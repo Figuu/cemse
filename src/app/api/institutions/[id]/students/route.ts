@@ -1,0 +1,236 @@
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { z } from "zod";
+
+const createStudentSchema = z.object({
+  studentId: z.string().min(1, "Student ID is required"),
+  studentNumber: z.string().min(1, "Student number is required"),
+  programId: z.string().optional(),
+  status: z.enum(["ACTIVE", "INACTIVE", "SUSPENDED", "GRADUATED", "DROPPED_OUT", "TRANSFERRED"]).default("ACTIVE"),
+  notes: z.string().optional(),
+});
+
+const updateStudentSchema = z.object({
+  studentNumber: z.string().min(1).optional(),
+  programId: z.string().optional(),
+  status: z.enum(["ACTIVE", "INACTIVE", "SUSPENDED", "GRADUATED", "DROPPED_OUT", "TRANSFERRED"]).optional(),
+  graduationDate: z.string().datetime().optional(),
+  gpa: z.number().min(0).max(4).optional(),
+  notes: z.string().optional(),
+});
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "20");
+    const search = searchParams.get("search") || "";
+    const status = searchParams.get("status") || "";
+    const programId = searchParams.get("programId") || "";
+    const sortBy = searchParams.get("sortBy") || "enrollmentDate";
+    const sortOrder = searchParams.get("sortOrder") || "desc";
+
+    const skip = (page - 1) * limit;
+
+    const where: any = {
+      institutionId: params.id,
+    };
+
+    if (search) {
+      where.OR = [
+        { studentNumber: { contains: search, mode: "insensitive" } },
+        { student: { firstName: { contains: search, mode: "insensitive" } } },
+        { student: { lastName: { contains: search, mode: "insensitive" } } },
+        { student: { email: { contains: search, mode: "insensitive" } } },
+      ];
+    }
+
+    if (status) {
+      where.status = status;
+    }
+
+    if (programId) {
+      where.programId = programId;
+    }
+
+    const orderBy: any = {};
+    orderBy[sortBy] = sortOrder;
+
+    const [students, total] = await Promise.all([
+      prisma.institutionStudent.findMany({
+        where,
+        orderBy,
+        skip,
+        take: limit,
+        include: {
+          student: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              phone: true,
+              avatarUrl: true,
+              birthDate: true,
+              gender: true,
+            },
+          },
+          program: {
+            select: {
+              id: true,
+              name: true,
+              level: true,
+            },
+          },
+          _count: {
+            select: {
+              enrollments: true,
+            },
+          },
+        },
+      }),
+      prisma.institutionStudent.count({ where }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return NextResponse.json({
+      students,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching students:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch students" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const body = await request.json();
+    const validatedData = createStudentSchema.parse(body);
+
+    // Get user ID from session (in real app, this would come from auth)
+    const userId = "user-1"; // Mock user ID
+
+    // Check if user has permission to manage this institution
+    const institution = await prisma.institution.findUnique({
+      where: { id: params.id },
+      select: { createdBy: true },
+    });
+
+    if (!institution) {
+      return NextResponse.json(
+        { error: "Institution not found" },
+        { status: 404 }
+      );
+    }
+
+    if (institution.createdBy !== userId) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 403 }
+      );
+    }
+
+    // Check if student already exists in this institution
+    const existingStudent = await prisma.institutionStudent.findUnique({
+      where: {
+        studentId_institutionId: {
+          studentId: validatedData.studentId,
+          institutionId: params.id,
+        },
+      },
+    });
+
+    if (existingStudent) {
+      return NextResponse.json(
+        { error: "Student already enrolled in this institution" },
+        { status: 400 }
+      );
+    }
+
+    // Check if student number is already taken
+    const existingStudentNumber = await prisma.institutionStudent.findUnique({
+      where: { studentNumber: validatedData.studentNumber },
+    });
+
+    if (existingStudentNumber) {
+      return NextResponse.json(
+        { error: "Student number already taken" },
+        { status: 400 }
+      );
+    }
+
+    const student = await prisma.institutionStudent.create({
+      data: {
+        ...validatedData,
+        institutionId: params.id,
+      },
+      include: {
+        student: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            phone: true,
+            avatarUrl: true,
+            birthDate: true,
+            gender: true,
+          },
+        },
+        program: {
+          select: {
+            id: true,
+            name: true,
+            level: true,
+          },
+        },
+        _count: {
+          select: {
+            enrollments: true,
+          },
+        },
+      },
+    });
+
+    // Update program student count if program is specified
+    if (validatedData.programId) {
+      await prisma.institutionProgram.update({
+        where: { id: validatedData.programId },
+        data: { currentStudents: { increment: 1 } },
+      });
+    }
+
+    return NextResponse.json(student, { status: 201 });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: "Validation error", details: error.errors },
+        { status: 400 }
+      );
+    }
+
+    console.error("Error creating student:", error);
+    return NextResponse.json(
+      { error: "Failed to create student" },
+      { status: 500 }
+    );
+  }
+}
