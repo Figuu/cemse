@@ -119,11 +119,31 @@
 - Unit tests should typically be placed alongside the code files they are testing (e.g., `MyComponent.tsx` and `MyComponent.test.tsx` in the same directory).
 - Use `npx jest [optional/path/to/test/file]` to run tests. Running without a path executes all tests found by the Jest configuration.
 
+### ⚠️ IMPORTANT: Tasks Needing Review
+
+The following tasks were marked as completed but have been modified to align with the CEMSE description. These need to be reviewed to ensure the current implementation matches the updated requirements:
+
+1. **Task 1.2**: Role-based navigation - INSTRUCTOR role removed, verify navigation works with YOUTH, COMPANIES, INSTITUTION, SUPERADMIN
+2. **Task 2.4**: Resume builder - Verify 3 templates are actually implemented
+3. **Task 2.6**: File upload - Verify chunked upload system is implemented
+4. **Task 3.3**: Job applications - Verify Flow 1 (Company Job Offers) matches description
+5. **Task 3.10**: Chat system - Verify integrated chat for job applications is implemented
+6. **Task 4.3**: Course structure - Verify hierarchical Course → Modules → Lessons structure
+7. **Task 4.5**: Quiz system - Verify unlimited attempts feature is implemented
+
+### 🔍 INSTRUCTOR Role Clarification
+
+The INSTRUCTOR role appears in the database schema but is not clearly defined in the main CEMSE description. Based on the schema, it seems instructors are just course instructors (Profile relation to Course), not a separate management role. The main roles should be:
+- **YOUTH**: Job-seeking youth
+- **COMPANIES**: Companies that post job offers  
+- **INSTITUTION**: Institutions (municipalities, NGOs, training centers)
+- **SUPERADMIN**: System administrator
+
 ## Tasks
 
 - [x] 1.0 Core Dashboard Infrastructure
   - [x] 1.1 Create main dashboard layout with responsive navigation sidebar
-  - [x] 1.2 Implement role-based navigation menu (YOUTH, COMPANIES, INSTITUTION, SUPERADMIN, INSTRUCTOR)
+  - [⚠️] 1.2 Implement role-based navigation menu (YOUTH, COMPANIES, INSTITUTION, SUPERADMIN) - NEEDS REVIEW: INSTRUCTOR role removed, verify navigation
   - [x] 1.3 Build dashboard header with user profile dropdown and notifications
   - [x] 1.4 Create statistics cards component for key metrics display
   - [x] 1.5 Implement recent activity feed component
@@ -137,9 +157,9 @@
   - [x] 2.1 Enhance existing authentication system with role-based access control
   - [x] 2.2 Create comprehensive user profile management interface
   - [x] 2.3 Implement skills assessment and tracking system
-  - [x] 2.4 Build resume builder with 3 available templates
+  - [⚠️] 2.4 Build resume builder with 3 available templates - NEEDS REVIEW: Verify 3 templates are implemented
   - [x] 2.5 Create profile completion progress indicator
-  - [x] 2.6 Implement chunked file upload for CV and profile pictures
+  - [⚠️] 2.6 Implement chunked file upload for CV and profile pictures - NEEDS REVIEW: Verify chunked upload is implemented
   - [x] 2.7 Add profile verification and validation system
   - [x] 2.8 Create user preferences and notification settings
   - [x] 2.9 Implement profile search and discovery features
@@ -148,14 +168,14 @@
 - [x] 3.0 Job Management & Application System
   - [x] 3.1 Create job listing page with advanced search and filters
   - [x] 3.2 Implement job card component with company information
-  - [x] 3.3 Build job application form with file uploads (Flow 1: Company Job Offers)
+  - [⚠️] 3.3 Build job application form with file uploads (Flow 1: Company Job Offers) - NEEDS REVIEW: Verify Flow 1 implementation matches description
   - [x] 3.4 Create job application tracking system with status management
   - [x] 3.5 Implement job recommendation engine based on profile
   - [x] 3.6 Add job bookmarking and saved searches functionality
   - [x] 3.7 Create company job posting management interface
   - [x] 3.8 Implement application status notifications
   - [x] 3.9 Add job application analytics for companies
-  - [x] 3.10 Create integrated chat system for job applications
+  - [⚠️] 3.10 Create integrated chat system for job applications - NEEDS REVIEW: Verify chat system is implemented
   - [ ] 3.11 Build youth open applications system (Flow 2: Open Applications)
   - [ ] 3.12 Implement company interest tracking for open applications
   - [ ] 3.13 Add interview scheduling and communication system
@@ -163,9 +183,9 @@
 - [x] 4.0 Course Management & Learning System
   - [x] 4.1 Build course catalog with categories and search
   - [x] 4.2 Create course card component with enrollment options
-  - [x] 4.3 Implement hierarchical course structure (Course → Modules → Lessons)
+  - [⚠️] 4.3 Implement hierarchical course structure (Course → Modules → Lessons) - NEEDS REVIEW: Verify hierarchical structure is implemented
   - [x] 4.4 Build course content viewer with video/audio/text support
-  - [x] 4.5 Create quiz system with unlimited attempts
+  - [⚠️] 4.5 Create quiz system with unlimited attempts - NEEDS REVIEW: Verify unlimited attempts feature
   - [x] 4.6 Implement automatic certificate generation (PDF)
   - [x] 4.7 Add course discussion forums and Q&A
   - [x] 4.8 Create instructor dashboard for course management
@@ -194,7 +214,6 @@
   - [x] 6.7 Add institution analytics and reporting
   - [ ] 6.8 Create municipality management system (create/manage companies, youth, institutions)
   - [ ] 6.9 Implement NGO and training center specific features
-  - [ ] 6.10 Add communication tools for institutions and companies
 
 - [ ] 7.0 Content Management & Resources System
   - [ ] 7.1 Create news article management system (company, government, NGO types)
