@@ -44,7 +44,7 @@ model Profile {
   email                     String?
   phone                     String?
   address                   String?
-  municipalityId            String?
+  institutionId             String?
   country                   String?             @default("Bolivia")
   birthDate                 DateTime?
   gender                    String?
@@ -98,7 +98,7 @@ model Profile {
 
   // Relations
   user                      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  municipality              Municipality?       @relation(fields: [municipalityId], references: [id])
+  institution               Institution?        @relation(fields: [institutionId], references: [id])
   courseEnrollments         CourseEnrollment[]
   instructedCourses         Course[]            @relation("CourseInstructor")
   discussions               Discussion[]
@@ -110,7 +110,7 @@ model Profile {
   studentNotes              StudentNote[]
 
   @@index([userId])
-  @@index([municipalityId])
+  @@index([institutionId])
   @@index([status])
   @@map("profiles")
 }
@@ -444,7 +444,7 @@ model Company {
   foundedYear               Int?
   logoUrl                   String?
   isActive                  Boolean                           @default(true)
-  municipalityId            String
+  institutionId             String
   createdBy                 String
   createdAt                 DateTime                          @default(now())
   updatedAt                 DateTime                          @updatedAt
@@ -452,12 +452,12 @@ model Company {
   
   // Relations
   creator                   User                              @relation("CompanyCreator", fields: [createdBy], references: [id])
-  municipality              Municipality                      @relation(fields: [municipalityId], references: [id])
+  institution               Institution                      @relation(fields: [institutionId], references: [id])
   jobOffers                 JobOffer[]
   youthApplicationInterests YouthApplicationCompanyInterest[]
 
-  @@unique([name, municipalityId])
-  @@index([municipalityId])
+  @@unique([name, institutionId])
+  @@index([institutionId])
   @@index([businessSector])
   @@index([isActive])
   @@index([createdBy])
@@ -489,6 +489,8 @@ model Institution {
   
   // Relations
   creator         User            @relation("InstitutionCreator", fields: [createdBy], references: [id])
+  companies       Company[]
+  profiles        Profile[]
 
   @@unique([name, department])
   @@index([department])
@@ -496,42 +498,6 @@ model Institution {
   @@index([createdBy])
   @@index([institutionType])
   @@map("institutions")
-}
-
-model Municipality {
-  id              String          @id @default(cuid())
-  name            String
-  department      String
-  region          String?
-  population      Int?
-  mayorName       String?
-  mayorEmail      String?
-  mayorPhone      String?
-  address         String?
-  website         String?
-  isActive        Boolean         @default(true)
-  email           String          @unique
-  password        String
-  phone           String?
-  createdBy       String
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-  customType      String?
-  institutionType InstitutionType @default(MUNICIPALITY)
-  primaryColor    String?
-  secondaryColor  String?
-  
-  // Relations
-  companies       Company[]
-  profiles        Profile[]
-  creator         User            @relation("MunicipalityCreator", fields: [createdBy], references: [id])
-
-  @@unique([name, department])
-  @@index([department])
-  @@index([isActive])
-  @@index([createdBy])
-  @@index([institutionType])
-  @@map("municipalities")
 }
 
 // Enums
