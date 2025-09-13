@@ -18,7 +18,8 @@ import {
   Users,
   Lightbulb,
   ArrowRight,
-  Star
+  Star,
+  BarChart3
 } from "lucide-react";
 import { ResourceCard } from "@/components/entrepreneurship/ResourceCard";
 import { NewsCard } from "@/components/entrepreneurship/NewsCard";
@@ -166,6 +167,15 @@ export default function EntrepreneurshipPage() {
               <Users className="h-8 w-8 text-primary mx-auto mb-2" />
               <h3 className="font-semibold mb-1">Conexiones</h3>
               <p className="text-sm text-muted-foreground">Conecta con otros emprendedores</p>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/entrepreneurship/analytics">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardContent className="p-6 text-center">
+              <BarChart3 className="h-8 w-8 text-primary mx-auto mb-2" />
+              <h3 className="font-semibold mb-1">Analytics</h3>
+              <p className="text-sm text-muted-foreground">Analiza tu rendimiento</p>
             </CardContent>
           </Card>
         </Link>
