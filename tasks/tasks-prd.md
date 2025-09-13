@@ -118,7 +118,7 @@
   - [x] 6.3 Implement candidate search and filtering tools
   - [x] 6.4 Add company analytics and hiring metrics
   - [x] 6.5 Create institution student management dashboard
-  - [ ] 6.6 Implement program and course management for institutions
+  - [x] 6.6 Implement program and course management for institutions
   - [ ] 6.7 Add institution analytics and reporting
   - [ ] 6.8 Create partnership and collaboration management
   - [ ] 6.9 Implement compliance and reporting tools

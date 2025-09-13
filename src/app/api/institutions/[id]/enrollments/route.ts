@@ -1,0 +1,285 @@
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { z } from "zod";
+
+const createEnrollmentSchema = z.object({
+  studentId: z.string().min(1, "Student ID is required"),
+  programId: z.string().optional(),
+  courseId: z.string().optional(),
+  semester: z.string().optional(),
+  year: z.number().int().positive().optional(),
+  notes: z.string().optional(),
+});
+
+const updateEnrollmentSchema = z.object({
+  status: z.enum(["ACTIVE", "INACTIVE", "COMPLETED", "DROPPED", "SUSPENDED"]).optional(),
+  grade: z.number().min(0).max(100).optional(),
+  credits: z.number().int().positive().optional(),
+  semester: z.string().optional(),
+  year: z.number().int().positive().optional(),
+  notes: z.string().optional(),
+});
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "20");
+    const search = searchParams.get("search") || "";
+    const status = searchParams.get("status") || "";
+    const programId = searchParams.get("programId") || "";
+    const courseId = searchParams.get("courseId") || "";
+    const semester = searchParams.get("semester") || "";
+    const year = searchParams.get("year") || "";
+    const sortBy = searchParams.get("sortBy") || "enrollmentDate";
+    const sortOrder = searchParams.get("sortOrder") || "desc";
+
+    const skip = (page - 1) * limit;
+
+    const where: any = {
+      institutionId: params.id,
+    };
+
+    if (search) {
+      where.OR = [
+        { student: { firstName: { contains: search, mode: "insensitive" } } },
+        { student: { lastName: { contains: search, mode: "insensitive" } } },
+        { student: { email: { contains: search, mode: "insensitive" } } },
+        { program: { name: { contains: search, mode: "insensitive" } } },
+        { course: { name: { contains: search, mode: "insensitive" } } },
+        { course: { code: { contains: search, mode: "insensitive" } } },
+      ];
+    }
+
+    if (status) {
+      where.status = status;
+    }
+
+    if (programId) {
+      where.programId = programId;
+    }
+
+    if (courseId) {
+      where.courseId = courseId;
+    }
+
+    if (semester) {
+      where.semester = semester;
+    }
+
+    if (year) {
+      where.year = parseInt(year);
+    }
+
+    const orderBy: any = {};
+    orderBy[sortBy] = sortOrder;
+
+    const [enrollments, total] = await Promise.all([
+      prisma.institutionEnrollment.findMany({
+        where,
+        orderBy,
+        skip,
+        take: limit,
+        include: {
+          student: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              avatarUrl: true,
+              studentNumber: true,
+            },
+          },
+          program: {
+            select: {
+              id: true,
+              name: true,
+              level: true,
+            },
+          },
+          course: {
+            select: {
+              id: true,
+              name: true,
+              code: true,
+              credits: true,
+              level: true,
+            },
+          },
+        },
+      }),
+      prisma.institutionEnrollment.count({ where }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return NextResponse.json({
+      enrollments,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching enrollments:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch enrollments" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const body = await request.json();
+    const validatedData = createEnrollmentSchema.parse(body);
+
+    // Get user ID from session (in real app, this would come from auth)
+    const userId = "user-1"; // Mock user ID
+
+    // Check if user has permission to manage this institution
+    const institution = await prisma.institution.findUnique({
+      where: { id: params.id },
+      select: { createdBy: true },
+    });
+
+    if (!institution) {
+      return NextResponse.json(
+        { error: "Institution not found" },
+        { status: 404 }
+      );
+    }
+
+    if (institution.createdBy !== userId) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 403 }
+      );
+    }
+
+    // Validate that either programId or courseId is provided
+    if (!validatedData.programId && !validatedData.courseId) {
+      return NextResponse.json(
+        { error: "Either programId or courseId must be provided" },
+        { status: 400 }
+      );
+    }
+
+    // Check if student exists in this institution
+    const institutionStudent = await prisma.institutionStudent.findFirst({
+      where: {
+        studentId: validatedData.studentId,
+        institutionId: params.id,
+      },
+    });
+
+    if (!institutionStudent) {
+      return NextResponse.json(
+        { error: "Student not found in this institution" },
+        { status: 400 }
+      );
+    }
+
+    // Check if enrollment already exists
+    const existingEnrollment = await prisma.institutionEnrollment.findFirst({
+      where: {
+        studentId: validatedData.studentId,
+        institutionId: params.id,
+        programId: validatedData.programId || null,
+        courseId: validatedData.courseId || null,
+        status: "ACTIVE",
+      },
+    });
+
+    if (existingEnrollment) {
+      return NextResponse.json(
+        { error: "Student is already enrolled in this program/course" },
+        { status: 400 }
+      );
+    }
+
+    // Check capacity if enrolling in a course
+    if (validatedData.courseId) {
+      const course = await prisma.institutionCourse.findUnique({
+        where: { id: validatedData.courseId },
+        select: { maxStudents: true, currentStudents: true },
+      });
+
+      if (course && course.maxStudents && course.currentStudents >= course.maxStudents) {
+        return NextResponse.json(
+          { error: "Course is at maximum capacity" },
+          { status: 400 }
+        );
+      }
+    }
+
+    const enrollment = await prisma.institutionEnrollment.create({
+      data: {
+        ...validatedData,
+        institutionId: params.id,
+      },
+      include: {
+        student: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            avatarUrl: true,
+            studentNumber: true,
+          },
+        },
+        program: {
+          select: {
+            id: true,
+            name: true,
+            level: true,
+          },
+        },
+        course: {
+          select: {
+            id: true,
+            name: true,
+            code: true,
+            credits: true,
+            level: true,
+          },
+        },
+      },
+    });
+
+    // Update course student count if enrolling in a course
+    if (validatedData.courseId) {
+      await prisma.institutionCourse.update({
+        where: { id: validatedData.courseId },
+        data: { currentStudents: { increment: 1 } },
+      });
+    }
+
+    return NextResponse.json(enrollment, { status: 201 });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: "Validation error", details: error.errors },
+        { status: 400 }
+      );
+    }
+
+    console.error("Error creating enrollment:", error);
+    return NextResponse.json(
+      { error: "Failed to create enrollment" },
+      { status: 500 }
+    );
+  }
+}
