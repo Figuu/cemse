@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -141,13 +142,15 @@ export default function EntrepreneurshipPage() {
             <p className="text-sm text-muted-foreground">Crea tu plan paso a paso</p>
           </CardContent>
         </Card>
-        <Card className="hover:shadow-md transition-shadow cursor-pointer">
-          <CardContent className="p-6 text-center">
-            <Calculator className="h-8 w-8 text-primary mx-auto mb-2" />
-            <h3 className="font-semibold mb-1">Calculadora Financiera</h3>
-            <p className="text-sm text-muted-foreground">Calcula costos y proyecciones</p>
-          </CardContent>
-        </Card>
+        <Link href="/entrepreneurship/calculator">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardContent className="p-6 text-center">
+              <Calculator className="h-8 w-8 text-primary mx-auto mb-2" />
+              <h3 className="font-semibold mb-1">Calculadora Financiera</h3>
+              <p className="text-sm text-muted-foreground">Calcula costos y proyecciones</p>
+            </CardContent>
+          </Card>
+        </Link>
         <Card className="hover:shadow-md transition-shadow cursor-pointer">
           <CardContent className="p-6 text-center">
             <Users className="h-8 w-8 text-primary mx-auto mb-2" />

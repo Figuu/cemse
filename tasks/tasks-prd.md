@@ -106,7 +106,7 @@
   - [x] 5.2 Build startup discovery and browsing interface
   - [x] 5.3 Implement business plan builder and templates
   - [x] 5.4 Create entrepreneurship hub page with resources and news
-  - [ ] 5.5 Build financial calculator for startups
+  - [x] 5.5 Build financial calculator for startups
   - [ ] 5.6 Create entrepreneurship social network (mini social network)
   - [ ] 5.7 Implement entrepreneurship friendship/connection system
   - [ ] 5.8 Add entrepreneurship post sharing and interaction features
