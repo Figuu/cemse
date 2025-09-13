@@ -34,6 +34,13 @@ model User {
   postComments             PostComment[] @relation("PostCommentAuthor")
   postShares               PostShare[] @relation("PostShareUser")
   
+  // Company relations
+  ownedCompanies           Company[] @relation("CompanyOwner")
+  jobApplications          JobApplication[] @relation("JobApplicant")
+  companyReviews           CompanyReview[] @relation("CompanyReviewAuthor")
+  companyFollows           CompanyFollow[] @relation("CompanyFollower")
+  jobLikes                 JobLike[] @relation("JobLikeUser")
+  jobShares                JobShare[] @relation("JobShareUser")
 
   @@index([role])
   @@index([isActive])
@@ -1044,6 +1051,190 @@ model PostShare {
   @@map("post_shares")
 }
 
+// Company Management Models
+model Company {
+  id                String            @id @default(cuid())
+  name              String
+  description       String?
+  website           String?
+  logo              String?
+  industry          String?
+  size              CompanySize?
+  location          String?
+  address           String?
+  city              String?
+  state             String?
+  country           String?
+  postalCode        String?
+  phone             String?
+  email             String?
+  foundedYear       Int?
+  isVerified        Boolean           @default(false)
+  isActive          Boolean           @default(true)
+  socialMedia       Json?             // { linkedin, twitter, facebook, instagram }
+  benefits          String[]          @default([])
+  culture           String?
+  mission           String?
+  vision            String?
+  values            String[]          @default([])
+  technologies      String[]          @default([])
+  languages         String[]          @default([])
+  remoteWork        Boolean           @default(false)
+  hybridWork        Boolean           @default(false)
+  officeWork        Boolean           @default(true)
+  totalEmployees    Int?
+  totalJobs         Int               @default(0)
+  totalApplications Int               @default(0)
+  averageRating     Float?
+  totalReviews      Int               @default(0)
+  views             Int               @default(0)
+  followers         Int               @default(0)
+  isPublic          Boolean           @default(true)
+  isFeatured        Boolean           @default(false)
+  ownerId           String
+  owner             User              @relation("CompanyOwner", fields: [ownerId], references: [id])
+  jobs              JobPosting[]
+  applications      JobApplication[]
+  reviews           CompanyReview[]
+  followersList     CompanyFollow[]
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  
+  @@map("companies")
+}
+
+model JobPosting {
+  id                String            @id @default(cuid())
+  title             String
+  description       String
+  requirements      String[]
+  responsibilities  String[]
+  benefits          String[]
+  location          String
+  city              String?
+  state             String?
+  country           String?
+  remoteWork        Boolean           @default(false)
+  hybridWork        Boolean           @default(false)
+  officeWork        Boolean           @default(true)
+  employmentType    EmploymentType
+  experienceLevel   ExperienceLevel
+  salaryMin         Float?
+  salaryMax         Float?
+  currency          String            @default("USD")
+  isActive          Boolean           @default(true)
+  isFeatured        Boolean           @default(false)
+  isUrgent          Boolean           @default(false)
+  applicationDeadline DateTime?
+  startDate         DateTime?
+  totalViews        Int               @default(0)
+  totalApplications Int               @default(0)
+  totalLikes        Int               @default(0)
+  totalShares       Int               @default(0)
+  tags              String[]          @default([])
+  skills            String[]          @default([])
+  department        String?
+  reportingTo       String?
+  companyId         String
+  company           Company           @relation(fields: [companyId], references: [id])
+  applications      JobApplication[]
+  likes             JobLike[]
+  shares            JobShare[]
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  
+  @@map("job_postings")
+}
+
+model JobApplication {
+  id                String            @id @default(cuid())
+  coverLetter       String?
+  resume            String?
+  portfolio         String?
+  linkedinProfile   String?
+  githubProfile     String?
+  status            ApplicationStatus @default(PENDING)
+  notes             String?
+  appliedAt         DateTime          @default(now())
+  reviewedAt        DateTime?
+  interviewedAt     DateTime?
+  rejectedAt        DateTime?
+  hiredAt           DateTime?
+  jobId             String
+  job               JobPosting        @relation(fields: [jobId], references: [id])
+  applicantId       String
+  applicant         User              @relation("JobApplicant", fields: [applicantId], references: [id])
+  companyId         String
+  company           Company           @relation(fields: [companyId], references: [id])
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  
+  @@unique([jobId, applicantId])
+  @@map("job_applications")
+}
+
+model CompanyReview {
+  id                String            @id @default(cuid())
+  rating            Int               // 1-5 stars
+  title             String
+  content           String
+  pros              String[]
+  cons              String[]
+  workLifeBalance   Int?              // 1-5 rating
+  culture           Int?              // 1-5 rating
+  management        Int?              // 1-5 rating
+  benefits          Int?              // 1-5 rating
+  careerGrowth      Int?              // 1-5 rating
+  isVerified        Boolean           @default(false)
+  isAnonymous       Boolean           @default(false)
+  helpfulVotes      Int               @default(0)
+  totalVotes        Int               @default(0)
+  companyId         String
+  company           Company           @relation(fields: [companyId], references: [id])
+  authorId          String
+  author            User              @relation("CompanyReviewAuthor", fields: [authorId], references: [id])
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  
+  @@map("company_reviews")
+}
+
+model CompanyFollow {
+  id                String            @id @default(cuid())
+  companyId         String
+  company           Company           @relation(fields: [companyId], references: [id])
+  userId            String
+  user              User              @relation("CompanyFollower", fields: [userId], references: [id])
+  createdAt         DateTime          @default(now())
+  
+  @@unique([companyId, userId])
+  @@map("company_follows")
+}
+
+model JobLike {
+  id                String            @id @default(cuid())
+  jobId             String
+  userId            String
+  job               JobPosting        @relation(fields: [jobId], references: [id])
+  user              User              @relation("JobLikeUser", fields: [userId], references: [id])
+  createdAt         DateTime          @default(now())
+  
+  @@unique([jobId, userId])
+  @@map("job_likes")
+}
+
+model JobShare {
+  id                String            @id @default(cuid())
+  jobId             String
+  userId            String
+  job               JobPosting        @relation(fields: [jobId], references: [id])
+  user              User              @relation("JobShareUser", fields: [userId], references: [id])
+  createdAt         DateTime          @default(now())
+  
+  @@unique([jobId, userId])
+  @@map("job_shares")
+}
+
 // Enums
 enum ResourceType {
   ARTICLE
@@ -1072,4 +1263,38 @@ enum PostType {
   ANNOUNCEMENT
   ACHIEVEMENT
   QUESTION
+}
+
+enum CompanySize {
+  STARTUP
+  SMALL
+  MEDIUM
+  LARGE
+  ENTERPRISE
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+  FREELANCE
+  TEMPORARY
+}
+
+enum ExperienceLevel {
+  ENTRY_LEVEL
+  MID_LEVEL
+  SENIOR_LEVEL
+  EXECUTIVE
+  INTERN
+}
+
+enum ApplicationStatus {
+  PENDING
+  REVIEWED
+  INTERVIEWED
+  REJECTED
+  HIRED
+  WITHDRAWN
 }
