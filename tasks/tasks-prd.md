@@ -119,7 +119,7 @@
   - [x] 6.4 Add company analytics and hiring metrics
   - [x] 6.5 Create institution student management dashboard
   - [x] 6.6 Implement program and course management for institutions
-  - [ ] 6.7 Add institution analytics and reporting
+  - [x] 6.7 Add institution analytics and reporting
   - [ ] 6.8 Create partnership and collaboration management
   - [ ] 6.9 Implement compliance and reporting tools
   - [ ] 6.10 Add communication tools for institutions and companies
