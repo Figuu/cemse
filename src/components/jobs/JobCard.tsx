@@ -3,200 +3,260 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
-  MapPin, 
-  Clock, 
   Briefcase, 
-  Bookmark, 
-  BookmarkCheck,
-  DollarSign,
-  Zap
+  MapPin, 
+  DollarSign, 
+  Clock, 
+  Users, 
+  Heart,
+  Share2,
+  Eye,
+  Calendar,
+  Star,
+  ExternalLink,
+  Building2
 } from "lucide-react";
+import { JobPosting, EmploymentTypeLabels, ExperienceLevelLabels } from "@/types/company";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
-
-interface Job {
-  id: string;
-  title: string;
-  company: {
-    name: string;
-    logo: string;
-    location: string;
-  };
-  location: string;
-  type: "full-time" | "part-time" | "contract" | "internship";
-  salary?: {
-    min: number;
-    max: number;
-    currency: string;
-  };
-  description: string;
-  requirements: string[];
-  benefits: string[];
-  postedAt: Date;
-  deadline: Date;
-  isBookmarked: boolean;
-  isApplied: boolean;
-  experience: string;
-  education: string;
-  skills: string[];
-  remote: boolean;
-  urgent: boolean;
-}
+import Link from "next/link";
 
 interface JobCardProps {
-  job: Job;
-  viewMode: "grid" | "list";
-  onBookmark: (jobId: string) => void;
-  onApply: (jobId: string) => void;
+  job: JobPosting;
+  currentUserId?: string;
+  onLike?: (jobId: string) => void;
+  onShare?: (jobId: string) => void;
+  onApply?: (jobId: string) => void;
+  variant?: "default" | "featured" | "compact";
+  showActions?: boolean;
 }
 
-export function JobCard({ job, viewMode, onBookmark, onApply }: JobCardProps) {
-  const formatSalary = (min: number, max: number, currency: string) => {
-    const formatter = new Intl.NumberFormat('es-MX', {
-      style: 'currency',
-      currency: currency,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    });
-    return `${formatter.format(min)} - ${formatter.format(max)}`;
-  };
+export function JobCard({ 
+  job, 
+  currentUserId,
+  onLike,
+  onShare,
+  onApply,
+  variant = "default",
+  showActions = true
+}: JobCardProps) {
+  const isLiked = false; // This would come from a hook in real app
+  const hasApplied = false; // This would come from a hook in real app
 
-  const getTypeLabel = (type: string) => {
-    switch (type) {
-      case "full-time":
-        return "Tiempo Completo";
-      case "part-time":
-        return "Medio Tiempo";
-      case "contract":
-        return "Contrato";
-      case "internship":
-        return "Prácticas";
-      default:
-        return type;
+  const handleLike = () => {
+    if (onLike) {
+      onLike(job.id);
     }
   };
 
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case "full-time":
-        return "bg-green-100 text-green-800";
-      case "part-time":
-        return "bg-blue-100 text-blue-800";
-      case "contract":
-        return "bg-purple-100 text-purple-800";
-      case "internship":
-        return "bg-orange-100 text-orange-800";
-      default:
-        return "bg-gray-100 text-gray-800";
+  const handleShare = () => {
+    if (onShare) {
+      onShare(job.id);
     }
   };
 
-  const isExpiringSoon = () => {
-    const daysUntilDeadline = Math.ceil((job.deadline.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-    return daysUntilDeadline <= 7;
+  const handleApply = () => {
+    if (onApply) {
+      onApply(job.id);
+    }
   };
 
-  if (viewMode === "list") {
+  const formatSalary = () => {
+    if (!job.salaryMin && !job.salaryMax) return null;
+    
+    const min = job.salaryMin ? job.salaryMin.toLocaleString() : "";
+    const max = job.salaryMax ? job.salaryMax.toLocaleString() : "";
+    
+    if (min && max) {
+      return `${min} - ${max} ${job.currency}`;
+    } else if (min) {
+      return `Desde ${min} ${job.currency}`;
+    } else if (max) {
+      return `Hasta ${max} ${job.currency}`;
+    }
+    
+    return null;
+  };
+
+  const getWorkArrangements = () => {
+    const arrangements = [];
+    if (job.officeWork) arrangements.push("Oficina");
+    if (job.remoteWork) arrangements.push("Remoto");
+    if (job.hybridWork) arrangements.push("Híbrido");
+    return arrangements;
+  };
+
+  if (variant === "compact") {
     return (
       <Card className="hover:shadow-md transition-shadow">
-        <CardContent className="p-6">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0">
-                  <div className="h-12 w-12 bg-gray-200 rounded-lg flex items-center justify-center">
-                    <Briefcase className="h-6 w-6 text-gray-600" />
-                  </div>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center space-x-2 mb-1">
-                    <h3 className="text-lg font-semibold text-foreground truncate">
-                      {job.title}
-                    </h3>
-                    {job.urgent && (
-                      <Badge className="bg-red-100 text-red-800">
-                        <Zap className="h-3 w-3 mr-1" />
-                        Urgente
-                      </Badge>
-                    )}
-                    {isExpiringSoon() && (
-                      <Badge variant="outline" className="text-orange-600 border-orange-200">
-                        <Clock className="h-3 w-3 mr-1" />
-                        Pronto a expirar
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-sm font-medium text-muted-foreground mb-2">
-                    {job.company.name}
-                  </p>
-                  <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-3">
-                    <div className="flex items-center">
-                      <MapPin className="h-4 w-4 mr-1" />
-                      {job.location}
-                    </div>
-                    <div className="flex items-center">
-                      <Clock className="h-4 w-4 mr-1" />
-                      {formatDistanceToNow(job.postedAt, { addSuffix: true, locale: es })}
-                    </div>
-                    {job.salary && (
-                      <div className="flex items-center">
-                        <DollarSign className="h-4 w-4 mr-1" />
-                        {formatSalary(job.salary.min, job.salary.max, job.salary.currency)}
-                      </div>
-                    )}
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                    {job.description}
-                  </p>
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    <Badge className={getTypeColor(job.type)}>
-                      {getTypeLabel(job.type)}
-                    </Badge>
-                    {job.remote && (
-                      <Badge variant="outline">
-                        Remoto
-                      </Badge>
-                    )}
-                    <Badge variant="outline">
-                      {job.experience}
-                    </Badge>
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {job.skills.slice(0, 4).map((skill, index) => (
-                      <Badge key={index} variant="secondary" className="text-xs">
-                        {skill}
-                      </Badge>
-                    ))}
-                    {job.skills.length > 4 && (
-                      <Badge variant="secondary" className="text-xs">
-                        +{job.skills.length - 4} más
-                      </Badge>
-                    )}
-                  </div>
-                </div>
+        <CardContent className="p-4">
+          <div className="flex items-start gap-3">
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={job.company.logo} />
+              <AvatarFallback>
+                <Building2 className="h-5 w-5" />
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="font-semibold truncate">{job.title}</h3>
+                {job.isUrgent && (
+                  <Badge variant="destructive" className="text-xs">
+                    Urgente
+                  </Badge>
+                )}
+              </div>
+              <p className="text-sm text-muted-foreground truncate">
+                {job.company.name} • {job.location}
+              </p>
+              <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                <span>{EmploymentTypeLabels[job.employmentType]}</span>
+                <span>{ExperienceLevelLabels[job.experienceLevel]}</span>
+                <span>{job.totalApplications} aplicaciones</span>
               </div>
             </div>
-            <div className="flex items-center space-x-2 ml-4">
+            <div className="flex items-center gap-1">
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => onBookmark(job.id)}
+                onClick={handleLike}
+                className="h-8 w-8 p-0"
               >
-                {job.isBookmarked ? (
-                  <BookmarkCheck className="h-4 w-4 text-blue-600" />
-                ) : (
-                  <Bookmark className="h-4 w-4" />
-                )}
+                <Heart className={`h-4 w-4 ${isLiked ? 'fill-current text-red-500' : ''}`} />
+              </Button>
+              <Link href={`/companies/${job.company.id}/jobs/${job.id}`}>
+                <Button variant="outline" size="sm">
+                  Ver
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (variant === "featured") {
+    return (
+      <Card className="hover:shadow-lg transition-shadow group border-2 border-primary/20">
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-3">
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={job.company.logo} />
+                <AvatarFallback>
+                  <Building2 className="h-6 w-6" />
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="text-lg font-semibold">{job.title}</h3>
+                  {job.isUrgent && (
+                    <Badge variant="destructive" className="text-xs">
+                      Urgente
+                    </Badge>
+                  )}
+                  <Badge variant="secondary" className="text-xs">
+                    Destacado
+                  </Badge>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {job.company.name} • {job.location}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {formatDistanceToNow(new Date(job.createdAt), { 
+                    addSuffix: true, 
+                    locale: es 
+                  })}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLike}
+                className="flex items-center gap-1"
+              >
+                <Heart className={`h-4 w-4 ${isLiked ? 'fill-current text-red-500' : ''}`} />
+                <span>{job.totalLikes}</span>
               </Button>
               <Button
-                variant={job.isApplied ? "outline" : "default"}
+                variant="ghost"
                 size="sm"
-                onClick={() => onApply(job.id)}
-                disabled={job.isApplied}
+                onClick={handleShare}
+                className="flex items-center gap-1"
               >
-                {job.isApplied ? "Aplicado" : "Aplicar"}
+                <Share2 className="h-4 w-4" />
+                <span>{job.totalShares}</span>
               </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <div className="space-y-4">
+            <p className="text-sm leading-relaxed line-clamp-2">
+              {job.description}
+            </p>
+            
+            <div className="flex flex-wrap gap-2">
+              {job.skills.slice(0, 5).map((skill) => (
+                <Badge key={skill} variant="outline" className="text-xs">
+                  {skill}
+                </Badge>
+              ))}
+              {job.skills.length > 5 && (
+                <Badge variant="outline" className="text-xs">
+                  +{job.skills.length - 5}
+                </Badge>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                <span>{EmploymentTypeLabels[job.employmentType]}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Star className="h-4 w-4 text-muted-foreground" />
+                <span>{ExperienceLevelLabels[job.experienceLevel]}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Eye className="h-4 w-4 text-muted-foreground" />
+                <span>{job.totalViews} vistas</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-muted-foreground" />
+                <span>{job.totalApplications} aplicaciones</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex items-center justify-between pt-4 border-t mt-4">
+            <div className="flex items-center gap-2">
+              {!hasApplied ? (
+                <Button onClick={handleApply}>
+                  Aplicar Ahora
+                </Button>
+              ) : (
+                <Button variant="outline" disabled>
+                  Ya Aplicaste
+                </Button>
+              )}
+              <Link href={`/companies/${job.company.id}/jobs/${job.id}`}>
+                <Button variant="outline">
+                  Ver Detalles
+                </Button>
+              </Link>
+            </div>
+            <div className="flex items-center gap-2">
+              <Link href={`/companies/${job.company.id}`}>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                  <ExternalLink className="h-4 w-4" />
+                </Button>
+              </Link>
             </div>
           </div>
         </CardContent>
@@ -205,107 +265,134 @@ export function JobCard({ job, viewMode, onBookmark, onApply }: JobCardProps) {
   }
 
   return (
-    <Card className="hover:shadow-md transition-shadow h-full">
+    <Card className="hover:shadow-md transition-shadow">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="flex items-center space-x-2 mb-2">
-              <h3 className="text-lg font-semibold text-foreground line-clamp-1">
-                {job.title}
-              </h3>
-              {job.urgent && (
-                <Badge className="bg-red-100 text-red-800">
-                  <Zap className="h-3 w-3 mr-1" />
-                  Urgente
-                </Badge>
-              )}
-            </div>
-            <p className="text-sm font-medium text-muted-foreground mb-2">
-              {job.company.name}
-            </p>
-            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-              <div className="flex items-center">
-                <MapPin className="h-4 w-4 mr-1" />
-                {job.location}
+          <div className="flex items-center gap-3">
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={job.company.logo} />
+              <AvatarFallback>
+                <Building2 className="h-5 w-5" />
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="font-semibold text-sm">{job.title}</h3>
+                {job.isUrgent && (
+                  <Badge variant="destructive" className="text-xs">
+                    Urgente
+                  </Badge>
+                )}
               </div>
-              {job.remote && (
-                <Badge variant="outline" className="text-xs">
-                  Remoto
-                </Badge>
-              )}
+              <p className="text-xs text-muted-foreground">
+                {job.company.name} • {job.location}
+              </p>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onBookmark(job.id)}
-          >
-            {job.isBookmarked ? (
-              <BookmarkCheck className="h-4 w-4 text-blue-600" />
-            ) : (
-              <Bookmark className="h-4 w-4" />
-            )}
-          </Button>
+          
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLike}
+              className="h-8 w-8 p-0"
+            >
+              <Heart className={`h-4 w-4 ${isLiked ? 'fill-current text-red-500' : ''}`} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleShare}
+              className="h-8 w-8 p-0"
+            >
+              <Share2 className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </CardHeader>
+
       <CardContent className="pt-0">
         <div className="space-y-3">
-          <p className="text-sm text-muted-foreground line-clamp-2">
+          <p className="text-sm leading-relaxed line-clamp-2">
             {job.description}
           </p>
           
-          <div className="flex items-center justify-between text-sm">
-            {job.salary && (
-              <div className="flex items-center text-muted-foreground">
-                <DollarSign className="h-4 w-4 mr-1" />
-                {formatSalary(job.salary.min, job.salary.max, job.salary.currency)}
-              </div>
-            )}
-            <div className="flex items-center text-muted-foreground">
-              <Clock className="h-4 w-4 mr-1" />
-              {formatDistanceToNow(job.postedAt, { addSuffix: true, locale: es })}
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            <Badge className={getTypeColor(job.type)}>
-              {getTypeLabel(job.type)}
-            </Badge>
-            <Badge variant="outline">
-              {job.experience}
-            </Badge>
-            {isExpiringSoon() && (
-              <Badge variant="outline" className="text-orange-600 border-orange-200">
-                <Clock className="h-3 w-3 mr-1" />
-                Pronto a expirar
-              </Badge>
-            )}
-          </div>
-
           <div className="flex flex-wrap gap-1">
-            {job.skills.slice(0, 3).map((skill, index) => (
-              <Badge key={index} variant="secondary" className="text-xs">
+            {job.skills.slice(0, 3).map((skill) => (
+              <Badge key={skill} variant="outline" className="text-xs">
                 {skill}
               </Badge>
             ))}
             {job.skills.length > 3 && (
-              <Badge variant="secondary" className="text-xs">
+              <Badge variant="outline" className="text-xs">
                 +{job.skills.length - 3}
               </Badge>
             )}
           </div>
-
-          <div className="pt-2">
-            <Button
-              className="w-full"
-              variant={job.isApplied ? "outline" : "default"}
-              onClick={() => onApply(job.id)}
-              disabled={job.isApplied}
-            >
-              {job.isApplied ? "Aplicado" : "Aplicar"}
-            </Button>
+          
+          <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              <span>{EmploymentTypeLabels[job.employmentType]}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Star className="h-3 w-3" />
+              <span>{ExperienceLevelLabels[job.experienceLevel]}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Eye className="h-3 w-3" />
+              <span>{job.totalViews}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Users className="h-3 w-3" />
+              <span>{job.totalApplications}</span>
+            </div>
           </div>
+
+          {formatSalary() && (
+            <div className="flex items-center gap-1 text-sm font-medium text-green-600">
+              <DollarSign className="h-4 w-4" />
+              <span>{formatSalary()}</span>
+            </div>
+          )}
+
+          {getWorkArrangements().length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {getWorkArrangements().map((arrangement) => (
+                <Badge key={arrangement} variant="secondary" className="text-xs">
+                  {arrangement}
+                </Badge>
+              ))}
+            </div>
+          )}
         </div>
+
+        {showActions && (
+          <div className="flex items-center justify-between pt-3 border-t mt-3">
+            <div className="flex items-center gap-2">
+              {!hasApplied ? (
+                <Button size="sm" onClick={handleApply}>
+                  Aplicar
+                </Button>
+              ) : (
+                <Button variant="outline" size="sm" disabled>
+                  Ya Aplicaste
+                </Button>
+              )}
+              <Link href={`/companies/${job.company.id}/jobs/${job.id}`}>
+                <Button variant="outline" size="sm">
+                  Ver Detalles
+                </Button>
+              </Link>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {formatDistanceToNow(new Date(job.createdAt), { 
+                addSuffix: true, 
+                locale: es 
+              })}
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

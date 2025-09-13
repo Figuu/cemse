@@ -1,192 +1,358 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useSession } from "next-auth/react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { JobPosting, JobApplication } from "@/types/company";
 
-export interface Job {
-  id: string;
-  title: string;
-  company: {
-    name: string;
-    logo: string;
-    location: string;
-  };
-  location: string;
-  type: "full-time" | "part-time" | "contract" | "internship";
-  salary?: {
-    min: number;
-    max: number;
-    currency: string;
-  };
-  description: string;
-  requirements: string[];
-  benefits: string[];
-  postedAt: Date;
-  deadline: Date;
-  isBookmarked: boolean;
-  isApplied: boolean;
-  experience: string;
-  education: string;
-  skills: string[];
-  remote: boolean;
-  urgent: boolean;
-}
-
-interface UseJobsReturn {
-  jobs: Job[];
-  isLoading: boolean;
-  error: string | null;
-  refetch: () => Promise<void>;
-  bookmarkJob: (jobId: string) => Promise<void>;
-  unbookmarkJob: (jobId: string) => Promise<void>;
-  applyToJob: (jobId: string, data: { coverLetter?: string; resumeUrl?: string; additionalDocuments?: string[] }) => Promise<void>;
-}
-
-interface JobFilters {
+interface JobsFilters {
+  companyId?: string;
+  page?: number;
+  limit?: number;
   search?: string;
+  employmentType?: string;
+  experienceLevel?: string;
   location?: string;
-  type?: string;
-  experience?: string;
-  salary?: string;
-  remote?: string;
-  skills?: string[];
+  isActive?: boolean;
+  isUrgent?: boolean;
   sortBy?: string;
+  sortOrder?: "asc" | "desc";
 }
 
-export function useJobs(filters?: JobFilters): UseJobsReturn {
-  const { data: session } = useSession();
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+interface JobsResponse {
+  jobs: JobPosting[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}
 
-  const fetchJobs = useCallback(async () => {
-    if (!session?.user?.id) return;
+interface ApplicationsFilters {
+  companyId?: string;
+  jobId?: string;
+  page?: number;
+  limit?: number;
+  status?: string;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+}
 
-    setIsLoading(true);
-    setError(null);
+interface ApplicationsResponse {
+  applications: JobApplication[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}
 
-    try {
+export function useJobs(filters: JobsFilters = {}) {
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
+    queryKey: ["jobs", filters],
+    queryFn: async (): Promise<JobsResponse> => {
       const params = new URLSearchParams();
-      if (filters?.search) params.append("search", filters.search);
-      if (filters?.location) params.append("location", filters.location);
-      if (filters?.type) params.append("type", filters.type);
-      if (filters?.experience) params.append("experience", filters.experience);
-      if (filters?.salary) params.append("salary", filters.salary);
-      if (filters?.remote) params.append("remote", filters.remote);
-      if (filters?.skills && filters.skills.length > 0) {
-        params.append("skills", filters.skills.join(","));
-      }
-      if (filters?.sortBy) params.append("sortBy", filters.sortBy);
-
-      const response = await fetch(`/api/jobs?${params.toString()}`);
       
+      if (filters.page) params.append("page", filters.page.toString());
+      if (filters.limit) params.append("limit", filters.limit.toString());
+      if (filters.search) params.append("search", filters.search);
+      if (filters.employmentType) params.append("employmentType", filters.employmentType);
+      if (filters.experienceLevel) params.append("experienceLevel", filters.experienceLevel);
+      if (filters.location) params.append("location", filters.location);
+      if (filters.isActive !== undefined) params.append("isActive", filters.isActive.toString());
+      if (filters.isUrgent !== undefined) params.append("isUrgent", filters.isUrgent.toString());
+      if (filters.sortBy) params.append("sortBy", filters.sortBy);
+      if (filters.sortOrder) params.append("sortOrder", filters.sortOrder);
+
+      const url = filters.companyId 
+        ? `/api/companies/${filters.companyId}/jobs?${params.toString()}`
+        : `/api/jobs?${params.toString()}`;
+
+      const response = await fetch(url);
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to fetch jobs");
+        throw new Error("Failed to fetch jobs");
       }
+      return response.json();
+    },
+  });
 
-      const data = await response.json();
-      setJobs(data.jobs || []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [session?.user?.id, filters?.search, filters?.location, filters?.type, filters?.experience, filters?.salary, filters?.remote, filters?.skills, filters?.sortBy]);
+  return query;
+}
 
-  const bookmarkJob = async (jobId: string) => {
-    if (!session?.user?.id) {
-      throw new Error("User not authenticated");
-    }
-
-    try {
-      const response = await fetch(`/api/jobs/${jobId}/bookmark`, {
-        method: "POST",
-      });
-
+export function useJob(companyId: string, jobId: string) {
+  return useQuery({
+    queryKey: ["job", companyId, jobId],
+    queryFn: async (): Promise<JobPosting> => {
+      const response = await fetch(`/api/companies/${companyId}/jobs/${jobId}`);
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to bookmark job");
+        throw new Error("Failed to fetch job");
       }
+      return response.json();
+    },
+    enabled: !!companyId && !!jobId,
+  });
+}
 
-      // Update local state
-      setJobs(prev => prev.map(job => 
-        job.id === jobId ? { ...job, isBookmarked: true } : job
-      ));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to bookmark job");
-      throw err;
-    }
-  };
+export function useCreateJob(companyId: string) {
+  const queryClient = useQueryClient();
 
-  const unbookmarkJob = async (jobId: string) => {
-    if (!session?.user?.id) {
-      throw new Error("User not authenticated");
-    }
-
-    try {
-      const response = await fetch(`/api/jobs/${jobId}/bookmark`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to unbookmark job");
-      }
-
-      // Update local state
-      setJobs(prev => prev.map(job => 
-        job.id === jobId ? { ...job, isBookmarked: false } : job
-      ));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to unbookmark job");
-      throw err;
-    }
-  };
-
-  const applyToJob = async (jobId: string, data: { coverLetter?: string; resumeUrl?: string; additionalDocuments?: string[] }) => {
-    if (!session?.user?.id) {
-      throw new Error("User not authenticated");
-    }
-
-    try {
-      const response = await fetch("/api/applications", {
+  return useMutation({
+    mutationFn: async (data: Partial<JobPosting>): Promise<JobPosting> => {
+      const response = await fetch(`/api/companies/${companyId}/jobs`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          jobId,
-          ...data,
-        }),
+        body: JSON.stringify(data),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to apply to job");
+        const error = await response.json();
+        throw new Error(error.error || "Failed to create job");
       }
 
-      // Update local state
-      setJobs(prev => prev.map(job => 
-        job.id === jobId ? { ...job, isApplied: true } : job
-      ));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to apply to job");
-      throw err;
-    }
-  };
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["company", companyId] });
+    },
+  });
+}
 
-  useEffect(() => {
-    fetchJobs();
-  }, [fetchJobs]);
+export function useUpdateJob(companyId: string, jobId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: Partial<JobPosting>): Promise<JobPosting> => {
+      const response = await fetch(`/api/companies/${companyId}/jobs/${jobId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to update job");
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["job", companyId, jobId] });
+      queryClient.invalidateQueries({ queryKey: ["company", companyId] });
+    },
+  });
+}
+
+export function useDeleteJob(companyId: string, jobId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (): Promise<void> => {
+      const response = await fetch(`/api/companies/${companyId}/jobs/${jobId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to delete job");
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["company", companyId] });
+    },
+  });
+}
+
+export function useJobApplications(filters: ApplicationsFilters = {}) {
+  const query = useQuery({
+    queryKey: ["job-applications", filters],
+    queryFn: async (): Promise<ApplicationsResponse> => {
+      const params = new URLSearchParams();
+      
+      if (filters.page) params.append("page", filters.page.toString());
+      if (filters.limit) params.append("limit", filters.limit.toString());
+      if (filters.status) params.append("status", filters.status);
+      if (filters.sortBy) params.append("sortBy", filters.sortBy);
+      if (filters.sortOrder) params.append("sortOrder", filters.sortOrder);
+
+      const url = filters.companyId && filters.jobId
+        ? `/api/companies/${filters.companyId}/jobs/${filters.jobId}/applications?${params.toString()}`
+        : `/api/applications?${params.toString()}`;
+
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error("Failed to fetch applications");
+      }
+      return response.json();
+    },
+  });
+
+  return query;
+}
+
+export function useJobApplication(companyId: string, jobId: string, applicationId: string) {
+  return useQuery({
+    queryKey: ["job-application", companyId, jobId, applicationId],
+    queryFn: async (): Promise<JobApplication> => {
+      const response = await fetch(`/api/companies/${companyId}/jobs/${jobId}/applications/${applicationId}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch application");
+      }
+      return response.json();
+    },
+    enabled: !!companyId && !!jobId && !!applicationId,
+  });
+}
+
+export function useCreateJobApplication(companyId: string, jobId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: Partial<JobApplication>): Promise<JobApplication> => {
+      const response = await fetch(`/api/companies/${companyId}/jobs/${jobId}/applications`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to create application");
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["job-applications"] });
+      queryClient.invalidateQueries({ queryKey: ["job", companyId, jobId] });
+      queryClient.invalidateQueries({ queryKey: ["company", companyId] });
+    },
+  });
+}
+
+export function useUpdateJobApplication(companyId: string, jobId: string, applicationId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: Partial<JobApplication>): Promise<JobApplication> => {
+      const response = await fetch(`/api/companies/${companyId}/jobs/${jobId}/applications/${applicationId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to update application");
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["job-applications"] });
+      queryClient.invalidateQueries({ queryKey: ["job-application", companyId, jobId, applicationId] });
+      queryClient.invalidateQueries({ queryKey: ["job", companyId, jobId] });
+    },
+  });
+}
+
+export function useDeleteJobApplication(companyId: string, jobId: string, applicationId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (): Promise<void> => {
+      const response = await fetch(`/api/companies/${companyId}/jobs/${jobId}/applications/${applicationId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to delete application");
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["job-applications"] });
+      queryClient.invalidateQueries({ queryKey: ["job", companyId, jobId] });
+      queryClient.invalidateQueries({ queryKey: ["company", companyId] });
+    },
+  });
+}
+
+export function useJobLike(companyId: string, jobId: string) {
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
+    queryKey: ["job-like", companyId, jobId],
+    queryFn: async (): Promise<{ liked: boolean }> => {
+      const response = await fetch(`/api/companies/${companyId}/jobs/${jobId}/like`);
+      if (!response.ok) {
+        throw new Error("Failed to check job like");
+      }
+      return response.json();
+    },
+    enabled: !!companyId && !!jobId,
+  });
+
+  const mutation = useMutation({
+    mutationFn: async (): Promise<{ liked: boolean }> => {
+      const response = await fetch(`/api/companies/${companyId}/jobs/${jobId}/like`, {
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to toggle job like");
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["job-like", companyId, jobId] });
+      queryClient.invalidateQueries({ queryKey: ["job", companyId, jobId] });
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
+    },
+  });
 
   return {
-    jobs,
-    isLoading,
-    error,
-    refetch: fetchJobs,
-    bookmarkJob,
-    unbookmarkJob,
-    applyToJob,
+    ...query,
+    toggleLike: mutation.mutate,
+    isToggling: mutation.isPending,
   };
+}
+
+export function useJobShare(companyId: string, jobId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (): Promise<void> => {
+      const response = await fetch(`/api/companies/${companyId}/jobs/${jobId}/share`, {
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to share job");
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["job", companyId, jobId] });
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
+    },
+  });
 }

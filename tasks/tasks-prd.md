@@ -114,7 +114,7 @@
 
 - [ ] 6.0 Company & Institution Management
   - [x] 6.1 Build company profile management interface
-  - [ ] 6.2 Create company job posting and management system
+  - [x] 6.2 Create company job posting and management system
   - [ ] 6.3 Implement candidate search and filtering tools
   - [ ] 6.4 Add company analytics and hiring metrics
   - [ ] 6.5 Create institution student management dashboard
