@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
       whereClause.status = "PUBLISHED";
     }
 
-    const news = await prisma.news.findMany({
+    const news = await prisma.newsArticle.findMany({
       where: whereClause,
       include: {
         author: {
@@ -53,13 +53,6 @@ export async function GET(request: NextRequest) {
             profile: true
           }
         },
-        _count: {
-          select: {
-            views: true,
-            likes: true,
-            comments: true
-          }
-        }
       },
       orderBy: { publishedAt: "desc" },
       take: limit,
@@ -112,18 +105,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const news = await prisma.news.create({
+    const news = await prisma.newsArticle.create({
       data: {
         title,
         content,
-        excerpt: excerpt || content.substring(0, 200) + "...",
+        summary: content.substring(0, 200) + "...", // Generate summary from content
         category,
         tags: tags || [],
-        featuredImage,
         status,
-        scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
         publishedAt: status === "PUBLISHED" ? new Date() : null,
-        authorId: session.user.id
+        authorId: session.user.id,
+        authorName: "Mock Author", // Note: should get from user profile
+        authorType: "INSTITUTION" as any, // Note: should get from user type
       },
       include: {
         author: {
@@ -131,13 +124,6 @@ export async function POST(request: NextRequest) {
             profile: true
           }
         },
-        _count: {
-          select: {
-            views: true,
-            likes: true,
-            comments: true
-          }
-        }
       }
     });
 

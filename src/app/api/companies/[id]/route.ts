@@ -18,7 +18,7 @@ const updateCompanySchema = z.object({
   phone: z.string().optional(),
   email: z.string().email().optional().or(z.literal("")),
   foundedYear: z.number().int().min(1800).max(new Date().getFullYear()).optional(),
-  socialMedia: z.record(z.string()).optional(),
+  socialMedia: z.record(z.string(), z.string()).optional(),
   benefits: z.array(z.string()).optional(),
   culture: z.string().optional(),
   mission: z.string().optional(),
@@ -45,7 +45,7 @@ export async function GET(
     const company = await prisma.company.findUnique({
       where: { id: companyId },
       include: {
-        owner: {
+        creator: {
           select: {
             id: true,
             email: true,
@@ -58,7 +58,7 @@ export async function GET(
             },
           },
         },
-        jobs: {
+        jobOffers: {
           where: { isActive: true },
           orderBy: { createdAt: "desc" },
           take: 10,
@@ -100,10 +100,8 @@ export async function GET(
         },
         _count: {
           select: {
-            jobs: true,
-            reviews: true,
-            followersList: true,
-            applications: true,
+            jobOffers: true,
+            employees: true,
           },
         },
       },
@@ -116,11 +114,8 @@ export async function GET(
       );
     }
 
-    // Increment view count
-    await prisma.company.update({
-      where: { id: companyId },
-      data: { views: { increment: 1 } },
-    });
+    // View count functionality not implemented in schema
+    // Would need to add viewsCount field to Company model
 
     return NextResponse.json(company);
   } catch (error) {
@@ -168,7 +163,7 @@ export async function PUT(
       where: { id: companyId },
       data: validatedData,
       include: {
-        owner: {
+        creator: {
           select: {
             id: true,
             email: true,
@@ -183,9 +178,8 @@ export async function PUT(
         },
         _count: {
           select: {
-            jobs: true,
-            reviews: true,
-            followersList: true,
+            jobOffers: true,
+            employees: true,
           },
         },
       },
@@ -195,7 +189,7 @@ export async function PUT(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Validation error", details: error.errors },
+        { error: "Validation error", details: error.issues },
         { status: 400 }
       );
     }

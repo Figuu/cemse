@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -13,14 +13,16 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     const resource = await prisma.resource.findUnique({
       where: { id },
       include: {
-        author: {
-          include: {
-            profile: true
+        createdBy: {
+          select: {
+            // userId: true, // This field doesn't exist on User model
+            firstName: true,
+            lastName: true,
           }
         },
         downloads: {
@@ -66,8 +68,8 @@ export async function GET(
     }
 
     // Check if user can view this resource
-    if (resource.status !== "PUBLISHED" && 
-        resource.authorId !== session.user.id && 
+    if (resource.isPublic !== true &&
+        resource.createdByUserId !== session.user.id &&
         session.user.role !== "SUPERADMIN") {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
@@ -88,7 +90,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -96,20 +98,20 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
 
     // Check if user owns the resource or is admin
     const resource = await prisma.resource.findUnique({
       where: { id },
-      select: { authorId: true }
+      select: { createdByUserId: true }
     });
 
     if (!resource) {
       return NextResponse.json({ error: "Resource not found" }, { status: 404 });
     }
 
-    if (resource.authorId !== session.user.id && session.user.role !== "SUPERADMIN") {
+    if (resource.createdByUserId !== session.user.id && session.user.role !== "SUPERADMIN") {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
@@ -141,7 +143,7 @@ export async function PUT(
       updateData.scheduledAt = new Date(scheduledAt);
     }
 
-    if (status === "PUBLISHED" && !resource.publishedAt) {
+    if (status === "PUBLISHED" && resource.isPublic) {
       updateData.publishedAt = new Date();
     }
 
@@ -149,9 +151,11 @@ export async function PUT(
       where: { id },
       data: updateData,
       include: {
-        author: {
-          include: {
-            profile: true
+        createdBy: {
+          select: {
+            // userId: true, // This field doesn't exist on User model
+            firstName: true,
+            lastName: true,
           }
         },
         _count: {
@@ -180,7 +184,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -188,19 +192,19 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     // Check if user owns the resource or is admin
     const resource = await prisma.resource.findUnique({
       where: { id },
-      select: { authorId: true }
+      select: { createdByUserId: true }
     });
 
     if (!resource) {
       return NextResponse.json({ error: "Resource not found" }, { status: 404 });
     }
 
-    if (resource.authorId !== session.user.id && session.user.role !== "SUPERADMIN") {
+    if (resource.createdByUserId !== session.user.id && session.user.role !== "SUPERADMIN") {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 

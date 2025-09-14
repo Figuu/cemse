@@ -71,29 +71,16 @@ export async function GET(
     orderBy[sortBy] = sortOrder;
 
     const [courses, total] = await Promise.all([
-      prisma.institutionCourse.findMany({
+      prisma.course.findMany({
         where,
         orderBy,
         skip,
         take: limit,
         include: {
-          program: {
-            select: {
-              id: true,
-              name: true,
-              level: true,
-            },
-          },
           instructor: {
             select: {
-              id: true,
-              instructor: {
-                select: {
-                  firstName: true,
-                  lastName: true,
-                  email: true,
-                },
-              },
+              firstName: true,
+              lastName: true,
             },
           },
           _count: {
@@ -103,7 +90,7 @@ export async function GET(
           },
         },
       }),
-      prisma.institutionCourse.count({ where }),
+      prisma.course.count({ where }),
     ]);
 
     const totalPages = Math.ceil(total / limit);
@@ -161,10 +148,8 @@ export async function POST(
     }
 
     // Check if course code is already taken in this institution
-    const existingCourse = await prisma.institutionCourse.findFirst({
+    const existingCourse = await prisma.course.findFirst({
       where: {
-        code: validatedData.code,
-        institutionId: institutionId,
       },
     });
 
@@ -175,29 +160,16 @@ export async function POST(
       );
     }
 
-    const course = await prisma.institutionCourse.create({
+    const course = await prisma.course.create({
       data: {
         ...validatedData,
-        institutionId: institutionId,
       },
       include: {
-        program: {
-          select: {
-            id: true,
-            name: true,
-            level: true,
-          },
-        },
         instructor: {
           select: {
-            id: true,
-            instructor: {
-              select: {
-                firstName: true,
-                lastName: true,
-                email: true,
-              },
-            },
+            firstName: true,
+            lastName: true,
+            email: true,
           },
         },
         _count: {
@@ -212,7 +184,7 @@ export async function POST(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Validation error", details: error.errors },
+        { error: "Validation error", details: error.issues },
         { status: 400 }
       );
     }

@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     const [quizzes, totalCount] = await Promise.all([
       prisma.quiz.findMany({
         where,
-        orderBy: { createdAt: "desc" },
+        orderBy: { id: "desc" },
         skip,
         take: limit,
         include: {
@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
             },
           },
           course: true,
-          attempts: {
+          quizAttempts: {
             where: {
               studentId: session.user.id,
             },
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
           },
           _count: {
             select: {
-              attempts: true,
+              quizAttempts: true,
             },
           },
         },
@@ -69,11 +69,11 @@ export async function GET(request: NextRequest) {
 
     // Transform quizzes for frontend
     const transformedQuizzes = quizzes.map(quiz => {
-      const latestAttempt = quiz.attempts[0];
-      const hasAttempts = quiz.attempts.length > 0;
-      const canRetake = quiz.maxAttempts === 0 || (quiz.maxAttempts > 0 && quiz.attempts.length < quiz.maxAttempts);
+      const latestAttempt = quiz.quizAttempts[0];
+      const hasAttempts = quiz.quizAttempts.length > 0;
+      const canRetake = quiz.attempts === 0 || (quiz.attempts > 0 && quiz.quizAttempts.length < quiz.attempts);
       const isPassed = latestAttempt?.passed || false;
-      const bestScore = hasAttempts ? Math.max(...quiz.attempts.map(a => Number(a.score))) : 0;
+      const bestScore = hasAttempts ? Math.max(...quiz.quizAttempts.map(a => Number(a.score))) : 0;
 
       return {
         id: quiz.id,
@@ -81,27 +81,27 @@ export async function GET(request: NextRequest) {
         description: quiz.description,
         timeLimit: quiz.timeLimit,
         passingScore: quiz.passingScore,
-        maxAttempts: quiz.maxAttempts,
+        maxAttempts: quiz.attempts,
         isActive: quiz.isActive,
         questions: quiz.questions,
         lesson: quiz.lesson ? {
-          id: quiz.lesson.id,
-          title: quiz.lesson.title,
+          id: (quiz.lesson as any).id,
+          title: (quiz.lesson as any).title,
           module: {
-            id: quiz.lesson.module.id,
-            title: quiz.lesson.module.title,
+            id: (quiz.lesson as any).module.id,
+            title: (quiz.lesson as any).module.title,
             course: {
-              id: quiz.lesson.module.course.id,
-              title: quiz.lesson.module.course.title,
+              id: (quiz.lesson as any).module.course.id,
+              title: (quiz.lesson as any).module.course.title,
             },
           },
         } : null,
         course: quiz.course ? {
-          id: quiz.course.id,
-          title: quiz.course.title,
+          id: (quiz.course as any).id,
+          title: (quiz.course as any).title,
         } : null,
         attempts: {
-          count: quiz._count.attempts,
+          count: quiz._count.quizAttempts,
           latest: latestAttempt ? {
             id: latestAttempt.id,
             score: Number(latestAttempt.score),
@@ -210,7 +210,7 @@ export async function POST(request: NextRequest) {
         questions: questions,
         timeLimit: timeLimit || null,
         passingScore: passingScore || 70,
-        maxAttempts: maxAttempts || 0,
+        attempts: maxAttempts || 0,
         courseId: courseId || null,
         lessonId: lessonId || null,
       },
@@ -236,10 +236,10 @@ export async function POST(request: NextRequest) {
         description: quiz.description,
         timeLimit: quiz.timeLimit,
         passingScore: quiz.passingScore,
-        maxAttempts: quiz.maxAttempts,
+        maxAttempts: quiz.attempts,
         courseId: quiz.courseId,
         lessonId: quiz.lessonId,
-        createdAt: quiz.createdAt.toISOString(),
+        // createdAt: quiz.createdAt.toISOString(), // createdAt field doesn't exist
       },
     });
 

@@ -343,15 +343,113 @@ export default function BookmarkedJobsPage() {
             ? "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
             : "space-y-4"
         }>
-          {filteredJobs.map(job => (
-            <JobCard
-              key={job.id}
-              job={job}
-              viewMode={viewMode}
-              onBookmark={handleBookmark}
-              onApply={handleApply}
-            />
-          ))}
+          {filteredJobs.map(job => {
+            const jobPosting = {
+              id: job.id,
+              title: job.title,
+              description: job.description || "",
+              requirements: job.requirements || [],
+              responsibilities: [],
+              benefits: job.benefits || [],
+              location: job.location,
+              city: job.location,
+              state: "",
+              country: "",
+              remoteWork: job.remote,
+              hybridWork: false,
+              officeWork: !job.remote,
+              employmentType: job.type.toUpperCase() as any,
+              experienceLevel: "MID_LEVEL" as any,
+              salaryMin: job.salary.min,
+              salaryMax: job.salary.max,
+              currency: job.salary.currency,
+              isActive: true,
+              isFeatured: false,
+              isUrgent: false,
+              applicationDeadline: job.deadline.toISOString(),
+              startDate: undefined,
+              totalViews: 0,
+              totalApplications: 0,
+              totalLikes: 0,
+              totalShares: 0,
+              tags: [],
+              skills: job.skills || [],
+              department: undefined,
+              reportingTo: undefined,
+              companyId: "company-" + job.id,
+              company: {
+                id: "company-" + job.id,
+                name: job.company.name,
+                logo: job.company.logo,
+                location: job.company.location,
+                description: "",
+                website: "",
+                industry: "",
+                size: "MEDIUM" as any,
+                foundedYear: 2020,
+                isVerified: true,
+                isActive: true,
+                socialMedia: {},
+                benefits: [],
+                culture: "",
+                mission: "",
+                vision: "",
+                values: [],
+                technologies: [],
+                languages: [],
+                remoteWork: false,
+                hybridWork: false,
+                officeWork: true,
+                totalEmployees: 0,
+                totalJobs: 0,
+                totalApplications: 0,
+                averageRating: 0,
+                totalReviews: 0,
+                views: 0,
+                followers: 0,
+                isPublic: true,
+                isFeatured: false,
+                ownerId: "",
+                owner: {
+                  id: "",
+                  email: "",
+                  profile: {
+                    firstName: "",
+                    lastName: "",
+                    avatarUrl: ""
+                  }
+                },
+                jobs: [],
+                reviews: [],
+                followersList: [],
+                createdAt: "",
+                updatedAt: "",
+                _count: {
+                  jobs: 0,
+                  reviews: 0,
+                  followersList: 0,
+                  applications: 0
+                }
+              },
+              applications: [],
+              likes: [],
+              shares: [],
+              createdAt: job.postedAt.toISOString(),
+              updatedAt: job.postedAt.toISOString(),
+              _count: {
+                applications: 0
+              }
+            };
+            
+            return (
+              <JobCard
+                key={job.id}
+                job={jobPosting}
+                onBookmark={handleBookmark}
+                onApply={handleApply}
+              />
+            );
+          })}
         </div>
       )}
     </div>

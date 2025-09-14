@@ -39,8 +39,8 @@ export async function GET(request: NextRequest) {
           author: {
             select: {
               id: true,
-              name: true,
-              email: true,
+              firstName: true,
+              lastName: true,
               image: true,
             },
           },
@@ -57,7 +57,8 @@ export async function GET(request: NextRequest) {
               author: {
                 select: {
                   id: true,
-                  name: true,
+                  firstName: true,
+              lastName: true,
                   image: true,
                 },
               },
@@ -142,7 +143,8 @@ export async function POST(request: NextRequest) {
             author: {
               select: {
                 id: true,
-                name: true,
+                firstName: true,
+              lastName: true,
                 image: true,
               },
             },

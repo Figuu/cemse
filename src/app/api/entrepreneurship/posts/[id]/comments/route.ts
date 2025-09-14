@@ -24,8 +24,8 @@ export async function GET(
           author: {
             select: {
               id: true,
-              name: true,
-              email: true,
+              firstName: true,
+              lastName: true,
               image: true,
             },
           },
@@ -34,8 +34,8 @@ export async function GET(
               author: {
                 select: {
                   id: true,
-                  name: true,
-                  email: true,
+                  firstName: true,
+              lastName: true,
                   image: true,
                 },
               },
@@ -134,8 +134,8 @@ export async function POST(
             author: {
               select: {
                 id: true,
-                name: true,
-                email: true,
+                firstName: true,
+              lastName: true,
                 image: true,
               },
             },

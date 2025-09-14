@@ -43,8 +43,6 @@ export default function CompanyJobsPage() {
     isActive: selectedStatus === "all" ? undefined : selectedStatus === "active",
   });
 
-  const deleteJobMutation = useDeleteJob(companyId, "");
-
   const jobs = jobsData?.jobs || [];
   const pagination = jobsData?.pagination;
 
@@ -68,9 +66,10 @@ export default function CompanyJobsPage() {
     setCurrentPage(1);
   };
 
-  const handleDeleteJob = async () => {
+  const handleDeleteJob = async (jobId: string) => {
     if (confirm("¿Estás seguro de que quieres eliminar este trabajo?")) {
       try {
+        const deleteJobMutation = useDeleteJob(companyId, jobId);
         await deleteJobMutation.mutateAsync();
         // Refresh the jobs list
         window.location.reload();

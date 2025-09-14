@@ -22,11 +22,85 @@ interface AnalyticsDashboardProps {
   className?: string;
 }
 
+interface OverviewData {
+  totalUsers: number;
+  totalCompanies: number;
+  totalJobs: number;
+  totalApplications: number;
+  totalCourses: number;
+  totalEnrollments: number;
+  totalMessages: number;
+  totalBusinessPlans: number;
+}
+
+interface UserEngagementData {
+  dailyActiveUsers: number;
+  weeklyActiveUsers: number;
+  monthlyActiveUsers: number;
+  averageSessionDuration: number;
+  pageViews: number;
+  bounceRate: number;
+}
+
+interface DemographicsData {
+  usersByAge: { ageGroup: string; count: number; }[];
+  usersByLocation: { location: string; count: number; }[];
+  usersByEducation: { education: string; count: number; }[];
+  usersByExperience: { experience: string; count: number; }[];
+}
+
+interface JobPlacementData {
+  totalApplications: number;
+  applicationsByStatus: Record<string, number>;
+  applicationsByMonth: { month: string; count: number; }[];
+  averageTimeToHire: number;
+  placementRate: number;
+  topHiringCompanies: { company: string; count: number; }[];
+  topJobCategories: { category: string; count: number; }[];
+}
+
+interface CourseCompletionData {
+  totalEnrollments: number;
+  completedCourses: number;
+  completionRate: number;
+  averageCompletionTime: number;
+  topCourses: { course: string; enrollments: number; completions: number; }[];
+  certificatesIssued: number;
+  courseRatings: { course: string; rating: number; reviews: number; }[];
+}
+
+interface EntrepreneurshipData {
+  totalBusinessPlans: number;
+  plansByStage: Record<string, number>;
+  totalFundingRaised: number;
+  averageFundingGoal: number;
+  topIndustries: { industry: string; count: number; }[];
+  successStories: number;
+}
+
+interface RevenueData {
+  totalRevenue: number;
+  revenueByMonth: { month: string; amount: number; }[];
+  revenueBySource: Record<string, number>;
+  averageRevenuePerUser: number;
+  churnRate: number;
+}
+
+interface AnalyticsData {
+  overview: OverviewData;
+  userEngagement: UserEngagementData;
+  demographics: DemographicsData;
+  jobPlacement: JobPlacementData;
+  courseCompletion: CourseCompletionData;
+  entrepreneurship: EntrepreneurshipData;
+  revenue: RevenueData;
+}
+
 export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
   const [activeTab, setActiveTab] = useState("overview");
   const [timeRange, setTimeRange] = useState("30d");
   const [isLoading, setIsLoading] = useState(false);
-  const [analyticsData, setAnalyticsData] = useState<Record<string, unknown> | null>(null);
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const fetchAnalytics = async () => {
@@ -65,7 +139,7 @@ export function AnalyticsDashboard({ className }: AnalyticsDashboardProps) {
       }
 
       const data = await response.json();
-      setAnalyticsData(data.data);
+      setAnalyticsData(data.data as AnalyticsData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch analytics");
     } finally {

@@ -18,7 +18,7 @@ const createCompanySchema = z.object({
   phone: z.string().optional(),
   email: z.string().email().optional().or(z.literal("")),
   foundedYear: z.number().int().min(1800).max(new Date().getFullYear()).optional(),
-  socialMedia: z.record(z.string()).optional(),
+  socialMedia: z.record(z.string(), z.string()).optional(),
   benefits: z.array(z.string()).default([]),
   culture: z.string().optional(),
   mission: z.string().optional(),
@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
         skip,
         take: limit,
         include: {
-          owner: {
+          creator: {
             select: {
               id: true,
               email: true,
@@ -113,9 +113,8 @@ export async function GET(request: NextRequest) {
           },
           _count: {
             select: {
-              jobs: true,
-              reviews: true,
-              followersList: true,
+              jobOffers: true,
+              employees: true,
             },
           },
         },
@@ -156,10 +155,11 @@ export async function POST(request: NextRequest) {
     const company = await prisma.company.create({
       data: {
         ...validatedData,
-        ownerId: userId,
+        createdBy: userId,
+        password: "default-password", // This should be properly handled in production
       },
       include: {
-        owner: {
+        creator: {
           select: {
             id: true,
             email: true,
@@ -174,9 +174,8 @@ export async function POST(request: NextRequest) {
         },
         _count: {
           select: {
-            jobs: true,
-            reviews: true,
-            followersList: true,
+            jobOffers: true,
+            employees: true,
           },
         },
       },
@@ -186,7 +185,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Validation error", details: error.errors },
+        { error: "Validation error", details: error.issues },
         { status: 400 }
       );
     }

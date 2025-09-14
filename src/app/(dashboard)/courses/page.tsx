@@ -16,7 +16,8 @@ import { RoleGuard } from "@/components/auth/RoleGuard";
 import { useCourses } from "@/hooks/useCourses";
 import { CourseCard } from "@/components/courses/CourseCard";
 import { CourseFilters } from "@/components/courses/CourseFilters";
-import { RecommendationSection } from "@/components/courses/RecommendationSection";
+import { CourseCreationModal } from "@/components/courses/CourseCreationModal";
+import { cn } from "@/lib/utils";
 
 export default function CoursesPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -27,6 +28,7 @@ export default function CoursesPage() {
   const [isEnrolled, setIsEnrolled] = useState<boolean | undefined>(undefined);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [activeTab, setActiveTab] = useState("all");
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const {
     courses,
@@ -72,6 +74,14 @@ export default function CoursesPage() {
   };
 
   const handleApplyFilters = () => {
+    refetch();
+  };
+
+  const handleCreateCourse = () => {
+    setIsCreateModalOpen(true);
+  };
+
+  const handleCreateSuccess = () => {
     refetch();
   };
 
@@ -143,7 +153,7 @@ export default function CoursesPage() {
               <RefreshCw className="h-4 w-4 mr-2" />
               Actualizar
             </Button>
-            <Button>
+            <Button onClick={handleCreateCourse}>
               <Plus className="h-4 w-4 mr-2" />
           Crear Curso
         </Button>
@@ -195,11 +205,10 @@ export default function CoursesPage() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="all">Todos ({courses.length})</TabsTrigger>
             <TabsTrigger value="enrolled">Mis Cursos ({enrolledCourses.length})</TabsTrigger>
             <TabsTrigger value="available">Disponibles ({availableCourses.length})</TabsTrigger>
-            <TabsTrigger value="recommendations">Recomendaciones</TabsTrigger>
           </TabsList>
 
           <TabsContent value="all" className="space-y-4">
@@ -298,22 +307,15 @@ export default function CoursesPage() {
             )}
           </TabsContent>
 
-          <TabsContent value="recommendations" className="space-y-4">
-            <RecommendationSection
-              title="Recomendaciones para ti"
-              description="Cursos seleccionados especialmente para ti basados en tus intereses y progreso"
-              showTabs={true}
-              limit={12}
-              onEnroll={handleEnroll}
-              onView={handleViewCourse}
-              onBookmark={(courseId) => {
-                // TODO: Implement bookmark functionality
-                console.log("Bookmarking course:", courseId);
-              }}
-            />
-          </TabsContent>
         </Tabs>
     </div>
+    
+    {/* Course Creation Modal */}
+    <CourseCreationModal
+      isOpen={isCreateModalOpen}
+      onClose={() => setIsCreateModalOpen(false)}
+      onSuccess={handleCreateSuccess}
+    />
     </RoleGuard>
   );
 }

@@ -20,7 +20,7 @@ import {
   Briefcase
 } from "lucide-react";
 import { 
-  CandidateSearchFilters, 
+  CandidateSearchFilters as CandidateSearchFiltersType,
   COMMON_SKILLS, 
   COMMON_LANGUAGES, 
   EXPERIENCE_LEVELS, 
@@ -30,8 +30,8 @@ import {
 } from "@/hooks/useCandidates";
 
 interface CandidateSearchFiltersProps {
-  filters: CandidateSearchFilters;
-  onFiltersChange: (filters: CandidateSearchFilters) => void;
+  filters: CandidateSearchFiltersType;
+  onFiltersChange: (filters: CandidateSearchFiltersType) => void;
   onSearch: (search: string) => void;
   onClearFilters: () => void;
 }
@@ -46,7 +46,7 @@ export function CandidateSearchFilters({
   const [newSkill, setNewSkill] = useState("");
   const [newLanguage, setNewLanguage] = useState("");
 
-  const handleFilterChange = (key: keyof CandidateSearchFilters, value: any) => {
+  const handleFilterChange = (key: keyof CandidateSearchFiltersType, value: any) => {
     onFiltersChange({
       ...filters,
       [key]: value,

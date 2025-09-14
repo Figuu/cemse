@@ -126,9 +126,9 @@ async function getCourseMetrics(where: Record<string, unknown>, _startDate: Date
     averageRating
   ] = await Promise.all([
     prisma.course.count({ where }),
-    prisma.course.count({ where: { ...where, status: "ACTIVE" } }),
-    prisma.course.count({ where: { ...where, status: "COMPLETED" } }),
-    prisma.course.count({ where: { ...where, status: "DRAFT" } }),
+    prisma.course.count({ where: { ...where, isActive: true } }),
+    prisma.course.count({ where: { ...where, isActive: false } }),
+    prisma.course.count({ where: { ...where, publishedAt: null } }),
     prisma.courseEnrollment.count({
       where: {
         course: where,
@@ -137,7 +137,7 @@ async function getCourseMetrics(where: Record<string, unknown>, _startDate: Date
     prisma.courseEnrollment.count({
       where: {
         course: where,
-        isCompleted: true,
+        completedAt: { not: null },
       },
     }),
     prisma.courseEnrollment.aggregate({
@@ -171,12 +171,12 @@ async function getCourseMetrics(where: Record<string, unknown>, _startDate: Date
     totalEnrollments,
     totalCompletions,
     completionRate,
-    averageProgress: Math.round(averageCompletionRate._avg.progress || 0),
-    averageRating: Math.round((averageRating._avg.rating || 0) * 10) / 10,
+    averageProgress: Math.round(Number(averageCompletionRate._avg.progress) || 0),
+    averageRating: Math.round((Number(averageRating._avg.rating) || 0) * 10) / 10,
   };
 }
 
-async function getEnrollmentTrends(where: Record<string, unknown>, _startDate: Date) {
+async function getEnrollmentTrends(where: Record<string, unknown>, startDate: Date) {
   const enrollments = await prisma.courseEnrollment.findMany({
     where: {
       course: where,
@@ -187,7 +187,7 @@ async function getEnrollmentTrends(where: Record<string, unknown>, _startDate: D
       course: {
         select: {
           level: true,
-          status: true,
+          isActive: true,
         },
       },
     },
@@ -222,7 +222,7 @@ async function getCompletionRates(where: Record<string, unknown>, _startDate: Da
     include: {
       enrollments: {
         select: {
-          isCompleted: true,
+          completedAt: true,
           progress: true,
           enrolledAt: true,
         },
@@ -232,16 +232,16 @@ async function getCompletionRates(where: Record<string, unknown>, _startDate: Da
 
   return courses.map(course => {
     const totalEnrollments = course.enrollments.length;
-    const completedEnrollments = course.enrollments.filter(e => e.isCompleted).length;
+    const completedEnrollments = course.enrollments.filter(e => e.completedAt !== null).length;
     const averageProgress = totalEnrollments > 0 
-      ? Math.round(course.enrollments.reduce((sum, e) => sum + (e.progress || 0), 0) / totalEnrollments)
+      ? Math.round(course.enrollments.reduce((sum, e) => sum + Number(e.progress || 0), 0) / totalEnrollments)
       : 0;
 
     return {
       courseId: course.id,
       courseTitle: course.title,
       level: course.level,
-      status: course.status,
+      isActive: course.isActive,
       totalEnrollments,
       completedEnrollments,
       completionRate: totalEnrollments > 0 ? Math.round((completedEnrollments / totalEnrollments) * 100) : 0,
@@ -250,58 +250,42 @@ async function getCompletionRates(where: Record<string, unknown>, _startDate: Da
   });
 }
 
-async function getStudentEngagement(where: Record<string, unknown>, _startDate: Date) {
+async function getStudentEngagement(where: Record<string, unknown>, startDate: Date) {
   const [
-    discussionCount,
-    questionCount,
     quizAttempts,
     averageSessionTime,
     activeStudents
   ] = await Promise.all([
-    prisma.discussion.count({
-      where: {
-        course: where,
-        createdAt: { gte: startDate },
-      },
-    }),
-    prisma.question.count({
-      where: {
-        course: where,
-        createdAt: { gte: startDate },
-      },
-    }),
     prisma.quizAttempt.count({
       where: {
         quiz: {
           course: where,
         },
-        createdAt: { gte: startDate },
+        completedAt: { gte: startDate },
       },
     }),
     prisma.courseEnrollment.aggregate({
       where: {
         course: where,
-        lastAccessedAt: { gte: startDate },
+        enrolledAt: { gte: startDate },
       },
       _avg: {
-        timeSpent: true,
+        progress: true,
       },
     }),
     prisma.courseEnrollment.count({
       where: {
         course: where,
-        lastAccessedAt: { gte: startDate },
+        enrolledAt: { gte: startDate },
       },
     }),
   ]);
 
   return {
-    discussionCount,
-    questionCount,
     quizAttempts,
-    averageSessionTime: Math.round(averageSessionTime._avg.timeSpent || 0),
+    averageProgress: Math.round(Number(averageSessionTime._avg.progress) || 0),
     activeStudents,
-    engagementScore: calculateEngagementScore(discussionCount, questionCount, quizAttempts, activeStudents),
+    engagementScore: calculateEngagementScore(0, 0, quizAttempts, activeStudents),
   };
 }
 
@@ -311,7 +295,7 @@ async function getCoursePerformance(where: Record<string, unknown>, _startDate: 
     include: {
       enrollments: {
         select: {
-          isCompleted: true,
+          completedAt: true,
           progress: true,
           enrolledAt: true,
         },
@@ -320,8 +304,6 @@ async function getCoursePerformance(where: Record<string, unknown>, _startDate: 
         select: {
           enrollments: true,
           modules: true,
-          discussions: true,
-          questions: true,
         },
       },
     },
@@ -331,26 +313,24 @@ async function getCoursePerformance(where: Record<string, unknown>, _startDate: 
 
   return courses.map(course => {
     const totalEnrollments = course._count.enrollments;
-    const completedEnrollments = course.enrollments.filter(e => e.isCompleted).length;
+    const completedEnrollments = course.enrollments.filter(e => e.completedAt !== null).length;
     const averageProgress = totalEnrollments > 0 
-      ? Math.round(course.enrollments.reduce((sum, e) => sum + (e.progress || 0), 0) / totalEnrollments)
+      ? Math.round(course.enrollments.reduce((sum, e) => sum + Number(e.progress || 0), 0) / totalEnrollments)
       : 0;
 
     return {
       id: course.id,
       title: course.title,
       level: course.level,
-      status: course.status,
+      isActive: course.isActive,
       totalEnrollments,
       completedEnrollments,
       completionRate: totalEnrollments > 0 ? Math.round((completedEnrollments / totalEnrollments) * 100) : 0,
       averageProgress,
       totalModules: course._count.modules,
-      totalDiscussions: course._count.discussions,
-      totalQuestions: course._count.questions,
       engagementScore: calculateEngagementScore(
-        course._count.discussions,
-        course._count.questions,
+        0,
+        0,
         0, // quiz attempts not included in this query
         totalEnrollments
       ),
@@ -359,67 +339,52 @@ async function getCoursePerformance(where: Record<string, unknown>, _startDate: 
 }
 
 async function getInstructorPerformance(where: Record<string, unknown>, _startDate: Date) {
-  const instructors = await prisma.user.findMany({
+  const instructors = await prisma.profile.findMany({
     where: {
-      role: "INSTRUCTOR",
-      courses: {
+      instructedCourses: {
         some: where,
       },
     },
     include: {
-      courses: {
+      instructedCourses: {
         where,
         include: {
           enrollments: {
             select: {
-              isCompleted: true,
+              completedAt: true,
               progress: true,
             },
           },
           _count: {
             select: {
               enrollments: true,
-              discussions: true,
-              questions: true,
             },
           },
-        },
-      },
-      profile: {
-        select: {
-          firstName: true,
-          lastName: true,
-          email: true,
         },
       },
     },
   });
 
   return instructors.map(instructor => {
-    const totalCourses = instructor.courses.length;
-    const totalEnrollments = instructor.courses.reduce((sum, course) => sum + course._count.enrollments, 0);
-    const totalCompletions = instructor.courses.reduce((sum, course) => 
-      sum + course.enrollments.filter(e => e.isCompleted).length, 0
+    const totalCourses = instructor.instructedCourses.length;
+    const totalEnrollments = instructor.instructedCourses.reduce((sum, course) => sum + course._count.enrollments, 0);
+    const totalCompletions = instructor.instructedCourses.reduce((sum, course) => 
+      sum + course.enrollments.filter(e => e.completedAt !== null).length, 0
     );
-    const totalDiscussions = instructor.courses.reduce((sum, course) => sum + course._count.discussions, 0);
-    const totalQuestions = instructor.courses.reduce((sum, course) => sum + course._count.questions, 0);
 
     return {
       id: instructor.id,
-      name: `${instructor.profile?.firstName || ''} ${instructor.profile?.lastName || ''}`.trim(),
-      email: instructor.profile?.email || '',
+      name: `${instructor.firstName || ''} ${instructor.lastName || ''}`.trim(),
       totalCourses,
       totalEnrollments,
       totalCompletions,
       completionRate: totalEnrollments > 0 ? Math.round((totalCompletions / totalEnrollments) * 100) : 0,
-      totalDiscussions,
-      totalQuestions,
-      engagementScore: calculateEngagementScore(totalDiscussions, totalQuestions, 0, totalEnrollments),
+      engagementScore: calculateEngagementScore(0, 0, 0, totalEnrollments),
     };
   });
 }
 
-async function getContentAnalytics(where: Record<string, unknown>, _startDate: Date) {
+async function getContentAnalytics(where: Record<string, unknown>, startDate: Date) {
   const [
     totalModules,
     totalLessons,
@@ -431,7 +396,6 @@ async function getContentAnalytics(where: Record<string, unknown>, _startDate: D
     prisma.courseModule.count({
       where: {
         course: where,
-        createdAt: { gte: startDate },
       },
     }),
     prisma.lesson.count({
@@ -439,22 +403,19 @@ async function getContentAnalytics(where: Record<string, unknown>, _startDate: D
         module: {
           course: where,
         },
-        createdAt: { gte: startDate },
       },
     }),
     prisma.quiz.count({
       where: {
         course: where,
-        createdAt: { gte: startDate },
       },
     }),
     prisma.courseModule.aggregate({
       where: {
         course: where,
-        createdAt: { gte: startDate },
       },
       _avg: {
-        duration: true,
+        estimatedDuration: true,
       },
     }),
     prisma.lesson.aggregate({
@@ -462,7 +423,6 @@ async function getContentAnalytics(where: Record<string, unknown>, _startDate: D
         module: {
           course: where,
         },
-        createdAt: { gte: startDate },
       },
       _avg: {
         duration: true,
@@ -494,8 +454,8 @@ async function getContentAnalytics(where: Record<string, unknown>, _startDate: D
     totalModules,
     totalLessons,
     totalQuizzes,
-    averageModuleLength: Math.round(averageModuleLength._avg.duration || 0),
-    averageLessonLength: Math.round(averageLessonLength._avg.duration || 0),
+    averageModuleLength: Math.round(averageModuleLength._avg?.estimatedDuration || 0),
+    averageLessonLength: Math.round(averageLessonLength._avg?.duration || 0),
     mostAccessedContent: mostAccessedContent.map(lesson => ({
       id: lesson.id,
       title: lesson.title,
@@ -505,7 +465,7 @@ async function getContentAnalytics(where: Record<string, unknown>, _startDate: D
   };
 }
 
-async function getTimeSeriesData(where: Record<string, unknown>, _startDate: Date) {
+async function getTimeSeriesData(where: Record<string, unknown>, startDate: Date) {
   const enrollments = await prisma.courseEnrollment.findMany({
     where: {
       course: where,
@@ -513,7 +473,6 @@ async function getTimeSeriesData(where: Record<string, unknown>, _startDate: Dat
     },
     select: {
       enrolledAt: true,
-      isCompleted: true,
       completedAt: true,
     },
     orderBy: { enrolledAt: "asc" },
@@ -526,7 +485,7 @@ async function getTimeSeriesData(where: Record<string, unknown>, _startDate: Dat
       acc[date] = { enrollments: 0, completions: 0 };
     }
     acc[date].enrollments++;
-    if (enrollment.isCompleted && enrollment.completedAt) {
+    if (enrollment.completedAt) {
       const completionDate = enrollment.completedAt.toISOString().split("T")[0];
       if (completionDate >= date) {
         acc[date].completions++;
@@ -548,15 +507,13 @@ async function getTopPerformingCourses(where: Record<string, unknown>, _startDat
     include: {
       enrollments: {
         select: {
-          isCompleted: true,
+          completedAt: true,
           progress: true,
         },
       },
       _count: {
         select: {
           enrollments: true,
-          discussions: true,
-          questions: true,
         },
       },
     },
@@ -566,25 +523,25 @@ async function getTopPerformingCourses(where: Record<string, unknown>, _startDat
 
   return courses.map(course => {
     const totalEnrollments = course._count.enrollments;
-    const completedEnrollments = course.enrollments.filter(e => e.isCompleted).length;
+    const completedEnrollments = course.enrollments.filter(e => e.completedAt !== null).length;
     const averageProgress = totalEnrollments > 0 
-      ? Math.round(course.enrollments.reduce((sum, e) => sum + (e.progress || 0), 0) / totalEnrollments)
+      ? Math.round(course.enrollments.reduce((sum, e) => sum + Number(e.progress || 0), 0) / totalEnrollments)
       : 0;
 
     return {
       id: course.id,
       title: course.title,
       level: course.level,
-      status: course.status,
+      isActive: course.isActive,
       totalEnrollments,
       completedEnrollments,
       completionRate: totalEnrollments > 0 ? Math.round((completedEnrollments / totalEnrollments) * 100) : 0,
       averageProgress,
-      totalDiscussions: course._count.discussions,
-      totalQuestions: course._count.questions,
+      totalDiscussions: 0,
+      totalQuestions: 0,
       engagementScore: calculateEngagementScore(
-        course._count.discussions,
-        course._count.questions,
+        0,
+        0,
         0,
         totalEnrollments
       ),
@@ -592,7 +549,7 @@ async function getTopPerformingCourses(where: Record<string, unknown>, _startDat
   });
 }
 
-async function getStudentDemographics(where: Record<string, unknown>, _startDate: Date) {
+async function getStudentDemographics(where: Record<string, unknown>, startDate: Date) {
   const enrollments = await prisma.courseEnrollment.findMany({
     where: {
       course: where,
@@ -600,35 +557,24 @@ async function getStudentDemographics(where: Record<string, unknown>, _startDate
     },
     include: {
       student: {
-        include: {
-          profile: {
-            select: {
-              experienceLevel: true,
-              educationLevel: true,
-              skills: true,
-              address: true,
-            },
-          },
+        select: {
+          educationLevel: true,
+          skills: true,
+          address: true,
         },
       },
     },
   });
 
   // Analyze demographics
-  const experienceLevels = enrollments.reduce((acc, enrollment) => {
-    const level = enrollment.student.profile?.experienceLevel || "NO_EXPERIENCE";
-    acc[level] = (acc[level] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-
   const educationLevels = enrollments.reduce((acc, enrollment) => {
-    const level = enrollment.student.profile?.educationLevel || "HIGH_SCHOOL";
+    const level = enrollment.student?.educationLevel || "PRIMARY";
     acc[level] = (acc[level] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
   const allSkills = enrollments.flatMap(enrollment => 
-    enrollment.student.profile?.skills as string[] || []
+    enrollment.student?.skills as string[] || []
   );
   const skillFrequency = allSkills.reduce((acc, skill) => {
     acc[skill] = (acc[skill] || 0) + 1;
@@ -642,7 +588,6 @@ async function getStudentDemographics(where: Record<string, unknown>, _startDate
 
   return {
     totalStudents: enrollments.length,
-    experienceLevels,
     educationLevels,
     topSkills,
     averageSkillsPerStudent: allSkills.length / enrollments.length || 0,

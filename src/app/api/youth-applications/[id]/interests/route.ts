@@ -15,7 +15,7 @@ const updateInterestSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -24,9 +24,11 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await params;
+
     // Check if application exists
     const application = await prisma.youthApplication.findUnique({
-      where: { id: params.id },
+      where: { id },
       select: { youthProfileId: true, isPublic: true },
     });
 
@@ -41,22 +43,22 @@ export async function GET(
     const canView = 
       application.youthProfileId === session.user.id ||
       application.isPublic ||
-      session.user.role === "ADMIN";
+      session.user.role === "SUPERADMIN";
 
     if (!canView) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const interests = await prisma.youthApplicationCompanyInterest.findMany({
-      where: { applicationId: params.id },
+      where: { applicationId: id },
       include: {
         company: {
           select: {
             id: true,
             name: true,
             logoUrl: true,
-            industry: true,
-            location: true,
+            // industry: true, // This field doesn't exist
+            // location: true, // This field doesn't exist in Company model
             website: true,
             description: true,
           },
@@ -81,7 +83,7 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -91,16 +93,17 @@ export async function POST(
     }
 
     // Only COMPANY role can express interest
-    if (session.user.role !== "COMPANY") {
+    if (session.user.role !== "COMPANIES") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    const { id } = await params;
     const body = await request.json();
     const validatedData = expressInterestSchema.parse(body);
 
     // Check if application exists and is public and active
     const application = await prisma.youthApplication.findUnique({
-      where: { id: params.id },
+      where: { id },
       select: { id: true, isPublic: true, status: true },
     });
 
@@ -135,7 +138,7 @@ export async function POST(
     const existingInterest = await prisma.youthApplicationCompanyInterest.findUnique({
       where: {
         applicationId_companyId: {
-          applicationId: params.id,
+          applicationId: id,
           companyId: company.id,
         },
       },
@@ -151,7 +154,7 @@ export async function POST(
     // Create interest record
     const interest = await prisma.youthApplicationCompanyInterest.create({
       data: {
-        applicationId: params.id,
+        applicationId: id,
         companyId: company.id,
         notes: validatedData.notes,
         status: "INTERESTED",
@@ -162,8 +165,8 @@ export async function POST(
             id: true,
             name: true,
             logoUrl: true,
-            industry: true,
-            location: true,
+            // industry: true, // This field doesn't exist
+            // location: true, // This field doesn't exist in Company model
           },
         },
       },
@@ -171,7 +174,7 @@ export async function POST(
 
     // Update application applications count
     await prisma.youthApplication.update({
-      where: { id: params.id },
+      where: { id },
       data: { applicationsCount: { increment: 1 } },
     });
 
@@ -183,7 +186,7 @@ export async function POST(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Validation error", details: error.errors },
+        { error: "Validation error", details: error.issues },
         { status: 400 }
       );
     }
@@ -199,7 +202,7 @@ export async function POST(
 // Update interest status (for companies to update their interest status)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -209,10 +212,11 @@ export async function PUT(
     }
 
     // Only COMPANY role can update interest
-    if (session.user.role !== "COMPANY") {
+    if (session.user.role !== "COMPANIES") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    const { id } = await params;
     const body = await request.json();
     const validatedData = updateInterestSchema.parse(body);
 
@@ -233,7 +237,7 @@ export async function PUT(
     const existingInterest = await prisma.youthApplicationCompanyInterest.findUnique({
       where: {
         applicationId_companyId: {
-          applicationId: params.id,
+          applicationId: id,
           companyId: company.id,
         },
       },
@@ -257,7 +261,7 @@ export async function PUT(
     const updatedInterest = await prisma.youthApplicationCompanyInterest.update({
       where: {
         applicationId_companyId: {
-          applicationId: params.id,
+          applicationId: id,
           companyId: company.id,
         },
       },
@@ -276,13 +280,13 @@ export async function PUT(
     // If hired, update the youth application status and create employee record
     if (validatedData.status === "HIRED") {
       await prisma.youthApplication.update({
-        where: { id: params.id },
+        where: { id },
         data: { status: "HIRED" },
       });
 
       // Get the youth profile ID
       const application = await prisma.youthApplication.findUnique({
-        where: { id: params.id },
+        where: { id },
         select: { youthProfileId: true, title: true },
       });
 
@@ -294,7 +298,7 @@ export async function PUT(
             employeeId: application.youthProfileId,
             position: application.title || "New Position",
             status: "ACTIVE",
-            notes: `Hired through youth application: ${params.id}`,
+            notes: `Hired through youth application: ${id}`,
           },
         });
       }
@@ -308,7 +312,7 @@ export async function PUT(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Validation error", details: error.errors },
+        { error: "Validation error", details: error.issues },
         { status: 400 }
       );
     }

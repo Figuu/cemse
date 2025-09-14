@@ -16,9 +16,11 @@ import {
   MoreHorizontal,
   Bookmark,
   Flag,
-  Eye
+  Eye,
+  Calendar
 } from "lucide-react";
-import { EntrepreneurshipPost, PostType } from "@/hooks/useEntrepreneurshipPosts";
+import { PostType } from "@prisma/client";
+import { EntrepreneurshipPost } from "@/hooks/useEntrepreneurshipPosts";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { PostInteractions } from "./PostInteractions";
@@ -44,7 +46,8 @@ const postTypeIcons: Record<PostType, any> = {
   VIDEO: Video,
   LINK: LinkIcon,
   POLL: HelpCircle,
-  ANNOUNCEMENT: Megaphone,
+  EVENT: Calendar,
+  [PostType.ANNOUNCEMENT]: Megaphone,
   ACHIEVEMENT: Award,
   QUESTION: HelpCircle,
 };
@@ -55,7 +58,8 @@ const postTypeLabels: Record<PostType, string> = {
   VIDEO: "Video",
   LINK: "Enlace",
   POLL: "Encuesta",
-  ANNOUNCEMENT: "Anuncio",
+  EVENT: "Evento",
+  [PostType.ANNOUNCEMENT]: "Anuncio",
   ACHIEVEMENT: "Logro",
   QUESTION: "Pregunta",
 };

@@ -73,7 +73,7 @@ export async function GET(
     lessonProgress.forEach(progress => {
       progressMap.set(progress.lessonId, {
         id: progress.id,
-        isCompleted: progress.isCompleted,
+        isCompleted: progress.completed,
         completedAt: progress.completedAt?.toISOString(),
         timeSpent: progress.timeSpent,
       });
@@ -136,9 +136,7 @@ export async function GET(
         enrollment: {
           id: enrollment.id,
           enrolledAt: enrollment.enrolledAt.toISOString(),
-          lastAccessedAt: enrollment.lastAccessedAt?.toISOString(),
           progress: Number(enrollment.progress),
-          isCompleted: enrollment.isCompleted,
           completedAt: enrollment.completedAt?.toISOString(),
         },
         overall: {
@@ -217,14 +215,14 @@ export async function PATCH(
         },
       },
       update: {
-        isCompleted: isCompleted !== undefined ? isCompleted : undefined,
+        completed: isCompleted !== undefined ? isCompleted : undefined,
         completedAt: isCompleted ? new Date() : undefined,
         timeSpent: timeSpent !== undefined ? timeSpent : undefined,
       },
       create: {
         studentId: session.user.id,
         lessonId: lessonId,
-        isCompleted: isCompleted || false,
+        completed: isCompleted || false,
         completedAt: isCompleted ? new Date() : null,
         timeSpent: timeSpent || 0,
       },
@@ -247,7 +245,7 @@ export async function PATCH(
       const completedLessons = await prisma.lessonProgress.count({
         where: {
           studentId: session.user.id,
-          isCompleted: true,
+          completed: true,
           lesson: {
             module: {
               courseId: courseId,
@@ -264,32 +262,13 @@ export async function PATCH(
         where: { id: enrollment.id },
         data: {
           progress: courseProgressPercent,
-          isCompleted: isCourseCompleted,
           completedAt: isCourseCompleted ? new Date() : null,
-          lastAccessedAt: new Date(),
         },
       });
 
-      // Send completion notification if course is completed
-      if (isCourseCompleted && !enrollment.isCompleted) {
-        try {
-          await prisma.notification.create({
-            data: {
-              userId: session.user.id,
-              type: "COURSE_COMPLETION",
-              title: "¡Curso Completado!",
-              message: `¡Felicidades! Has completado el curso "${course.title}"`,
-              data: {
-                courseId: courseId,
-                courseTitle: course.title,
-                completionDate: new Date().toISOString(),
-              },
-            },
-          });
-        } catch (notificationError) {
-          console.error("Error creating completion notification:", notificationError);
-          // Don't fail the progress update if notification fails
-        }
+      // Course completion logic (notification system not implemented yet)
+      if (isCourseCompleted && !enrollment.completedAt) {
+        console.log(`Course completed: ${course.title} by user ${session.user.id}`);
       }
     }
 
@@ -298,7 +277,7 @@ export async function PATCH(
       lessonProgress: {
         id: lessonProgress.id,
         lessonId: lessonProgress.lessonId,
-        isCompleted: lessonProgress.isCompleted,
+        isCompleted: lessonProgress.completed,
         completedAt: lessonProgress.completedAt?.toISOString(),
         timeSpent: lessonProgress.timeSpent,
       },

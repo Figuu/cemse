@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -14,7 +14,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const messageId = params.id;
+    const { id: messageId } = await params;
 
     // Get message with access verification
     const message = await prisma.message.findFirst({
@@ -27,13 +27,33 @@ export async function GET(
       },
       include: {
         sender: {
-          include: {
-            profile: true,
+          select: {
+            userId: true,
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
+            user: {
+              select: {
+                id: true,
+                email: true,
+                role: true,
+              },
+            },
           },
         },
         recipient: {
-          include: {
-            profile: true,
+          select: {
+            userId: true,
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
+            user: {
+              select: {
+                id: true,
+                email: true,
+                role: true,
+              },
+            },
           },
         },
       },
@@ -51,22 +71,22 @@ export async function GET(
         recipientId: message.recipientId,
         content: message.content,
         messageType: message.messageType,
-        isRead: message.isRead,
+        isRead: !!message.readAt,
         contextType: message.contextType,
         contextId: message.contextId,
         createdAt: message.createdAt.toISOString(),
-        updatedAt: message.updatedAt.toISOString(),
+        updatedAt: message.createdAt.toISOString(), // Use createdAt since updatedAt doesn't exist
         sender: {
-          id: message.sender.id,
-          name: `${message.sender.profile?.firstName || ''} ${message.sender.profile?.lastName || ''}`.trim(),
-          role: message.sender.role,
-          avatar: message.sender.profile?.avatarUrl,
+          id: message.sender.user.id,
+          name: `${message.sender.firstName || ''} ${message.sender.lastName || ''}`.trim(),
+          role: message.sender.user.role,
+          avatar: message.sender.avatarUrl,
         },
         recipient: {
-          id: message.recipient.id,
-          name: `${message.recipient.profile?.firstName || ''} ${message.recipient.profile?.lastName || ''}`.trim(),
-          role: message.recipient.role,
-          avatar: message.recipient.profile?.avatarUrl,
+          id: message.recipient.user.id,
+          name: `${message.recipient.firstName || ''} ${message.recipient.lastName || ''}`.trim(),
+          role: message.recipient.user.role,
+          avatar: message.recipient.avatarUrl,
         },
       },
     });
@@ -82,7 +102,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -91,7 +111,7 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const messageId = params.id;
+    const { id: messageId } = await params;
     const body = await request.json();
     const { content, isRead } = body;
 
@@ -131,13 +151,33 @@ export async function PUT(
       data: updateData,
       include: {
         sender: {
-          include: {
-            profile: true,
+          select: {
+            userId: true,
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
+            user: {
+              select: {
+                id: true,
+                email: true,
+                role: true,
+              },
+            },
           },
         },
         recipient: {
-          include: {
-            profile: true,
+          select: {
+            userId: true,
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
+            user: {
+              select: {
+                id: true,
+                email: true,
+                role: true,
+              },
+            },
           },
         },
       },
@@ -151,22 +191,22 @@ export async function PUT(
         recipientId: updatedMessage.recipientId,
         content: updatedMessage.content,
         messageType: updatedMessage.messageType,
-        isRead: updatedMessage.isRead,
+        isRead: !!updatedMessage.readAt,
         contextType: updatedMessage.contextType,
         contextId: updatedMessage.contextId,
         createdAt: updatedMessage.createdAt.toISOString(),
-        updatedAt: updatedMessage.updatedAt.toISOString(),
+        updatedAt: updatedMessage.createdAt.toISOString(), // Use createdAt since updatedAt doesn't exist
         sender: {
-          id: updatedMessage.sender.id,
-          name: `${updatedMessage.sender.profile?.firstName || ''} ${updatedMessage.sender.profile?.lastName || ''}`.trim(),
-          role: updatedMessage.sender.role,
-          avatar: updatedMessage.sender.profile?.avatarUrl,
+          id: updatedMessage.sender.user.id,
+          name: `${updatedMessage.sender.firstName || ''} ${updatedMessage.sender.lastName || ''}`.trim(),
+          role: updatedMessage.sender.user.role,
+          avatar: updatedMessage.sender.avatarUrl,
         },
         recipient: {
-          id: updatedMessage.recipient.id,
-          name: `${updatedMessage.recipient.profile?.firstName || ''} ${updatedMessage.recipient.profile?.lastName || ''}`.trim(),
-          role: updatedMessage.recipient.role,
-          avatar: updatedMessage.recipient.profile?.avatarUrl,
+          id: updatedMessage.recipient.user.id,
+          name: `${updatedMessage.recipient.firstName || ''} ${updatedMessage.recipient.lastName || ''}`.trim(),
+          role: updatedMessage.recipient.user.role,
+          avatar: updatedMessage.recipient.avatarUrl,
         },
       },
     });
@@ -182,7 +222,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -191,7 +231,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const messageId = params.id;
+    const { id: messageId } = await params;
 
     // Verify message ownership (only sender can delete)
     const existingMessage = await prisma.message.findFirst({

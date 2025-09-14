@@ -37,6 +37,7 @@ type ApplicationFormData = z.infer<typeof applicationFormSchema>;
 interface JobApplicationFormProps {
   job: JobPosting;
   onSubmit: (data: ApplicationFormData) => void;
+  onClose?: () => void;
   isLoading?: boolean;
   currentUser?: {
     id: string;
@@ -53,6 +54,7 @@ interface JobApplicationFormProps {
 export function JobApplicationForm({ 
   job, 
   onSubmit, 
+  onClose,
   isLoading = false,
   currentUser
 }: JobApplicationFormProps) {
@@ -346,7 +348,7 @@ export function JobApplicationForm({
 
             {/* Submit Button */}
             <div className="flex justify-end gap-4">
-              <Button type="button" variant="outline">
+              <Button type="button" variant="outline" onClick={onClose}>
                 Cancelar
               </Button>
               <Button type="submit" disabled={isLoading}>

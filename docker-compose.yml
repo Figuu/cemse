@@ -6,49 +6,49 @@ services:
     image: postgres:15-alpine
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: cemse_dev
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-cemse_dev}
       POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
-      - db_dev_data:/var/lib/postgresql/data
+      - db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d cemse_dev"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-cemse_dev}"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
     networks:
-      - cemse-dev-network
+      - cemse-network
 
   # Redis for caching
   redis:
     image: redis:7-alpine
     restart: always
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
     volumes:
-      - redis_dev_data:/data
+      - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - cemse-dev-network
+      - cemse-network
 
   # MinIO Object Storage
   minio:
     image: minio/minio:latest
     restart: always
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "${MINIO_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
     command: server /data --console-address ":9001"
     volumes:
       - minio_data:/data
@@ -58,7 +58,7 @@ services:
       timeout: 20s
       retries: 3
     networks:
-      - cemse-dev-network
+      - cemse-network
 
   # MinIO Client for bucket initialization
   mc:
@@ -67,35 +67,116 @@ services:
     depends_on:
       - minio
     environment:
-      MC_HOST_local: http://minioadmin:minioadmin@minio:9000
-    command: sh -c "sleep 10 && mc alias set local http://minio:9000 minioadmin minioadmin && mc mb local/videos local/images local/documents local/courses local/lessons local/resources local/cvs local/certificates && mc policy set public local/videos && mc policy set public local/images && mc policy set public local/documents && mc policy set public local/courses && mc policy set public local/lessons && mc policy set public local/resources && mc policy set public local/cvs && mc policy set public local/certificates && echo 'MinIO buckets created successfully' && tail -f /dev/null"
+      MC_HOST_local: "http://${MINIO_ROOT_USER:-minioadmin}:${MINIO_ROOT_PASSWORD:-minioadmin}@minio:9000"
+    entrypoint: >
+      /bin/sh -c "
+        sleep 15 &&
+        mc alias set local http://minio:9000 ${MINIO_ROOT_USER:-minioadmin} ${MINIO_ROOT_PASSWORD:-minioadmin} &&
+        mc mb local/uploads local/videos local/images local/documents local/audio local/temp &&
+        mc anonymous set public local/uploads &&
+        mc anonymous set public local/videos &&
+        mc anonymous set public local/images &&
+        mc anonymous set public local/documents &&
+        mc anonymous set public local/audio &&
+        mc anonymous set public local/temp &&
+        echo '✅ MinIO buckets created successfully' &&
+        echo 'Buckets: uploads, videos, images, documents, audio, temp' &&
+        tail -f /dev/null
+      "
     networks:
-      - cemse-dev-network
+      - cemse-network
 
-  # Prisma Studio (Development)
-  prisma-studio:
+  # MinIO Initialization Service
+  minio-init:
     image: node:20-alpine
+    container_name: minio-init
     working_dir: /app
+    depends_on:
+      - minio
+      - mc
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/cemse_dev
-    ports:
-      - "5555:5555"
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      MINIO_USE_SSL: false
+      MINIO_PUBLIC_URL: ${MINIO_PUBLIC_URL:-http://localhost:9000}
     volumes:
       - .:/app
-    command: sh -c "npm install -g prisma && prisma studio --hostname 0.0.0.0 --port 5555"
+    command: >
+      sh -c "
+        sleep 20 &&
+        echo '🚀 MinIO initialization complete!' &&
+        tail -f /dev/null
+      "
     networks:
-      - cemse-dev-network
+      - cemse-network
+
+  # Prisma Client Service
+  prisma-client:
+    image: node:20-alpine
+    container_name: prisma-client
+    working_dir: /app
     depends_on:
       - db
+    environment:
+      DATABASE_URL: "postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-cemse_dev}"
+      DIRECT_URL: "postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-cemse_dev}"
+      NODE_ENV: ${NODE_ENV:-development}
+    volumes:
+      - .:/app
+    command: >
+      sh -c "
+        echo '🔧 Installing dependencies...' &&
+        npm install &&
+        echo '📊 Running Prisma migrations...' &&
+        npx prisma migrate deploy &&
+        echo '🌱 Seeding database...' &&
+        if [ \"$${NODE_ENV:-development}\" = \"development\" ]; then 
+          npx prisma db seed; 
+        else 
+          echo 'Skipping seed in production'; 
+        fi &&
+        echo '✅ Prisma client setup complete!' &&
+        tail -f /dev/null
+      "
+    networks:
+      - cemse-network
+
+  # Prisma Studio Service
+  prisma-studio:
+    image: node:20-alpine
+    container_name: prisma-studio
+    working_dir: /app
+    depends_on:
+      - db
+      - prisma-client
+    environment:
+      DATABASE_URL: "postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-cemse_dev}"
+      NODE_ENV: ${NODE_ENV:-development}
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: >
+      sh -c "
+        echo '🔧 Installing Prisma globally...' &&
+        npm install -g prisma &&
+        echo '🎨 Starting Prisma Studio...' &&
+        prisma studio --hostname 0.0.0.0 --port 5555
+      "
+    ports:
+      - "5555:5555"
+    networks:
+      - cemse-network
 
 volumes:
-  db_dev_data:
+  db_data:
     driver: local
-  redis_dev_data:
+  redis_data:
     driver: local
   minio_data:
     driver: local
 
 networks:
-  cemse-dev-network:
+  cemse-network:
     driver: bridge

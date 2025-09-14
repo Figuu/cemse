@@ -11,7 +11,6 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   User, 
-  Bell, 
   Shield, 
   Palette,
   Save
@@ -45,14 +44,10 @@ export default function SettingsPage() {
 
       {/* Settings Tabs */}
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="profile" className="flex items-center space-x-2">
             <User className="h-4 w-4" />
             <span>Perfil</span>
-          </TabsTrigger>
-          <TabsTrigger value="notifications" className="flex items-center space-x-2">
-            <Bell className="h-4 w-4" />
-            <span>Notificaciones</span>
           </TabsTrigger>
           <TabsTrigger value="privacy" className="flex items-center space-x-2">
             <Shield className="h-4 w-4" />
@@ -107,68 +102,6 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
 
-        {/* Notification Settings */}
-        <TabsContent value="notifications" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Preferencias de Notificaciones</CardTitle>
-              <CardDescription>
-                Configura cómo y cuándo recibir notificaciones
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Notificaciones por Email</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Recibe notificaciones importantes por correo electrónico
-                  </p>
-                </div>
-                <Switch defaultChecked />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Notificaciones Push</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Recibe notificaciones en tiempo real en tu navegador
-                  </p>
-                </div>
-                <Switch defaultChecked />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Notificaciones de Empleos</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Recibe alertas sobre nuevas ofertas de trabajo
-                  </p>
-                </div>
-                <Switch defaultChecked />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Notificaciones de Cursos</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Recibe recordatorios sobre cursos y lecciones
-                  </p>
-                </div>
-                <Switch defaultChecked />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Notificaciones de Mensajes</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Recibe notificaciones cuando recibas mensajes
-                  </p>
-                </div>
-                <Switch defaultChecked />
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
 
         {/* Privacy Settings */}
         <TabsContent value="privacy" className="space-y-6">

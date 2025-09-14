@@ -53,9 +53,11 @@ export async function GET(request: NextRequest) {
     const resources = await prisma.resource.findMany({
       where: whereClause,
       include: {
-        author: {
-          include: {
-            profile: true
+        createdBy: {
+          select: {
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
           }
         },
         _count: {
@@ -124,18 +126,19 @@ export async function POST(request: NextRequest) {
         description,
         category,
         type,
-        fileUrl,
-        fileSize,
+        downloadUrl: fileUrl,
+        // fileSize, // This field doesn't exist in Resource model
         tags: tags || [],
         status,
-        scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
         publishedAt: status === "PUBLISHED" ? new Date() : null,
-        authorId: session.user.id
+        createdByUserId: session.user.id
       },
       include: {
-        author: {
-          include: {
-            profile: true
+        createdBy: {
+          select: {
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
           }
         },
         _count: {

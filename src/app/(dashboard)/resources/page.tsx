@@ -99,7 +99,7 @@ export default function ResourcesPage() {
       case "ZIP":
         return <File className="h-5 w-5 text-purple-500" />;
       case "Image":
-        return <Image className="h-5 w-5 text-green-500" alt="Imagen" />;
+        return <Image className="h-5 w-5 text-green-500" />;
       default:
         return <File className="h-5 w-5 text-gray-500" />;
     }

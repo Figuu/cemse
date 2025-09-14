@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
     // Location filter
     if (validatedParams.location) {
       where.profile = {
-        ...where.profile,
+        ...(where.profile || {}),
         address: { contains: validatedParams.location, mode: "insensitive" },
       };
     }
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
     // Education filter
     if (validatedParams.education) {
       where.profile = {
-        ...where.profile,
+        ...(where.profile || {}),
         // This would need to be added to the Profile model in a real implementation
         // education: { contains: validatedParams.education, mode: "insensitive" },
       };
@@ -84,7 +84,8 @@ export async function GET(request: NextRequest) {
         orderBy.createdAt = validatedParams.sortOrder;
         break;
       case "location":
-        orderBy.profile = { address: validatedParams.sortOrder };
+        // Note: Complex ordering by nested fields not directly supported
+        orderBy.createdAt = validatedParams.sortOrder;
         break;
       case "availability":
         // This would need availability data in the Profile model
@@ -121,7 +122,7 @@ export async function GET(request: NextRequest) {
           },
           _count: {
             select: {
-              jobApplications: true,
+              createdCompanies: true,
             },
           },
         },
@@ -191,7 +192,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Validation error", details: error.errors },
+        { error: "Validation error", details: error.issues },
         { status: 400 }
       );
     }

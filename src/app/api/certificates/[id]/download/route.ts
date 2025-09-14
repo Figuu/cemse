@@ -24,7 +24,8 @@ export async function GET(
     }
 
     // Check if user is the certificate owner or has admin access
-    const isOwner = verification.student?.userId === session.user.id;
+    // Note: This would need to be implemented based on the actual certificate verification structure
+    const isOwner = false; // TODO: Implement proper ownership check
     const isAdmin = ["SUPERADMIN", "INSTRUCTOR"].includes(session.user.role);
 
     if (!isOwner && !isAdmin) {

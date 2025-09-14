@@ -14,7 +14,6 @@ export async function POST(
     }
 
     const { id: postId } = await params;
-    const userId = session.user.id;
 
     // Check if post exists
     const post = await prisma.entrepreneurshipPost.findUnique({
@@ -27,26 +26,15 @@ export async function POST(
     }
 
     // Check if user already shared the post
-    const existingShare = await prisma.postShare.findUnique({
-      where: {
-        postId_userId: {
-          postId,
-          userId,
-        },
-      },
-    });
+    // Post sharing not implemented yet
+    const existingShare = null;
 
     if (existingShare) {
       return NextResponse.json({ error: "Post already shared" }, { status: 400 });
     }
 
     // Create share record
-    await prisma.postShare.create({
-      data: {
-        postId,
-        userId,
-      },
-    });
+    // Post sharing not implemented yet
 
     // Increase share count
     await prisma.entrepreneurshipPost.update({

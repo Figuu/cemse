@@ -16,6 +16,8 @@ model User {
   isActive              Boolean        @default(true)
   refreshToken          String?
   refreshTokenExpires   DateTime?
+  firstName             String?
+  lastName              String?
   createdAt             DateTime       @default(now())
   updatedAt             DateTime       @updatedAt
   
@@ -111,6 +113,10 @@ model Profile {
   certificates              Certificate[] @relation("Certificates")
   moduleCertificates        ModuleCertificate[] @relation("ModuleCertificates")
   lessonProgress            LessonProgress[] @relation("LessonProgress")
+  entrepreneurshipPosts     EntrepreneurshipPost[]
+  postLikes                 PostLike[]
+  postComments              PostComment[]
+  entrepreneurshipResources EntrepreneurshipResource[]
 
   @@index([userId])
   @@index([institutionId])
@@ -143,6 +149,7 @@ model Course {
   certification     Boolean?           @default(true)
   includedMaterials String[]
   instructorId      String?
+  institutionId     String?
   institutionName   String?
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
@@ -153,6 +160,7 @@ model Course {
   enrollments       CourseEnrollment[]
   modules           CourseModule[]
   instructor        Profile?           @relation("CourseInstructor", fields: [instructorId], references: [userId])
+  institution       Institution?       @relation(fields: [institutionId], references: [id])
   quizzes           Quiz[]
 
   @@index([category])
@@ -160,6 +168,7 @@ model Course {
   @@index([isMandatory])
   @@index([isActive])
   @@index([instructorId])
+  @@index([institutionId])
   @@map("courses")
 }
 
@@ -420,6 +429,7 @@ model Resource {
   isPublic        Boolean  @default(true)
   isEntrepreneurshipRelated Boolean @default(false)
   createdByUserId String
+  status          String   @default("PUBLISHED")
   
   // Relations
   createdBy       User     @relation("ResourceCreator", fields: [createdByUserId], references: [id], onDelete: Cascade)
@@ -451,6 +461,7 @@ model Company {
   createdAt                 DateTime                          @default(now())
   updatedAt                 DateTime                          @updatedAt
   password                  String
+  ownerId                   String?
   
   // Relations
   creator                   User                              @relation("CompanyCreator", fields: [createdBy], references: [id])
@@ -494,6 +505,7 @@ model Institution {
   creator         User            @relation("InstitutionCreator", fields: [createdBy], references: [id])
   companies       Company[]
   profiles        Profile[]
+  courses         Course[]
 
   @@unique([name, department])
   @@index([department])
@@ -660,6 +672,31 @@ enum EntrepreneurshipConnectionStatus {
   BLOCKED              // User blocked the connection
 }
 
+enum PostType {
+  TEXT
+  IMAGE
+  VIDEO
+  LINK
+  POLL
+  EVENT
+  QUESTION
+  ACHIEVEMENT
+  ANNOUNCEMENT
+}
+
+enum ResourceType {
+  ARTICLE
+  VIDEO
+  AUDIO
+  DOCUMENT
+  TOOL
+  TEMPLATE
+  GUIDE
+  CHECKLIST
+  WEBINAR
+  COURSE
+}
+
 enum EmployeeStatus {
   ACTIVE
   TERMINATED
@@ -751,7 +788,6 @@ model Quiz {
   timeLimit   Int?
   attempts    Int      @default(0) // 0 = unlimited
   isActive    Boolean  @default(true)
-  
   // Relations
   course      Course?  @relation(fields: [courseId], references: [id])
   lesson      Lesson?  @relation(fields: [lessonId], references: [id])
@@ -871,6 +907,7 @@ model BusinessPlan {
   entrepreneurshipId String  @unique
   content           Json
   status            String   @default("draft")
+  marketAnalysis    Json?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   
@@ -923,5 +960,141 @@ model CompanyEmployee {
   @@index([employeeId])
   @@index([status])
   @@map("company_employees")
+}
+
+// Question and Answer System
+model Question {
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  category    String?
+  difficulty  String?  @default("medium")
+  points      Int      @default(1)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  answers     Answer[]
+  
+  @@index([category])
+  @@index([isActive])
+  @@map("questions")
+}
+
+model Answer {
+  id          String   @id @default(cuid())
+  questionId  String
+  content     String
+  isCorrect   Boolean  @default(false)
+  orderIndex  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  question    Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  
+  @@index([questionId])
+  @@index([isCorrect])
+  @@map("answers")
+}
+
+// Entrepreneurship Posts
+model EntrepreneurshipPost {
+  id          String   @id @default(cuid())
+  content     String
+  type        PostType @default(TEXT)
+  images      String[]
+  tags        String[]
+  likes       Int      @default(0)
+  comments    Int      @default(0)
+  shares      Int      @default(0)
+  views       Int      @default(0)
+  isPinned    Boolean  @default(false)
+  isPublic    Boolean  @default(true)
+  authorId    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  author      Profile  @relation(fields: [authorId], references: [userId])
+  postLikes   PostLike[]
+  postComments PostComment[]
+  
+  @@index([authorId])
+  @@index([type])
+  @@index([isPublic])
+  @@index([createdAt])
+  @@map("entrepreneurship_posts")
+}
+
+model PostLike {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+  
+  // Relations
+  post      EntrepreneurshipPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      Profile              @relation(fields: [userId], references: [userId])
+  
+  @@unique([postId, userId])
+  @@index([postId])
+  @@index([userId])
+  @@map("post_likes")
+}
+
+model PostComment {
+  id        String   @id @default(cuid())
+  postId    String
+  content   String
+  authorId  String
+  parentId  String?
+  likes     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  post      EntrepreneurshipPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author    Profile              @relation(fields: [authorId], references: [userId])
+  parent    PostComment?         @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   PostComment[]        @relation("CommentReplies")
+  
+  @@index([postId])
+  @@index([authorId])
+  @@index([parentId])
+  @@index([createdAt])
+  @@map("post_comments")
+}
+
+// Entrepreneurship Resources
+model EntrepreneurshipResource {
+  id          String       @id @default(cuid())
+  title       String
+  description String
+  content     String
+  type        ResourceType
+  category    String
+  tags        String[]
+  url         String?
+  fileUrl     String?
+  imageUrl    String?
+  isPublic    Boolean      @default(true)
+  isFeatured  Boolean      @default(false)
+  views       Int          @default(0)
+  likes       Int          @default(0)
+  authorId    String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  
+  // Relations
+  author      Profile      @relation(fields: [authorId], references: [userId])
+  
+  @@index([authorId])
+  @@index([type])
+  @@index([category])
+  @@index([isPublic])
+  @@index([isFeatured])
+  @@map("entrepreneurship_resources")
 }
 

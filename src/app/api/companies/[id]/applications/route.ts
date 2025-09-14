@@ -15,7 +15,7 @@ export async function GET(
     }
 
     // Only COMPANY role can access this endpoint
-    if (session.user.role !== "COMPANY") {
+    if (session.user.role !== "COMPANIES") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -23,10 +23,10 @@ export async function GET(
     // Verify the user owns this company
     const company = await prisma.company.findUnique({
       where: { id: companyId },
-      select: { ownerId: true },
+      select: { createdBy: true },
     });
 
-    if (!company || company.ownerId !== session.user.id) {
+    if (!company || company.createdBy !== session.user.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
@@ -68,22 +68,17 @@ export async function GET(
         include: {
           applicant: {
             select: {
-              id: true,
-              email: true,
-              profile: {
-                select: {
-                  firstName: true,
-                  lastName: true,
-                  avatarUrl: true,
-                  phone: true,
-                  address: true,
-                  city: true,
-                  skillsWithLevel: true,
-                  workExperience: true,
-                  educationLevel: true,
-                  cvUrl: true,
-                },
-              },
+              userId: true,
+              firstName: true,
+              lastName: true,
+              avatarUrl: true,
+              phone: true,
+              address: true,
+              city: true,
+              skillsWithLevel: true,
+              workExperience: true,
+              educationLevel: true,
+              cvUrl: true,
             },
           },
           jobOffer: {
@@ -111,19 +106,18 @@ export async function GET(
     const transformedApplications = applications.map(app => ({
       id: app.id,
       applicant: {
-        id: app.applicant.id,
-        email: app.applicant.email,
+        id: app.applicant.userId,
         profile: {
-          firstName: app.applicant.profile?.firstName || "",
-          lastName: app.applicant.profile?.lastName || "",
-          avatarUrl: app.applicant.profile?.avatarUrl,
-          phone: app.applicant.profile?.phone,
-          address: app.applicant.profile?.address,
-          city: app.applicant.profile?.city,
-          skills: app.applicant.profile?.skillsWithLevel || [],
-          experience: app.applicant.profile?.workExperience || [],
-          education: app.applicant.profile?.educationLevel,
-          cvUrl: app.applicant.profile?.cvUrl,
+          firstName: app.applicant.firstName || "",
+          lastName: app.applicant.lastName || "",
+          avatarUrl: app.applicant.avatarUrl,
+          phone: app.applicant.phone,
+          address: app.applicant.address,
+          city: app.applicant.city,
+          skills: app.applicant.skillsWithLevel || [],
+          experience: app.applicant.workExperience || [],
+          education: app.applicant.educationLevel,
+          cvUrl: app.applicant.cvUrl,
         },
       },
       jobOffer: {

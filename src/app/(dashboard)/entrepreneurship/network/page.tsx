@@ -18,7 +18,8 @@ import {
   Link as LinkIcon,
   HelpCircle,
   Award,
-  Megaphone
+  Megaphone,
+  Calendar
 } from "lucide-react";
 import { PostCard } from "@/components/entrepreneurship/PostCard";
 import { CreatePostForm } from "@/components/entrepreneurship/CreatePostForm";
@@ -35,9 +36,7 @@ const postTypeIcons: Record<PostType, React.ComponentType<{ className?: string }
   VIDEO: Video,
   LINK: LinkIcon,
   POLL: HelpCircle,
-  ANNOUNCEMENT: Megaphone,
-  ACHIEVEMENT: Award,
-  QUESTION: HelpCircle,
+  EVENT: Calendar,
 };
 
 const postTypeLabels: Record<PostType, string> = {
@@ -46,15 +45,14 @@ const postTypeLabels: Record<PostType, string> = {
   VIDEO: "Videos",
   LINK: "Enlaces",
   POLL: "Encuestas",
-  ANNOUNCEMENT: "Anuncios",
-  ACHIEVEMENT: "Logros",
-  QUESTION: "Preguntas",
+  EVENT: "Eventos",
 };
 
 export default function EntrepreneurshipNetworkPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedType, setSelectedType] = useState<PostType | "all">("all");
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [selectedPost, setSelectedPost] = useState<EntrepreneurshipPost | null>(null);
 
   // Mock current user - in real app, this would come from auth context
   const currentUser = {
@@ -105,7 +103,7 @@ export default function EntrepreneurshipNetworkPage() {
     }
   };
 
-  const filteredPosts = posts.filter(post => {
+  const filteredPosts = posts.filter((post: any) => {
     if (selectedType !== "all" && post.type !== selectedType) {
       return false;
     }
@@ -155,7 +153,7 @@ export default function EntrepreneurshipNetworkPage() {
               <span className="text-sm font-medium">Emprendedores Activos</span>
             </div>
             <p className="text-2xl font-bold">
-              {new Set(posts.map(p => p.authorId)).size}
+              {new Set(posts.map((p: any) => p.authorId)).size}
             </p>
           </CardContent>
         </Card>
@@ -167,7 +165,7 @@ export default function EntrepreneurshipNetworkPage() {
               <span className="text-sm font-medium">Interacciones</span>
             </div>
             <p className="text-2xl font-bold">
-              {posts.reduce((sum, post) => sum + post.likes + post.comments + post.shares, 0)}
+              {posts.reduce((sum: number, post: any) => sum + post.likes + post.comments + post.shares, 0)}
             </p>
           </CardContent>
         </Card>
@@ -179,7 +177,7 @@ export default function EntrepreneurshipNetworkPage() {
               <span className="text-sm font-medium">Logros Compartidos</span>
             </div>
             <p className="text-2xl font-bold">
-              {posts.filter(p => p.type === "ACHIEVEMENT").length}
+              {posts.filter((p: any) => p.type === "EVENT").length}
             </p>
           </CardContent>
         </Card>
@@ -263,11 +261,11 @@ export default function EntrepreneurshipNetworkPage() {
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-1">
-                {Array.from(new Set(posts.flatMap(p => p.tags)))
+                {Array.from(new Set(posts.flatMap((p: any) => p.tags)))
                   .slice(0, 10)
                   .map((tag) => (
-                    <Badge key={tag} variant="outline" className="text-xs cursor-pointer">
-                      #{tag}
+                    <Badge key={tag as string} variant="outline" className="text-xs cursor-pointer">
+                      #{tag as string}
                     </Badge>
                   ))}
               </div>
@@ -324,7 +322,7 @@ export default function EntrepreneurshipNetworkPage() {
                 </CardContent>
               </Card>
             ) : filteredPosts.length > 0 ? (
-              filteredPosts.map((post) => (
+              filteredPosts.map((post: any) => (
                 <PostCard
                   key={post.id}
                   post={post}

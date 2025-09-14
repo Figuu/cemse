@@ -18,6 +18,7 @@ import { CandidateSearchFilters } from "@/components/candidates/CandidateSearchF
 import { useCandidates, CandidateSearchFilters as CandidateFilters } from "@/hooks/useCandidates";
 
 export default function CandidatesPage() {
+  const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState<CandidateFilters>({
     page: 1,
     limit: 12,

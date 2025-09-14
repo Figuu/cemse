@@ -137,9 +137,8 @@ export class MinIOClientService {
   }
 
   getObjectUrl(bucket: string, objectName: string): string {
-    // This would typically be a presigned URL from the server
-    // For now, we'll return a placeholder
-    return `${this.baseUrl}?action=download&bucket=${encodeURIComponent(bucket)}&object=${encodeURIComponent(objectName)}`;
+    // Return proxy URL for images, download URL for other files
+    return `/api/images/proxy?bucket=${encodeURIComponent(bucket)}&key=${encodeURIComponent(objectName)}`;
   }
 }
 

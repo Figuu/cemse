@@ -20,8 +20,8 @@ export async function GET(
       return NextResponse.json({ error: "Business plan not found" }, { status: 404 });
     }
 
-    // Check if user owns the business plan or if it's public
-    if (businessPlan.userId !== session.user.id && !businessPlan.isPublic) {
+    // Check if user owns the business plan
+    if (businessPlan.userId !== session.user.id) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 

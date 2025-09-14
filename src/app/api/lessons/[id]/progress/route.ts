@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -14,7 +14,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const lessonId = params.id;
+    const { id: lessonId } = await params;
 
     // Get lesson with course and module info
     const lesson = await prisma.lesson.findUnique({
@@ -80,7 +80,7 @@ export async function GET(
       },
       progress: progress ? {
         id: progress.id,
-        isCompleted: progress.isCompleted,
+        isCompleted: progress.completed,
         completedAt: progress.completedAt?.toISOString(),
         timeSpent: progress.timeSpent,
       } : {
@@ -102,7 +102,7 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -111,7 +111,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const lessonId = params.id;
+    const { id: lessonId } = await params;
     const body = await request.json();
     const { isCompleted, timeSpent } = body;
 
@@ -154,14 +154,14 @@ export async function PATCH(
         },
       },
       update: {
-        isCompleted: isCompleted !== undefined ? isCompleted : undefined,
+        completed: isCompleted !== undefined ? isCompleted : undefined,
         completedAt: isCompleted ? new Date() : undefined,
         timeSpent: timeSpent !== undefined ? timeSpent : undefined,
       },
       create: {
         studentId: session.user.id,
         lessonId: lessonId,
-        isCompleted: isCompleted || false,
+        completed: isCompleted || false,
         completedAt: isCompleted ? new Date() : null,
         timeSpent: timeSpent || 0,
       },
@@ -184,7 +184,7 @@ export async function PATCH(
       const completedLessons = await prisma.lessonProgress.count({
         where: {
           studentId: session.user.id,
-          isCompleted: true,
+          completed: true,
           lesson: {
             module: {
               courseId: lesson.module.courseId,
@@ -201,33 +201,13 @@ export async function PATCH(
         where: { id: enrollment.id },
         data: {
           progress: courseProgressPercent,
-          isCompleted: isCourseCompleted,
           completedAt: isCourseCompleted ? new Date() : null,
-          lastAccessedAt: new Date(),
+          // Note: lastAccessedAt field doesn't exist on CourseEnrollment model
         },
       });
 
-      // Send completion notification if course is completed
-      if (isCourseCompleted && !enrollment.isCompleted) {
-        try {
-          await prisma.notification.create({
-            data: {
-              userId: session.user.id,
-              type: "COURSE_COMPLETION",
-              title: "¡Curso Completado!",
-              message: `¡Felicidades! Has completado el curso "${course.title}"`,
-              data: {
-                courseId: lesson.module.courseId,
-                courseTitle: course.title,
-                completionDate: new Date().toISOString(),
-              },
-            },
-          });
-        } catch (notificationError) {
-          console.error("Error creating completion notification:", notificationError);
-          // Don't fail the progress update if notification fails
-        }
-      }
+      // Send completion notification if course is completed - Notification model doesn't exist
+      // Commented out notification creation
     }
 
     return NextResponse.json({
@@ -235,7 +215,7 @@ export async function PATCH(
       lessonProgress: {
         id: lessonProgress.id,
         lessonId: lessonProgress.lessonId,
-        isCompleted: lessonProgress.isCompleted,
+        isCompleted: lessonProgress.completed,
         completedAt: lessonProgress.completedAt?.toISOString(),
         timeSpent: lessonProgress.timeSpent,
       },

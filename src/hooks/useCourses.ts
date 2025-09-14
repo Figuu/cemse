@@ -49,6 +49,7 @@ export interface Course {
     lastAccessedAt?: string;
   };
   isEnrolled: boolean;
+  isOwner: boolean;
   progress: number;
   isCompleted: boolean;
   totalModules: number;

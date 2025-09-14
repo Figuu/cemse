@@ -31,10 +31,10 @@ export default function PostAnalyticsPage() {
   });
 
   // Calculate analytics
-  const totalViews = posts.reduce((sum, post) => sum + (post.views || 0), 0);
-  const totalLikes = posts.reduce((sum, post) => sum + post.likes, 0);
-  const totalComments = posts.reduce((sum, post) => sum + post.comments, 0);
-  const totalShares = posts.reduce((sum, post) => sum + post.shares, 0);
+  const totalViews = posts.reduce((sum: number, post: any) => sum + (post.views || 0), 0);
+  const totalLikes = posts.reduce((sum: number, post: any) => sum + post.likes, 0);
+  const totalComments = posts.reduce((sum: number, post: any) => sum + post.comments, 0);
+  const totalShares = posts.reduce((sum: number, post: any) => sum + post.shares, 0);
   const totalEngagement = totalLikes + totalComments + totalShares;
   const averageEngagementRate = totalViews > 0 ? (totalEngagement / totalViews) * 100 : 0;
 
@@ -46,7 +46,7 @@ export default function PostAnalyticsPage() {
   }).slice(0, 5);
 
   // Get engagement level distribution
-  const engagementLevels = posts.reduce((acc, post) => {
+  const engagementLevels = posts.reduce((acc: any, post: any) => {
     const engagementRate = PostEngagementService.calculateEngagementRate(
       post.views || 0,
       post.likes,
@@ -59,7 +59,7 @@ export default function PostAnalyticsPage() {
   }, {} as Record<string, number>);
 
   // Get post type performance
-  const postTypePerformance = posts.reduce((acc, post) => {
+  const postTypePerformance = posts.reduce((acc: any, post: any) => {
     if (!acc[post.type]) {
       acc[post.type] = { count: 0, totalEngagement: 0, totalViews: 0 };
     }
@@ -206,7 +206,7 @@ export default function PostAnalyticsPage() {
                   <Badge className={`${getEngagementLevelColor(level)}`}>
                     {getEngagementLevelLabel(level)}
                   </Badge>
-                  <span className="text-sm font-medium">{count} posts</span>
+                  <span className="text-sm font-medium">{count as number} posts</span>
                 </div>
               ))}
             </div>
@@ -225,8 +225,9 @@ export default function PostAnalyticsPage() {
         <CardContent>
           <div className="space-y-4">
             {Object.entries(postTypePerformance).map(([type, data]) => {
-              const avgEngagement = data.count > 0 ? data.totalEngagement / data.count : 0;
-              const avgViews = data.count > 0 ? data.totalViews / data.count : 0;
+              const typedData = data as { count: number; totalEngagement: number; totalViews: number };
+              const avgEngagement = typedData.count > 0 ? typedData.totalEngagement / typedData.count : 0;
+              const avgViews = typedData.count > 0 ? typedData.totalViews / typedData.count : 0;
               const engagementRate = avgViews > 0 ? (avgEngagement / avgViews) * 100 : 0;
               
               return (
@@ -234,7 +235,7 @@ export default function PostAnalyticsPage() {
                   <div>
                     <h4 className="font-medium capitalize">{type.toLowerCase()}</h4>
                     <p className="text-sm text-muted-foreground">
-                      {data.count} posts • {avgViews.toFixed(0)} vistas promedio
+                      {typedData.count} posts • {avgViews.toFixed(0)} vistas promedio
                     </p>
                   </div>
                   <div className="text-right">

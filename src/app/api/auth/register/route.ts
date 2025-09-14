@@ -47,7 +47,6 @@ export async function POST(request: NextRequest) {
             firstName: validatedData.firstName,
             lastName: validatedData.lastName,
             phone: validatedData.phone,
-            email: validatedData.email,
             profileCompletion: 20, // Basic info completed
           },
         },

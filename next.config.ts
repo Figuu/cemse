@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import type { Configuration } from "webpack";
 
 const nextConfig: NextConfig = {
   //eslint rules off
@@ -11,9 +12,10 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "10mb",
     },
   },
-  webpack: (config, { isServer }) => {
+  webpack: (config: Configuration, { isServer }: { isServer: boolean }) => {
     if (!isServer) {
       // Exclude MinIO from client-side bundle
+      config.resolve = config.resolve || {};
       config.resolve.fallback = {
         ...config.resolve.fallback,
         fs: false,
@@ -47,7 +49,15 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "bucket-production.up.railway.app",
       },
+      {
+        protocol: "http",
+        hostname: "localhost",
+        port: "9000",
+        pathname: "/**",
+      },
     ],
+    // Allow images from our own API routes
+    unoptimized: false,
   },
   async headers() {
     return [
@@ -73,7 +83,7 @@ const nextConfig: NextConfig = {
           {
             key: "Content-Security-Policy",
             value:
-              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*; connect-src 'self' https://*;",
+              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://* http://localhost:9000; media-src 'self' blob: https://* http://localhost:9000; connect-src 'self' https://* http://localhost:9000;",
           },
         ],
       },

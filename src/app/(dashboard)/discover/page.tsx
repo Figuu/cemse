@@ -20,12 +20,7 @@ import {
   List,
   BarChart3
 } from "lucide-react";
-import { StartupDiscoverySection } from "@/components/startups/StartupDiscoverySection";
 import { StartupFilters, StartupFilters as FilterType } from "@/components/startups/StartupFilters";
-import { 
-  useStartupDiscovery,
-  useDiscoveryAnalytics
-} from "@/hooks/useStartupDiscovery";
 
 export default function DiscoverPage() {
   const router = useRouter();
@@ -35,23 +30,13 @@ export default function DiscoverPage() {
   const [activeTab, setActiveTab] = useState("trending");
   const [showFilters, setShowFilters] = useState(false);
 
-  const {
-    isLoading,
-    discoverStartups,
-  } = useStartupDiscovery(filters);
-
-  const {
-    analytics,
-    isLoading: analyticsLoading,
-  } = useDiscoveryAnalytics();
+  const [isLoading, setIsLoading] = useState(false);
+  const [analytics, setAnalytics] = useState(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
   const handleSearch = async () => {
-    const newFilters = {
-      ...filters,
-      search: searchTerm || undefined,
-    };
-    setFilters(newFilters);
-    await discoverStartups(newFilters);
+    // TODO: Implement search functionality
+    console.log("Searching for:", searchTerm);
   };
 
   const handleFiltersChange = (newFilters: FilterType) => {
@@ -64,7 +49,8 @@ export default function DiscoverPage() {
   };
 
   const handleApplyFilters = async () => {
-    await discoverStartups(filters);
+    // TODO: Implement filter application
+    console.log("Applying filters:", filters);
   };
 
   const handleViewStartup = (startupId: string) => {
@@ -239,18 +225,10 @@ export default function DiscoverPage() {
 
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="trending" className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4" />
             Tendencia
-          </TabsTrigger>
-          <TabsTrigger value="recommendations" className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4" />
-            Recomendadas
-          </TabsTrigger>
-          <TabsTrigger value="all" className="flex items-center gap-2">
-            <Building2 className="h-4 w-4" />
-            Todas
           </TabsTrigger>
           <TabsTrigger value="analytics" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
@@ -259,45 +237,18 @@ export default function DiscoverPage() {
         </TabsList>
 
         <TabsContent value="trending" className="space-y-4">
-          <StartupDiscoverySection
-            title="Startups en Tendencia"
-            description="Las startups más populares y con mayor crecimiento"
-            showTabs={false}
-            defaultTab="trending"
-            limit={12}
-            onView={handleViewStartup}
-            onFollow={handleFollow}
-            onBookmark={handleBookmark}
-            onShare={handleShare}
-          />
-        </TabsContent>
-
-        <TabsContent value="recommendations" className="space-y-4">
-          <StartupDiscoverySection
-            title="Recomendadas para ti"
-            description="Startups seleccionadas basadas en tus intereses y perfil"
-            showTabs={false}
-            defaultTab="recommendations"
-            limit={12}
-            onView={handleViewStartup}
-            onFollow={handleFollow}
-            onBookmark={handleBookmark}
-            onShare={handleShare}
-          />
-        </TabsContent>
-
-        <TabsContent value="all" className="space-y-4">
-          <StartupDiscoverySection
-            title="Todas las Startups"
-            description="Explora todas las startups disponibles en la plataforma"
-            showTabs={false}
-            defaultTab="all"
-            limit={20}
-            onView={handleViewStartup}
-            onFollow={handleFollow}
-            onBookmark={handleBookmark}
-            onShare={handleShare}
-          />
+          <Card>
+            <CardContent className="text-center py-12">
+              <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Startups en Tendencia</h3>
+              <p className="text-muted-foreground">
+                Las startups más populares y con mayor crecimiento
+              </p>
+              <p className="text-sm text-muted-foreground mt-2">
+                Esta funcionalidad estará disponible próximamente
+              </p>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-4">

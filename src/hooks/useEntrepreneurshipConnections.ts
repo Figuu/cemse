@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { EntrepreneurshipConnectionStatus } from "@prisma/client";
 
+export type ConnectionStatus = EntrepreneurshipConnectionStatus;
+
 export interface EntrepreneurshipConnection {
   id: string;
   requesterId: string;

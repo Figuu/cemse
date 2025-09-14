@@ -21,16 +21,16 @@ export async function GET(
         requester: {
           select: {
             id: true,
-            name: true,
-            email: true,
+            firstName: true,
+            lastName: true,
             image: true,
           },
         },
         addressee: {
           select: {
             id: true,
-            name: true,
-            email: true,
+            firstName: true,
+            lastName: true,
             image: true,
           },
         },
@@ -106,16 +106,16 @@ export async function PUT(
         requester: {
           select: {
             id: true,
-            name: true,
-            email: true,
+            firstName: true,
+            lastName: true,
             image: true,
           },
         },
         addressee: {
           select: {
             id: true,
-            name: true,
-            email: true,
+            firstName: true,
+            lastName: true,
             image: true,
           },
         },

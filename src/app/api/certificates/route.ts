@@ -41,8 +41,11 @@ export async function GET(request: NextRequest) {
               },
             },
             student: {
-              include: {
-                profile: true,
+              select: {
+                userId: true,
+                firstName: true,
+                lastName: true,
+                avatarUrl: true,
               },
             },
           },
@@ -61,15 +64,21 @@ export async function GET(request: NextRequest) {
             course: {
               include: {
                 instructor: {
-                  include: {
-                    profile: true,
+                  select: {
+                    userId: true,
+                    firstName: true,
+                    lastName: true,
+                    avatarUrl: true,
                   },
                 },
               },
             },
             student: {
-              include: {
-                profile: true,
+              select: {
+                userId: true,
+                firstName: true,
+                lastName: true,
+                avatarUrl: true,
               },
             },
           },
@@ -85,26 +94,26 @@ export async function GET(request: NextRequest) {
       return {
         id: cert.id,
         type: isModuleCert ? "module" : "course",
-        certificateUrl: cert.certificateUrl,
+        certificateUrl: cert.fileUrl,
         issuedAt: cert.issuedAt.toISOString(),
         student: {
-          id: cert.student.id,
-          name: `${cert.student.profile?.firstName || ''} ${cert.student.profile?.lastName || ''}`.trim(),
-          email: cert.student.profile?.email || '',
+          id: cert.student.userId,
+          name: `${cert.student.firstName || ''} ${cert.student.lastName || ''}`.trim(),
+          email: '', // Email is not available in student select
         },
         course: isModuleCert ? {
           id: cert.module.course.id,
           title: cert.module.course.title,
-          instructor: cert.module.course.instructor ? {
-            id: cert.module.course.instructor.id,
-            name: `${cert.module.course.instructor.profile?.firstName || ''} ${cert.module.course.instructor.profile?.lastName || ''}`.trim(),
+          instructor: (cert.module.course as any).instructor ? {
+            id: (cert.module.course as any).instructor.userId,
+            name: `${(cert.module.course as any).instructor.firstName || ''} ${(cert.module.course as any).instructor.lastName || ''}`.trim(),
           } : null,
         } : {
           id: cert.course.id,
           title: cert.course.title,
-          instructor: cert.course.instructor ? {
-            id: cert.course.instructor.id,
-            name: `${cert.course.instructor.profile?.firstName || ''} ${cert.course.instructor.profile?.lastName || ''}`.trim(),
+          instructor: (cert.course as any).instructor ? {
+            id: (cert.course as any).instructor.userId,
+            name: `${(cert.course as any).instructor.firstName || ''} ${(cert.course as any).instructor.lastName || ''}`.trim(),
           } : null,
         },
         module: isModuleCert ? {
@@ -181,12 +190,10 @@ export async function POST(request: NextRequest) {
       }
 
       // Check if certificate already exists
-      const existingCert = await prisma.certificate.findUnique({
+      const existingCert = await prisma.certificate.findFirst({
         where: {
-          studentId_courseId: {
-            studentId: studentId,
-            courseId: courseId,
-          },
+          studentId: studentId,
+          courseId: courseId,
         },
       });
 
@@ -199,13 +206,16 @@ export async function POST(request: NextRequest) {
         data: {
           studentId: studentId,
           courseId: courseId,
-          certificateUrl: certificateUrl,
+          fileUrl: certificateUrl,
         },
         include: {
           course: true,
           student: {
-            include: {
-              profile: true,
+            select: {
+              userId: true,
+              firstName: true,
+              lastName: true,
+              avatarUrl: true,
             },
           },
         },
@@ -226,12 +236,10 @@ export async function POST(request: NextRequest) {
       }
 
       // Check if certificate already exists
-      const existingCert = await prisma.moduleCertificate.findUnique({
+      const existingCert = await prisma.moduleCertificate.findFirst({
         where: {
-          studentId_moduleId: {
-            studentId: studentId,
-            moduleId: moduleId,
-          },
+          studentId: studentId,
+          moduleId: moduleId,
         },
       });
 
@@ -244,7 +252,7 @@ export async function POST(request: NextRequest) {
         data: {
           studentId: studentId,
           moduleId: moduleId,
-          certificateUrl: certificateUrl,
+          fileUrl: certificateUrl,
         },
         include: {
           module: {
@@ -253,33 +261,20 @@ export async function POST(request: NextRequest) {
             },
           },
           student: {
-            include: {
-              profile: true,
+            select: {
+              userId: true,
+              firstName: true,
+              lastName: true,
+              avatarUrl: true,
             },
           },
         },
       });
     }
 
-    // Send notification to student
-    try {
-      await prisma.notification.create({
-        data: {
-          userId: studentId,
-          type: "CERTIFICATE_ISSUED",
-          title: "¡Certificado Emitido!",
-          message: `Se ha emitido un certificado para ${courseId ? 'el curso' : 'el módulo'} "${courseId ? certificate.course.title : certificate.module.title}"`,
-          data: {
-            certificateId: certificate.id,
-            certificateType: courseId ? "course" : "module",
-            courseId: courseId || certificate.module.courseId,
-            moduleId: moduleId || certificate.module.id,
-          },
-        },
-      });
-    } catch (notificationError) {
-      console.error("Error creating certificate notification:", notificationError);
-      // Don't fail the certificate creation if notification fails
+
+    if (!certificate) {
+      return NextResponse.json({ error: "Certificate creation failed" }, { status: 500 });
     }
 
     return NextResponse.json({
@@ -287,22 +282,22 @@ export async function POST(request: NextRequest) {
       certificate: {
         id: certificate.id,
         type: courseId ? "course" : "module",
-        certificateUrl: certificate.certificateUrl,
+        certificateUrl: certificate.fileUrl,
         issuedAt: certificate.issuedAt.toISOString(),
         student: {
-          id: certificate.student.id,
-          name: `${certificate.student.profile?.firstName || ''} ${certificate.student.profile?.lastName || ''}`.trim(),
+          id: certificate.student.userId,
+          name: `${certificate.student.firstName || ''} ${certificate.student.lastName || ''}`.trim(),
         },
         course: courseId ? {
-          id: certificate.course.id,
-          title: certificate.course.title,
+          id: (certificate as any).course.id,
+          title: (certificate as any).course.title,
         } : {
-          id: certificate.module.course.id,
-          title: certificate.module.course.title,
+          id: (certificate as any).module.course.id,
+          title: (certificate as any).module.course.title,
         },
         module: moduleId ? {
-          id: certificate.module.id,
-          title: certificate.module.title,
+          id: (certificate as any).module.id,
+          title: (certificate as any).module.title,
         } : null,
       },
     });

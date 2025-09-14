@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ResourceType } from "@prisma/client";
 
+export { ResourceType };
+
 export interface EntrepreneurshipResource {
   id: string;
   title: string;

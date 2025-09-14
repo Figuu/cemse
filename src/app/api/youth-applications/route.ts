@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     if (session.user.role === "YOUTH") {
       // Youth users can only see their own applications
       where.youthProfileId = session.user.id;
-    } else if (session.user.role === "COMPANY") {
+    } else if (session.user.role === "COMPANIES") {
       // Companies can see all public applications
       where.isPublic = true;
       where.status = "ACTIVE"; // Only show active applications to companies
@@ -86,30 +86,26 @@ export async function GET(request: NextRequest) {
         include: {
           youthProfile: {
             select: {
-              id: true,
-              email: true,
-              profile: {
-                select: {
-                  firstName: true,
-                  lastName: true,
-                  avatarUrl: true,
-                  city: true,
-                  skillsWithLevel: true,
-                  workExperience: true,
-                  educationLevel: true,
-                  phone: true,
-                },
-              },
+              // userId: true, // This field doesn't exist on User model
+              firstName: true,
+              lastName: true,
+              avatarUrl: true,
+              city: true,
+              skillsWithLevel: true,
+              workExperience: true,
+              educationLevel: true,
+              phone: true,
             },
           },
           companyInterests: {
-            where: session.user.role === "COMPANY" ? { companyId: session.user.id } : {},
+            where: session.user.role === "COMPANIES" ? { companyId: session.user.id } : {},
             include: {
               company: {
                 select: {
                   id: true,
                   name: true,
                   logoUrl: true,
+                  // industry: true, // This field doesn't exist
                 },
               },
             },
@@ -142,22 +138,22 @@ export async function GET(request: NextRequest) {
       cvUrl: app.cvUrl,
       coverLetterUrl: app.coverLetterUrl,
       youth: {
-        id: app.youthProfile.id,
-        email: app.youthProfile.email,
+        id: app.youthProfileId,
+        email: '', // Email not available in profile
         profile: {
-          firstName: app.youthProfile.profile?.firstName || "",
-          lastName: app.youthProfile.profile?.lastName || "",
-          avatarUrl: app.youthProfile.profile?.avatarUrl,
-          city: app.youthProfile.profile?.city,
-          skills: app.youthProfile.profile?.skillsWithLevel || [],
-          experience: app.youthProfile.profile?.workExperience || [],
-          education: app.youthProfile.profile?.educationLevel,
-          phone: app.youthProfile.profile?.phone,
+          firstName: app.youthProfile.firstName || "",
+          lastName: app.youthProfile.lastName || "",
+          avatarUrl: app.youthProfile.avatarUrl,
+          city: app.youthProfile.city,
+          skills: app.youthProfile.skillsWithLevel || [],
+          experience: app.youthProfile.workExperience || [],
+          education: app.youthProfile.educationLevel,
+          phone: app.youthProfile.phone,
         },
       },
       companyInterests: app.companyInterests,
       totalInterests: app._count.companyInterests,
-      hasInterest: session.user.role === "COMPANY" ? app.companyInterests.length > 0 : false,
+      hasInterest: session.user.role === "COMPANIES" ? app.companyInterests.length > 0 : false,
     }));
 
     return NextResponse.json({
@@ -222,7 +218,6 @@ export async function POST(request: NextRequest) {
         youthProfile: {
           select: {
             id: true,
-            email: true,
             profile: {
               select: {
                 firstName: true,
@@ -245,9 +240,9 @@ export async function POST(request: NextRequest) {
         isPublic: application.isPublic,
         createdAt: application.createdAt.toISOString(),
         youth: {
-          id: application.youthProfile.id,
-          email: application.youthProfile.email,
-          profile: application.youthProfile.profile,
+          id: application.youthProfileId,
+          email: "",
+          profile: null,
         },
       },
     });
@@ -255,7 +250,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Validation error", details: error.errors },
+        { error: "Validation error", details: error.issues },
         { status: 400 }
       );
     }

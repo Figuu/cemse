@@ -253,7 +253,7 @@ export async function PATCH(request: NextRequest) {
         id: updatedProfile.user.id,
         firstName: updatedProfile.firstName,
         lastName: updatedProfile.lastName,
-        email: updatedProfile.email || updatedProfile.user.email,
+        email: updatedProfile.user.email,
         avatar: updatedProfile.avatarUrl,
         role: updatedProfile.user.role,
       },

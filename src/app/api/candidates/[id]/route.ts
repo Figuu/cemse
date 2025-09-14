@@ -36,30 +36,31 @@ export async function GET(
             // githubProfile: true,
           },
         },
-        jobApplications: {
-          include: {
-            job: {
-              select: {
-                id: true,
-                title: true,
-                company: {
-                  select: {
-                    id: true,
-                    name: true,
-                    logo: true,
-                  },
-                },
-                status: true,
-                appliedAt: true,
-              },
-            },
-          },
-          orderBy: { appliedAt: "desc" },
-          take: 10,
-        },
+        // TODO: Add job applications through profile relation
+        // jobApplications: {
+        //   include: {
+        //     job: {
+        //       select: {
+        //         id: true,
+        //         title: true,
+        //         company: {
+        //           select: {
+        //             id: true,
+        //             name: true,
+        //             logo: true,
+        //           },
+        //         },
+        //         status: true,
+        //         appliedAt: true,
+        //       },
+        //     },
+        //   },
+        //   orderBy: { appliedAt: "desc" },
+        //   take: 10,
+        // },
         _count: {
           select: {
-            jobApplications: true,
+            createdCompanies: true,
           },
         },
       },
@@ -73,10 +74,8 @@ export async function GET(
     }
 
     // Calculate candidate statistics
-    const totalApplications = candidate.jobApplications.length;
-    const recentApplications = candidate.jobApplications.filter(
-      app => new Date(app.appliedAt).getTime() > Date.now() - (30 * 24 * 60 * 60 * 1000) // Last 30 days
-    ).length;
+    const totalApplications = 0; // TODO: Get from profile.jobApplications when relation is fixed
+    const recentApplications = 0; // TODO: Get from profile.jobApplications when relation is fixed
 
     // Calculate experience level based on profile data
     // This would be more sophisticated in a real implementation

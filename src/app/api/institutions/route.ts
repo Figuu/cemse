@@ -20,34 +20,33 @@ export async function GET(request: NextRequest) {
     const whereClause: any = {};
 
     if (type && type !== "all") {
-      whereClause.type = type;
+      whereClause.institutionType = type;
     }
 
     if (city && city !== "all") {
-      whereClause.city = city;
+      whereClause.department = city;
     }
 
     if (search) {
       whereClause.OR = [
         { name: { contains: search, mode: "insensitive" } },
-        { description: { contains: search, mode: "insensitive" } },
-        { city: { contains: search, mode: "insensitive" } }
+        { department: { contains: search, mode: "insensitive" } },
+        { region: { contains: search, mode: "insensitive" } }
       ];
     }
 
     const institutions = await prisma.institution.findMany({
       where: whereClause,
       include: {
-        user: {
+        creator: {
           include: {
             profile: true
           }
         },
         _count: {
           select: {
-            courses: true,
-            programs: true,
-            students: true
+            companies: true,
+            profiles: true
           }
         }
       },
@@ -80,19 +79,25 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       name,
-      description,
-      type,
-      city,
-      country,
+      department,
+      region,
+      population,
+      mayorName,
+      mayorEmail,
+      mayorPhone,
+      address,
       website,
       phone,
       email,
-      logoUrl,
+      institutionType,
+      customType,
+      primaryColor,
+      secondaryColor,
       isActive
     } = body;
 
     // Validate required fields
-    if (!name || !description || !type || !city || !country) {
+    if (!name || !department || !email || !institutionType) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -101,7 +106,7 @@ export async function POST(request: NextRequest) {
 
     // Check if user already has an institution
     const existingInstitution = await prisma.institution.findFirst({
-      where: { userId: session.user.id }
+      where: { createdBy: session.user.id }
     });
 
     if (existingInstitution) {
@@ -114,28 +119,34 @@ export async function POST(request: NextRequest) {
     const institution = await prisma.institution.create({
       data: {
         name,
-        description,
-        type,
-        city,
-        country,
+        department,
+        region,
+        population,
+        mayorName,
+        mayorEmail,
+        mayorPhone,
+        address,
         website,
         phone,
         email,
-        logoUrl,
+        institutionType,
+        customType,
+        primaryColor,
+        secondaryColor,
         isActive: isActive ?? true,
-        userId: session.user.id
+        createdBy: session.user.id,
+        password: "default-password" // Required field
       },
       include: {
-        user: {
+        creator: {
           include: {
             profile: true
           }
         },
         _count: {
           select: {
-            courses: true,
-            programs: true,
-            students: true
+            companies: true,
+            profiles: true
           }
         }
       }

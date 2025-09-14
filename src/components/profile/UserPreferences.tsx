@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import {
-  Bell, 
   Shield, 
   Globe, 
   Save,
@@ -20,14 +19,6 @@ interface UserPreferencesProps {
 
 export function UserPreferences({ className }: UserPreferencesProps) {
   const [preferences, setPreferences] = useState({
-    // Notification preferences
-    emailNotifications: true,
-    pushNotifications: true,
-    smsNotifications: false,
-    jobAlerts: true,
-    courseUpdates: true,
-    messageNotifications: true,
-    weeklyDigest: true,
     
     // Privacy preferences
     profileVisibility: "public", // public, private, connections
@@ -73,13 +64,6 @@ export function UserPreferences({ className }: UserPreferencesProps) {
   const handleReset = () => {
     // Reset to default preferences
     setPreferences({
-      emailNotifications: true,
-      pushNotifications: true,
-      smsNotifications: false,
-      jobAlerts: true,
-      courseUpdates: true,
-      messageNotifications: true,
-      weeklyDigest: true,
       profileVisibility: "public",
       showEmail: false,
       showPhone: false,
@@ -105,141 +89,6 @@ export function UserPreferences({ className }: UserPreferencesProps) {
 
   return (
     <div className={`space-y-6 ${className}`}>
-      {/* Notification Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Bell className="h-5 w-5 mr-2" />
-            Notificaciones
-          </CardTitle>
-          <CardDescription>
-            Configura cómo y cuándo quieres recibir notificaciones
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-4">
-            <h4 className="font-medium">Tipos de Notificaciones</h4>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="email-notifications">Notificaciones por Email</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Recibe notificaciones importantes por correo electrónico
-                  </p>
-                </div>
-                <Switch
-                  id="email-notifications"
-                  checked={preferences.emailNotifications}
-                  onCheckedChange={(checked) => 
-                    setPreferences(prev => ({ ...prev, emailNotifications: checked }))
-                  }
-                />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="push-notifications">Notificaciones Push</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Recibe notificaciones en tu navegador
-                  </p>
-                </div>
-                <Switch
-                  id="push-notifications"
-                  checked={preferences.pushNotifications}
-                  onCheckedChange={(checked) => 
-                    setPreferences(prev => ({ ...prev, pushNotifications: checked }))
-                  }
-                />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="sms-notifications">Notificaciones SMS</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Recibe notificaciones por mensaje de texto
-                  </p>
-                </div>
-                <Switch
-                  id="sms-notifications"
-                  checked={preferences.smsNotifications}
-                  onCheckedChange={(checked) => 
-                    setPreferences(prev => ({ ...prev, smsNotifications: checked }))
-                  }
-                />
-              </div>
-            </div>
-          </div>
-          
-          <div className="space-y-4">
-            <h4 className="font-medium">Contenido de Notificaciones</h4>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="job-alerts">Alertas de Empleo</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Notificaciones sobre nuevas ofertas de trabajo
-                  </p>
-                </div>
-                <Switch
-                  id="job-alerts"
-                  checked={preferences.jobAlerts}
-                  onCheckedChange={(checked) => 
-                    setPreferences(prev => ({ ...prev, jobAlerts: checked }))
-                  }
-                />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="course-updates">Actualizaciones de Cursos</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Notificaciones sobre cursos y certificaciones
-                  </p>
-                </div>
-                <Switch
-                  id="course-updates"
-                  checked={preferences.courseUpdates}
-                  onCheckedChange={(checked) => 
-                    setPreferences(prev => ({ ...prev, courseUpdates: checked }))
-                  }
-                />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="message-notifications">Mensajes</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Notificaciones sobre nuevos mensajes
-                  </p>
-                </div>
-                <Switch
-                  id="message-notifications"
-                  checked={preferences.messageNotifications}
-                  onCheckedChange={(checked) => 
-                    setPreferences(prev => ({ ...prev, messageNotifications: checked }))
-                  }
-                />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="weekly-digest">Resumen Semanal</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Recibe un resumen semanal de actividad
-                  </p>
-                </div>
-                <Switch
-                  id="weekly-digest"
-                  checked={preferences.weeklyDigest}
-                  onCheckedChange={(checked) => 
-                    setPreferences(prev => ({ ...prev, weeklyDigest: checked }))
-                  }
-                />
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Privacy Settings */}
       <Card>

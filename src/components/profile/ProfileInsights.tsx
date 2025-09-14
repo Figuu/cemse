@@ -32,11 +32,6 @@ interface ProfileInsightsProps {
       averageLevel: number;
       topSkills: { name: string; level: number; views: number }[];
     };
-    recommendations: {
-      skillSuggestions: string[];
-      courseSuggestions: { title: string; reason: string }[];
-      jobSuggestions: { title: string; company: string; match: number }[];
-    };
   };
   className?: string;
 }
@@ -173,90 +168,6 @@ export function ProfileInsights({ analytics, className }: ProfileInsightsProps) 
         </CardContent>
       </Card>
 
-      {/* Recommendations */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Skill Suggestions */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Lightbulb className="h-5 w-5 mr-2" />
-              Sugerencias de Habilidades
-            </CardTitle>
-            <CardDescription>
-              Habilidades que podrías agregar a tu perfil
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {analytics.recommendations.skillSuggestions.map((skill, index) => (
-                <div key={index} className="flex items-center justify-between p-2 border rounded-lg">
-                  <span className="text-sm font-medium">{skill}</span>
-                  <Button size="sm" variant="outline" className="h-7">
-                    Agregar
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Course Suggestions */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <BookOpen className="h-5 w-5 mr-2" />
-              Cursos Recomendados
-            </CardTitle>
-            <CardDescription>
-              Cursos que podrían interesarte
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {analytics.recommendations.courseSuggestions.map((course, index) => (
-                <div key={index} className="p-3 border rounded-lg">
-                  <h4 className="text-sm font-medium mb-1">{course.title}</h4>
-                  <p className="text-xs text-muted-foreground mb-2">{course.reason}</p>
-                  <Button size="sm" variant="outline" className="w-full h-7">
-                    Ver Curso
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Job Suggestions */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Briefcase className="h-5 w-5 mr-2" />
-              Trabajos Recomendados
-            </CardTitle>
-            <CardDescription>
-              Ofertas que coinciden con tu perfil
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {analytics.recommendations.jobSuggestions.map((job, index) => (
-                <div key={index} className="p-3 border rounded-lg">
-                  <div className="flex items-center justify-between mb-1">
-                    <h4 className="text-sm font-medium">{job.title}</h4>
-                    <Badge className={getMatchColor(job.match)}>
-                      {job.match}% match
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground mb-2">{job.company}</p>
-                  <Button size="sm" variant="outline" className="w-full h-7">
-                    Ver Oferta
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Action Items */}
       <Card>

@@ -43,7 +43,6 @@ export async function GET(request: NextRequest) {
           select: {
             firstName: true,
             lastName: true,
-            email: true,
           },
         },
       },
@@ -264,7 +263,7 @@ async function getApplicationTimeline(applicationId: string) {
 }
 
 function calculatePriority(application: Record<string, unknown>) {
-  const daysSinceApplied = Math.floor((new Date().getTime() - application.appliedAt.getTime()) / (1000 * 60 * 60 * 24));
+  const daysSinceApplied = Math.floor((new Date().getTime() - (application.appliedAt as Date).getTime()) / (1000 * 60 * 60 * 24));
   
   // High priority if it's been more than 14 days without response
   if (daysSinceApplied > 14 && !application.reviewedAt) {

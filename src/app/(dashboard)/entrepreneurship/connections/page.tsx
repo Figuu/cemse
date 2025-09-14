@@ -45,11 +45,15 @@ export default function EntrepreneurshipConnectionsPage() {
     console.log("Connecting to user:", userId);
   };
 
-  const handleViewProfile = (user: Record<string, unknown>) => {
-    console.log("Viewing profile:", user.id);
+  const handleViewProfile = (userId: string) => {
+    console.log("Viewing profile:", userId);
   };
 
-  const handleMessage = (connection: Record<string, unknown>) => {
+  const handleViewUserProfile = (user: any) => {
+    console.log("Viewing user profile:", user.id);
+  };
+
+  const handleMessage = (connection: any) => {
     console.log("Messaging connection:", connection.id);
   };
 
@@ -239,7 +243,7 @@ export default function EntrepreneurshipConnectionsPage() {
                 ))}
               </div>
             ) : connections.length > 0 ? (
-              connections.map((connection) => (
+              connections.map((connection: any) => (
                 <ConnectionCard
                   key={connection.id}
                   connection={connection}
@@ -284,7 +288,7 @@ export default function EntrepreneurshipConnectionsPage() {
                 ))}
               </div>
             ) : acceptedConnections.length > 0 ? (
-              acceptedConnections.map((connection) => (
+              acceptedConnections.map((connection: any) => (
                 <ConnectionCard
                   key={connection.id}
                   connection={connection}
@@ -328,7 +332,7 @@ export default function EntrepreneurshipConnectionsPage() {
                 ))}
               </div>
             ) : pendingConnections.length > 0 ? (
-              pendingConnections.map((connection) => (
+              pendingConnections.map((connection: any) => (
                 <ConnectionCard
                   key={connection.id}
                   connection={connection}
@@ -372,7 +376,7 @@ export default function EntrepreneurshipConnectionsPage() {
                 ))}
               </div>
             ) : sentConnections.length > 0 ? (
-              sentConnections.map((connection) => (
+              sentConnections.map((connection: any) => (
                 <ConnectionCard
                   key={connection.id}
                   connection={connection}
@@ -416,7 +420,7 @@ export default function EntrepreneurshipConnectionsPage() {
                 ))}
               </div>
             ) : receivedConnections.length > 0 ? (
-              receivedConnections.map((connection) => (
+              receivedConnections.map((connection: any) => (
                 <ConnectionCard
                   key={connection.id}
                   connection={connection}
@@ -460,13 +464,13 @@ export default function EntrepreneurshipConnectionsPage() {
                 ))}
               </div>
             ) : availableUsers.length > 0 ? (
-              availableUsers.map((user) => (
+              availableUsers.map((user: any) => (
                 <UserCard
                   key={user.id}
                   user={user}
                   currentUserId={currentUserId}
                   onConnect={handleConnect}
-                  onViewProfile={handleViewProfile}
+                  onViewProfile={handleViewUserProfile}
                   onMessage={handleMessage}
                 />
               ))

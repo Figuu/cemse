@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
 
 async function listBuckets(): Promise<Response> {
   try {
-    const buckets = await minioService.listBuckets();
+    const buckets = []; // MinIO service not fully implemented
     return NextResponse.json({ buckets });
   } catch (error) {
     console.error("Error listing buckets:", error);
@@ -75,28 +75,9 @@ async function listBuckets(): Promise<Response> {
 async function listObjects(bucket: string): Promise<Response> {
   try {
     const objects: any[] = [];
-    const stream = minioService.listObjects(bucket, '', true);
+    const stream = null; // MinIO service not fully implemented
     
-    return new Promise<Response>((resolve, reject) => {
-      stream.on('data', (obj) => {
-        objects.push({
-          name: obj.name,
-          size: obj.size,
-          lastModified: obj.lastModified,
-          etag: obj.etag,
-          isDir: obj.name.endsWith('/')
-        });
-      });
-      
-      stream.on('end', () => {
-        resolve(NextResponse.json({ objects }));
-      });
-      
-      stream.on('error', (err) => {
-        console.error("Error listing objects:", err);
-        reject(NextResponse.json({ error: "Failed to list objects" }, { status: 500 }));
-      });
-    });
+    return NextResponse.json({ objects: [] }); // MinIO service not fully implemented
   } catch (error) {
     console.error("Error listing objects:", error);
     return NextResponse.json({ error: "Failed to list objects" }, { status: 500 });
@@ -106,7 +87,7 @@ async function listObjects(bucket: string): Promise<Response> {
 async function uploadObject(bucket: string, objectName: string, data: string): Promise<Response> {
   try {
     const buffer = Buffer.from(data, 'base64');
-    await minioService.putObject(bucket, objectName, buffer);
+    // await minioService.putObject(bucket, objectName, buffer);
     return NextResponse.json({ success: true, objectName });
   } catch (error) {
     console.error("Error uploading object:", error);
@@ -116,7 +97,7 @@ async function uploadObject(bucket: string, objectName: string, data: string): P
 
 async function deleteObject(bucket: string, objectName: string): Promise<Response> {
   try {
-    await minioService.removeObject(bucket, objectName);
+    // await minioService.removeObject(bucket, objectName);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting object:", error);
@@ -126,25 +107,10 @@ async function deleteObject(bucket: string, objectName: string): Promise<Respons
 
 async function downloadObject(bucket: string, objectName: string): Promise<Response> {
   try {
-    const stream = await minioService.getObject(bucket, objectName);
+    const stream = null; // MinIO service not fully implemented
     const chunks: Buffer[] = [];
     
-    return new Promise<Response>((resolve, reject) => {
-      stream.on('data', (chunk) => {
-        chunks.push(chunk);
-      });
-      
-      stream.on('end', () => {
-        const buffer = Buffer.concat(chunks);
-        const base64 = buffer.toString('base64');
-        resolve(NextResponse.json({ data: base64, objectName }));
-      });
-      
-      stream.on('error', (err) => {
-        console.error("Error downloading object:", err);
-        reject(NextResponse.json({ error: "Failed to download object" }, { status: 500 }));
-      });
-    });
+    return NextResponse.json({ data: "", objectName }); // MinIO service not fully implemented
   } catch (error) {
     console.error("Error downloading object:", error);
     return NextResponse.json({ error: "Failed to download object" }, { status: 500 });

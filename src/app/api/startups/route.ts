@@ -105,12 +105,7 @@ export async function GET(request: NextRequest) {
           businessPlan: {
             select: {
               id: true,
-              executiveSummary: true,
-            },
-          },
-          _count: {
-            select: {
-              // Add any relations that need counting
+              // executiveSummary: true, // This field doesn't exist in BusinessPlan model
             },
           },
         },
@@ -196,7 +191,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Datos inválidos", details: error.errors },
+        { error: "Datos inválidos", details: error.issues },
         { status: 400 }
       );
     }

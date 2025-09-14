@@ -27,16 +27,8 @@ export async function GET(request: NextRequest) {
       },
       orderBy: { createdAt: "desc" },
       include: {
-        sender: {
-          include: {
-            profile: true,
-          },
-        },
-        recipient: {
-          include: {
-            profile: true,
-          },
-        },
+        sender: true,
+        recipient: true,
       },
     });
 
@@ -64,7 +56,7 @@ export async function GET(request: NextRequest) {
       conversation.totalMessages++;
       
       // Count unread messages (only for messages where current user is recipient)
-      if (!isSender && !message.isRead) {
+      if (!isSender && !message.readAt) {
         conversation.unreadCount++;
       }
 
@@ -80,9 +72,9 @@ export async function GET(request: NextRequest) {
         id: conversation.id,
         otherUser: {
           id: conversation.otherUser.id,
-          name: `${conversation.otherUser.profile?.firstName || ''} ${conversation.otherUser.profile?.lastName || ''}`.trim(),
-          role: conversation.otherUser.role,
-          avatar: conversation.otherUser.profile?.avatarUrl,
+          name: `${conversation.otherUser.firstName || ''} ${conversation.otherUser.lastName || ''}`.trim(),
+          role: conversation.otherUser.user?.role,
+          avatar: conversation.otherUser.avatarUrl,
         },
         contextType: conversation.contextType,
         contextId: conversation.contextId,
@@ -90,13 +82,13 @@ export async function GET(request: NextRequest) {
           id: conversation.lastMessage.id,
           content: conversation.lastMessage.content,
           messageType: conversation.lastMessage.messageType,
-          isRead: conversation.lastMessage.isRead,
+          isRead: !!conversation.lastMessage.readAt,
           createdAt: conversation.lastMessage.createdAt.toISOString(),
           sender: {
             id: conversation.lastMessage.sender.id,
-            name: `${conversation.lastMessage.sender.profile?.firstName || ''} ${conversation.lastMessage.sender.profile?.lastName || ''}`.trim(),
-            role: conversation.lastMessage.sender.role,
-            avatar: conversation.lastMessage.sender.profile?.avatarUrl,
+            name: `${conversation.lastMessage.sender.firstName || ''} ${conversation.lastMessage.sender.lastName || ''}`.trim(),
+            role: conversation.lastMessage.sender.user?.role,
+            avatar: conversation.lastMessage.sender.avatarUrl,
           },
         },
         unreadCount: conversation.unreadCount,

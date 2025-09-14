@@ -56,13 +56,33 @@ export async function GET(request: NextRequest) {
         take: limit,
         include: {
           sender: {
-            include: {
-              profile: true,
+            select: {
+              userId: true,
+              firstName: true,
+              lastName: true,
+              avatarUrl: true,
+              user: {
+                select: {
+                  id: true,
+                  email: true,
+                  role: true,
+                },
+              },
             },
           },
           recipient: {
-            include: {
-              profile: true,
+            select: {
+              userId: true,
+              firstName: true,
+              lastName: true,
+              avatarUrl: true,
+              user: {
+                select: {
+                  id: true,
+                  email: true,
+                  role: true,
+                },
+              },
             },
           },
         },
@@ -77,22 +97,22 @@ export async function GET(request: NextRequest) {
       recipientId: message.recipientId,
       content: message.content,
       messageType: message.messageType,
-      isRead: message.isRead,
+      isRead: !!message.readAt,
       contextType: message.contextType,
       contextId: message.contextId,
       createdAt: message.createdAt.toISOString(),
-      updatedAt: message.updatedAt.toISOString(),
+      updatedAt: message.createdAt.toISOString(), // Use createdAt since updatedAt doesn't exist
       sender: {
-        id: message.sender.id,
-        name: `${message.sender.profile?.firstName || ''} ${message.sender.profile?.lastName || ''}`.trim(),
-        role: message.sender.role,
-        avatar: message.sender.profile?.avatarUrl,
+        id: message.sender.user.id,
+        name: `${message.sender.firstName || ''} ${message.sender.lastName || ''}`.trim(),
+        role: message.sender.user.role,
+        avatar: message.sender.avatarUrl,
       },
       recipient: {
-        id: message.recipient.id,
-        name: `${message.recipient.profile?.firstName || ''} ${message.recipient.profile?.lastName || ''}`.trim(),
-        role: message.recipient.role,
-        avatar: message.recipient.profile?.avatarUrl,
+        id: message.recipient.user.id,
+        name: `${message.recipient.firstName || ''} ${message.recipient.lastName || ''}`.trim(),
+        role: message.recipient.user.role,
+        avatar: message.recipient.avatarUrl,
       },
     }));
 
@@ -160,38 +180,39 @@ export async function POST(request: NextRequest) {
       },
       include: {
         sender: {
-          include: {
-            profile: true,
+          select: {
+            userId: true,
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
+            user: {
+              select: {
+                id: true,
+                email: true,
+                role: true,
+              },
+            },
           },
         },
         recipient: {
-          include: {
-            profile: true,
+          select: {
+            userId: true,
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
+            user: {
+              select: {
+                id: true,
+                email: true,
+                role: true,
+              },
+            },
           },
         },
       },
     });
 
-    // Create notification for recipient
-    try {
-      await prisma.notification.create({
-        data: {
-          userId: recipientId,
-          type: "MESSAGE",
-          title: "Nuevo Mensaje",
-          message: `Nuevo mensaje de ${newMessage.sender.profile?.firstName} ${newMessage.sender.profile?.lastName}`,
-          data: {
-            messageId: newMessage.id,
-            senderId: session.user.id,
-            contextType,
-            contextId,
-          },
-        },
-      });
-    } catch (notificationError) {
-      console.error("Error creating message notification:", notificationError);
-      // Don't fail the message creation if notification fails
-    }
+    // Note: Notification creation removed as Notification model doesn't exist
 
     return NextResponse.json({
       success: true,
@@ -201,22 +222,22 @@ export async function POST(request: NextRequest) {
         recipientId: newMessage.recipientId,
         content: newMessage.content,
         messageType: newMessage.messageType,
-        isRead: newMessage.isRead,
+        isRead: !!newMessage.readAt,
         contextType: newMessage.contextType,
         contextId: newMessage.contextId,
         createdAt: newMessage.createdAt.toISOString(),
-        updatedAt: newMessage.updatedAt.toISOString(),
+        updatedAt: newMessage.createdAt.toISOString(), // Use createdAt since updatedAt doesn't exist
         sender: {
-          id: newMessage.sender.id,
-          name: `${newMessage.sender.profile?.firstName || ''} ${newMessage.sender.profile?.lastName || ''}`.trim(),
-          role: newMessage.sender.role,
-          avatar: newMessage.sender.profile?.avatarUrl,
+          id: newMessage.sender.user.id,
+          name: `${newMessage.sender.firstName || ''} ${newMessage.sender.lastName || ''}`.trim(),
+          role: newMessage.sender.user.role,
+          avatar: newMessage.sender.avatarUrl,
         },
         recipient: {
-          id: newMessage.recipient.id,
-          name: `${newMessage.recipient.profile?.firstName || ''} ${newMessage.recipient.profile?.lastName || ''}`.trim(),
-          role: newMessage.recipient.role,
-          avatar: newMessage.recipient.profile?.avatarUrl,
+          id: newMessage.recipient.user.id,
+          name: `${newMessage.recipient.firstName || ''} ${newMessage.recipient.lastName || ''}`.trim(),
+          role: newMessage.recipient.user.role,
+          avatar: newMessage.recipient.avatarUrl,
         },
       },
     });

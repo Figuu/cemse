@@ -17,7 +17,7 @@ const updateYouthApplicationSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -26,31 +26,28 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await params;
+
     const application = await prisma.youthApplication.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         youthProfile: {
           select: {
-            id: true,
-            email: true,
-            profile: {
-              select: {
-                firstName: true,
-                lastName: true,
-                avatarUrl: true,
-                phone: true,
-                address: true,
-                city: true,
-                skillsWithLevel: true,
-                workExperience: true,
-                educationLevel: true,
-                professionalSummary: true,
-                birthDate: true,
-                languages: true,
-                projects: true,
-                achievements: true,
-              },
-            },
+            userId: true,
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
+            phone: true,
+            address: true,
+            city: true,
+            skillsWithLevel: true,
+            workExperience: true,
+            educationLevel: true,
+            professionalSummary: true,
+            birthDate: true,
+            languages: true,
+            projects: true,
+            achievements: true,
           },
         },
         companyInterests: {
@@ -60,8 +57,8 @@ export async function GET(
                 id: true,
                 name: true,
                 logoUrl: true,
-                industry: true,
-                location: true,
+                // industry: true, // This field doesn't exist
+                // location: true, // This field doesn't exist in Company model
                 website: true,
               },
             },
@@ -87,7 +84,7 @@ export async function GET(
     const canView = 
       application.youthProfileId === session.user.id || // Owner
       application.isPublic || // Public application
-      session.user.role === "ADMIN"; // Admin can see all
+      session.user.role === "SUPERADMIN"; // Admin can see all
 
     if (!canView) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -96,7 +93,7 @@ export async function GET(
     // Increment view count if not the owner
     if (application.youthProfileId !== session.user.id) {
       await prisma.youthApplication.update({
-        where: { id: params.id },
+        where: { id },
         data: { viewsCount: { increment: 1 } },
       });
     }
@@ -118,9 +115,9 @@ export async function GET(
         cvUrl: application.cvUrl,
         coverLetterUrl: application.coverLetterUrl,
         youth: {
-          id: application.youthProfile.id,
-          email: application.youthProfile.email,
-          profile: application.youthProfile.profile,
+          id: application.youthProfile.userId,
+          email: '', // Email not available in profile
+          profile: application.youthProfile,
         },
         companyInterests: application.companyInterests,
         totalInterests: application._count.companyInterests,
@@ -138,7 +135,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -147,12 +144,13 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await params;
     const body = await request.json();
     const validatedData = updateYouthApplicationSchema.parse(body);
 
     // Check if application exists and user owns it
     const application = await prisma.youthApplication.findUnique({
-      where: { id: params.id },
+      where: { id },
       select: { youthProfileId: true },
     });
 
@@ -168,22 +166,17 @@ export async function PUT(
     }
 
     const updatedApplication = await prisma.youthApplication.update({
-      where: { id: params.id },
+      where: { id },
       data: validatedData,
       include: {
-        youthProfile: {
-          select: {
-            id: true,
-            email: true,
-            profile: {
-              select: {
-                firstName: true,
-                lastName: true,
-                avatarUrl: true,
-              },
+          youthProfile: {
+            select: {
+              userId: true,
+              firstName: true,
+              lastName: true,
+              avatarUrl: true,
             },
           },
-        },
       },
     });
 
@@ -197,9 +190,9 @@ export async function PUT(
         isPublic: updatedApplication.isPublic,
         updatedAt: updatedApplication.updatedAt.toISOString(),
         youth: {
-          id: updatedApplication.youthProfile.id,
-          email: updatedApplication.youthProfile.email,
-          profile: updatedApplication.youthProfile.profile,
+          id: updatedApplication.youthProfile.userId,
+          email: '', // Email not available in profile
+          profile: updatedApplication.youthProfile,
         },
       },
     });
@@ -207,7 +200,7 @@ export async function PUT(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Validation error", details: error.errors },
+        { error: "Validation error", details: error.issues },
         { status: 400 }
       );
     }
@@ -222,7 +215,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -231,9 +224,11 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await params;
+
     // Check if application exists and user owns it
     const application = await prisma.youthApplication.findUnique({
-      where: { id: params.id },
+      where: { id },
       select: { youthProfileId: true },
     });
 
@@ -250,7 +245,7 @@ export async function DELETE(
 
     // Soft delete by setting status to CLOSED
     await prisma.youthApplication.update({
-      where: { id: params.id },
+      where: { id },
       data: { status: "CLOSED" },
     });
 

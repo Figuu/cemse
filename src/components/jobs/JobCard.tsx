@@ -29,6 +29,7 @@ interface JobCardProps {
   onLike?: (jobId: string) => void;
   onShare?: (jobId: string) => void;
   onApply?: (jobId: string) => void;
+  onBookmark?: (jobId: string) => void;
   variant?: "default" | "featured" | "compact";
   showActions?: boolean;
 }
@@ -39,6 +40,7 @@ export function JobCard({
   onLike,
   onShare,
   onApply,
+  onBookmark,
   variant = "default",
   showActions = true
 }: JobCardProps) {
@@ -60,6 +62,12 @@ export function JobCard({
   const handleApply = () => {
     if (onApply) {
       onApply(job.id);
+    }
+  };
+
+  const handleBookmark = () => {
+    if (onBookmark) {
+      onBookmark(job.id);
     }
   };
 
@@ -121,7 +129,7 @@ export function JobCard({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={handleLike}
+                onClick={onBookmark ? handleBookmark : handleLike}
                 className="h-8 w-8 p-0"
               >
                 <Heart className={`h-4 w-4 ${isLiked ? 'fill-current text-red-500' : ''}`} />
@@ -177,7 +185,7 @@ export function JobCard({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={handleLike}
+                onClick={onBookmark ? handleBookmark : handleLike}
                 className="flex items-center gap-1"
               >
                 <Heart className={`h-4 w-4 ${isLiked ? 'fill-current text-red-500' : ''}`} />
@@ -294,7 +302,7 @@ export function JobCard({
             <Button
               variant="ghost"
               size="sm"
-              onClick={handleLike}
+              onClick={onBookmark ? handleBookmark : handleLike}
               className="h-8 w-8 p-0"
             >
               <Heart className={`h-4 w-4 ${isLiked ? 'fill-current text-red-500' : ''}`} />

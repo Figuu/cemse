@@ -17,39 +17,35 @@ export async function GET(
     const application = await prisma.jobApplication.findFirst({
       where: { 
         id: applicationId,
-        jobId: jobId,
-        companyId: companyId,
+        jobOfferId: jobId,
+        jobOffer: {
+          companyId: companyId,
+        },
       },
       include: {
         applicant: {
           select: {
-            id: true,
-            email: true,
-            profile: {
-              select: {
-                firstName: true,
-                lastName: true,
-                avatarUrl: true,
-                phone: true,
-                address: true,
-                birthDate: true,
-                gender: true,
-              },
-            },
+            userId: true,
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
+            phone: true,
+            address: true,
+            birthDate: true,
+            gender: true,
           },
         },
-        job: {
+        jobOffer: {
           select: {
             id: true,
             title: true,
             description: true,
             requirements: true,
-            responsibilities: true,
             company: {
               select: {
                 id: true,
                 name: true,
-                logo: true,
+                logoUrl: true,
               },
             },
           },
@@ -89,7 +85,7 @@ export async function PUT(
     // Check if user owns the company
     const company = await prisma.company.findUnique({
       where: { id: companyId },
-      select: { ownerId: true },
+      select: { createdBy: true },
     });
 
     if (!company) {
@@ -99,7 +95,7 @@ export async function PUT(
       );
     }
 
-    if (company.ownerId !== userId) {
+    if (company.createdBy !== userId) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 403 }
@@ -112,14 +108,14 @@ export async function PUT(
     if (validatedData.status) {
       const now = new Date();
       switch (validatedData.status) {
-        case "REVIEWED":
+        case "UNDER_REVIEW":
           updateData.reviewedAt = now;
           break;
-        case "INTERVIEWED":
-          updateData.interviewedAt = now;
+        case "PRE_SELECTED":
+          updateData.reviewedAt = now; // Using reviewedAt as proxy
           break;
         case "REJECTED":
-          updateData.rejectedAt = now;
+          updateData.reviewedAt = now; // Using reviewedAt as proxy
           break;
         case "HIRED":
           updateData.hiredAt = now;
@@ -133,18 +129,13 @@ export async function PUT(
       include: {
         applicant: {
           select: {
-            id: true,
-            email: true,
-            profile: {
-              select: {
-                firstName: true,
-                lastName: true,
-                avatarUrl: true,
-              },
-            },
+            userId: true,
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
           },
         },
-        job: {
+        jobOffer: {
           select: {
             id: true,
             title: true,
@@ -163,7 +154,7 @@ export async function PUT(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Validation error", details: error.errors },
+        { error: "Validation error", details: error.issues },
         { status: 400 }
       );
     }
@@ -189,12 +180,18 @@ export async function DELETE(
     const application = await prisma.jobApplication.findFirst({
       where: { 
         id: applicationId,
-        jobId: jobId,
-        companyId: companyId,
+        jobOfferId: jobId,
+        jobOffer: {
+          companyId: companyId,
+        },
       },
       include: {
-        company: {
-          select: { ownerId: true },
+        jobOffer: {
+          select: {
+            company: {
+              select: { createdBy: true },
+            },
+          },
         },
       },
     });
@@ -206,7 +203,7 @@ export async function DELETE(
       );
     }
 
-    const isCompanyOwner = application.company.ownerId === userId;
+    const isCompanyOwner = application.jobOffer.company.createdBy === userId;
     const isApplicant = application.applicantId === userId;
 
     if (!isCompanyOwner && !isApplicant) {
@@ -220,17 +217,8 @@ export async function DELETE(
       where: { id: applicationId },
     });
 
-    // Update job application count
-    await prisma.jobPosting.update({
-      where: { id: jobId },
-      data: { totalApplications: { decrement: 1 } },
-    });
-
-    // Update company application count
-    await prisma.company.update({
-      where: { id: companyId },
-      data: { totalApplications: { decrement: 1 } },
-    });
+    // Note: JobOffer and Company models don't have totalApplications field
+    // These updates would need to be implemented if the fields exist in the schema
 
     return NextResponse.json({ message: "Application deleted successfully" });
   } catch (error) {

@@ -21,7 +21,7 @@ export default function CreateJobPage() {
   const { data: company, isLoading: companyLoading } = useCompany(companyId);
   const createJobMutation = useCreateJob(companyId);
 
-  const handleSubmit = async (data: Partial<JobPosting>) => {
+  const handleSubmit = async (data: any) => {
     setIsSubmitting(true);
     try {
       const newJob = await createJobMutation.mutateAsync(data);

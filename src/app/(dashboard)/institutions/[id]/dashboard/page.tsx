@@ -297,10 +297,10 @@ export default function InstitutionDashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {programs.reduce((acc, program) => {
+                  {Object.entries(programs.reduce((acc, program) => {
                     acc[program.level] = (acc[program.level] || 0) + 1;
                     return acc;
-                  }, {} as Record<string, number>).map(([level, count]) => (
+                  }, {} as Record<string, number>)).map(([level, count]) => (
                     <div key={level} className="flex items-center justify-between">
                       <span className="text-sm">{level}</span>
                       <div className="flex items-center gap-2">

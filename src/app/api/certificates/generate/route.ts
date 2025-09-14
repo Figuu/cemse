@@ -50,8 +50,11 @@ export async function POST(request: NextRequest) {
         include: {
           course: true,
           student: {
-            include: {
-              profile: true,
+            select: {
+              userId: true,
+              firstName: true,
+              lastName: true,
+              avatarUrl: true,
             },
           },
         },
@@ -70,8 +73,11 @@ export async function POST(request: NextRequest) {
             },
           },
           student: {
-            include: {
-              profile: true,
+            select: {
+              userId: true,
+              firstName: true,
+              lastName: true,
+              avatarUrl: true,
             },
           },
         },
@@ -88,22 +94,22 @@ export async function POST(request: NextRequest) {
       certificate: {
         id: certificate.id,
         type: courseId ? "course" : "module",
-        certificateUrl: certificate.certificateUrl,
+        certificateUrl: certificate.fileUrl,
         issuedAt: certificate.issuedAt.toISOString(),
         student: {
-          id: certificate.student.id,
-          name: `${certificate.student.profile?.firstName || ''} ${certificate.student.profile?.lastName || ''}`.trim(),
+          id: certificate.student.userId,
+          name: `${certificate.student.firstName || ''} ${certificate.student.lastName || ''}`.trim(),
         },
         course: courseId ? {
-          id: certificate.course.id,
-          title: certificate.course.title,
+          id: (certificate as any).course.id,
+          title: (certificate as any).course.title,
         } : {
-          id: certificate.module.course.id,
-          title: certificate.module.course.title,
+          id: (certificate as any).module.course.id,
+          title: (certificate as any).module.course.title,
         },
         module: moduleId ? {
-          id: certificate.module.id,
-          title: certificate.module.title,
+          id: (certificate as any).module.id,
+          title: (certificate as any).module.title,
         } : null,
       },
     });

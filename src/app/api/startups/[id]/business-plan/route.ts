@@ -33,7 +33,7 @@ const businessPlanSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -42,10 +42,12 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await params;
+
     // Check if startup exists and user can access it
     const startup = await prisma.entrepreneurship.findUnique({
       where: {
-        id: params.id,
+        id,
         isActive: true,
       },
       select: {
@@ -74,7 +76,7 @@ export async function GET(
     // Get business plan
     const businessPlan = await prisma.businessPlan.findUnique({
       where: {
-        entrepreneurshipId: params.id,
+        entrepreneurshipId: id,
       },
     });
 
@@ -94,7 +96,7 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -103,13 +105,14 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await params;
     const body = await request.json();
     const validatedData = businessPlanSchema.parse(body);
 
     // Check if startup exists and user owns it
     const startup = await prisma.entrepreneurship.findUnique({
       where: {
-        id: params.id,
+        id,
         isActive: true,
       },
       select: {
@@ -135,7 +138,7 @@ export async function POST(
     // Check if business plan already exists
     const existingPlan = await prisma.businessPlan.findUnique({
       where: {
-        entrepreneurshipId: params.id,
+        entrepreneurshipId: id,
       },
     });
 
@@ -149,8 +152,8 @@ export async function POST(
     // Create business plan
     const businessPlan = await prisma.businessPlan.create({
       data: {
-        entrepreneurshipId: params.id,
-        ...validatedData,
+        entrepreneurshipId: id,
+        content: validatedData,
       },
     });
 
@@ -163,7 +166,7 @@ export async function POST(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Datos inválidos", details: error.errors },
+        { error: "Datos inválidos", details: error.issues },
         { status: 400 }
       );
     }
@@ -178,7 +181,7 @@ export async function POST(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -187,13 +190,14 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await params;
     const body = await request.json();
     const validatedData = businessPlanSchema.parse(body);
 
     // Check if startup exists and user owns it
     const startup = await prisma.entrepreneurship.findUnique({
       where: {
-        id: params.id,
+        id,
         isActive: true,
       },
       select: {
@@ -219,7 +223,7 @@ export async function PUT(
     // Check if business plan exists
     const existingPlan = await prisma.businessPlan.findUnique({
       where: {
-        entrepreneurshipId: params.id,
+        entrepreneurshipId: id,
       },
     });
 
@@ -233,9 +237,11 @@ export async function PUT(
     // Update business plan
     const businessPlan = await prisma.businessPlan.update({
       where: {
-        entrepreneurshipId: params.id,
+        entrepreneurshipId: id,
       },
-      data: validatedData,
+      data: {
+        content: validatedData,
+      },
     });
 
     return NextResponse.json({
@@ -247,7 +253,7 @@ export async function PUT(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Datos inválidos", details: error.errors },
+        { error: "Datos inválidos", details: error.issues },
         { status: 400 }
       );
     }

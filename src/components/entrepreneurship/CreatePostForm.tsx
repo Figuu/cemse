@@ -19,7 +19,7 @@ import {
   X,
   Plus
 } from "lucide-react";
-import { PostType } from "@/hooks/useEntrepreneurshipPosts";
+import { PostType } from "@prisma/client";
 import { useEntrepreneurshipPosts } from "@/hooks/useEntrepreneurshipPosts";
 
 interface CreatePostFormProps {
@@ -34,43 +34,43 @@ interface CreatePostFormProps {
 
 const postTypes: { value: PostType; label: string; icon: any; description: string }[] = [
   { 
-    value: "TEXT", 
+    value: PostType.TEXT, 
     label: "Publicación", 
     icon: ImageIcon, 
     description: "Comparte tus pensamientos e ideas" 
   },
   { 
-    value: "IMAGE", 
+    value: PostType.IMAGE, 
     label: "Imagen", 
     icon: ImageIcon, 
     description: "Comparte una imagen o foto" 
   },
   { 
-    value: "VIDEO", 
+    value: PostType.VIDEO, 
     label: "Video", 
     icon: Video, 
     description: "Comparte un video" 
   },
   { 
-    value: "LINK", 
+    value: PostType.LINK, 
     label: "Enlace", 
     icon: LinkIcon, 
     description: "Comparte un enlace interesante" 
   },
   { 
-    value: "QUESTION", 
+    value: PostType.QUESTION, 
     label: "Pregunta", 
     icon: HelpCircle, 
     description: "Haz una pregunta a la comunidad" 
   },
   { 
-    value: "ACHIEVEMENT", 
+    value: PostType.ACHIEVEMENT, 
     label: "Logro", 
     icon: Award, 
     description: "Celebra un logro o hito" 
   },
   { 
-    value: "ANNOUNCEMENT", 
+    value: PostType.ANNOUNCEMENT, 
     label: "Anuncio", 
     icon: Megaphone, 
     description: "Haz un anuncio importante" 
@@ -79,7 +79,7 @@ const postTypes: { value: PostType; label: string; icon: any; description: strin
 
 export function CreatePostForm({ currentUser, onSuccess, onCancel }: CreatePostFormProps) {
   const [content, setContent] = useState("");
-  const [type, setType] = useState<PostType>("TEXT");
+  const [type, setType] = useState<PostType>(PostType.TEXT);
   const [images, setImages] = useState<string[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");

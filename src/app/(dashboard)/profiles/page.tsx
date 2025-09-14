@@ -22,7 +22,6 @@ import { cn, getInitials } from "@/lib/utils";
 import { useProfiles } from "@/hooks/useProfiles";
 import { RoleGuard } from "@/components/auth/RoleGuard";
 import { ProfileSearchFilters, ProfileFilters } from "@/components/profile/ProfileSearchFilters";
-import { ProfileRecommendations } from "@/components/profile/ProfileRecommendations";
 
 
 export default function ProfilesPage() {
@@ -361,10 +360,6 @@ export default function ProfilesPage() {
           </div>
         </div>
 
-        {/* Recommendations Sidebar */}
-        <div className="mt-8">
-          <ProfileRecommendations />
-        </div>
       </div>
     </RoleGuard>
   );

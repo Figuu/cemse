@@ -111,8 +111,6 @@ export class CertificateService {
         },
       });
 
-      // Send notification
-      await this.sendCertificateNotification(studentId, courseId, certificate.id, "course");
 
       return certificateUrl;
     } catch (error) {
@@ -199,8 +197,6 @@ export class CertificateService {
         },
       });
 
-      // Send notification
-      await this.sendCertificateNotification(studentId, courseModule.courseId, certificate.id, "module");
 
       return certificateUrl;
     } catch (error) {
@@ -229,35 +225,6 @@ export class CertificateService {
     return `${baseUrl}/api/certificates/${certificateId}/download`;
   }
 
-  /**
-   * Send certificate notification to student
-   * Note: This is a placeholder implementation since the Notification model doesn't exist in the schema yet
-   */
-  private static async sendCertificateNotification(
-    studentId: string,
-    courseId: string,
-    certificateId: string,
-    type: "course" | "module"
-  ): Promise<void> {
-    try {
-      const course = await prisma.course.findUnique({
-        where: { id: courseId },
-      });
-
-      if (!course) return;
-
-      // TODO: Implement when Notification model is added to schema
-      console.log(`Certificate notification would be sent for ${type} certificate:`, {
-        studentId,
-        courseId,
-        certificateId,
-        courseTitle: course.title
-      });
-    } catch (error) {
-      console.error("Error sending certificate notification:", error);
-      // Don't throw error as this is not critical
-    }
-  }
 
   /**
    * Get certificate download URL

@@ -48,15 +48,62 @@ export class MinIOService {
    */
   async initializeBuckets(): Promise<void> {
     try {
+      console.log('Initializing MinIO buckets...');
+      
       for (const bucketName of Object.values(BUCKETS)) {
-        const exists = await this.client.bucketExists(bucketName);
-        if (!exists) {
-          await this.client.makeBucket(bucketName, 'us-east-1');
-          console.log(`Created bucket: ${bucketName}`);
+        try {
+          const exists = await this.client.bucketExists(bucketName);
+          if (!exists) {
+            await this.client.makeBucket(bucketName, 'us-east-1');
+            console.log(`✅ Created bucket: ${bucketName}`);
+            
+            // Set bucket policy to public read
+            try {
+              const policy = {
+                Version: '2012-10-17',
+                Statement: [
+                  {
+                    Effect: 'Allow',
+                    Principal: { AWS: ['*'] },
+                    Action: ['s3:GetObject'],
+                    Resource: [`arn:aws:s3:::${bucketName}/*`]
+                  }
+                ]
+              };
+              await this.client.setBucketPolicy(bucketName, JSON.stringify(policy));
+              console.log(`✅ Set public policy for bucket: ${bucketName}`);
+            } catch (policyError) {
+              console.warn(`⚠️ Could not set policy for bucket ${bucketName}:`, policyError.message);
+            }
+          } else {
+            // Ensure existing buckets also have public read policy
+            try {
+              const policy = {
+                Version: '2012-10-17',
+                Statement: [
+                  {
+                    Effect: 'Allow',
+                    Principal: { AWS: ['*'] },
+                    Action: ['s3:GetObject'],
+                    Resource: [`arn:aws:s3:::${bucketName}/*`]
+                  }
+                ]
+              };
+              await this.client.setBucketPolicy(bucketName, JSON.stringify(policy));
+              console.log(`✅ Updated public policy for existing bucket: ${bucketName}`);
+            } catch (policyError) {
+              console.warn(`⚠️ Could not update policy for existing bucket ${bucketName}:`, policyError.message);
+            }
+          }
+        } catch (bucketError) {
+          console.error(`❌ Error with bucket ${bucketName}:`, bucketError.message);
+          throw bucketError;
         }
       }
+      
+      console.log('✅ All MinIO buckets initialized successfully');
     } catch (error) {
-      console.error('Error initializing MinIO buckets:', error);
+      console.error('❌ Error initializing MinIO buckets:', error);
       throw error;
     }
   }

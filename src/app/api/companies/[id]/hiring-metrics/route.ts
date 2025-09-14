@@ -56,7 +56,9 @@ export async function GET(
 
     // Build where clause for applications
     const applicationWhere: any = {
-      companyId: companyId,
+      jobOffer: {
+        companyId: companyId,
+      },
       appliedAt: {
         gte: startDate,
         lte: endDate,
@@ -64,33 +66,29 @@ export async function GET(
     };
 
     if (validatedQuery.jobId) {
-      applicationWhere.jobId = validatedQuery.jobId;
+      applicationWhere.jobOfferId = validatedQuery.jobId;
     }
 
     // Get applications with detailed information
     const applications = await prisma.jobApplication.findMany({
       where: applicationWhere,
       include: {
-        job: {
+        jobOffer: {
           select: {
             id: true,
             title: true,
             department: true,
-            employmentType: true,
+            contractType: true,
             experienceLevel: true,
             createdAt: true,
           },
         },
         applicant: {
           select: {
-            id: true,
-            profile: {
-              select: {
-                firstName: true,
-                lastName: true,
-                address: true,
-              },
-            },
+            userId: true,
+            firstName: true,
+            lastName: true,
+            address: true,
           },
         },
       },
@@ -99,12 +97,12 @@ export async function GET(
 
     // Calculate hiring funnel metrics
     const totalApplications = applications.length;
-    const pendingApplications = applications.filter(app => app.status === "PENDING").length;
-    const reviewedApplications = applications.filter(app => app.status === "REVIEWED").length;
-    const interviewedApplications = applications.filter(app => app.status === "INTERVIEWED").length;
+    const pendingApplications = applications.filter(app => app.status === "SENT").length;
+    const reviewedApplications = applications.filter(app => app.status === "UNDER_REVIEW").length;
+    const interviewedApplications = applications.filter(app => app.status === "PRE_SELECTED").length;
     const rejectedApplications = applications.filter(app => app.status === "REJECTED").length;
     const hiredApplications = applications.filter(app => app.status === "HIRED").length;
-    const withdrawnApplications = applications.filter(app => app.status === "WITHDRAWN").length;
+    const withdrawnApplications = 0; // No WITHDRAWN status in enum
 
     // Calculate conversion rates
     const conversionRates = {
@@ -133,13 +131,13 @@ export async function GET(
       timeMetrics.averageTimeToReview = totalTimeToReview / reviewedApps.length / (1000 * 60 * 60 * 24); // Convert to days
     }
 
-    // Calculate time to interview
-    const interviewedApps = applications.filter(app => app.interviewedAt);
+    // Calculate time to interview (using reviewedAt as proxy for interview time)
+    const interviewedApps = applications.filter(app => app.status === "PRE_SELECTED" && app.reviewedAt);
     if (interviewedApps.length > 0) {
       const totalTimeToInterview = interviewedApps.reduce((sum, app) => {
         const appliedAt = new Date(app.appliedAt);
-        const interviewedAt = new Date(app.interviewedAt!);
-        return sum + (interviewedAt.getTime() - appliedAt.getTime());
+        const reviewedAt = new Date(app.reviewedAt!);
+        return sum + (reviewedAt.getTime() - appliedAt.getTime());
       }, 0);
       timeMetrics.averageTimeToInterview = totalTimeToInterview / interviewedApps.length / (1000 * 60 * 60 * 24); // Convert to days
     }
@@ -155,13 +153,13 @@ export async function GET(
       timeMetrics.averageTimeToHire = totalTimeToHire / hiredApps.length / (1000 * 60 * 60 * 24); // Convert to days
     }
 
-    // Calculate time to reject
-    const rejectedApps = applications.filter(app => app.rejectedAt);
+    // Calculate time to reject (using reviewedAt as proxy for rejection time)
+    const rejectedApps = applications.filter(app => app.status === "REJECTED" && app.reviewedAt);
     if (rejectedApps.length > 0) {
       const totalTimeToReject = rejectedApps.reduce((sum, app) => {
         const appliedAt = new Date(app.appliedAt);
-        const rejectedAt = new Date(app.rejectedAt!);
-        return sum + (rejectedAt.getTime() - appliedAt.getTime());
+        const reviewedAt = new Date(app.reviewedAt!);
+        return sum + (reviewedAt.getTime() - appliedAt.getTime());
       }, 0);
       timeMetrics.averageTimeToReject = totalTimeToReject / rejectedApps.length / (1000 * 60 * 60 * 24); // Convert to days
     }
@@ -176,7 +174,7 @@ export async function GET(
 
     // Calculate department metrics
     const departmentMetrics = applications.reduce((acc, app) => {
-      const department = app.job.department || "Sin departamento";
+      const department = app.jobOffer.department || "Sin departamento";
       if (!acc[department]) {
         acc[department] = {
           total: 0,
@@ -188,13 +186,13 @@ export async function GET(
       acc[department].total++;
       if (app.status === "HIRED") acc[department].hired++;
       if (app.status === "REJECTED") acc[department].rejected++;
-      if (app.status === "PENDING") acc[department].pending++;
+      if (app.status === "SENT") acc[department].pending++;
       return acc;
     }, {} as Record<string, { total: number; hired: number; rejected: number; pending: number }>);
 
-    // Calculate employment type metrics
-    const employmentTypeMetrics = applications.reduce((acc, app) => {
-      const type = app.job.employmentType;
+    // Calculate contract type metrics
+    const contractTypeMetrics = applications.reduce((acc, app) => {
+      const type = app.jobOffer.contractType;
       if (!acc[type]) {
         acc[type] = {
           total: 0,
@@ -206,13 +204,13 @@ export async function GET(
       acc[type].total++;
       if (app.status === "HIRED") acc[type].hired++;
       if (app.status === "REJECTED") acc[type].rejected++;
-      if (app.status === "PENDING") acc[type].pending++;
+      if (app.status === "SENT") acc[type].pending++;
       return acc;
     }, {} as Record<string, { total: number; hired: number; rejected: number; pending: number }>);
 
     // Calculate experience level metrics
     const experienceLevelMetrics = applications.reduce((acc, app) => {
-      const level = app.job.experienceLevel;
+      const level = app.jobOffer.experienceLevel;
       if (!acc[level]) {
         acc[level] = {
           total: 0,
@@ -224,7 +222,7 @@ export async function GET(
       acc[level].total++;
       if (app.status === "HIRED") acc[level].hired++;
       if (app.status === "REJECTED") acc[level].rejected++;
-      if (app.status === "PENDING") acc[level].pending++;
+      if (app.status === "SENT") acc[level].pending++;
       return acc;
     }, {} as Record<string, { total: number; hired: number; rejected: number; pending: number }>);
 
@@ -243,7 +241,7 @@ export async function GET(
 
       const dayHires = dayApplications.filter(app => app.status === "HIRED").length;
       const dayRejections = dayApplications.filter(app => app.status === "REJECTED").length;
-      const dayInterviews = dayApplications.filter(app => app.status === "INTERVIEWED").length;
+      const dayInterviews = dayApplications.filter(app => app.status === "PRE_SELECTED").length;
 
       dailyHiringMetrics.push({
         date: currentDate.toISOString().split('T')[0],
@@ -258,12 +256,12 @@ export async function GET(
 
     // Calculate top performing jobs
     const jobPerformance = applications.reduce((acc, app) => {
-      const jobId = app.job.id;
+      const jobId = app.jobOffer.id;
       if (!acc[jobId]) {
         acc[jobId] = {
           jobId,
-          title: app.job.title,
-          department: app.job.department,
+          title: app.jobOffer.title,
+          department: app.jobOffer.department,
           totalApplications: 0,
           hired: 0,
           rejected: 0,
@@ -274,7 +272,7 @@ export async function GET(
       acc[jobId].totalApplications++;
       if (app.status === "HIRED") acc[jobId].hired++;
       if (app.status === "REJECTED") acc[jobId].rejected++;
-      if (app.status === "PENDING") acc[jobId].pending++;
+      if (app.status === "SENT") acc[jobId].pending++;
       return acc;
     }, {} as Record<string, any>);
 
@@ -325,7 +323,7 @@ export async function GET(
       timeMetrics,
       applicationSources,
       departmentMetrics,
-      employmentTypeMetrics,
+      contractTypeMetrics,
       experienceLevelMetrics,
       dailyHiringMetrics,
       topPerformingJobs,
@@ -337,7 +335,7 @@ export async function GET(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Validation error", details: error.errors },
+        { error: "Validation error", details: error.issues },
         { status: 400 }
       );
     }

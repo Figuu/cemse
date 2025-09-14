@@ -1,32 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
 const createJobSchema = z.object({
   title: z.string().min(1, "Job title is required"),
   description: z.string().min(1, "Job description is required"),
-  requirements: z.array(z.string()).default([]),
-  responsibilities: z.array(z.string()).default([]),
-  benefits: z.array(z.string()).default([]),
+  requirements: z.string().min(1, "Requirements are required"),
+  benefits: z.string().optional(),
   location: z.string().min(1, "Location is required"),
-  city: z.string().optional(),
-  state: z.string().optional(),
-  country: z.string().optional(),
-  remoteWork: z.boolean().default(false),
-  hybridWork: z.boolean().default(false),
-  officeWork: z.boolean().default(true),
-  employmentType: z.enum(["FULL_TIME", "PART_TIME", "CONTRACT", "INTERNSHIP", "FREELANCE", "TEMPORARY"]),
-  experienceLevel: z.enum(["ENTRY_LEVEL", "MID_LEVEL", "SENIOR_LEVEL", "EXECUTIVE", "INTERN"]),
+  municipality: z.string().min(1, "Municipality is required"),
+  department: z.string().default("Cochabamba"),
+  contractType: z.enum(["FULL_TIME", "PART_TIME", "INTERNSHIP", "VOLUNTEER", "FREELANCE"]),
+  workSchedule: z.string().min(1, "Work schedule is required"),
+  workModality: z.enum(["ON_SITE", "REMOTE", "HYBRID"]),
+  experienceLevel: z.enum(["NO_EXPERIENCE", "ENTRY_LEVEL", "MID_LEVEL", "SENIOR_LEVEL"]),
+  educationRequired: z.enum(["PRIMARY", "SECONDARY", "TECHNICAL", "UNIVERSITY", "POSTGRADUATE", "OTHER"]).optional(),
+  skillsRequired: z.array(z.string()).default([]),
+  desiredSkills: z.array(z.string()).default([]),
   salaryMin: z.number().positive().optional(),
   salaryMax: z.number().positive().optional(),
-  currency: z.string().default("USD"),
+  salaryCurrency: z.string().default("BOB"),
   applicationDeadline: z.string().datetime().optional(),
-  startDate: z.string().datetime().optional(),
-  tags: z.array(z.string()).default([]),
-  skills: z.array(z.string()).default([]),
-  department: z.string().optional(),
-  reportingTo: z.string().optional(),
-  isUrgent: z.boolean().default(false),
+  featured: z.boolean().default(false),
 });
 
 export async function GET(
@@ -49,7 +46,7 @@ export async function GET(
     const skip = (page - 1) * limit;
 
     const { id: companyId } = await params;
-    const where: any = {
+    const where: Record<string, unknown> = {
       companyId: companyId,
     };
 
@@ -88,11 +85,11 @@ export async function GET(
       where.isUrgent = isUrgent === "true";
     }
 
-    const orderBy: any = {};
+    const orderBy: Record<string, string> = {};
     orderBy[sortBy] = sortOrder;
 
     const [jobs, total] = await Promise.all([
-      prisma.jobPosting.findMany({
+      prisma.jobOffer.findMany({
         where,
         orderBy,
         skip,
@@ -102,21 +99,19 @@ export async function GET(
             select: {
               id: true,
               name: true,
-              logo: true,
-              industry: true,
-              location: true,
+              logoUrl: true,
+              businessSector: true,
+              address: true,
             },
           },
           _count: {
             select: {
               applications: true,
-              likes: true,
-              shares: true,
             },
           },
         },
       }),
-      prisma.jobPosting.count({ where }),
+      prisma.jobOffer.count({ where }),
     ]);
 
     const totalPages = Math.ceil(total / limit);
@@ -146,12 +141,17 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await request.json();
     const validatedData = createJobSchema.parse(body);
 
     const { id: companyId } = await params;
-    // Get user ID from session (in real app, this would come from auth)
-    const userId = "user-1"; // Mock user ID
+    const userId = session.user.id;
 
     // Check if user owns the company
     const company = await prisma.company.findUnique({
@@ -173,7 +173,7 @@ export async function POST(
       );
     }
 
-    const job = await prisma.jobPosting.create({
+    const job = await prisma.jobOffer.create({
       data: {
         ...validatedData,
         companyId: companyId,
@@ -183,32 +183,24 @@ export async function POST(
           select: {
             id: true,
             name: true,
-            logo: true,
-            industry: true,
-            location: true,
+            logoUrl: true,
+            businessSector: true,
+            address: true,
           },
         },
         _count: {
           select: {
             applications: true,
-            likes: true,
-            shares: true,
           },
         },
       },
-    });
-
-    // Update company job count
-    await prisma.company.update({
-      where: { id: companyId },
-      data: { totalJobs: { increment: 1 } },
     });
 
     return NextResponse.json(job, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Validation error", details: error.errors },
+        { error: "Validation error", details: error.issues },
         { status: 400 }
       );
     }

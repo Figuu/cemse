@@ -21,7 +21,6 @@ import {
   Award,
   Bookmark,
   Search,
-  Sparkles,
   Compass
 } from "lucide-react";
 import { UserRole } from "@/types";
@@ -48,7 +47,6 @@ export function RoleBasedNavigation({ role, className }: RoleBasedNavigationProp
         return [
           { name: "Inicio", href: "/dashboard", icon: BookOpen },
           { name: "Cursos", href: "/courses", icon: GraduationCap },
-          { name: "Recomendaciones", href: "/recommendations", icon: Sparkles },
           { name: "Descubrir", href: "/discover", icon: Compass },
           { name: "Empleos", href: "/jobs", icon: Briefcase },
           { name: "Aplicaciones", href: "/applications", icon: FileText },

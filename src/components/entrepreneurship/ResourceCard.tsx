@@ -13,7 +13,10 @@ import {
   BarChart3,
   Eye,
   Heart,
-  Calendar
+  Calendar,
+  CheckSquare,
+  Video,
+  GraduationCap
 } from "lucide-react";
 import { EntrepreneurshipResource, ResourceType } from "@/hooks/useEntrepreneurshipResources";
 import { formatDistanceToNow } from "date-fns";
@@ -30,23 +33,27 @@ interface ResourceCardProps {
 const resourceTypeIcons: Record<ResourceType, any> = {
   ARTICLE: FileText,
   VIDEO: Play,
-  PODCAST: Headphones,
+  AUDIO: Headphones,
+  DOCUMENT: FileText,
   TOOL: Wrench,
   TEMPLATE: BookOpen,
   GUIDE: BookOpen,
-  CASE_STUDY: BarChart3,
-  OTHER: FileText,
+  CHECKLIST: CheckSquare,
+  WEBINAR: Video,
+  COURSE: GraduationCap,
 };
 
 const resourceTypeLabels: Record<ResourceType, string> = {
   ARTICLE: "Artículo",
   VIDEO: "Video",
-  PODCAST: "Podcast",
+  AUDIO: "Audio",
+  DOCUMENT: "Documento",
   TOOL: "Herramienta",
   TEMPLATE: "Plantilla",
   GUIDE: "Guía",
-  CASE_STUDY: "Caso de Estudio",
-  OTHER: "Otro",
+  CHECKLIST: "Lista de Verificación",
+  WEBINAR: "Webinar",
+  COURSE: "Curso",
 };
 
 export function ResourceCard({ 

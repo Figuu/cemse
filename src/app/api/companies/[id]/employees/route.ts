@@ -24,8 +24,8 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Only COMPANY role can access this endpoint
-    if (session.user.role !== "COMPANY") {
+    // Only COMPANIES role can access this endpoint
+    if (session.user.role !== "COMPANIES") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -65,20 +65,20 @@ export async function GET(
           employee: {
             select: {
               id: true,
-              email: true,
-              profile: {
+              user: {
                 select: {
-                  firstName: true,
-                  lastName: true,
-                  avatarUrl: true,
-                  phone: true,
-                  address: true,
-                  city: true,
-                  skillsWithLevel: true,
-                  workExperience: true,
-                  educationLevel: true,
+                  email: true,
                 },
               },
+              firstName: true,
+              lastName: true,
+              avatarUrl: true,
+              phone: true,
+              address: true,
+              city: true,
+              skillsWithLevel: true,
+              workExperience: true,
+              educationLevel: true,
             },
           },
           company: {
@@ -127,8 +127,8 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Only COMPANY role can create employees
-    if (session.user.role !== "COMPANY") {
+    // Only COMPANIES role can create employees
+    if (session.user.role !== "COMPANIES") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -178,7 +178,7 @@ export async function POST(
 
     // Create or reactivate employee record
     const employee = existingEmployee
-      ? await prisma.companyEmployee.update({
+        ? await prisma.companyEmployee.update({
           where: { id: existingEmployee.id },
           data: {
             status: "ACTIVE",
@@ -193,14 +193,14 @@ export async function POST(
             employee: {
               select: {
                 id: true,
-                email: true,
-                profile: {
+                user: {
                   select: {
-                    firstName: true,
-                    lastName: true,
-                    avatarUrl: true,
+                    email: true,
                   },
                 },
+                firstName: true,
+                lastName: true,
+                avatarUrl: true,
               },
             },
           },
@@ -219,14 +219,14 @@ export async function POST(
             employee: {
               select: {
                 id: true,
-                email: true,
-                profile: {
+                user: {
                   select: {
-                    firstName: true,
-                    lastName: true,
-                    avatarUrl: true,
+                    email: true,
                   },
                 },
+                firstName: true,
+                lastName: true,
+                avatarUrl: true,
               },
             },
           },
@@ -252,7 +252,7 @@ export async function POST(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Validation error", details: error.errors },
+        { error: "Validation error", details: error.issues },
         { status: 400 }
       );
     }

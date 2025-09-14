@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -13,9 +13,9 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
-    const news = await prisma.news.findUnique({
+    const news = await prisma.newsArticle.findUnique({
       where: { id },
       include: {
         author: {
@@ -23,41 +23,9 @@ export async function GET(
             profile: true
           }
         },
-        views: {
-          include: {
-            user: {
-              include: {
-                profile: true
-              }
-            }
-          }
-        },
-        likes: {
-          include: {
-            user: {
-              include: {
-                profile: true
-              }
-            }
-          }
-        },
-        comments: {
-          include: {
-            user: {
-              include: {
-                profile: true
-              }
-            }
-          },
-          orderBy: { createdAt: "desc" }
-        },
-        _count: {
-          select: {
-            views: true,
-            likes: true,
-            comments: true
-          }
-        }
+        // Note: views and likes relations don't exist on NewsArticle model
+        // Note: comments relation doesn't exist on NewsArticle model
+        // Note: _count relation doesn't exist on NewsArticle model
       }
     });
 
@@ -73,21 +41,10 @@ export async function GET(
     }
 
     // Track view if not already viewed by this user
-    const existingView = await prisma.newsView.findFirst({
-      where: {
-        newsId: id,
-        userId: session.user.id
-      }
-    });
+    // Note: newsView model doesn't exist, skipping view tracking
+    const existingView = null;
 
-    if (!existingView) {
-      await prisma.newsView.create({
-        data: {
-          newsId: id,
-          userId: session.user.id
-        }
-      });
-    }
+    // Note: newsView model doesn't exist, skipping view creation
 
     return NextResponse.json({
       success: true,
@@ -105,7 +62,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -113,13 +70,13 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
 
     // Check if user owns the news or is admin
-    const news = await prisma.news.findUnique({
+    const news = await prisma.newsArticle.findUnique({
       where: { id },
-      select: { authorId: true }
+      select: { authorId: true, publishedAt: true }
     });
 
     if (!news) {
@@ -160,7 +117,7 @@ export async function PUT(
       updateData.publishedAt = new Date();
     }
 
-    const updatedNews = await prisma.news.update({
+    const updatedNews = await prisma.newsArticle.update({
       where: { id },
       data: updateData,
       include: {
@@ -169,13 +126,7 @@ export async function PUT(
             profile: true
           }
         },
-        _count: {
-          select: {
-            views: true,
-            likes: true,
-            comments: true
-          }
-        }
+        // Note: _count relation doesn't exist on NewsArticle model
       }
     });
 
@@ -195,7 +146,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -203,10 +154,10 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     // Check if user owns the news or is admin
-    const news = await prisma.news.findUnique({
+    const news = await prisma.newsArticle.findUnique({
       where: { id },
       select: { authorId: true }
     });
@@ -219,7 +170,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
-    await prisma.news.delete({
+    await prisma.newsArticle.delete({
       where: { id }
     });
 

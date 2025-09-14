@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -14,13 +14,13 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const quizId = params.id;
+    const { id: quizId } = await params;
 
     // Get quiz with attempts
     const quiz = await prisma.quiz.findUnique({
       where: { id: quizId },
       include: {
-        attempts: {
+        quizAttempts: {
           where: {
             studentId: session.user.id,
           },
@@ -100,28 +100,28 @@ export async function GET(
         questions: quiz.questions,
         timeLimit: quiz.timeLimit,
         passingScore: quiz.passingScore,
-        maxAttempts: quiz.maxAttempts,
+        maxAttempts: quiz.attempts,
         isActive: quiz.isActive,
         lesson: quiz.lesson ? {
-          id: quiz.lesson.id,
-          title: quiz.lesson.title,
+          id: (quiz.lesson as any).id,
+          title: (quiz.lesson as any).title,
           module: {
-            id: quiz.lesson.module.id,
-            title: quiz.lesson.module.title,
+            id: (quiz.lesson as any).module.id,
+            title: (quiz.lesson as any).module.title,
             course: {
-              id: quiz.lesson.module.course.id,
-              title: quiz.lesson.module.course.title,
+              id: (quiz.lesson as any).module.course.id,
+              title: (quiz.lesson as any).module.course.title,
             },
           },
         } : null,
         course: quiz.course ? {
-          id: quiz.course.id,
-          title: quiz.course.title,
+          id: (quiz.course as any).id,
+          title: (quiz.course as any).title,
         } : null,
       },
       attempts: transformedAttempts,
-      canAttempt: quiz.maxAttempts === 0 || quiz.attempts.length < quiz.maxAttempts,
-      attemptsRemaining: quiz.maxAttempts === 0 ? -1 : Math.max(0, quiz.maxAttempts - quiz.attempts.length),
+      canAttempt: quiz.attempts === 0 || quiz.quizAttempts.length < quiz.attempts,
+      attemptsRemaining: quiz.attempts === 0 ? -1 : Math.max(0, quiz.attempts - quiz.quizAttempts.length),
     });
 
   } catch (error) {
@@ -135,7 +135,7 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -144,7 +144,7 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const quizId = params.id;
+    const { id: quizId } = await params;
     const body = await request.json();
     const { answers } = body;
 
@@ -220,7 +220,7 @@ export async function POST(
       },
     });
 
-    if (quiz.maxAttempts > 0 && existingAttempts >= quiz.maxAttempts) {
+    if (quiz.attempts > 0 && existingAttempts >= quiz.attempts) {
       return NextResponse.json({ error: "Maximum attempts reached" }, { status: 400 });
     }
 
@@ -253,28 +253,28 @@ export async function POST(
       },
     });
 
-    // Send notification if passed
-    if (passed) {
-      try {
-        await prisma.notification.create({
-          data: {
-            userId: session.user.id,
-            type: "QUIZ_PASSED",
-            title: "¡Cuestionario Aprobado!",
-            message: `Has aprobado el cuestionario "${quiz.title}" con ${score}%`,
-            data: {
-              quizId: quizId,
-              quizTitle: quiz.title,
-              score: score,
-              passed: passed,
-            },
-          },
-        });
-      } catch (notificationError) {
-        console.error("Error creating quiz notification:", notificationError);
-        // Don't fail the quiz attempt if notification fails
-      }
-    }
+    // TODO: Send notification if passed
+    // if (passed) {
+    //   try {
+    //     await prisma.notification.create({
+    //       data: {
+    //         userId: session.user.id,
+    //         type: "QUIZ_PASSED",
+    //         title: "¡Cuestionario Aprobado!",
+    //         message: `Has aprobado el cuestionario "${quiz.title}" con ${score}%`,
+    //         data: {
+    //           quizId: quizId,
+    //           quizTitle: quiz.title,
+    //           score: score,
+    //           passed: passed,
+    //         },
+    //       },
+    //     });
+    //   } catch (notificationError) {
+    //     console.error("Error creating quiz notification:", notificationError);
+    //     // Don't fail the quiz attempt if notification fails
+    //   }
+    // }
 
     return NextResponse.json({
       success: true,

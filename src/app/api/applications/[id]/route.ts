@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { NotificationService } from "@/lib/notificationService";
 
 export async function GET(
   request: NextRequest,
@@ -33,7 +32,6 @@ export async function GET(
           select: {
             firstName: true,
             lastName: true,
-            email: true,
           },
         },
       },
@@ -78,7 +76,7 @@ export async function GET(
       experience: jobOffer?.experienceLevel,
       skills: jobOffer?.skillsRequired || [],
       notes: application.notes,
-      nextSteps: getNextSteps(application.status, application.decisionReason),
+      nextSteps: getNextSteps(application.status, application.decisionReason || undefined),
       interviewDate: application.reviewedAt?.toISOString(),
       rejectionReason: application.status === "REJECTED" ? application.decisionReason : undefined,
       offerDetails: application.status === "HIRED" ? {
@@ -148,19 +146,6 @@ export async function PUT(
       },
     });
 
-    // If status changed, create notification
-    if (status && status !== existingApplication.status) {
-      try {
-        await NotificationService.createApplicationStatusNotification(
-          applicationId,
-          existingApplication.status,
-          status
-        );
-      } catch (error) {
-        console.error("Error creating status change notification:", error);
-        // Don't fail the request if notification creation fails
-      }
-    }
 
     return NextResponse.json({
       success: true,
@@ -232,7 +217,17 @@ export async function DELETE(
 }
 
 // Helper functions
-async function getDetailedTimeline(applicationId: string) {
+interface TimelineItem {
+  id: string;
+  type: string;
+  title: string;
+  description: string;
+  date: string;
+  status: string;
+  details: Record<string, any>;
+}
+
+async function getDetailedTimeline(applicationId: string): Promise<TimelineItem[]> {
   // This would typically come from an application_timeline table
   // For now, we'll generate a detailed timeline based on application data
   const application = await prisma.jobApplication.findUnique({
@@ -247,14 +242,14 @@ async function getDetailedTimeline(applicationId: string) {
 
   if (!application) return [];
 
-  const timeline = [
+  const timeline: TimelineItem[] = [
     {
       id: `${applicationId}-applied`,
-      type: "applied" as const,
+      type: "applied",
       title: "Aplicación enviada",
       description: "Tu aplicación fue enviada exitosamente al empleador",
       date: application.appliedAt.toISOString(),
-      status: "completed" as const,
+      status: "completed",
       details: {
         method: "Online",
         documents: ["CV", "Carta de presentación"],
@@ -266,12 +261,15 @@ async function getDetailedTimeline(applicationId: string) {
   if (application.reviewedAt) {
     timeline.push({
       id: `${applicationId}-reviewed`,
-      type: "reviewed" as const,
+      type: "reviewed",
       title: "Aplicación revisada",
       description: `Tu aplicación fue ${application.status === "REJECTED" ? "rechazada" : "revisada"}`,
       date: application.reviewedAt.toISOString(),
-      status: "completed" as const,
+      status: "completed",
       details: {
+        method: "Online",
+        documents: ["CV", "Carta de presentación"],
+        estimatedResponse: "7-14 días hábiles",
         responseTime: Math.floor((application.reviewedAt.getTime() - application.appliedAt.getTime()) / (1000 * 60 * 60 * 24)),
         reason: application.decisionReason
       }
@@ -280,12 +278,15 @@ async function getDetailedTimeline(applicationId: string) {
     if (application.status === "PRE_SELECTED") {
       timeline.push({
         id: `${applicationId}-shortlisted`,
-        type: "shortlisted" as const,
+        type: "shortlisted",
         title: "Preseleccionado",
         description: "Has sido preseleccionado para la siguiente etapa del proceso",
         date: application.reviewedAt.toISOString(),
-        status: "completed" as const,
+        status: "completed",
         details: {
+          method: "Online",
+          documents: ["CV", "Carta de presentación"],
+          estimatedResponse: "7-14 días hábiles",
           nextStep: "Entrevista o prueba técnica",
           estimatedTime: "1-3 días hábiles"
         }
@@ -295,12 +296,15 @@ async function getDetailedTimeline(applicationId: string) {
     if (application.status === "HIRED") {
       timeline.push({
         id: `${applicationId}-offered`,
-        type: "offered" as const,
+        type: "offered",
         title: "Oferta recibida",
         description: "¡Felicitaciones! Has recibido una oferta de trabajo",
         date: application.reviewedAt.toISOString(),
-        status: "completed" as const,
+        status: "completed",
         details: {
+          method: "Online",
+          documents: ["CV", "Carta de presentación"],
+          estimatedResponse: "7-14 días hábiles",
           offerType: "Oferta de trabajo",
           responseDeadline: "5 días hábiles"
         }
@@ -313,12 +317,15 @@ async function getDetailedTimeline(applicationId: string) {
     if (daysSinceApplied > 7) {
       timeline.push({
         id: `${applicationId}-pending`,
-        type: "pending" as const,
+        type: "pending",
         title: "Esperando respuesta",
         description: `Han pasado ${daysSinceApplied} días desde tu aplicación`,
         date: new Date().toISOString(),
-        status: "pending" as const,
+        status: "pending",
         details: {
+          method: "Online",
+          documents: ["CV", "Carta de presentación"],
+          estimatedResponse: "7-14 días hábiles",
           daysWaiting: daysSinceApplied,
           suggestedAction: daysSinceApplied > 14 ? "Considera hacer seguimiento" : "Continúa esperando"
         }
@@ -330,7 +337,7 @@ async function getDetailedTimeline(applicationId: string) {
 }
 
 function calculatePriority(application: Record<string, unknown>) {
-  const daysSinceApplied = Math.floor((new Date().getTime() - application.appliedAt.getTime()) / (1000 * 60 * 60 * 24));
+  const daysSinceApplied = Math.floor((new Date().getTime() - (application.appliedAt as Date).getTime()) / (1000 * 60 * 60 * 24));
   
   // High priority if it's been more than 14 days without response
   if (daysSinceApplied > 14 && !application.reviewedAt) {

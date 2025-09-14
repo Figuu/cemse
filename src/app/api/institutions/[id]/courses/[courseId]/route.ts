@@ -25,46 +25,17 @@ export async function GET(
 ) {
   try {
     const { id: institutionId, courseId } = await params;
-    const course = await prisma.institutionCourse.findFirst({
+    const course = await prisma.course.findFirst({
       where: {
         id: courseId,
-        institutionId: institutionId,
       },
       include: {
-        institution: {
-          select: {
-            id: true,
-            name: true,
-            department: true,
-            region: true,
-            institutionType: true,
-          },
-        },
-        program: {
-          select: {
-            id: true,
-            name: true,
-            level: true,
-            duration: true,
-            credits: true,
-          },
-        },
         instructor: {
           select: {
-            id: true,
-            instructor: {
-              select: {
-                firstName: true,
-                lastName: true,
-                email: true,
-                phone: true,
-                avatarUrl: true,
-              },
-            },
-            department: true,
-            position: true,
-            qualifications: true,
-            specializations: true,
+            firstName: true,
+            lastName: true,
+            phone: true,
+            avatarUrl: true,
           },
         },
         enrollments: {
@@ -74,13 +45,11 @@ export async function GET(
                 id: true,
                 firstName: true,
                 lastName: true,
-                email: true,
                 avatarUrl: true,
-                studentNumber: true,
               },
             },
           },
-          orderBy: { enrollmentDate: "desc" },
+          orderBy: { enrolledAt: "desc" },
         },
         _count: {
           select: {
@@ -141,10 +110,8 @@ export async function PUT(
 
     // Check if course code is already taken (if being updated)
     if (validatedData.code) {
-      const existingCourse = await prisma.institutionCourse.findFirst({
+      const existingCourse = await prisma.course.findFirst({
         where: {
-          code: validatedData.code,
-          institutionId: institutionId,
           id: { not: courseId },
         },
       });
@@ -157,27 +124,14 @@ export async function PUT(
       }
     }
 
-    const updatedCourse = await prisma.institutionCourse.update({
+    const updatedCourse = await prisma.course.update({
       where: { id: courseId },
       data: validatedData,
       include: {
-        program: {
-          select: {
-            id: true,
-            name: true,
-            level: true,
-          },
-        },
         instructor: {
           select: {
-            id: true,
-            instructor: {
-              select: {
-                firstName: true,
-                lastName: true,
-                email: true,
-              },
-            },
+            firstName: true,
+            lastName: true,
           },
         },
         _count: {
@@ -192,7 +146,7 @@ export async function PUT(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Validation error", details: error.errors },
+        { error: "Validation error", details: error.issues },
         { status: 400 }
       );
     }
@@ -235,7 +189,7 @@ export async function DELETE(
     }
 
     // Check if course has active enrollments
-    const activeEnrollments = await prisma.institutionEnrollment.count({
+    const activeEnrollments = await prisma.courseEnrollment.count({
       where: {
         courseId: courseId,
         status: "ACTIVE",
@@ -250,7 +204,7 @@ export async function DELETE(
     }
 
     // Delete course
-    await prisma.institutionCourse.delete({
+    await prisma.course.delete({
       where: { id: courseId },
     });
 

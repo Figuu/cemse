@@ -27,6 +27,8 @@ export async function POST(request: NextRequest) {
       "profile-picture": ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp"],
       "cv": ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
       "certificate": ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp", "application/pdf"],
+      "course-thumbnail": ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp", "image/svg+xml"],
+      "course-video": ["video/mp4", "video/avi", "video/mov", "video/wmv", "video/flv", "video/webm", "video/quicktime"],
       "other": ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp", "application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]
     };
 
@@ -49,6 +51,8 @@ export async function POST(request: NextRequest) {
       "profile-picture": 5 * 1024 * 1024, // 5MB
       "cv": 10 * 1024 * 1024, // 10MB
       "certificate": 10 * 1024 * 1024, // 10MB
+      "course-thumbnail": 10 * 1024 * 1024, // 10MB
+      "course-video": 500 * 1024 * 1024, // 500MB
       "other": 10 * 1024 * 1024 // 10MB
     };
 

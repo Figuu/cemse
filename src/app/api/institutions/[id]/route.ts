@@ -18,43 +18,17 @@ export async function GET(
     const institution = await prisma.institution.findUnique({
       where: { id },
       include: {
-        user: {
+        creator: {
           include: {
             profile: true
           }
         },
-        courses: {
-          include: {
-            _count: {
-              select: {
-                enrollments: true
-              }
-            }
-          }
-        },
-        programs: {
-          include: {
-            _count: {
-              select: {
-                courses: true
-              }
-            }
-          }
-        },
-        students: {
-          include: {
-            user: {
-              include: {
-                profile: true
-              }
-            }
-          }
-        },
+        companies: true,
+        profiles: true,
         _count: {
           select: {
-            courses: true,
-            programs: true,
-            students: true
+            companies: true,
+            profiles: true
           }
         }
       }
@@ -94,27 +68,33 @@ export async function PUT(
     // Check if user owns the institution or is admin
     const institution = await prisma.institution.findUnique({
       where: { id },
-      select: { userId: true }
+      select: { createdBy: true }
     });
 
     if (!institution) {
       return NextResponse.json({ error: "Institution not found" }, { status: 404 });
     }
 
-    if (institution.userId !== session.user.id && session.user.role !== "SUPERADMIN") {
+    if (institution.createdBy !== session.user.id && session.user.role !== "SUPERADMIN") {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
     const {
       name,
-      description,
-      type,
-      city,
-      country,
+      department,
+      region,
+      population,
+      mayorName,
+      mayorEmail,
+      mayorPhone,
+      address,
       website,
       phone,
       email,
-      logoUrl,
+      institutionType,
+      customType,
+      primaryColor,
+      secondaryColor,
       isActive
     } = body;
 
@@ -122,28 +102,33 @@ export async function PUT(
       where: { id },
       data: {
         name,
-        description,
-        type,
-        city,
-        country,
+        department,
+        region,
+        population,
+        mayorName,
+        mayorEmail,
+        mayorPhone,
+        address,
         website,
         phone,
         email,
-        logoUrl,
+        institutionType,
+        customType,
+        primaryColor,
+        secondaryColor,
         isActive,
         updatedAt: new Date()
       },
       include: {
-        user: {
+        creator: {
           include: {
             profile: true
           }
         },
         _count: {
           select: {
-            courses: true,
-            programs: true,
-            students: true
+            companies: true,
+            profiles: true
           }
         }
       }
@@ -178,14 +163,14 @@ export async function DELETE(
     // Check if user owns the institution or is admin
     const institution = await prisma.institution.findUnique({
       where: { id },
-      select: { userId: true }
+      select: { createdBy: true }
     });
 
     if (!institution) {
       return NextResponse.json({ error: "Institution not found" }, { status: 404 });
     }
 
-    if (institution.userId !== session.user.id && session.user.role !== "SUPERADMIN") {
+    if (institution.createdBy !== session.user.id && session.user.role !== "SUPERADMIN") {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
@@ -195,18 +180,16 @@ export async function DELETE(
       include: {
         _count: {
           select: {
-            courses: true,
-            programs: true,
-            students: true
+            companies: true,
+            profiles: true
           }
         }
       }
     });
 
     if (associatedData && (
-      associatedData._count.courses > 0 ||
-      associatedData._count.programs > 0 ||
-      associatedData._count.students > 0
+      associatedData._count.companies > 0 ||
+      associatedData._count.profiles > 0
     )) {
       return NextResponse.json(
         { error: "Cannot delete institution with associated data" },

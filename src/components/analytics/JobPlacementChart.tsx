@@ -10,7 +10,8 @@ import {
   Tag,
   CheckCircle,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  Eye
 } from "lucide-react";
 
 interface JobPlacementChartProps {

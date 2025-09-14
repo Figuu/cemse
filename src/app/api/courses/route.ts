@@ -35,8 +35,8 @@ export async function GET(request: NextRequest) {
         { description: { contains: search, mode: "insensitive" } },
         { shortDescription: { contains: search, mode: "insensitive" } },
         { tags: { has: search } },
-        { instructor: { profile: { firstName: { contains: search, mode: "insensitive" } } } },
-        { instructor: { profile: { lastName: { contains: search, mode: "insensitive" } } } },
+        { instructor: { firstName: { contains: search, mode: "insensitive" } } },
+        { instructor: { lastName: { contains: search, mode: "insensitive" } } },
       ];
     }
 
@@ -78,8 +78,15 @@ export async function GET(request: NextRequest) {
         take: limit,
         include: {
           instructor: {
-            include: {
-              profile: true,
+            select: {
+              firstName: true,
+              lastName: true,
+            },
+          },
+          institution: {
+            select: {
+              id: true,
+              name: true,
             },
           },
           enrollments: {
@@ -89,9 +96,8 @@ export async function GET(request: NextRequest) {
             select: {
               id: true,
               progress: true,
-              isCompleted: true,
+              completedAt: true,
               enrolledAt: true,
-              lastAccessedAt: true,
             },
           },
           modules: {
@@ -115,13 +121,27 @@ export async function GET(request: NextRequest) {
       prisma.course.count({ where }),
     ]);
 
+    // Get user's institution ID for role-based filtering
+    let userInstitutionId = null;
+    if (session.user.role === "INSTITUTION") {
+      const userInstitution = await prisma.institution.findFirst({
+        where: { createdBy: session.user.id },
+        select: { id: true }
+      });
+      userInstitutionId = userInstitution?.id;
+    }
+
     // Transform courses for frontend
     const transformedCourses = courses.map(course => {
       const enrollment = course.enrollments[0];
       const isEnrolled = !!enrollment;
       const progress = enrollment ? Number(enrollment.progress) : 0;
-      const isCompleted = enrollment?.isCompleted || false;
-      const lastAccessed = enrollment?.lastAccessedAt?.toISOString();
+      const isCompleted = !!enrollment?.completedAt;
+      const lastAccessed = null; // lastAccessedAt not available in CourseEnrollment
+      
+      // Check if user owns this course (for institutions)
+      const isOwner = session.user.role === "INSTITUTION" && 
+                     course.institutionId === userInstitutionId;
 
       return {
         id: course.id,
@@ -147,16 +167,20 @@ export async function GET(request: NextRequest) {
         certification: course.certification,
         includedMaterials: course.includedMaterials,
         instructor: course.instructor ? {
-          id: course.instructor.id,
-          name: `${course.instructor.profile?.firstName || ''} ${course.instructor.profile?.lastName || ''}`.trim(),
-          email: course.instructor.profile?.email || '',
-          avatar: course.instructor.profile?.avatarUrl,
+          id: course.instructorId || '',
+          name: `${course.instructor.firstName || ''} ${course.instructor.lastName || ''}`.trim(),
+          email: '', // Email not available in this query
+          avatar: null, // Avatar not available in this query
+        } : null,
+        institution: course.institution ? {
+          id: course.institution.id,
+          name: course.institution.name,
         } : null,
         institutionName: course.institutionName,
         createdAt: course.createdAt.toISOString(),
         updatedAt: course.updatedAt.toISOString(),
         publishedAt: course.publishedAt?.toISOString(),
-        modules: course.modules.map(module => ({
+        modules: course.modules.map((module: any) => ({
           id: module.id,
           title: module.title,
           orderIndex: module.orderIndex,
@@ -169,6 +193,7 @@ export async function GET(request: NextRequest) {
           lastAccessedAt: lastAccessed,
         } : null,
         isEnrolled,
+        isOwner,
         progress,
         isCompleted,
         totalModules: course._count.modules,
@@ -179,9 +204,21 @@ export async function GET(request: NextRequest) {
     // Filter by enrollment status if specified
     let filteredCourses = transformedCourses;
     if (isEnrolled === "true") {
-      filteredCourses = transformedCourses.filter(course => course.isEnrolled);
+      if (session.user.role === "INSTITUTION") {
+        // For institutions, "enrolled" means "my courses" (courses they created)
+        filteredCourses = transformedCourses.filter(course => course.isOwner);
+      } else {
+        // For students, "enrolled" means courses they're enrolled in
+        filteredCourses = transformedCourses.filter(course => course.isEnrolled);
+      }
     } else if (isEnrolled === "false") {
-      filteredCourses = transformedCourses.filter(course => !course.isEnrolled);
+      if (session.user.role === "INSTITUTION") {
+        // For institutions, "not enrolled" means "other courses" (courses they didn't create)
+        filteredCourses = transformedCourses.filter(course => !course.isOwner);
+      } else {
+        // For students, "not enrolled" means courses they're not enrolled in
+        filteredCourses = transformedCourses.filter(course => !course.isEnrolled);
+      }
     }
 
     return NextResponse.json({
@@ -214,8 +251,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Only instructors and admins can create courses
-    if (!["INSTRUCTOR", "SUPERADMIN"].includes(session.user.role)) {
+    // Only institutions and admins can create courses
+    if (session.user.role !== "INSTITUTION" && session.user.role !== "SUPERADMIN") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -259,6 +296,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "A course with this title already exists" }, { status: 400 });
     }
 
+    // Get institution ID for institution users
+    let institutionId = undefined;
+    if (session.user.role === "INSTITUTION") {
+      // Find the institution associated with this user
+      const institution = await prisma.institution.findFirst({
+        where: { createdBy: session.user.id },
+        select: { id: true }
+      });
+      institutionId = institution?.id;
+    }
+
     // Create course
     const course = await prisma.course.create({
       data: {
@@ -277,14 +325,16 @@ export async function POST(request: NextRequest) {
         tags: tags || [],
         certification: certification !== false,
         includedMaterials: includedMaterials || [],
-        instructorId: session.user.role === "INSTRUCTOR" ? session.user.id : null,
+        instructorId: session.user.role === "INSTITUTION" ? session.user.id : undefined,
+        institutionId,
         institutionName,
         publishedAt: new Date(),
       },
       include: {
         instructor: {
-          include: {
-            profile: true,
+          select: {
+            firstName: true,
+            lastName: true,
           },
         },
       },
@@ -300,8 +350,8 @@ export async function POST(request: NextRequest) {
         level: course.level,
         category: course.category,
         instructor: course.instructor ? {
-          id: course.instructor.id,
-          name: `${course.instructor.profile?.firstName || ''} ${course.instructor.profile?.lastName || ''}`.trim(),
+          id: course.instructorId || '',
+          name: `${course.instructor.firstName || ''} ${course.instructor.lastName || ''}`.trim(),
         } : null,
         createdAt: course.createdAt.toISOString(),
       },

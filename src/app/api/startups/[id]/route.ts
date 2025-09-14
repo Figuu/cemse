@@ -56,16 +56,15 @@ export async function GET(
             firstName: true,
             lastName: true,
             avatarUrl: true,
-            email: true,
+            // email: true, // Email field doesn't exist in Profile model
             phone: true,
           },
         },
         businessPlan: {
           select: {
             id: true,
-            executiveSummary: true,
+            // executiveSummary: true, // This field doesn't exist in BusinessPlan model
             marketAnalysis: true,
-            financialProjections: true,
             marketingStrategy: true,
             operationsPlan: true,
             riskAnalysis: true,
@@ -174,7 +173,7 @@ export async function PUT(
         businessPlan: {
           select: {
             id: true,
-            executiveSummary: true,
+            // executiveSummary: true, // This field doesn't exist in BusinessPlan model
           },
         },
       },
@@ -189,7 +188,7 @@ export async function PUT(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Datos inválidos", details: error.errors },
+        { error: "Datos inválidos", details: error.issues },
         { status: 400 }
       );
     }

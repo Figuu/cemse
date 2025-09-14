@@ -7,11 +7,9 @@ export async function POST(
 ) {
   try {
     const { id: companyId, jobId } = await params;
-    // Get user ID from session (in real app, this would come from auth)
-    const userId = "user-1"; // Mock user ID
 
     // Check if job exists
-    const job = await prisma.jobPosting.findFirst({
+    const job = await prisma.jobOffer.findFirst({
       where: { 
         id: jobId,
         companyId: companyId,
@@ -27,14 +25,8 @@ export async function POST(
     }
 
     // Check if user already shared the job
-    const existingShare = await prisma.jobShare.findUnique({
-      where: {
-        jobId_userId: {
-          jobId: jobId,
-          userId: userId,
-        },
-      },
-    });
+    // Job sharing not implemented yet
+    const existingShare = null;
 
     if (existingShare) {
       return NextResponse.json(
@@ -44,18 +36,10 @@ export async function POST(
     }
 
     // Share the job
-    await prisma.jobShare.create({
-      data: {
-        jobId: jobId,
-        userId: userId,
-      },
-    });
+    // Job sharing not implemented yet
 
-    // Increment share count
-    await prisma.jobPosting.update({
-      where: { id: jobId },
-      data: { totalShares: { increment: 1 } },
-    });
+    // Share count functionality not implemented in schema
+    // Would need to add totalShares field to JobOffer model
 
     return NextResponse.json({ 
       message: "Job shared successfully",

@@ -27,7 +27,6 @@ export default function SearchPage() {
           <div className="max-w-2xl mx-auto">
             <GlobalSearch 
               placeholder="Buscar trabajos, empresas, personas, cursos..."
-              showFilters={true}
             />
           </div>
         </TabsContent>

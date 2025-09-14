@@ -25,8 +25,8 @@ export async function GET(
 
     const skip = (page - 1) * limit;
 
-    const { id: companyId, jobId } = await params;
-    const where: any = {
+    const { jobId } = await params;
+    const where: Record<string, unknown> = {
       jobOfferId: jobId,
     };
 
@@ -34,7 +34,7 @@ export async function GET(
       where.status = status;
     }
 
-    const orderBy: any = {};
+    const orderBy: Record<string, string> = {};
     orderBy[sortBy] = sortOrder;
 
     const [applications, total] = await Promise.all([

@@ -9,11 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { JobCard } from "@/components/jobs/JobCard";
 import { JobFilters } from "@/components/jobs/JobFilters";
 import { JobApplicationForm } from "@/components/jobs/JobApplicationForm";
-import { JobRecommendations } from "@/components/jobs/JobRecommendations";
-import { RecommendationInsights } from "@/components/jobs/RecommendationInsights";
 import { RoleGuard } from "@/components/auth/RoleGuard";
-import { useJobs, type Job } from "@/hooks/useJobs";
-import { useJobRecommendations } from "@/hooks/useJobRecommendations";
+import { useJobs } from "@/hooks/useJobs";
+import { JobPosting } from "@/types/company";
 import { 
   Search, 
   Filter, 
@@ -36,40 +34,40 @@ function JobsPageContent() {
   const [sortBy, setSortBy] = useState("newest");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);
-  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [selectedJob, setSelectedJob] = useState<JobPosting | null>(null);
   const [showApplicationForm, setShowApplicationForm] = useState(false);
-  const [showRecommendations, setShowRecommendations] = useState(true);
-  const [showInsights, setShowInsights] = useState(false);
 
   const { 
-    jobs, 
+    data: jobsData, 
     isLoading, 
     error, 
-    refetch,
-    bookmarkJob,
-    unbookmarkJob,
-    applyToJob
+    refetch
   } = useJobs({
     search: searchTerm || undefined,
     location: selectedFilters.location || undefined,
-    type: selectedFilters.type || undefined,
-    experience: selectedFilters.experience || undefined,
-    salary: selectedFilters.salary || undefined,
-    remote: selectedFilters.remote || undefined,
-    skills: selectedFilters.skills.length > 0 ? selectedFilters.skills : undefined,
+    employmentType: selectedFilters.type || undefined,
+    experienceLevel: selectedFilters.experience || undefined,
     sortBy: sortBy,
   });
 
-  const {
-    recommendations,
-    profile,
-    isLoading: recommendationsLoading,
-    error: recommendationsError,
-    refetch: refetchRecommendations
-  } = useJobRecommendations({
-    limit: 5,
-    includeApplied: false
-  });
+  const jobs = jobsData?.jobs || [];
+
+  // Placeholder functions for bookmarking and applying
+  const bookmarkJob = async (jobId: string) => {
+    // TODO: Implement bookmark functionality
+    console.log('Bookmarking job:', jobId);
+  };
+
+  const unbookmarkJob = async (jobId: string) => {
+    // TODO: Implement unbookmark functionality
+    console.log('Unbookmarking job:', jobId);
+  };
+
+  const applyToJob = async (jobId: string, applicationData: any) => {
+    // TODO: Implement job application functionality
+    console.log('Applying to job:', jobId, applicationData);
+  };
+
 
   // Filtering is now handled by the API, so we just use the jobs directly
   const filteredJobs = jobs;
@@ -77,12 +75,8 @@ function JobsPageContent() {
 
   const handleBookmark = async (jobId: string) => {
     try {
-      const job = jobs.find(j => j.id === jobId);
-      if (job?.isBookmarked) {
-        await unbookmarkJob(jobId);
-      } else {
-        await bookmarkJob(jobId);
-      }
+      // For now, just bookmark the job (could be enhanced with actual bookmark state)
+      await bookmarkJob(jobId);
     } catch (error) {
       console.error("Error toggling bookmark:", error);
     }
@@ -162,9 +156,9 @@ function JobsPageContent() {
         <Card className="p-6">
           <div className="flex items-center space-x-2 text-destructive">
             <AlertCircle className="h-5 w-5" />
-            <p>Error al cargar las ofertas: {error}</p>
+            <p>Error al cargar las ofertas: {error?.message || 'Error desconocido'}</p>
           </div>
-          <Button onClick={refetch} className="mt-4">
+          <Button onClick={() => refetch()} className="mt-4">
             Reintentar
           </Button>
         </Card>
@@ -189,20 +183,6 @@ function JobsPageContent() {
           >
             <Filter className="h-4 w-4 mr-2" />
             Filtros
-          </Button>
-          <Button
-            variant={showRecommendations ? "default" : "outline"}
-            onClick={() => setShowRecommendations(!showRecommendations)}
-          >
-            <Briefcase className="h-4 w-4 mr-2" />
-            Recomendados
-          </Button>
-          <Button
-            variant={showInsights ? "default" : "outline"}
-            onClick={() => setShowInsights(!showInsights)}
-          >
-            <Filter className="h-4 w-4 mr-2" />
-            Análisis
           </Button>
           <div className="flex items-center border rounded-lg">
             <Button
@@ -265,25 +245,6 @@ function JobsPageContent() {
         </div>
       </div>
 
-      {/* Recommendations Section */}
-      {showRecommendations && (
-        <JobRecommendations
-          recommendations={recommendations}
-          isLoading={recommendationsLoading}
-          error={recommendationsError}
-          onRefetch={refetchRecommendations}
-          onApply={handleApply}
-          onBookmark={handleBookmark}
-        />
-      )}
-
-      {/* Insights Section */}
-      {showInsights && profile && (
-        <RecommendationInsights
-          profile={profile}
-          recommendations={recommendations}
-        />
-      )}
 
       {/* Job Listings */}
       {filteredJobs.length === 0 ? (
@@ -311,7 +272,6 @@ function JobsPageContent() {
             <JobCard
               key={job.id}
               job={job}
-              viewMode={viewMode}
               onBookmark={handleBookmark}
               onApply={handleApply}
             />

@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
     }
 
     const [news, total] = await Promise.all([
-      prisma.entrepreneurshipNews.findMany({
+      prisma.newsArticle.findMany({
         where,
         include: {
           author: {
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
         skip,
         take: limit,
       }),
-      prisma.entrepreneurshipNews.count({ where }),
+      prisma.newsArticle.count({ where }),
     ]);
 
     return NextResponse.json({
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
       isPublished = false,
     } = body;
 
-    const news = await prisma.entrepreneurshipNews.create({
+    const news = await prisma.newsArticle.create({
       data: {
         title,
         summary,

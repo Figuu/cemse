@@ -49,7 +49,6 @@ export async function POST(
         courseId: courseId,
         enrolledAt: new Date(),
         progress: 0,
-        isCompleted: false,
       },
     });
 
@@ -63,25 +62,6 @@ export async function POST(
       },
     });
 
-    // Send notification
-    try {
-      await prisma.notification.create({
-        data: {
-          userId: session.user.id,
-          type: "COURSE_ENROLLMENT",
-          title: "Inscripción Exitosa",
-          message: `Te has inscrito exitosamente en el curso "${course.title}"`,
-          data: {
-            courseId: courseId,
-            courseTitle: course.title,
-            enrollmentId: enrollment.id,
-          },
-        },
-      });
-    } catch (notificationError) {
-      console.error("Error creating enrollment notification:", notificationError);
-      // Don't fail the enrollment if notification fails
-    }
 
     return NextResponse.json({
       success: true,
@@ -89,7 +69,7 @@ export async function POST(
         id: enrollment.id,
         courseId: enrollment.courseId,
         progress: Number(enrollment.progress),
-        isCompleted: enrollment.isCompleted,
+        isCompleted: enrollment.completedAt !== null,
         enrolledAt: enrollment.enrolledAt.toISOString(),
       },
     });

@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import Image from "next/image";
 import { 
   BookOpen, 
   Clock, 
@@ -21,6 +22,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Course } from "@/hooks/useCourses";
+import { useSession } from "next-auth/react";
+import { getImageUrl } from "@/lib/imageUtils";
 
 interface CourseCardProps {
   course: Course;
@@ -39,6 +42,7 @@ export function CourseCard({
   showActions = true,
   className 
 }: CourseCardProps) {
+  const { data: session } = useSession();
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [isUnenrolling, setIsUnenrolling] = useState(false);
 
@@ -160,10 +164,18 @@ export function CourseCard({
       {/* Course Thumbnail */}
       <div className="aspect-video bg-gradient-to-br from-blue-50 to-indigo-100 relative overflow-hidden">
         {course.thumbnail ? (
-          <img
-            src={course.thumbnail}
+          <Image
+            src={getImageUrl(course.thumbnail) || ''}
             alt={course.title}
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
+            onError={(e) => {
+              console.error('Image failed to load:', course.thumbnail);
+              console.error('Error:', e);
+            }}
+            onLoad={() => {
+              console.log('Image loaded successfully:', course.thumbnail);
+            }}
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
@@ -321,7 +333,29 @@ export function CourseCard({
             </div>
 
             <div className="flex space-x-2">
-              {course.isEnrolled ? (
+              {/* Show different actions based on user role and course ownership */}
+              {session?.user?.role === "INSTITUTION" && course.isOwner ? (
+                // Institution viewing their own course
+                <Button
+                  size="sm"
+                  onClick={() => onView(course.id)}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <BookOpen className="h-4 w-4 mr-1" />
+                  Gestionar
+                </Button>
+              ) : session?.user?.role === "INSTITUTION" ? (
+                // Institution viewing someone else's course
+                <Button
+                  size="sm"
+                  onClick={() => onView(course.id)}
+                  className="bg-gray-600 hover:bg-gray-700"
+                >
+                  <ExternalLink className="h-4 w-4 mr-1" />
+                  Ver Detalles
+                </Button>
+              ) : course.isEnrolled ? (
+                // Student viewing enrolled course
                 <Button
                   size="sm"
                   onClick={() => onView(course.id)}
@@ -331,6 +365,7 @@ export function CourseCard({
                   Continuar
                 </Button>
               ) : (
+                // Student viewing available course
                 <Button
                   size="sm"
                   onClick={handleEnroll}
