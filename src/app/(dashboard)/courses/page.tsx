@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   BookOpen, 
@@ -11,15 +10,13 @@ import {
   RefreshCw,
   AlertCircle,
   Grid3X3,
-  List,
-  Filter
+  List
 } from "lucide-react";
 import { RoleGuard } from "@/components/auth/RoleGuard";
 import { useCourses } from "@/hooks/useCourses";
 import { CourseCard } from "@/components/courses/CourseCard";
 import { CourseFilters } from "@/components/courses/CourseFilters";
 import { RecommendationSection } from "@/components/courses/RecommendationSection";
-import { Course } from "@/hooks/useCourses";
 
 export default function CoursesPage() {
   const [searchTerm, setSearchTerm] = useState("");

@@ -18,6 +18,24 @@ export interface CertificateTemplate {
   isActive: boolean;
 }
 
+export interface CertificateVerificationResult {
+  isValid: boolean;
+  certificate?: {
+    id: string;
+    certificateUrl: string | null;
+    issuedAt: Date;
+  };
+  student?: {
+    id: string;
+    firstName: string | null;
+    lastName: string | null;
+  };
+  course?: {
+    id: string;
+    title: string;
+  };
+}
+
 export class CertificateService {
   /**
    * Generate a certificate for course completion
@@ -31,11 +49,7 @@ export class CertificateService {
       const course = await prisma.course.findUnique({
         where: { id: courseId },
         include: {
-          instructor: {
-            include: {
-              profile: true,
-            },
-          },
+          instructor: true,
         },
       });
 
@@ -57,22 +71,20 @@ export class CertificateService {
         },
       });
 
-      if (!enrollment || !enrollment.isCompleted) {
+      if (!enrollment || !enrollment.completedAt) {
         throw new Error("Student has not completed the course");
       }
 
       // Check if certificate already exists
-      const existingCert = await prisma.certificate.findUnique({
+      const existingCert = await prisma.certificate.findFirst({
         where: {
-          studentId_courseId: {
-            studentId: studentId,
-            courseId: courseId,
-          },
+          studentId: studentId,
+          courseId: courseId,
         },
       });
 
       if (existingCert) {
-        return existingCert.certificateUrl;
+        return existingCert.fileUrl;
       }
 
       // Generate certificate data
@@ -80,7 +92,7 @@ export class CertificateService {
         studentName: `${student.firstName || ''} ${student.lastName || ''}`.trim(),
         courseTitle: course.title,
         instructorName: course.instructor ? 
-          `${course.instructor.profile?.firstName || ''} ${course.instructor.profile?.lastName || ''}`.trim() : 
+          `${course.instructor.firstName || ''} ${course.instructor.lastName || ''}`.trim() : 
           undefined,
         completionDate: enrollment.completedAt!.toISOString(),
         certificateId: `CERT-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -95,7 +107,7 @@ export class CertificateService {
         data: {
           studentId: studentId,
           courseId: courseId,
-          certificateUrl: certificateUrl,
+          fileUrl: certificateUrl,
         },
       });
 
@@ -118,16 +130,12 @@ export class CertificateService {
   ): Promise<string | null> {
     try {
       // Get module and student data
-      const module = await prisma.courseModule.findUnique({
+      const courseModule = await prisma.courseModule.findUnique({
         where: { id: moduleId },
         include: {
           course: {
             include: {
-              instructor: {
-                include: {
-                  profile: true,
-                },
-              },
+              instructor: true,
             },
           },
         },
@@ -137,7 +145,7 @@ export class CertificateService {
         where: { userId: studentId },
       });
 
-      if (!module || !student) {
+      if (!courseModule || !student) {
         throw new Error("Module or student not found");
       }
 
@@ -145,7 +153,7 @@ export class CertificateService {
       const enrollment = await prisma.courseEnrollment.findFirst({
         where: {
           studentId: studentId,
-          courseId: module.courseId,
+          courseId: courseModule.courseId,
         },
       });
 
@@ -154,30 +162,28 @@ export class CertificateService {
       }
 
       // Check if certificate already exists
-      const existingCert = await prisma.moduleCertificate.findUnique({
+      const existingCert = await prisma.moduleCertificate.findFirst({
         where: {
-          studentId_moduleId: {
-            studentId: studentId,
-            moduleId: moduleId,
-          },
+          studentId: studentId,
+          moduleId: moduleId,
         },
       });
 
       if (existingCert) {
-        return existingCert.certificateUrl;
+        return existingCert.fileUrl;
       }
 
       // Generate certificate data
       const certificateData: CertificateData = {
         studentName: `${student.firstName || ''} ${student.lastName || ''}`.trim(),
-        courseTitle: module.course.title,
-        moduleTitle: module.title,
-        instructorName: module.course.instructor ? 
-          `${module.course.instructor.profile?.firstName || ''} ${module.course.instructor.profile?.lastName || ''}`.trim() : 
+        courseTitle: courseModule.course.title,
+        moduleTitle: courseModule.title,
+        instructorName: courseModule.course.instructor ? 
+          `${courseModule.course.instructor.firstName || ''} ${courseModule.course.instructor.lastName || ''}`.trim() : 
           undefined,
         completionDate: new Date().toISOString(),
         certificateId: `MOD-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        courseId: module.courseId,
+        courseId: courseModule.courseId,
         moduleId: moduleId,
       };
 
@@ -189,12 +195,12 @@ export class CertificateService {
         data: {
           studentId: studentId,
           moduleId: moduleId,
-          certificateUrl: certificateUrl,
+          fileUrl: certificateUrl,
         },
       });
 
       // Send notification
-      await this.sendCertificateNotification(studentId, module.courseId, certificate.id, "module");
+      await this.sendCertificateNotification(studentId, courseModule.courseId, certificate.id, "module");
 
       return certificateUrl;
     } catch (error) {
@@ -225,6 +231,7 @@ export class CertificateService {
 
   /**
    * Send certificate notification to student
+   * Note: This is a placeholder implementation since the Notification model doesn't exist in the schema yet
    */
   private static async sendCertificateNotification(
     studentId: string,
@@ -239,18 +246,12 @@ export class CertificateService {
 
       if (!course) return;
 
-      await prisma.notification.create({
-        data: {
-          userId: studentId,
-          type: "CERTIFICATE_ISSUED",
-          title: "¡Certificado Emitido!",
-          message: `Se ha emitido un certificado para ${type === "course" ? "el curso" : "el módulo"} "${course.title}"`,
-          data: {
-            certificateId: certificateId,
-            certificateType: type,
-            courseId: courseId,
-          },
-        },
+      // TODO: Implement when Notification model is added to schema
+      console.log(`Certificate notification would be sent for ${type} certificate:`, {
+        studentId,
+        courseId,
+        certificateId,
+        courseTitle: course.title
       });
     } catch (error) {
       console.error("Error sending certificate notification:", error);
@@ -269,7 +270,7 @@ export class CertificateService {
       });
 
       if (courseCert) {
-        return courseCert.certificateUrl;
+        return courseCert.fileUrl;
       }
 
       // Check if it's a module certificate
@@ -278,7 +279,7 @@ export class CertificateService {
       });
 
       if (moduleCert) {
-        return moduleCert.certificateUrl;
+        return moduleCert.fileUrl;
       }
 
       return null;
@@ -291,22 +292,13 @@ export class CertificateService {
   /**
    * Verify certificate authenticity
    */
-  static async verifyCertificate(certificateId: string): Promise<{
-    isValid: boolean;
-    certificate?: any;
-    student?: any;
-    course?: any;
-  }> {
+  static async verifyCertificate(certificateId: string): Promise<CertificateVerificationResult> {
     try {
       // Check course certificates
       const courseCert = await prisma.certificate.findUnique({
         where: { id: certificateId },
         include: {
-          student: {
-            include: {
-              profile: true,
-            },
-          },
+          student: true,
           course: true,
         },
       });
@@ -314,7 +306,11 @@ export class CertificateService {
       if (courseCert) {
         return {
           isValid: true,
-          certificate: courseCert,
+          certificate: {
+            id: courseCert.id,
+            certificateUrl: courseCert.fileUrl,
+            issuedAt: courseCert.issuedAt,
+          },
           student: courseCert.student,
           course: courseCert.course,
         };
@@ -324,11 +320,7 @@ export class CertificateService {
       const moduleCert = await prisma.moduleCertificate.findUnique({
         where: { id: certificateId },
         include: {
-          student: {
-            include: {
-              profile: true,
-            },
-          },
+          student: true,
           module: {
             include: {
               course: true,
@@ -340,7 +332,11 @@ export class CertificateService {
       if (moduleCert) {
         return {
           isValid: true,
-          certificate: moduleCert,
+          certificate: {
+            id: moduleCert.id,
+            certificateUrl: moduleCert.fileUrl,
+            issuedAt: moduleCert.issuedAt,
+          },
           student: moduleCert.student,
           course: moduleCert.module.course,
         };

@@ -3,17 +3,18 @@ import { prisma } from "@/lib/prisma";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string; jobId: string } }
+  { params }: { params: Promise<{ id: string; jobId: string }> }
 ) {
   try {
+    const { id: companyId, jobId } = await params;
     // Get user ID from session (in real app, this would come from auth)
     const userId = "user-1"; // Mock user ID
 
     // Check if job exists
     const job = await prisma.jobPosting.findFirst({
       where: { 
-        id: params.jobId,
-        companyId: params.id,
+        id: jobId,
+        companyId: companyId,
         isActive: true,
       },
     });
@@ -29,7 +30,7 @@ export async function POST(
     const existingShare = await prisma.jobShare.findUnique({
       where: {
         jobId_userId: {
-          jobId: params.jobId,
+          jobId: jobId,
           userId: userId,
         },
       },
@@ -45,14 +46,14 @@ export async function POST(
     // Share the job
     await prisma.jobShare.create({
       data: {
-        jobId: params.jobId,
+        jobId: jobId,
         userId: userId,
       },
     });
 
     // Increment share count
     await prisma.jobPosting.update({
-      where: { id: params.jobId },
+      where: { id: jobId },
       data: { totalShares: { increment: 1 } },
     });
 

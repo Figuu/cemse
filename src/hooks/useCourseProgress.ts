@@ -3,6 +3,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 
+export interface LessonAttachment {
+  name: string;
+  type: string;
+  url?: string;
+  size?: number;
+}
+
 export interface LessonProgress {
   id: string;
   isCompleted: boolean;
@@ -22,7 +29,7 @@ export interface Lesson {
   orderIndex: number;
   isRequired: boolean;
   isPreview: boolean;
-  attachments: any;
+  attachments: Record<string, LessonAttachment>;
   module: {
     id: string;
     title: string;

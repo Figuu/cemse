@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Build where clause
-    const where: any = {
+    const where: Record<string, unknown> = {
       createdAt: { gte: startDate },
     };
 
@@ -114,7 +114,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-async function getCourseMetrics(where: any, startDate: Date) {
+async function getCourseMetrics(where: Record<string, unknown>, _startDate: Date) {
   const [
     totalCourses,
     activeCourses,
@@ -176,7 +176,7 @@ async function getCourseMetrics(where: any, startDate: Date) {
   };
 }
 
-async function getEnrollmentTrends(where: any, startDate: Date) {
+async function getEnrollmentTrends(where: Record<string, unknown>, _startDate: Date) {
   const enrollments = await prisma.courseEnrollment.findMany({
     where: {
       course: where,
@@ -216,7 +216,7 @@ async function getEnrollmentTrends(where: any, startDate: Date) {
   }));
 }
 
-async function getCompletionRates(where: any, startDate: Date) {
+async function getCompletionRates(where: Record<string, unknown>, _startDate: Date) {
   const courses = await prisma.course.findMany({
     where,
     include: {
@@ -250,7 +250,7 @@ async function getCompletionRates(where: any, startDate: Date) {
   });
 }
 
-async function getStudentEngagement(where: any, startDate: Date) {
+async function getStudentEngagement(where: Record<string, unknown>, _startDate: Date) {
   const [
     discussionCount,
     questionCount,
@@ -305,7 +305,7 @@ async function getStudentEngagement(where: any, startDate: Date) {
   };
 }
 
-async function getCoursePerformance(where: any, startDate: Date) {
+async function getCoursePerformance(where: Record<string, unknown>, _startDate: Date) {
   const courses = await prisma.course.findMany({
     where,
     include: {
@@ -358,7 +358,7 @@ async function getCoursePerformance(where: any, startDate: Date) {
   });
 }
 
-async function getInstructorPerformance(where: any, startDate: Date) {
+async function getInstructorPerformance(where: Record<string, unknown>, _startDate: Date) {
   const instructors = await prisma.user.findMany({
     where: {
       role: "INSTRUCTOR",
@@ -419,7 +419,7 @@ async function getInstructorPerformance(where: any, startDate: Date) {
   });
 }
 
-async function getContentAnalytics(where: any, startDate: Date) {
+async function getContentAnalytics(where: Record<string, unknown>, _startDate: Date) {
   const [
     totalModules,
     totalLessons,
@@ -505,7 +505,7 @@ async function getContentAnalytics(where: any, startDate: Date) {
   };
 }
 
-async function getTimeSeriesData(where: any, startDate: Date) {
+async function getTimeSeriesData(where: Record<string, unknown>, _startDate: Date) {
   const enrollments = await prisma.courseEnrollment.findMany({
     where: {
       course: where,
@@ -542,7 +542,7 @@ async function getTimeSeriesData(where: any, startDate: Date) {
   }));
 }
 
-async function getTopPerformingCourses(where: any, startDate: Date) {
+async function getTopPerformingCourses(where: Record<string, unknown>, _startDate: Date) {
   const courses = await prisma.course.findMany({
     where,
     include: {
@@ -592,7 +592,7 @@ async function getTopPerformingCourses(where: any, startDate: Date) {
   });
 }
 
-async function getStudentDemographics(where: any, startDate: Date) {
+async function getStudentDemographics(where: Record<string, unknown>, _startDate: Date) {
   const enrollments = await prisma.courseEnrollment.findMany({
     where: {
       course: where,

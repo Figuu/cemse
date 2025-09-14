@@ -3,29 +3,21 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   BarChart3, 
-  TrendingUp, 
-  TrendingDown, 
   Users, 
   Briefcase, 
   Eye, 
   Heart, 
-  Share2, 
   UserPlus,
-  Calendar,
   Target,
   Award,
   Clock,
-  DollarSign,
-  Filter,
   Download,
   RefreshCw
 } from "lucide-react";
-import { useCompanyAnalytics, useHiringMetrics, ANALYTICS_PERIODS, formatPercentage, formatNumber, formatDays, calculateGrowthRate, getStatusColor, getPerformanceLevel, getPerformanceColor } from "@/hooks/useCompanyAnalytics";
-import { CompanyAnalytics, HiringMetrics } from "@/hooks/useCompanyAnalytics";
+import { useCompanyAnalytics, useHiringMetrics, ANALYTICS_PERIODS, formatPercentage, formatNumber, formatDays } from "@/hooks/useCompanyAnalytics";
 
 interface CompanyAnalyticsDashboardProps {
   companyId: string;

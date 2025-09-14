@@ -3,18 +3,12 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-  Search, 
   Users, 
   Star, 
   MapPin, 
-  Clock, 
   Briefcase,
-  Heart,
   MessageCircle,
-  Eye,
-  TrendingUp,
   Filter,
   Save,
   User
@@ -30,7 +24,6 @@ export default function CandidatesPage() {
     sortBy: "relevance",
     sortOrder: "desc",
   });
-  const [searchTerm, setSearchTerm] = useState("");
 
   const { data: candidatesData, isLoading } = useCandidates(filters);
 

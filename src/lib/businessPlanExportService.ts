@@ -1,4 +1,4 @@
-import { BusinessPlanTemplate } from "./businessPlanTemplates";
+import { BusinessPlanTemplate, BusinessPlanField, BusinessPlanSection, BusinessPlanFieldDefaultValue } from "./businessPlanTemplates";
 
 export interface ExportOptions {
   format: "pdf" | "docx" | "html" | "json";
@@ -8,13 +8,22 @@ export interface ExportOptions {
   language: "es" | "en";
 }
 
+export interface BusinessPlanData {
+  [fieldId: string]: BusinessPlanFieldDefaultValue;
+}
+
+interface TableData {
+  headers: string[];
+  rows: Record<string, string>[];
+}
+
 export class BusinessPlanExportService {
   /**
    * Export business plan to PDF
    */
   static async exportToPDF(
     template: BusinessPlanTemplate,
-    data: any,
+    data: BusinessPlanData,
     options: ExportOptions = {
       format: "pdf",
       includeCharts: true,
@@ -36,7 +45,7 @@ export class BusinessPlanExportService {
    */
   static async exportToDOCX(
     template: BusinessPlanTemplate,
-    data: any,
+    data: BusinessPlanData,
     options: ExportOptions = {
       format: "docx",
       includeCharts: true,
@@ -57,7 +66,7 @@ export class BusinessPlanExportService {
    */
   static async exportToHTML(
     template: BusinessPlanTemplate,
-    data: any,
+    data: BusinessPlanData,
     options: ExportOptions = {
       format: "html",
       includeCharts: true,
@@ -76,7 +85,7 @@ export class BusinessPlanExportService {
    */
   static async exportToJSON(
     template: BusinessPlanTemplate,
-    data: any,
+    data: BusinessPlanData,
     options: ExportOptions = {
       format: "json",
       includeCharts: false,
@@ -112,7 +121,7 @@ export class BusinessPlanExportService {
    */
   private static generateHTML(
     template: BusinessPlanTemplate,
-    data: any,
+    data: BusinessPlanData,
     options: ExportOptions
   ): string {
     const sections = template.sections
@@ -261,12 +270,12 @@ export class BusinessPlanExportService {
    * Generate section HTML
    */
   private static generateSectionHTML(
-    section: any,
-    data: any,
+    section: BusinessPlanSection,
+    data: BusinessPlanData,
     options: ExportOptions
   ): string {
     const fields = section.fields
-      .map((field: any) => this.generateFieldHTML(field, data, options))
+      .map((field: BusinessPlanField) => this.generateFieldHTML(field, data))
       .join("");
 
     let tips = "";
@@ -281,17 +290,8 @@ export class BusinessPlanExportService {
       `;
     }
 
-    let examples = "";
-    if (options.includeExamples && section.examples && section.examples.length > 0) {
-      examples = `
-        <div class="examples">
-            <h4>📝 Ejemplos</h4>
-            <ul>
-                ${section.examples.map((example: string) => `<li>${example}</li>`).join("")}
-            </ul>
-        </div>
-      `;
-    }
+    // Note: Examples are not available in BusinessPlanSection interface
+    const examples = "";
 
     return `
       <div class="section">
@@ -308,9 +308,8 @@ export class BusinessPlanExportService {
    * Generate field HTML
    */
   private static generateFieldHTML(
-    field: any,
-    data: any,
-    options: ExportOptions
+    field: BusinessPlanField,
+    data: BusinessPlanData
   ): string {
     const value = data[field.id];
     
@@ -322,10 +321,10 @@ export class BusinessPlanExportService {
 
     switch (field.type) {
       case "table":
-        fieldContent = this.generateTableHTML(value);
+        fieldContent = this.generateTableHTML(value as TableData);
         break;
       case "multiselect":
-        fieldContent = Array.isArray(value) ? value.join(", ") : value;
+        fieldContent = Array.isArray(value) ? value.join(", ") : String(value);
         break;
       default:
         fieldContent = String(value);
@@ -342,13 +341,13 @@ export class BusinessPlanExportService {
   /**
    * Generate table HTML
    */
-  private static generateTableHTML(tableData: any): string {
+  private static generateTableHTML(tableData: TableData): string {
     if (!tableData || !tableData.headers || !tableData.rows) {
       return "No hay datos en la tabla";
     }
 
     const headers = tableData.headers.map((header: string) => `<th>${header}</th>`).join("");
-    const rows = tableData.rows.map((row: any) => 
+    const rows = tableData.rows.map((row: Record<string, string>) => 
       `<tr>${tableData.headers.map((header: string) => `<td>${row[header] || ""}</td>`).join("")}</tr>`
     ).join("");
 
@@ -369,7 +368,7 @@ export class BusinessPlanExportService {
    */
   private static generateTextContent(
     template: BusinessPlanTemplate,
-    data: any,
+    data: BusinessPlanData,
     options: ExportOptions
   ): string {
     const sections = template.sections
@@ -399,12 +398,12 @@ Generado el ${new Date().toLocaleDateString('es-ES')} - Plan de Negocios CEMSE
    * Generate section text
    */
   private static generateSectionText(
-    section: any,
-    data: any,
+    section: BusinessPlanSection,
+    data: BusinessPlanData,
     options: ExportOptions
   ): string {
     const fields = section.fields
-      .map((field: any) => this.generateFieldText(field, data, options))
+      .map((field: BusinessPlanField) => this.generateFieldText(field, data))
       .filter(Boolean)
       .join("\n\n");
 
@@ -413,10 +412,8 @@ Generado el ${new Date().toLocaleDateString('es-ES')} - Plan de Negocios CEMSE
       tips = `\n\nCONSEJOS:\n${section.tips.map((tip: string) => `• ${tip}`).join("\n")}`;
     }
 
-    let examples = "";
-    if (options.includeExamples && section.examples && section.examples.length > 0) {
-      examples = `\n\nEJEMPLOS:\n${section.examples.map((example: string) => `• ${example}`).join("\n")}`;
-    }
+    // Note: Examples are not available in BusinessPlanSection interface
+    const examples = "";
 
     return `
 ${section.title.toUpperCase()}
@@ -430,9 +427,8 @@ ${fields}${tips}${examples}
    * Generate field text
    */
   private static generateFieldText(
-    field: any,
-    data: any,
-    options: ExportOptions
+    field: BusinessPlanField,
+    data: BusinessPlanData
   ): string {
     const value = data[field.id];
     
@@ -444,10 +440,10 @@ ${fields}${tips}${examples}
 
     switch (field.type) {
       case "table":
-        fieldContent = this.generateTableText(value);
+        fieldContent = this.generateTableText(value as TableData);
         break;
       case "multiselect":
-        fieldContent = Array.isArray(value) ? value.join(", ") : value;
+        fieldContent = Array.isArray(value) ? value.join(", ") : String(value);
         break;
       default:
         fieldContent = String(value);
@@ -459,14 +455,14 @@ ${fields}${tips}${examples}
   /**
    * Generate table text
    */
-  private static generateTableText(tableData: any): string {
+  private static generateTableText(tableData: TableData): string {
     if (!tableData || !tableData.headers || !tableData.rows) {
       return "No hay datos en la tabla";
     }
 
     const headers = tableData.headers.join(" | ");
     const separator = tableData.headers.map(() => "---").join(" | ");
-    const rows = tableData.rows.map((row: any) => 
+    const rows = tableData.rows.map((row: Record<string, string>) => 
       tableData.headers.map((header: string) => row[header] || "").join(" | ")
     ).join("\n");
 

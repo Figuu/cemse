@@ -8,9 +8,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   GraduationCap, 
   Users, 
-  BookOpen, 
-  MessageCircle, 
-  HelpCircle, 
   Award,
   Plus,
   RefreshCw,
@@ -19,8 +16,6 @@ import {
   Filter,
   BarChart3,
   TrendingUp,
-  Calendar,
-  Clock,
   Settings
 } from "lucide-react";
 import { RoleGuard } from "@/components/auth/RoleGuard";
@@ -39,8 +34,6 @@ export default function InstructorDashboardPage() {
     isLoading: coursesLoading,
     error: coursesError,
     refetch: refetchCourses,
-    createCourse,
-    updateCourse,
     deleteCourse,
   } = useInstructorCourses({
     search: searchTerm || undefined,

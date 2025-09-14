@@ -10,9 +10,10 @@ const analyticsQuerySchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: companyId } = await params;
     const { searchParams } = new URL(request.url);
     const query = {
       period: searchParams.get("period") || "30d",
@@ -53,7 +54,7 @@ export async function GET(
 
     // Get company basic info
     const company = await prisma.company.findUnique({
-      where: { id: params.id },
+      where: { id: companyId },
       select: {
         id: true,
         name: true,
@@ -76,7 +77,7 @@ export async function GET(
     // Get job postings in date range
     const jobs = await prisma.jobPosting.findMany({
       where: {
-        companyId: params.id,
+        companyId: companyId,
         createdAt: {
           gte: startDate,
           lte: endDate,
@@ -96,7 +97,7 @@ export async function GET(
     // Get applications in date range
     const applications = await prisma.jobApplication.findMany({
       where: {
-        companyId: params.id,
+        companyId: companyId,
         appliedAt: {
           gte: startDate,
           lte: endDate,
@@ -126,7 +127,7 @@ export async function GET(
     // Get company views in date range
     const companyViews = await prisma.companyView.findMany({
       where: {
-        companyId: params.id,
+        companyId: companyId,
         viewedAt: {
           gte: startDate,
           lte: endDate,
@@ -137,7 +138,7 @@ export async function GET(
     // Get company follows in date range
     const companyFollows = await prisma.companyFollow.findMany({
       where: {
-        companyId: params.id,
+        companyId: companyId,
         createdAt: {
           gte: startDate,
           lte: endDate,
@@ -149,7 +150,7 @@ export async function GET(
     const jobLikes = await prisma.jobLike.findMany({
       where: {
         job: {
-          companyId: params.id,
+          companyId: companyId,
         },
         createdAt: {
           gte: startDate,
@@ -162,7 +163,7 @@ export async function GET(
     const jobShares = await prisma.jobShare.findMany({
       where: {
         job: {
-          companyId: params.id,
+          companyId: companyId,
         },
         createdAt: {
           gte: startDate,

@@ -13,13 +13,14 @@ const updateEnrollmentSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string; enrollmentId: string } }
+  { params }: { params: Promise<{ id: string; enrollmentId: string }> }
 ) {
   try {
+    const { id: institutionId, enrollmentId } = await params;
     const enrollment = await prisma.institutionEnrollment.findFirst({
       where: {
-        id: params.enrollmentId,
-        institutionId: params.id,
+        id: enrollmentId,
+        institutionId: institutionId,
       },
       include: {
         student: {
@@ -93,9 +94,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string; enrollmentId: string } }
+  { params }: { params: Promise<{ id: string; enrollmentId: string }> }
 ) {
   try {
+    const { id: institutionId, enrollmentId } = await params;
     const body = await request.json();
     const validatedData = updateEnrollmentSchema.parse(body);
 
@@ -104,7 +106,7 @@ export async function PUT(
 
     // Check if user has permission to manage this institution
     const institution = await prisma.institution.findUnique({
-      where: { id: params.id },
+      where: { id: institutionId },
       select: { createdBy: true },
     });
 
@@ -125,8 +127,8 @@ export async function PUT(
     // Get current enrollment data
     const currentEnrollment = await prisma.institutionEnrollment.findFirst({
       where: {
-        id: params.enrollmentId,
-        institutionId: params.id,
+        id: enrollmentId,
+        institutionId: institutionId,
       },
       select: {
         courseId: true,
@@ -142,7 +144,7 @@ export async function PUT(
     }
 
     const updatedEnrollment = await prisma.institutionEnrollment.update({
-      where: { id: params.enrollmentId },
+      where: { id: enrollmentId },
       data: validatedData,
       include: {
         student: {
@@ -210,15 +212,16 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; enrollmentId: string } }
+  { params }: { params: Promise<{ id: string; enrollmentId: string }> }
 ) {
   try {
+    const { id: institutionId, enrollmentId } = await params;
     // Get user ID from session (in real app, this would come from auth)
     const userId = "user-1"; // Mock user ID
 
     // Check if user has permission to manage this institution
     const institution = await prisma.institution.findUnique({
-      where: { id: params.id },
+      where: { id: institutionId },
       select: { createdBy: true },
     });
 
@@ -239,8 +242,8 @@ export async function DELETE(
     // Get current enrollment data
     const currentEnrollment = await prisma.institutionEnrollment.findFirst({
       where: {
-        id: params.enrollmentId,
-        institutionId: params.id,
+        id: enrollmentId,
+        institutionId: institutionId,
       },
       select: {
         courseId: true,
@@ -257,7 +260,7 @@ export async function DELETE(
 
     // Delete enrollment
     await prisma.institutionEnrollment.delete({
-      where: { id: params.enrollmentId },
+      where: { id: enrollmentId },
     });
 
     // Update course student count if student was active

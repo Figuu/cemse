@@ -33,13 +33,14 @@ const updateJobSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string; jobId: string } }
+  { params }: { params: Promise<{ id: string; jobId: string }> }
 ) {
   try {
+    const { id: companyId, jobId } = await params;
     const job = await prisma.jobPosting.findFirst({
       where: { 
-        id: params.jobId,
-        companyId: params.id,
+        id: jobId,
+        companyId: companyId,
       },
       include: {
         company: {
@@ -125,7 +126,7 @@ export async function GET(
 
     // Increment view count
     await prisma.jobPosting.update({
-      where: { id: params.jobId },
+      where: { id: jobId },
       data: { totalViews: { increment: 1 } },
     });
 
@@ -141,18 +142,19 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string; jobId: string } }
+  { params }: { params: Promise<{ id: string; jobId: string }> }
 ) {
   try {
     const body = await request.json();
     const validatedData = updateJobSchema.parse(body);
 
+    const { id: companyId, jobId } = await params;
     // Get user ID from session (in real app, this would come from auth)
     const userId = "user-1"; // Mock user ID
 
     // Check if user owns the company
     const company = await prisma.company.findUnique({
-      where: { id: params.id },
+      where: { id: companyId },
       select: { ownerId: true },
     });
 
@@ -171,7 +173,7 @@ export async function PUT(
     }
 
     const updatedJob = await prisma.jobPosting.update({
-      where: { id: params.jobId },
+      where: { id: jobId },
       data: validatedData,
       include: {
         company: {
@@ -212,15 +214,16 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; jobId: string } }
+  { params }: { params: Promise<{ id: string; jobId: string }> }
 ) {
   try {
+    const { id: companyId, jobId } = await params;
     // Get user ID from session (in real app, this would come from auth)
     const userId = "user-1"; // Mock user ID
 
     // Check if user owns the company
     const company = await prisma.company.findUnique({
-      where: { id: params.id },
+      where: { id: companyId },
       select: { ownerId: true },
     });
 
@@ -240,13 +243,13 @@ export async function DELETE(
 
     // Soft delete by setting isActive to false
     await prisma.jobPosting.update({
-      where: { id: params.jobId },
+      where: { id: jobId },
       data: { isActive: false },
     });
 
     // Update company job count
     await prisma.company.update({
-      where: { id: params.id },
+      where: { id: companyId },
       data: { totalJobs: { decrement: 1 } },
     });
 

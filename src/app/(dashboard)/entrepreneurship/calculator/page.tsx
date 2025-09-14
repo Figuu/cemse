@@ -22,11 +22,11 @@ import Link from "next/link";
 
 export default function FinancialCalculatorPage() {
   const [financials, setFinancials] = useState<StartupFinancials | null>(null);
-  const [results, setResults] = useState<{
+  const [results] = useState<{
     projections: FinancialProjection[];
     breakEven: BreakEvenAnalysis;
     investment: InvestmentAnalysis;
-    summary: any;
+    summary: Record<string, unknown>;
   } | null>(null);
 
   const handleCalculate = (data: StartupFinancials) => {

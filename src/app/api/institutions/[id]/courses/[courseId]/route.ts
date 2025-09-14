@@ -21,13 +21,14 @@ const updateCourseSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string; courseId: string } }
+  { params }: { params: Promise<{ id: string; courseId: string }> }
 ) {
   try {
+    const { id: institutionId, courseId } = await params;
     const course = await prisma.institutionCourse.findFirst({
       where: {
-        id: params.courseId,
-        institutionId: params.id,
+        id: courseId,
+        institutionId: institutionId,
       },
       include: {
         institution: {
@@ -108,9 +109,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string; courseId: string } }
+  { params }: { params: Promise<{ id: string; courseId: string }> }
 ) {
   try {
+    const { id: institutionId, courseId } = await params;
     const body = await request.json();
     const validatedData = updateCourseSchema.parse(body);
 
@@ -119,7 +121,7 @@ export async function PUT(
 
     // Check if user has permission to manage this institution
     const institution = await prisma.institution.findUnique({
-      where: { id: params.id },
+      where: { id: institutionId },
       select: { createdBy: true },
     });
 
@@ -142,8 +144,8 @@ export async function PUT(
       const existingCourse = await prisma.institutionCourse.findFirst({
         where: {
           code: validatedData.code,
-          institutionId: params.id,
-          id: { not: params.courseId },
+          institutionId: institutionId,
+          id: { not: courseId },
         },
       });
 
@@ -156,7 +158,7 @@ export async function PUT(
     }
 
     const updatedCourse = await prisma.institutionCourse.update({
-      where: { id: params.courseId },
+      where: { id: courseId },
       data: validatedData,
       include: {
         program: {
@@ -205,15 +207,16 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; courseId: string } }
+  { params }: { params: Promise<{ id: string; courseId: string }> }
 ) {
   try {
+    const { id: institutionId, courseId } = await params;
     // Get user ID from session (in real app, this would come from auth)
     const userId = "user-1"; // Mock user ID
 
     // Check if user has permission to manage this institution
     const institution = await prisma.institution.findUnique({
-      where: { id: params.id },
+      where: { id: institutionId },
       select: { createdBy: true },
     });
 
@@ -234,7 +237,7 @@ export async function DELETE(
     // Check if course has active enrollments
     const activeEnrollments = await prisma.institutionEnrollment.count({
       where: {
-        courseId: params.courseId,
+        courseId: courseId,
         status: "ACTIVE",
       },
     });
@@ -248,7 +251,7 @@ export async function DELETE(
 
     // Delete course
     await prisma.institutionCourse.delete({
-      where: { id: params.courseId },
+      where: { id: courseId },
     });
 
     return NextResponse.json({ message: "Course deleted successfully" });

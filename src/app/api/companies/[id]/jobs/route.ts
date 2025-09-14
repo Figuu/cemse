@@ -31,7 +31,7 @@ const createJobSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { searchParams } = new URL(request.url);
@@ -48,8 +48,9 @@ export async function GET(
 
     const skip = (page - 1) * limit;
 
+    const { id: companyId } = await params;
     const where: any = {
-      companyId: params.id,
+      companyId: companyId,
     };
 
     if (isActive !== null) {
@@ -142,18 +143,19 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const body = await request.json();
     const validatedData = createJobSchema.parse(body);
 
+    const { id: companyId } = await params;
     // Get user ID from session (in real app, this would come from auth)
     const userId = "user-1"; // Mock user ID
 
     // Check if user owns the company
     const company = await prisma.company.findUnique({
-      where: { id: params.id },
+      where: { id: companyId },
       select: { ownerId: true },
     });
 
@@ -174,7 +176,7 @@ export async function POST(
     const job = await prisma.jobPosting.create({
       data: {
         ...validatedData,
-        companyId: params.id,
+        companyId: companyId,
       },
       include: {
         company: {
@@ -198,7 +200,7 @@ export async function POST(
 
     // Update company job count
     await prisma.company.update({
-      where: { id: params.id },
+      where: { id: companyId },
       data: { totalJobs: { increment: 1 } },
     });
 

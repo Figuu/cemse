@@ -34,7 +34,7 @@ const updateStartupSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -43,9 +43,10 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id: startupId } = await params;
     const startup = await prisma.entrepreneurship.findUnique({
       where: {
-        id: params.id,
+        id: startupId,
         isActive: true,
       },
       include: {
@@ -95,7 +96,7 @@ export async function GET(
     // Increment view count if not the owner
     if (startup.ownerId !== session.user.id) {
       await prisma.entrepreneurship.update({
-        where: { id: params.id },
+        where: { id: startupId },
         data: { viewsCount: { increment: 1 } },
       });
     }
@@ -116,7 +117,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -128,10 +129,11 @@ export async function PUT(
     const body = await request.json();
     const validatedData = updateStartupSchema.parse(body);
 
+    const { id: startupId } = await params;
     // Check if startup exists and user owns it
     const existingStartup = await prisma.entrepreneurship.findUnique({
       where: {
-        id: params.id,
+        id: startupId,
         isActive: true,
       },
     });
@@ -158,7 +160,7 @@ export async function PUT(
 
     // Update startup
     const startup = await prisma.entrepreneurship.update({
-      where: { id: params.id },
+      where: { id: startupId },
       data: updateData,
       include: {
         owner: {
@@ -202,7 +204,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -211,10 +213,11 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id: startupId } = await params;
     // Check if startup exists and user owns it
     const existingStartup = await prisma.entrepreneurship.findUnique({
       where: {
-        id: params.id,
+        id: startupId,
         isActive: true,
       },
     });
@@ -235,7 +238,7 @@ export async function DELETE(
 
     // Soft delete startup
     await prisma.entrepreneurship.update({
-      where: { id: params.id },
+      where: { id: startupId },
       data: { isActive: false },
     });
 

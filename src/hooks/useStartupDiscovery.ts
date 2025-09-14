@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { DiscoveryFilters } from "@/lib/startupDiscoveryService";
+import { DiscoveryFilters, StartupWithOwner, TrendingStartup, RecommendedStartup } from "@/lib/startupDiscoveryService";
 
 export interface DiscoveryResult {
-  startups: any[];
+  startups: StartupWithOwner[];
   total: number;
   facets: {
     categories: Array<{ name: string; count: number }>;
@@ -13,8 +13,8 @@ export interface DiscoveryResult {
     municipalities: Array<{ name: string; count: number }>;
     departments: Array<{ name: string; count: number }>;
   };
-  trending: any[];
-  recommendations: any[];
+  trending: TrendingStartup[];
+  recommendations: RecommendedStartup[];
 }
 
 export interface DiscoveryAnalytics {
@@ -34,14 +34,14 @@ interface UseStartupDiscoveryReturn {
 }
 
 interface UseTrendingStartupsReturn {
-  trendingStartups: any[];
+  trendingStartups: TrendingStartup[];
   isLoading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
 }
 
 interface UseRecommendedStartupsReturn {
-  recommendedStartups: any[];
+  recommendedStartups: RecommendedStartup[];
   isLoading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
@@ -60,7 +60,7 @@ export function useStartupDiscovery(filters?: DiscoveryFilters): UseStartupDisco
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const discoverStartups = async (newFilters: DiscoveryFilters): Promise<DiscoveryResult | null> => {
+  const discoverStartups = useCallback(async (newFilters: DiscoveryFilters): Promise<DiscoveryResult | null> => {
     if (!session?.user?.id) return null;
 
     setIsLoading(true);
@@ -91,7 +91,7 @@ export function useStartupDiscovery(filters?: DiscoveryFilters): UseStartupDisco
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [session?.user?.id]);
 
   const fetchDiscovery = useCallback(async () => {
     if (!session?.user?.id || !filters) return;
@@ -100,7 +100,7 @@ export function useStartupDiscovery(filters?: DiscoveryFilters): UseStartupDisco
     if (result) {
       setDiscoveryResult(result);
     }
-  }, [session?.user?.id, filters]);
+  }, [session?.user?.id, filters, discoverStartups]);
 
   useEffect(() => {
     fetchDiscovery();
@@ -117,7 +117,7 @@ export function useStartupDiscovery(filters?: DiscoveryFilters): UseStartupDisco
 
 export function useTrendingStartups(limit: number = 10): UseTrendingStartupsReturn {
   const { data: session } = useSession();
-  const [trendingStartups, setTrendingStartups] = useState<any[]>([]);
+  const [trendingStartups, setTrendingStartups] = useState<TrendingStartup[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -158,7 +158,7 @@ export function useTrendingStartups(limit: number = 10): UseTrendingStartupsRetu
 
 export function useRecommendedStartups(limit: number = 10): UseRecommendedStartupsReturn {
   const { data: session } = useSession();
-  const [recommendedStartups, setRecommendedStartups] = useState<any[]>([]);
+  const [recommendedStartups, setRecommendedStartups] = useState<RecommendedStartup[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

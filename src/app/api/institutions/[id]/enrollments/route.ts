@@ -11,18 +11,10 @@ const createEnrollmentSchema = z.object({
   notes: z.string().optional(),
 });
 
-const updateEnrollmentSchema = z.object({
-  status: z.enum(["ACTIVE", "INACTIVE", "COMPLETED", "DROPPED", "SUSPENDED"]).optional(),
-  grade: z.number().min(0).max(100).optional(),
-  credits: z.number().int().positive().optional(),
-  semester: z.string().optional(),
-  year: z.number().int().positive().optional(),
-  notes: z.string().optional(),
-});
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { searchParams } = new URL(request.url);
@@ -39,8 +31,9 @@ export async function GET(
 
     const skip = (page - 1) * limit;
 
+    const { id: institutionId } = await params;
     const where: any = {
-      institutionId: params.id,
+      institutionId: institutionId,
     };
 
     if (search) {
@@ -139,9 +132,10 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: institutionId } = await params;
     const body = await request.json();
     const validatedData = createEnrollmentSchema.parse(body);
 
@@ -150,7 +144,7 @@ export async function POST(
 
     // Check if user has permission to manage this institution
     const institution = await prisma.institution.findUnique({
-      where: { id: params.id },
+      where: { id: institutionId },
       select: { createdBy: true },
     });
 
@@ -180,7 +174,7 @@ export async function POST(
     const institutionStudent = await prisma.institutionStudent.findFirst({
       where: {
         studentId: validatedData.studentId,
-        institutionId: params.id,
+        institutionId: institutionId,
       },
     });
 
@@ -195,7 +189,7 @@ export async function POST(
     const existingEnrollment = await prisma.institutionEnrollment.findFirst({
       where: {
         studentId: validatedData.studentId,
-        institutionId: params.id,
+        institutionId: institutionId,
         programId: validatedData.programId || null,
         courseId: validatedData.courseId || null,
         status: "ACTIVE",
@@ -227,7 +221,7 @@ export async function POST(
     const enrollment = await prisma.institutionEnrollment.create({
       data: {
         ...validatedData,
-        institutionId: params.id,
+        institutionId: institutionId,
       },
       include: {
         student: {

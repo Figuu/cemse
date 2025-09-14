@@ -1,26 +1,28 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   Bell, 
-  CheckCircle, 
-  XCircle, 
-  AlertCircle, 
-  MessageCircle, 
-  Briefcase,
-  BookOpen,
+  Check, 
+  CheckCheck, 
+  Trash2, 
   Settings,
-  MarkAsRead,
-  Trash2,
-  RefreshCw
+  Mail,
+  MessageSquare,
+  Briefcase,
+  GraduationCap,
+  Award,
+  AlertCircle,
+  Clock
 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { formatDate, formatDateTime } from "@/lib/utils";
-import { useNotifications, Notification } from "@/hooks/useNotifications";
+import { useNotifications } from "@/hooks/useNotifications";
+import { formatDistanceToNow } from "date-fns";
+import { es } from "date-fns/locale";
 
 interface NotificationCenterProps {
   className?: string;
@@ -28,51 +30,55 @@ interface NotificationCenterProps {
 
 export function NotificationCenter({ className }: NotificationCenterProps) {
   const [activeTab, setActiveTab] = useState("all");
-  const [selectedNotifications, setSelectedNotifications] = useState<string[]>([]);
-
   const {
     notifications,
-    unreadCount,
+    preferences,
     isLoading,
-    error,
-    refetch,
+    unreadCount,
     markAsRead,
     markAllAsRead,
-  } = useNotifications({
-    limit: 50,
-  });
+    deleteNotification
+  } = useNotifications();
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
-      case "APPLICATION_STATUS_CHANGE":
+      case "job_application":
         return <Briefcase className="h-4 w-4 text-blue-600" />;
-      case "JOB_ALERT":
-        return <Bell className="h-4 w-4 text-yellow-600" />;
-      case "MESSAGE":
-        return <MessageCircle className="h-4 w-4 text-green-600" />;
-      case "COURSE_UPDATE":
-        return <BookOpen className="h-4 w-4 text-purple-600" />;
-      case "SYSTEM":
-        return <Settings className="h-4 w-4 text-gray-600" />;
-      default:
+      case "job_offer":
+        return <Briefcase className="h-4 w-4 text-green-600" />;
+      case "youth_application":
+        return <Briefcase className="h-4 w-4 text-purple-600" />;
+      case "message":
+        return <MessageSquare className="h-4 w-4 text-red-600" />;
+      case "course":
+        return <GraduationCap className="h-4 w-4 text-orange-600" />;
+      case "certificate":
+        return <Award className="h-4 w-4 text-yellow-600" />;
+      case "system":
         return <AlertCircle className="h-4 w-4 text-gray-600" />;
+      default:
+        return <Bell className="h-4 w-4 text-gray-600" />;
     }
   };
 
-  const getNotificationColor = (type: string) => {
+  const getNotificationTypeLabel = (type: string) => {
     switch (type) {
-      case "APPLICATION_STATUS_CHANGE":
-        return "border-l-blue-500 bg-blue-50";
-      case "JOB_ALERT":
-        return "border-l-yellow-500 bg-yellow-50";
-      case "MESSAGE":
-        return "border-l-green-500 bg-green-50";
-      case "COURSE_UPDATE":
-        return "border-l-purple-500 bg-purple-50";
-      case "SYSTEM":
-        return "border-l-gray-500 bg-gray-50";
+      case "job_application":
+        return "Aplicación de Trabajo";
+      case "job_offer":
+        return "Oferta de Trabajo";
+      case "youth_application":
+        return "Aplicación Joven";
+      case "message":
+        return "Mensaje";
+      case "course":
+        return "Curso";
+      case "certificate":
+        return "Certificado";
+      case "system":
+        return "Sistema";
       default:
-        return "border-l-gray-500 bg-gray-50";
+        return type;
     }
   };
 
@@ -80,93 +86,32 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
     switch (activeTab) {
       case "unread":
         return !notification.read;
-      case "applications":
-        return notification.type === "APPLICATION_STATUS_CHANGE";
-      case "jobs":
-        return notification.type === "JOB_ALERT";
-      case "messages":
-        return notification.type === "MESSAGE";
-      case "courses":
-        return notification.type === "COURSE_UPDATE";
+      case "read":
+        return notification.read;
+      case "all":
       default:
         return true;
     }
   });
 
-  const handleMarkAsRead = async (notificationId: string) => {
-    await markAsRead(notificationId);
+  const handleMarkAsRead = async (id: string) => {
+    await markAsRead(id);
+  };
+
+  const handleDelete = async (id: string) => {
+    await deleteNotification(id);
   };
 
   const handleMarkAllAsRead = async () => {
     await markAllAsRead();
   };
 
-  const handleSelectNotification = (notificationId: string) => {
-    setSelectedNotifications(prev => 
-      prev.includes(notificationId)
-        ? prev.filter(id => id !== notificationId)
-        : [...prev, notificationId]
-    );
-  };
-
-  const handleSelectAll = () => {
-    if (selectedNotifications.length === filteredNotifications.length) {
-      setSelectedNotifications([]);
-    } else {
-      setSelectedNotifications(filteredNotifications.map(n => n.id));
-    }
-  };
-
-  const handleBulkMarkAsRead = async () => {
-    for (const notificationId of selectedNotifications) {
-      await markAsRead(notificationId);
-    }
-    setSelectedNotifications([]);
-  };
-
   if (isLoading) {
     return (
-      <Card className={cn("", className)}>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Bell className="h-5 w-5 mr-2" />
-            Centro de Notificaciones
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="animate-pulse">
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-1/2 mb-4"></div>
-                <div className="h-3 bg-gray-200 rounded w-full mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-2/3"></div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (error) {
-    return (
-      <Card className={cn("", className)}>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Bell className="h-5 w-5 mr-2" />
-            Centro de Notificaciones
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8">
-            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Error al cargar notificaciones</h3>
-            <p className="text-muted-foreground mb-4">{error}</p>
-            <Button onClick={refetch}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Reintentar
-            </Button>
+      <Card className={className}>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         </CardContent>
       </Card>
@@ -174,172 +119,189 @@ export function NotificationCenter({ className }: NotificationCenterProps) {
   }
 
   return (
-    <Card className={cn("", className)}>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center">
-              <Bell className="h-5 w-5 mr-2" />
-              Centro de Notificaciones
-              {unreadCount > 0 && (
-                <Badge variant="destructive" className="ml-2">
-                  {unreadCount}
-                </Badge>
-              )}
-            </CardTitle>
-            <CardDescription>
-              {notifications.length} notificaciones totales
-            </CardDescription>
-          </div>
-          <div className="flex space-x-2">
-            {unreadCount > 0 && (
-              <Button size="sm" variant="outline" onClick={handleMarkAllAsRead}>
-                <MarkAsRead className="h-4 w-4 mr-2" />
-                Marcar todas como leídas
-              </Button>
-            )}
-            <Button size="sm" variant="outline" onClick={refetch}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Actualizar
-            </Button>
-          </div>
+    <div className={className}>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-2xl font-bold">Centro de Notificaciones</h2>
+          <p className="text-muted-foreground">
+            Gestiona tus notificaciones y preferencias
+          </p>
         </div>
-      </CardHeader>
-      <CardContent>
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="all">Todas ({notifications.length})</TabsTrigger>
-            <TabsTrigger value="unread">No leídas ({unreadCount})</TabsTrigger>
-            <TabsTrigger value="applications">Aplicaciones</TabsTrigger>
-            <TabsTrigger value="jobs">Trabajos</TabsTrigger>
-            <TabsTrigger value="messages">Mensajes</TabsTrigger>
-            <TabsTrigger value="courses">Cursos</TabsTrigger>
-          </TabsList>
+        <div className="flex items-center space-x-2">
+          {unreadCount > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleMarkAllAsRead}
+            >
+              <CheckCheck className="h-4 w-4 mr-2" />
+              Marcar todas como leídas
+            </Button>
+          )}
+          <Button variant="outline" size="sm">
+            <Settings className="h-4 w-4 mr-2" />
+            Configuración
+          </Button>
+        </div>
+      </div>
 
-          <TabsContent value={activeTab} className="space-y-4 mt-6">
-            {filteredNotifications.length > 0 && (
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleSelectAll}
-                  >
-                    {selectedNotifications.length === filteredNotifications.length ? "Deseleccionar todo" : "Seleccionar todo"}
-                  </Button>
-                  {selectedNotifications.length > 0 && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={handleBulkMarkAsRead}
-                    >
-                      <MarkAsRead className="h-4 w-4 mr-2" />
-                      Marcar seleccionadas como leídas
-                    </Button>
-                  )}
-                </div>
-                <span className="text-sm text-muted-foreground">
-                  {filteredNotifications.length} notificaciones
-                </span>
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2">
+              <Bell className="h-5 w-5 text-blue-600" />
+              <div>
+                <p className="text-2xl font-bold">{notifications.length}</p>
+                <p className="text-sm text-muted-foreground">Total</p>
               </div>
-            )}
-
-            {filteredNotifications.length === 0 ? (
-              <div className="text-center py-8">
-                <Bell className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No hay notificaciones</h3>
-                <p className="text-muted-foreground">
-                  {activeTab === "unread" 
-                    ? "No tienes notificaciones sin leer"
-                    : "No hay notificaciones en esta categoría"
-                  }
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2">
+              <AlertCircle className="h-5 w-5 text-red-600" />
+              <div>
+                <p className="text-2xl font-bold">{unreadCount}</p>
+                <p className="text-sm text-muted-foreground">No leídas</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2">
+              <Check className="h-5 w-5 text-green-600" />
+              <div>
+                <p className="text-2xl font-bold">{notifications.length - unreadCount}</p>
+                <p className="text-sm text-muted-foreground">Leídas</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2">
+              <Mail className="h-5 w-5 text-purple-600" />
+              <div>
+                <p className="text-2xl font-bold">
+                  {preferences?.email ? "Activado" : "Desactivado"}
                 </p>
+                <p className="text-sm text-muted-foreground">Email</p>
               </div>
-            ) : (
-              <div className="space-y-3">
-                {filteredNotifications.map((notification) => (
-                  <div
-                    key={notification.id}
-                    className={cn(
-                      "border rounded-lg p-4 transition-all hover:shadow-md",
-                      !notification.read && "border-l-4",
-                      !notification.read && getNotificationColor(notification.type),
-                      selectedNotifications.includes(notification.id) && "ring-2 ring-blue-500"
-                    )}
-                  >
-                    <div className="flex items-start space-x-3">
-                      <div className="flex-shrink-0 mt-1">
-                        {getNotificationIcon(notification.type)}
-                      </div>
-                      
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <h4 className={cn(
-                            "text-sm font-medium",
-                            !notification.read && "font-semibold"
-                          )}>
-                            {notification.title}
-                          </h4>
-                          <div className="flex items-center space-x-2">
-                            {!notification.read && (
-                              <Badge variant="secondary" className="text-xs">
-                                Nuevo
-                              </Badge>
-                            )}
-                            <span className="text-xs text-muted-foreground">
-                              {formatDate(notification.createdAt)}
-                            </span>
-                          </div>
-                        </div>
-                        
-                        <p className="text-sm text-muted-foreground mb-2">
-                          {notification.message}
-                        </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-                        {notification.jobApplication && (
-                          <div className="bg-white/50 rounded p-2 mb-2">
-                            <p className="text-xs text-muted-foreground">
-                              <strong>Empleo:</strong> {notification.jobApplication.jobTitle}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              <strong>Empresa:</strong> {notification.jobApplication.company}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              <strong>Estado:</strong> {notification.jobApplication.status}
-                            </p>
-                          </div>
-                        )}
+      {/* Notifications */}
+      <Card>
+        <CardHeader>
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="all">
+                Todas ({notifications.length})
+              </TabsTrigger>
+              <TabsTrigger value="unread">
+                No leídas ({unreadCount})
+              </TabsTrigger>
+              <TabsTrigger value="read">
+                Leídas ({notifications.length - unreadCount})
+              </TabsTrigger>
+            </TabsList>
 
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleSelectNotification(notification.id)}
-                            >
-                              {selectedNotifications.includes(notification.id) ? "Deseleccionar" : "Seleccionar"}
-                            </Button>
-                            {!notification.read && (
+            <TabsContent value={activeTab} className="mt-6">
+              {filteredNotifications.length === 0 ? (
+                <div className="text-center py-12">
+                  <Bell className="mx-auto h-12 w-12 text-muted-foreground" />
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">
+                    No hay notificaciones
+                  </h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    {activeTab === "unread" 
+                      ? "No tienes notificaciones sin leer"
+                      : activeTab === "read"
+                      ? "No tienes notificaciones leídas"
+                      : "No tienes notificaciones"
+                    }
+                  </p>
+                </div>
+              ) : (
+                <ScrollArea className="h-96">
+                  <div className="space-y-2">
+                    {filteredNotifications.map((notification) => (
+                      <div
+                        key={notification.id}
+                        className={`p-4 border rounded-lg transition-colors ${
+                          notification.read 
+                            ? "bg-muted/50" 
+                            : "bg-background border-primary/20"
+                        }`}
+                      >
+                        <div className="flex items-start space-x-3">
+                          <div className="flex-shrink-0 mt-1">
+                            {getNotificationIcon(notification.type)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-2">
+                                <h4 className="text-sm font-medium">
+                                  {notification.title}
+                                </h4>
+                                <Badge variant="outline" className="text-xs">
+                                  {getNotificationTypeLabel(notification.type)}
+                                </Badge>
+                                {!notification.read && (
+                                  <div className="h-2 w-2 bg-primary rounded-full" />
+                                )}
+                              </div>
+                              <div className="flex items-center space-x-1">
+                                <span className="text-xs text-muted-foreground">
+                                  {formatDistanceToNow(new Date(notification.createdAt), {
+                                    addSuffix: true,
+                                    locale: es
+                                  })}
+                                </span>
+                                <Clock className="h-3 w-3 text-muted-foreground" />
+                              </div>
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {notification.message}
+                            </p>
+                            <div className="flex items-center space-x-2 mt-2">
+                              {!notification.read && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleMarkAsRead(notification.id)}
+                                >
+                                  <Check className="h-4 w-4 mr-1" />
+                                  Marcar como leída
+                                </Button>
+                              )}
                               <Button
-                                size="sm"
                                 variant="ghost"
-                                onClick={() => handleMarkAsRead(notification.id)}
+                                size="sm"
+                                onClick={() => handleDelete(notification.id)}
+                                className="text-destructive hover:text-destructive"
                               >
-                                <CheckCircle className="h-4 w-4 mr-1" />
-                                Marcar como leída
+                                <Trash2 className="h-4 w-4 mr-1" />
+                                Eliminar
                               </Button>
-                            )}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+                </ScrollArea>
+              )}
+            </TabsContent>
+          </Tabs>
+        </CardHeader>
+      </Card>
+    </div>
   );
 }

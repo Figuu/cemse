@@ -3,6 +3,104 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 
+// Union type for different report data structures
+export type ReportDataType = 
+  | CoursePerformanceReportData
+  | StudentEngagementReportData
+  | InstructorAnalyticsReportData
+  | CompletionAnalysisReportData
+  | ContentAnalyticsReportData
+  | ComprehensiveReportData;
+
+export interface CoursePerformanceReportData {
+  courses: Array<{
+    id: string;
+    title: string;
+    level: string;
+    status: string;
+    totalEnrollments: number;
+    completedEnrollments: number;
+    completionRate: number;
+    averageProgress: number;
+    averageRating: number;
+  }>;
+}
+
+export interface StudentEngagementReportData {
+  engagement: {
+    discussionCount: number;
+    questionCount: number;
+    quizAttempts: number;
+    averageSessionTime: number;
+    activeStudents: number;
+    engagementScore: number;
+  };
+  trends: Array<{
+    date: string;
+    engagement: number;
+  }>;
+}
+
+export interface InstructorAnalyticsReportData {
+  instructors: Array<{
+    id: string;
+    name: string;
+    totalCourses: number;
+    totalStudents: number;
+    averageRating: number;
+    completionRate: number;
+  }>;
+}
+
+export interface CompletionAnalysisReportData {
+  completions: Array<{
+    courseId: string;
+    courseTitle: string;
+    level: string;
+    totalEnrollments: number;
+    completedEnrollments: number;
+    completionRate: number;
+  }>;
+  trends: Array<{
+    date: string;
+    completions: number;
+  }>;
+}
+
+export interface ContentAnalyticsReportData {
+  content: Array<{
+    id: string;
+    title: string;
+    type: string;
+    views: number;
+    completions: number;
+    rating: number;
+  }>;
+}
+
+export interface ComprehensiveReportData {
+  overview: CourseAnalytics;
+  detailed: {
+    courses: CourseAnalytics['coursePerformance'];
+    students: Array<{
+      id: string;
+      name: string;
+      email: string;
+      totalCourses: number;
+      completedCourses: number;
+      averageProgress: number;
+    }>;
+    instructors: Array<{
+      id: string;
+      name: string;
+      email: string;
+      totalCourses: number;
+      totalStudents: number;
+      averageRating: number;
+    }>;
+  };
+}
+
 export interface CourseAnalytics {
   timeRange: string;
   period: {
@@ -128,7 +226,7 @@ export interface ReportData {
       instructorId: string | null;
     };
   };
-  data: any;
+  data: ReportDataType;
 }
 
 interface UseCourseAnalyticsReturn {

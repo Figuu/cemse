@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Award, 
@@ -12,11 +11,8 @@ import {
   AlertCircle,
   Search,
   Filter,
-  Download,
-  Eye,
   GraduationCap,
-  BookOpen,
-  Calendar
+  BookOpen
 } from "lucide-react";
 import { RoleGuard } from "@/components/auth/RoleGuard";
 import { useCertificates } from "@/hooks/useCertificates";
@@ -36,7 +32,6 @@ export default function CertificatesPage() {
     isLoading,
     error,
     refetch,
-    generateCertificate,
     downloadCertificate,
   } = useCertificates();
 

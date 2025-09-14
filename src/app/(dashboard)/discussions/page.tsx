@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   MessageCircle, 
@@ -13,8 +12,6 @@ import {
   Search,
   Filter,
   HelpCircle,
-  BookOpen,
-  GraduationCap,
   Calendar
 } from "lucide-react";
 import { RoleGuard } from "@/components/auth/RoleGuard";
@@ -34,7 +31,6 @@ export default function DiscussionsPage() {
     isLoading: discussionsLoading,
     error: discussionsError,
     refetch: refetchDiscussions,
-    createDiscussion,
     vote: voteDiscussion,
   } = useDiscussions({
     search: searchTerm || undefined,
@@ -47,7 +43,6 @@ export default function DiscussionsPage() {
     isLoading: questionsLoading,
     error: questionsError,
     refetch: refetchQuestions,
-    createQuestion,
     vote: voteQuestion,
   } = useQuestions({
     search: searchTerm || undefined,

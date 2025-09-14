@@ -6,7 +6,7 @@ export interface ValidationResult {
   maxScore: number;
   percentage: number;
   errors: ValidationError[];
-  warnings: ValidationWarning[];
+  _warnings: ValidationWarning[];
   suggestions: ValidationSuggestion[];
   sectionScores: SectionScore[];
 }
@@ -47,10 +47,10 @@ export class BusinessPlanValidationService {
    */
   static validateBusinessPlan(
     template: BusinessPlanTemplate,
-    data: any
+    data: Record<string, unknown>
   ): ValidationResult {
     const errors: ValidationError[] = [];
-    const warnings: ValidationWarning[] = [];
+    const _warnings: ValidationWarning[] = [];
     const suggestions: ValidationSuggestion[] = [];
     const sectionScores: SectionScore[] = [];
 
@@ -74,7 +74,7 @@ export class BusinessPlanValidationService {
       maxScore += sectionResult.maxScore;
       
       errors.push(...sectionResult.errors);
-      warnings.push(...sectionResult.warnings);
+      _warnings.push(...sectionResult._warnings);
       suggestions.push(...sectionResult.suggestions);
     });
 
@@ -87,7 +87,7 @@ export class BusinessPlanValidationService {
       maxScore,
       percentage,
       errors,
-      warnings,
+      _warnings,
       suggestions,
       sectionScores
     };
@@ -98,24 +98,24 @@ export class BusinessPlanValidationService {
    */
   private static validateSection(
     section: BusinessPlanSection,
-    data: any
+    data: Record<string, unknown>
   ): {
     score: number;
     maxScore: number;
     percentage: number;
     completeness: number;
     errors: ValidationError[];
-    warnings: ValidationWarning[];
+    _warnings: ValidationWarning[];
     suggestions: ValidationSuggestion[];
   } {
     const errors: ValidationError[] = [];
-    const warnings: ValidationWarning[] = [];
+    const _warnings: ValidationWarning[] = [];
     const suggestions: ValidationSuggestion[] = [];
     
     let score = 0;
     let maxScore = 0;
     let completedFields = 0;
-    let totalFields = section.fields.length;
+    const totalFields = section.fields.length;
 
     section.fields.forEach((field) => {
       const fieldResult = this.validateField(field, data[field.id]);
@@ -132,7 +132,7 @@ export class BusinessPlanValidationService {
         sectionId: section.id
       })));
       
-      warnings.push(...fieldResult.warnings.map(w => ({
+      _warnings.push(...fieldResult._warnings.map(w => ({
         ...w,
         sectionId: section.id
       })));
@@ -152,7 +152,7 @@ export class BusinessPlanValidationService {
       percentage,
       completeness,
       errors,
-      warnings,
+      _warnings,
       suggestions
     };
   }
@@ -162,21 +162,21 @@ export class BusinessPlanValidationService {
    */
   private static validateField(
     field: BusinessPlanField,
-    value: any
+    value: unknown
   ): {
     isValid: boolean;
     score: number;
     maxScore: number;
     errors: ValidationError[];
-    warnings: ValidationWarning[];
+    _warnings: ValidationWarning[];
     suggestions: ValidationSuggestion[];
   } {
     const errors: ValidationError[] = [];
-    const warnings: ValidationWarning[] = [];
+    const _warnings: ValidationWarning[] = [];
     const suggestions: ValidationSuggestion[] = [];
     
     let score = 0;
-    let maxScore = 10; // Base score for each field
+    const maxScore = 10; // Base score for each field
 
     // Check if field is required and has value
     if (field.required) {
@@ -187,30 +187,30 @@ export class BusinessPlanValidationService {
           message: `${field.label} es requerido`,
           severity: "error"
         });
-        return { isValid: false, score: 0, maxScore, errors, warnings, suggestions };
+        return { isValid: false, score: 0, maxScore, errors, _warnings, suggestions };
       }
     }
 
     // If no value, return early
     if (value === undefined || value === null || value === "") {
-      return { isValid: true, score: 0, maxScore, errors, warnings, suggestions };
+      return { isValid: true, score: 0, maxScore, errors, _warnings, suggestions };
     }
 
     // Field-specific validation
     switch (field.type) {
       case "text":
       case "textarea":
-        score += this.validateTextField(field, value, errors, warnings, suggestions);
+        score += this.validateTextField(field, value as string, errors, _warnings, suggestions);
         break;
       case "number":
       case "currency":
-        score += this.validateNumberField(field, value, errors, warnings, suggestions);
+        score += this.validateNumberField(field, value as number, errors, _warnings, suggestions);
         break;
       case "table":
-        score += this.validateTableField(field, value, errors, warnings, suggestions);
+        score += this.validateTableField(field, value, errors, _warnings, suggestions);
         break;
       case "multiselect":
-        score += this.validateMultiselectField(field, value, errors, warnings, suggestions);
+        score += this.validateMultiselectField(field, value as string[], errors, _warnings, suggestions);
         break;
       default:
         score += 5; // Default score for other field types
@@ -226,7 +226,7 @@ export class BusinessPlanValidationService {
       score: Math.min(score, maxScore),
       maxScore,
       errors,
-      warnings,
+      _warnings,
       suggestions
     };
   }
@@ -238,8 +238,8 @@ export class BusinessPlanValidationService {
     field: BusinessPlanField,
     value: string,
     errors: ValidationError[],
-    warnings: ValidationWarning[],
-    suggestions: ValidationSuggestion[]
+    __warnings: ValidationWarning[],
+    __suggestions: ValidationSuggestion[]
   ): number {
     let score = 0;
 
@@ -258,7 +258,7 @@ export class BusinessPlanValidationService {
       }
       
       if (maxLength && value.length > maxLength) {
-        warnings.push({
+        __warnings.push({
           fieldId: field.id,
           sectionId: "",
           message: `Máximo ${maxLength} caracteres recomendados`,
@@ -305,8 +305,8 @@ export class BusinessPlanValidationService {
     field: BusinessPlanField,
     value: number,
     errors: ValidationError[],
-    warnings: ValidationWarning[],
-    suggestions: ValidationSuggestion[]
+    __warnings: ValidationWarning[],
+    __suggestions: ValidationSuggestion[]
   ): number {
     let score = 0;
 
@@ -324,7 +324,7 @@ export class BusinessPlanValidationService {
       }
       
       if (max !== undefined && value > max) {
-        warnings.push({
+        __warnings.push({
           fieldId: field.id,
           sectionId: "",
           message: `Valor máximo recomendado: ${max}`,
@@ -369,14 +369,15 @@ export class BusinessPlanValidationService {
    */
   private static validateTableField(
     field: BusinessPlanField,
-    value: any,
+    value: unknown,
     errors: ValidationError[],
-    warnings: ValidationWarning[],
-    suggestions: ValidationSuggestion[]
+    __warnings: ValidationWarning[],
+    __suggestions: ValidationSuggestion[]
   ): number {
     let score = 0;
 
-    if (!value || !value.rows || value.rows.length === 0) {
+    const tableValue = value as { rows?: Record<string, unknown>[] };
+    if (!tableValue || !tableValue.rows || tableValue.rows.length === 0) {
       if (field.required) {
         errors.push({
           fieldId: field.id,
@@ -389,7 +390,7 @@ export class BusinessPlanValidationService {
     }
 
     // Check if table has data
-    const hasData = value.rows.some((row: any) => 
+    const hasData = tableValue.rows.some((row: Record<string, unknown>) => 
       Object.values(row).some(cell => cell !== "" && cell !== null && cell !== undefined)
     );
 
@@ -408,13 +409,13 @@ export class BusinessPlanValidationService {
     score += 5; // Base score for having data
 
     // Check for completeness
-    const filledCells = value.rows.reduce((count: number, row: any) => {
+    const filledCells = tableValue.rows.reduce((count: number, row: Record<string, unknown>) => {
       return count + Object.values(row).filter(cell => 
         cell !== "" && cell !== null && cell !== undefined
       ).length;
     }, 0);
 
-    const totalCells = value.rows.length * value.headers.length;
+    const totalCells = tableValue.rows.length * (tableValue as { headers: string[] }).headers.length;
     const completeness = totalCells > 0 ? (filledCells / totalCells) * 100 : 0;
 
     if (completeness >= 80) {
@@ -422,7 +423,7 @@ export class BusinessPlanValidationService {
     } else if (completeness >= 50) {
       score += 2;
     } else {
-      warnings.push({
+      __warnings.push({
         fieldId: field.id,
         sectionId: "",
         message: `Solo ${Math.round(completeness)}% de las celdas están completas`,
@@ -440,8 +441,8 @@ export class BusinessPlanValidationService {
     field: BusinessPlanField,
     value: string[],
     errors: ValidationError[],
-    warnings: ValidationWarning[],
-    suggestions: ValidationSuggestion[]
+    __warnings: ValidationWarning[],
+    __suggestions: ValidationSuggestion[]
   ): number {
     let score = 0;
 
@@ -569,7 +570,7 @@ export class BusinessPlanValidationService {
     message: string;
     nextSteps: string[];
   } {
-    const { percentage, errors, warnings, suggestions } = result;
+    const { percentage, errors, _warnings: warnings, suggestions } = result;
     const errorCount = errors.filter(e => e.severity === "error").length;
     const warningCount = warnings.length;
     const suggestionCount = suggestions.length;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,8 +14,6 @@ import {
   Calendar,
   BarChart3,
   Settings,
-  Bell,
-  TrendingUp,
   UserPlus,
   Award,
   Clock,
@@ -25,7 +23,6 @@ import {
   Globe,
   Download,
   RefreshCw,
-  Plus
 } from "lucide-react";
 import { StudentManagementDashboard } from "@/components/institutions/StudentManagementDashboard";
 import { useInstitutionStudents, useInstitutionPrograms, useInstitutionCourses } from "@/hooks/useInstitutionStudents";
@@ -33,7 +30,6 @@ import Link from "next/link";
 
 export default function InstitutionDashboardPage() {
   const params = useParams();
-  const router = useRouter();
   const institutionId = params.id as string;
   const [activeTab, setActiveTab] = useState("overview");
 

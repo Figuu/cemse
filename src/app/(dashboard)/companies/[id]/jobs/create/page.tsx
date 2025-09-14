@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Briefcase, Save, X } from "lucide-react";
+import { ArrowLeft, Briefcase, X } from "lucide-react";
 import { JobPostingForm } from "@/components/jobs/JobPostingForm";
 import { useCreateJob } from "@/hooks/useJobs";
 import { useCompany } from "@/hooks/useCompanies";
@@ -33,13 +33,6 @@ export default function CreateJobPage() {
     }
   };
 
-  const handleExit = () => {
-    if (showExitDialog) {
-      router.push(`/companies/${companyId}/jobs`);
-    } else {
-      setShowExitDialog(true);
-    }
-  };
 
   if (companyLoading) {
     return (

@@ -38,11 +38,12 @@ const updateCompanySchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: companyId } = await params;
     const company = await prisma.company.findUnique({
-      where: { id: params.id },
+      where: { id: companyId },
       include: {
         owner: {
           select: {
@@ -117,7 +118,7 @@ export async function GET(
 
     // Increment view count
     await prisma.company.update({
-      where: { id: params.id },
+      where: { id: companyId },
       data: { views: { increment: 1 } },
     });
 
@@ -133,9 +134,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: companyId } = await params;
     const body = await request.json();
     const validatedData = updateCompanySchema.parse(body);
 
@@ -144,7 +146,7 @@ export async function PUT(
 
     // Check if user owns the company
     const company = await prisma.company.findUnique({
-      where: { id: params.id },
+      where: { id: companyId },
       select: { ownerId: true },
     });
 
@@ -163,7 +165,7 @@ export async function PUT(
     }
 
     const updatedCompany = await prisma.company.update({
-      where: { id: params.id },
+      where: { id: companyId },
       data: validatedData,
       include: {
         owner: {
@@ -208,15 +210,16 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: companyId } = await params;
     // Get user ID from session (in real app, this would come from auth)
     const userId = "user-1"; // Mock user ID
 
     // Check if user owns the company
     const company = await prisma.company.findUnique({
-      where: { id: params.id },
+      where: { id: companyId },
       select: { ownerId: true },
     });
 
@@ -236,7 +239,7 @@ export async function DELETE(
 
     // Soft delete by setting isActive to false
     await prisma.company.update({
-      where: { id: params.id },
+      where: { id: companyId },
       data: { isActive: false },
     });
 

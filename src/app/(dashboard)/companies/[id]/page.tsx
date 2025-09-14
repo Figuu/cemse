@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,16 +15,13 @@ import {
   Globe, 
   Phone, 
   Mail,
-  Calendar,
   Briefcase,
   Heart,
   Share2,
   Edit,
-  MoreHorizontal,
   Eye,
   MessageCircle,
-  Award,
-  TrendingUp
+  Award
 } from "lucide-react";
 import { useCompany } from "@/hooks/useCompanies";
 import { CompanySizeLabels } from "@/types/company";
@@ -34,7 +31,6 @@ import Link from "next/link";
 
 export default function CompanyProfilePage() {
   const params = useParams();
-  const router = useRouter();
   const companyId = params.id as string;
   const [activeTab, setActiveTab] = useState("overview");
 
@@ -166,7 +162,7 @@ export default function CompanyProfilePage() {
                   {company.logo ? (
                     <img
                       src={company.logo}
-                      alt={company.name}
+                      alt={`Logo de ${company.name}`}
                       className="h-full w-full object-cover"
                     />
                   ) : (

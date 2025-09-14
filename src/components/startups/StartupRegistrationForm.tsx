@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import Image from "next/image";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,10 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Building2, 
   Globe, 
-  MapPin, 
-  Users, 
   DollarSign,
-  Lightbulb,
   Upload,
   Plus,
   X
@@ -150,7 +148,7 @@ export function StartupRegistrationForm({
     setValue,
     watch,
     reset,
-  } = useForm<StartupFormData>({
+  } = useForm({
     resolver: zodResolver(startupSchema),
     defaultValues: {
       ...initialData,
@@ -271,7 +269,7 @@ export function StartupRegistrationForm({
 
                 <div className="space-y-2">
                   <Label htmlFor="businessStage">Etapa del Negocio *</Label>
-                  <Select onValueChange={(value) => setValue("businessStage", value as any)}>
+                  <Select onValueChange={(value) => setValue("businessStage", value as "IDEA" | "STARTUP" | "GROWING" | "ESTABLISHED")}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecciona la etapa" />
                     </SelectTrigger>
@@ -488,9 +486,11 @@ export function StartupRegistrationForm({
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                       {imageUrls.map((url, index) => (
                         <div key={index} className="relative group">
-                          <img
+                          <Image
                             src={url}
                             alt={`Startup image ${index + 1}`}
+                            width={80}
+                            height={80}
                             className="w-full h-20 object-cover rounded border"
                           />
                           <Button

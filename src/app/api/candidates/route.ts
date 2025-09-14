@@ -26,26 +26,26 @@ export async function GET(request: NextRequest) {
     const params = {
       search: searchParams.get("search") || undefined,
       skills: searchParams.get("skills")?.split(",").filter(Boolean) || undefined,
-      experienceLevel: searchParams.get("experienceLevel") as any || undefined,
+      experienceLevel: searchParams.get("experienceLevel") as "ENTRY" | "JUNIOR" | "MID" | "SENIOR" | "LEAD" | undefined || undefined,
       location: searchParams.get("location") || undefined,
-      availability: searchParams.get("availability") as any || undefined,
+      availability: searchParams.get("availability") as "IMMEDIATE" | "WITHIN_MONTH" | "FLEXIBLE" | undefined || undefined,
       education: searchParams.get("education") || undefined,
       languages: searchParams.get("languages")?.split(",").filter(Boolean) || undefined,
       salaryMin: searchParams.get("salaryMin") ? parseFloat(searchParams.get("salaryMin")!) : undefined,
       salaryMax: searchParams.get("salaryMax") ? parseFloat(searchParams.get("salaryMax")!) : undefined,
       currency: searchParams.get("currency") || "USD",
-      workArrangement: searchParams.get("workArrangement") as any || undefined,
+      workArrangement: searchParams.get("workArrangement") as "REMOTE" | "HYBRID" | "ONSITE" | undefined || undefined,
       page: parseInt(searchParams.get("page") || "1"),
       limit: parseInt(searchParams.get("limit") || "20"),
-      sortBy: (searchParams.get("sortBy") as any) || "relevance",
-      sortOrder: (searchParams.get("sortOrder") as any) || "desc",
+      sortBy: (searchParams.get("sortBy") as "relevance" | "experience" | "education" | "skills" | undefined) || "relevance",
+      sortOrder: (searchParams.get("sortOrder") as "asc" | "desc" | undefined) || "desc",
     };
 
     const validatedParams = searchCandidatesSchema.parse(params);
     const skip = (validatedParams.page - 1) * validatedParams.limit;
 
     // Build the where clause for candidate search
-    const where: any = {
+    const where: Record<string, unknown> = {
       role: "YOUTH", // Only search for youth users
       isActive: true,
     };
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Build order by clause
-    const orderBy: any = {};
+    const orderBy: Record<string, string> = {};
     switch (validatedParams.sortBy) {
       case "experience":
         // This would need experience data in the Profile model
@@ -130,7 +130,7 @@ export async function GET(request: NextRequest) {
     ]);
 
     // Filter candidates by additional criteria that require more complex queries
-    let filteredCandidates = candidates;
+    const filteredCandidates = candidates;
 
     // Skills filter (would need a skills field in Profile model)
     if (validatedParams.skills && validatedParams.skills.length > 0) {

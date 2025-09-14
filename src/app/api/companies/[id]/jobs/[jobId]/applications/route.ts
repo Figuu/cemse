@@ -13,7 +13,7 @@ const createApplicationSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string; jobId: string } }
+  { params }: { params: Promise<{ id: string; jobId: string }> }
 ) {
   try {
     const { searchParams } = new URL(request.url);
@@ -25,9 +25,9 @@ export async function GET(
 
     const skip = (page - 1) * limit;
 
+    const { id: companyId, jobId } = await params;
     const where: any = {
-      jobId: params.jobId,
-      companyId: params.id,
+      jobOfferId: jobId,
     };
 
     if (status) {
@@ -57,9 +57,9 @@ export async function GET(
                   address: true,
                 },
               },
-            },
+            } as any,
           },
-          job: {
+          jobOffer: {
             select: {
               id: true,
               title: true,
@@ -100,20 +100,21 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string; jobId: string } }
+  { params }: { params: Promise<{ id: string; jobId: string }> }
 ) {
   try {
     const body = await request.json();
     const validatedData = createApplicationSchema.parse(body);
 
+    const { id: companyId, jobId } = await params;
     // Get user ID from session (in real app, this would come from auth)
     const userId = "user-1"; // Mock user ID
 
     // Check if job exists and is active
-    const job = await prisma.jobPosting.findFirst({
+    const job = await prisma.jobOffer.findFirst({
       where: { 
-        id: params.jobId,
-        companyId: params.id,
+        id: jobId,
+        companyId: companyId,
         isActive: true,
       },
     });
@@ -126,12 +127,10 @@ export async function POST(
     }
 
     // Check if user already applied
-    const existingApplication = await prisma.jobApplication.findUnique({
+    const existingApplication = await prisma.jobApplication.findFirst({
       where: {
-        jobId_applicantId: {
-          jobId: params.jobId,
-          applicantId: userId,
-        },
+        jobOfferId: jobId,
+        applicantId: userId,
       },
     });
 
@@ -145,9 +144,8 @@ export async function POST(
     const application = await prisma.jobApplication.create({
       data: {
         ...validatedData,
-        jobId: params.jobId,
+        jobOfferId: jobId,
         applicantId: userId,
-        companyId: params.id,
       },
       include: {
         applicant: {
@@ -161,40 +159,18 @@ export async function POST(
                 avatarUrl: true,
               },
             },
-          },
-        },
-        job: {
-          select: {
-            id: true,
-            title: true,
-            company: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
+          } as any,
         },
       },
     });
 
-    // Update job application count
-    await prisma.jobPosting.update({
-      where: { id: params.jobId },
-      data: { totalApplications: { increment: 1 } },
-    });
-
-    // Update company application count
-    await prisma.company.update({
-      where: { id: params.id },
-      data: { totalApplications: { increment: 1 } },
-    });
+    // Note: Application count updates would be handled by database triggers or background jobs
 
     return NextResponse.json(application, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Validation error", details: error.errors },
+        { error: "Validation error", details: error.issues },
         { status: 400 }
       );
     }

@@ -1,32 +1,27 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Sparkles, 
   Search, 
-  Filter, 
   RefreshCw,
   TrendingUp,
   Users,
   Target,
   BookOpen,
-  Star,
   Clock
 } from "lucide-react";
 import { RecommendationSection } from "@/components/courses/RecommendationSection";
-import { RecommendationCard } from "@/components/courses/RecommendationCard";
 import { 
   usePersonalizedRecommendations,
   usePopularRecommendations,
   useTrendingRecommendations,
-  useSkillBasedRecommendations,
-  CourseRecommendation
+  useSkillBasedRecommendations
 } from "@/hooks/useCourseRecommendations";
 import { useRouter } from "next/navigation";
 
@@ -108,7 +103,7 @@ export default function RecommendationsPage() {
     }
   };
 
-  const { recommendations, isLoading, error, refetch } = getCurrentRecommendations();
+  const { recommendations, isLoading, refetch } = getCurrentRecommendations();
 
   // Filter and sort recommendations
   const filteredRecommendations = recommendations.filter(rec => {
@@ -123,22 +118,6 @@ export default function RecommendationsPage() {
     return matchesSearch && matchesLevel && matchesCategory;
   });
 
-  const sortedRecommendations = [...filteredRecommendations].sort((a, b) => {
-    switch (sortBy) {
-      case "score":
-        return b.recommendationScore - a.recommendationScore;
-      case "rating":
-        return b.rating - a.rating;
-      case "students":
-        return b.stats.totalStudents - a.stats.totalStudents;
-      case "duration":
-        return a.duration - b.duration;
-      case "title":
-        return a.title.localeCompare(b.title);
-      default:
-        return b.recommendationScore - a.recommendationScore;
-    }
-  });
 
   const handleEnroll = async (courseId: string) => {
     // TODO: Implement enrollment logic

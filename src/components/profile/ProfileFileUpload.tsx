@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { FileUpload } from "@/components/ui/file-upload";
+import { ChunkedFileUpload } from "@/components/ui/chunked-file-upload";
 import { 
   Image, 
   FileText, 
@@ -143,16 +143,6 @@ export function ProfileFileUpload({
     }
   };
 
-  const handleUpload = async (files: File[]) => {
-    setIsUploading(true);
-    try {
-      await onFileUpload(files, category);
-    } catch (error) {
-      console.error("Error uploading files:", error);
-    } finally {
-      setIsUploading(false);
-    }
-  };
 
   const handleDelete = async (fileId: string) => {
     try {
@@ -178,11 +168,18 @@ export function ProfileFileUpload({
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Upload Area */}
-        <FileUpload
-          onUpload={handleUpload}
+        <ChunkedFileUpload
+          onUploadComplete={(fileUrl) => {
+            console.log("File uploaded successfully:", fileUrl);
+            // The file will be automatically added to the files list via the hook
+          }}
+          onUploadError={(error) => {
+            console.error("Upload error:", error);
+          }}
           accept={getAcceptTypes(category)}
           maxFiles={maxFiles}
           maxSize={maxSize}
+          category={category}
           disabled={isUploading}
           className="w-full"
         />

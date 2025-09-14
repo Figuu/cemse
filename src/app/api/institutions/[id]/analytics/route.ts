@@ -10,9 +10,10 @@ const analyticsQuerySchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: institutionId } = await params;
     const { searchParams } = new URL(request.url);
     const query = {
       period: searchParams.get("period") || "30d",
@@ -53,7 +54,7 @@ export async function GET(
 
     // Get institution basic info
     const institution = await prisma.institution.findUnique({
-      where: { id: params.id },
+      where: { id: institutionId },
       select: {
         id: true,
         name: true,
@@ -74,7 +75,7 @@ export async function GET(
     // Get students in date range
     const students = await prisma.institutionStudent.findMany({
       where: {
-        institutionId: params.id,
+        institutionId: institutionId,
         enrollmentDate: {
           gte: startDate,
           lte: endDate,
@@ -102,7 +103,7 @@ export async function GET(
     // Get programs in date range
     const programs = await prisma.institutionProgram.findMany({
       where: {
-        institutionId: params.id,
+        institutionId: institutionId,
         createdAt: {
           gte: startDate,
           lte: endDate,
@@ -121,7 +122,7 @@ export async function GET(
     // Get courses in date range
     const courses = await prisma.institutionCourse.findMany({
       where: {
-        institutionId: params.id,
+        institutionId: institutionId,
         createdAt: {
           gte: startDate,
           lte: endDate,
@@ -139,7 +140,7 @@ export async function GET(
     // Get enrollments in date range
     const enrollments = await prisma.institutionEnrollment.findMany({
       where: {
-        institutionId: params.id,
+        institutionId: institutionId,
         enrollmentDate: {
           gte: startDate,
           lte: endDate,
@@ -172,7 +173,7 @@ export async function GET(
     // Get announcements in date range
     const announcements = await prisma.institutionAnnouncement.findMany({
       where: {
-        institutionId: params.id,
+        institutionId: institutionId,
         createdAt: {
           gte: startDate,
           lte: endDate,
@@ -183,7 +184,7 @@ export async function GET(
     // Get events in date range
     const events = await prisma.institutionEvent.findMany({
       where: {
-        institutionId: params.id,
+        institutionId: institutionId,
         startDate: {
           gte: startDate,
           lte: endDate,

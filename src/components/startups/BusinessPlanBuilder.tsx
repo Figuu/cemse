@@ -5,30 +5,30 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   FileText, 
   Save, 
   Download, 
   Eye, 
   CheckCircle, 
-  AlertCircle,
   Clock,
   Lightbulb,
   ArrowLeft,
   ArrowRight,
-  Target,
-  BarChart3
+  Target
 } from "lucide-react";
-import { BusinessPlanTemplate, BusinessPlanSection, BusinessPlanField } from "@/lib/businessPlanTemplates";
+import { BusinessPlanTemplate, BusinessPlanFieldDefaultValue } from "@/lib/businessPlanTemplates";
+
+// Type for dynamic form data
+type BusinessPlanFormData = Record<string, BusinessPlanFieldDefaultValue>;
 import { BusinessPlanFieldRenderer } from "./BusinessPlanFieldRenderer";
 
 interface BusinessPlanBuilderProps {
   template: BusinessPlanTemplate;
-  initialData?: any;
-  onSave?: (data: any) => Promise<void>;
-  onExport?: (data: any) => Promise<void>;
-  onPreview?: (data: any) => void;
+  initialData?: BusinessPlanFormData;
+  onSave?: (data: BusinessPlanFormData) => Promise<void>;
+  onExport?: (data: BusinessPlanFormData) => Promise<void>;
+  onPreview?: (data: BusinessPlanFormData) => void;
   isLoading?: boolean;
   className?: string;
 }
@@ -43,7 +43,7 @@ export function BusinessPlanBuilder({
   className = "",
 }: BusinessPlanBuilderProps) {
   const [currentSection, setCurrentSection] = useState(0);
-  const [formData, setFormData] = useState(initialData);
+  const [formData, setFormData] = useState<BusinessPlanFormData>(initialData || {});
   const [completedSections, setCompletedSections] = useState<Set<number>>(new Set());
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
@@ -61,7 +61,7 @@ export function BusinessPlanBuilder({
         const value = formData[field.id];
         if (field.required) {
           if (field.type === "table") {
-            return value && value.rows && value.rows.length > 0;
+            return value && typeof value === 'object' && 'rows' in value && Array.isArray((value as { rows: unknown[] }).rows) && (value as { rows: unknown[] }).rows.length > 0;
           }
           return value !== undefined && value !== null && value !== "";
         }
@@ -74,7 +74,7 @@ export function BusinessPlanBuilder({
     setCompletedSections(completed);
   }, [formData, template.sections]);
 
-  const handleFieldChange = (fieldId: string, value: any) => {
+  const handleFieldChange = (fieldId: string, value: BusinessPlanFieldDefaultValue) => {
     setFormData(prev => ({
       ...prev,
       [fieldId]: value
@@ -273,7 +273,7 @@ export function BusinessPlanBuilder({
                     <BusinessPlanFieldRenderer
                       field={field}
                       value={formData[field.id]}
-                      onChange={(value) => handleFieldChange(field.id, value)}
+                      onChange={(value) => handleFieldChange(field.id, value as BusinessPlanFieldDefaultValue)}
                       error={errors[field.id]}
                     />
                   </div>

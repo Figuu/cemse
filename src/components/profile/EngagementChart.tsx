@@ -1,7 +1,6 @@
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { 
   BarChart3, 
   TrendingUp, 
@@ -36,14 +35,17 @@ export function EngagementChart({ data, timeRange, className }: EngagementChartP
     }
   };
 
-  const calculateTrend = (data: { date: string; views: number }[]) => {
+  const calculateTrend = (data: { date: string; [key: string]: string | number }[]) => {
     if (data.length < 2) return { direction: "stable", percentage: 0 };
     
     const firstHalf = data.slice(0, Math.floor(data.length / 2));
     const secondHalf = data.slice(Math.floor(data.length / 2));
     
-    const firstAvg = firstHalf.reduce((sum, item) => sum + item.views, 0) / firstHalf.length;
-    const secondAvg = secondHalf.reduce((sum, item) => sum + item.views, 0) / secondHalf.length;
+    // Get the numeric property (views, applications, activity, etc.)
+    const numericKey = Object.keys(data[0]).find(key => key !== 'date' && typeof data[0][key] === 'number') || 'views';
+    
+    const firstAvg = firstHalf.reduce((sum, item) => sum + (item[numericKey] as number), 0) / firstHalf.length;
+    const secondAvg = secondHalf.reduce((sum, item) => sum + (item[numericKey] as number), 0) / secondHalf.length;
     
     const percentage = firstAvg > 0 ? ((secondAvg - firstAvg) / firstAvg) * 100 : 0;
     const direction = percentage > 5 ? "up" : percentage < -5 ? "down" : "stable";

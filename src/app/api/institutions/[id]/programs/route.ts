@@ -14,21 +14,10 @@ const createProgramSchema = z.object({
   maxStudents: z.number().int().positive().optional(),
 });
 
-const updateProgramSchema = z.object({
-  name: z.string().min(1).optional(),
-  description: z.string().optional(),
-  duration: z.number().int().positive().optional(),
-  credits: z.number().int().positive().optional(),
-  level: z.enum(["CERTIFICATE", "DIPLOMA", "ASSOCIATE", "BACHELOR", "MASTER", "DOCTORATE", "CONTINUING_EDUCATION"]).optional(),
-  status: z.enum(["ACTIVE", "INACTIVE", "SUSPENDED", "COMPLETED"]).optional(),
-  startDate: z.string().datetime().optional(),
-  endDate: z.string().datetime().optional(),
-  maxStudents: z.number().int().positive().optional(),
-});
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { searchParams } = new URL(request.url);
@@ -42,8 +31,9 @@ export async function GET(
 
     const skip = (page - 1) * limit;
 
+    const { id: institutionId } = await params;
     const where: any = {
-      institutionId: params.id,
+      institutionId: institutionId,
     };
 
     if (search) {
@@ -106,9 +96,10 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: institutionId } = await params;
     const body = await request.json();
     const validatedData = createProgramSchema.parse(body);
 
@@ -117,7 +108,7 @@ export async function POST(
 
     // Check if user has permission to manage this institution
     const institution = await prisma.institution.findUnique({
-      where: { id: params.id },
+      where: { id: institutionId },
       select: { createdBy: true },
     });
 
@@ -138,7 +129,7 @@ export async function POST(
     const program = await prisma.institutionProgram.create({
       data: {
         ...validatedData,
-        institutionId: params.id,
+        institutionId: institutionId,
       },
       include: {
         _count: {

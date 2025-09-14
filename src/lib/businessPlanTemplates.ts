@@ -20,6 +20,28 @@ export interface BusinessPlanSection {
   tips: string[];
 }
 
+export interface TableData {
+  headers: string[];
+  rows: Record<string, string | number>[];
+}
+
+export interface ChartData {
+  labels: string[];
+  datasets: {
+    label: string;
+    data: number[];
+    backgroundColor?: string;
+    borderColor?: string;
+  }[];
+}
+
+export type BusinessPlanFieldDefaultValue = 
+  | string 
+  | number 
+  | string[] 
+  | TableData 
+  | ChartData;
+
 export interface BusinessPlanField {
   id: string;
   type: "text" | "textarea" | "number" | "currency" | "date" | "select" | "multiselect" | "table" | "chart";
@@ -35,7 +57,7 @@ export interface BusinessPlanField {
     maxLength?: number;
     pattern?: string;
   };
-  defaultValue?: any;
+  defaultValue?: BusinessPlanFieldDefaultValue;
 }
 
 export const BUSINESS_PLAN_TEMPLATES: BusinessPlanTemplate[] = [

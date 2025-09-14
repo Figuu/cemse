@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,9 +20,13 @@ import {
   GraduationCap,
   User
 } from "lucide-react";
+import { CVBuilderService, CVData, CV_TEMPLATES } from "@/lib/cvBuilderService";
 
 interface ResumeBuilderProps {
   className?: string;
+  userId?: string;
+  onSave?: (cvData: CVData) => void;
+  onGenerate?: (cvUrl: string) => void;
 }
 
 interface Experience {
@@ -51,14 +55,10 @@ interface Skill {
   level: number;
 }
 
-const resumeTemplates = [
-  { id: "modern", name: "Moderno", description: "Diseño limpio y profesional" },
-  { id: "classic", name: "Clásico", description: "Estilo tradicional y elegante" },
-  { id: "creative", name: "Creativo", description: "Para perfiles creativos" },
-  { id: "minimal", name: "Minimalista", description: "Simple y directo" },
-];
+// Use the templates from the service
+const resumeTemplates = CV_TEMPLATES;
 
-export function ResumeBuilder({ className }: ResumeBuilderProps) {
+export function ResumeBuilder({ className, userId, onSave, onGenerate }: ResumeBuilderProps) {
   const [selectedTemplate, setSelectedTemplate] = useState("modern");
   const [isEditing, setIsEditing] = useState(false);
   const [personalInfo, setPersonalInfo] = useState({
@@ -72,6 +72,42 @@ export function ResumeBuilder({ className }: ResumeBuilderProps) {
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const [educations, setEducations] = useState<Education[]>([]);
   const [skills, setSkills] = useState<Skill[]>([]);
+  const [languages, setLanguages] = useState<Array<{ name: string; level: string }>>([]);
+  const [projects, setProjects] = useState<Array<{ name: string; description: string; technologies: string[]; url?: string }>>([]);
+  const [achievements, setAchievements] = useState<Array<{ title: string; description: string; date: string }>>([]);
+
+  const loadCVData = useCallback(async () => {
+    try {
+      const cvData = await CVBuilderService.getCVData(userId!);
+      if (cvData) {
+        setPersonalInfo(cvData.personalInfo);
+        setExperiences(cvData.experiences.map(exp => ({
+          id: Date.now().toString() + Math.random(),
+          ...exp
+        })));
+        setEducations(cvData.educations.map(edu => ({
+          id: Date.now().toString() + Math.random(),
+          ...edu
+        })));
+        setSkills(cvData.skills.map(skill => ({
+          id: Date.now().toString() + Math.random(),
+          ...skill
+        })));
+        setLanguages(cvData.languages || []);
+        setProjects(cvData.projects || []);
+        setAchievements(cvData.achievements || []);
+      }
+    } catch (error) {
+      console.error("Error loading CV data:", error);
+    }
+  }, [userId]);
+
+  // Load existing CV data
+  useEffect(() => {
+    if (userId) {
+      loadCVData();
+    }
+  }, [userId, loadCVData]);
 
   const addExperience = () => {
     const newExperience: Experience = {
@@ -138,14 +174,41 @@ export function ResumeBuilder({ className }: ResumeBuilderProps) {
     setSkills(skills.filter(skill => skill.id !== id));
   };
 
-  const generateResume = () => {
-    // This would generate a PDF resume
-    console.log("Generating resume...");
+  const generateResume = async () => {
+    try {
+      const cvData: CVData = {
+        personalInfo,
+        experiences,
+        educations,
+        skills,
+        languages,
+        projects,
+        achievements
+      };
+      
+      if (onSave) {
+        onSave(cvData);
+      }
+      
+      console.log("Generating resume...", cvData);
+    } catch (error) {
+      console.error("Error generating resume:", error);
+    }
   };
 
   const previewResume = () => {
+    const cvData: CVData = {
+      personalInfo,
+      experiences,
+      educations,
+      skills,
+      languages,
+      projects,
+      achievements
+    };
+    
     // This would show a preview of the resume
-    console.log("Previewing resume...");
+    console.log("Previewing resume...", cvData);
   };
 
   return (

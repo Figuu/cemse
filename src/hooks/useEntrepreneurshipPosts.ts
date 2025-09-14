@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { PostType } from "@prisma/client";
+
+export type PostType = "TEXT" | "IMAGE" | "VIDEO" | "LINK" | "POLL" | "EVENT";
 
 export interface EntrepreneurshipPost {
   id: string;
@@ -176,8 +177,6 @@ export function useEntrepreneurshipPosts(filters: PostsFilters = {}) {
 }
 
 export function usePost(postId: string) {
-  const queryClient = useQueryClient();
-
   const {
     data,
     isLoading,

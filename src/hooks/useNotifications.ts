@@ -3,49 +3,48 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 
-export interface Notification {
+// Type for notification data based on common notification types
+export type NotificationData = Record<string, string | number | boolean | null | string[]>;
+
+interface Notification {
   id: string;
-  type: "APPLICATION_STATUS_CHANGE" | "JOB_ALERT" | "MESSAGE" | "SYSTEM" | "COURSE_UPDATE";
+  userId: string;
+  type: string;
   title: string;
   message: string;
+  data: NotificationData;
   read: boolean;
   createdAt: string;
-  data?: Record<string, any>;
-  jobApplication?: {
-    id: string;
-    jobTitle: string;
-    company: string;
-    status: string;
-  };
+}
+
+interface NotificationPreferences {
+  email: boolean;
+  push: boolean;
+  inApp: boolean;
+  jobApplications: boolean;
+  jobOffers: boolean;
+  messages: boolean;
+  courses: boolean;
+  certificates: boolean;
 }
 
 interface UseNotificationsReturn {
   notifications: Notification[];
-  unreadCount: number;
+  preferences: NotificationPreferences | null;
   isLoading: boolean;
   error: string | null;
-  refetch: () => Promise<void>;
-  markAsRead: (notificationId: string) => Promise<void>;
+  unreadCount: number;
+  markAsRead: (id: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
-  createNotification: (data: {
-    type: string;
-    title: string;
-    message: string;
-    data?: Record<string, any>;
-  }) => Promise<void>;
+  deleteNotification: (id: string) => Promise<void>;
+  updatePreferences: (preferences: NotificationPreferences) => Promise<void>;
+  refetch: () => Promise<void>;
 }
 
-interface NotificationFilters {
-  page?: number;
-  limit?: number;
-  type?: string;
-  unreadOnly?: boolean;
-}
-
-export function useNotifications(filters?: NotificationFilters): UseNotificationsReturn {
+export function useNotifications(): UseNotificationsReturn {
   const { data: session } = useSession();
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [preferences, setPreferences] = useState<NotificationPreferences | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -56,63 +55,61 @@ export function useNotifications(filters?: NotificationFilters): UseNotification
     setError(null);
 
     try {
-      const params = new URLSearchParams();
-      if (filters?.page) params.append("page", filters.page.toString());
-      if (filters?.limit) params.append("limit", filters.limit.toString());
-      if (filters?.type) params.append("type", filters.type);
-      if (filters?.unreadOnly) params.append("unreadOnly", filters.unreadOnly.toString());
-
-      const response = await fetch(`/api/notifications?${params.toString()}`);
-      
+      const response = await fetch("/api/notifications");
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to fetch notifications");
+        throw new Error("Failed to fetch notifications");
       }
 
       const data = await response.json();
-      setNotifications(data.notifications || []);
-      
-      // Calculate unread count
-      const unread = data.notifications.filter((n: Notification) => !n.read).length;
-      setUnreadCount(unread);
+      setNotifications(data.notifications);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setIsLoading(false);
     }
-  }, [session?.user?.id, filters?.page, filters?.limit, filters?.type, filters?.unreadOnly]);
+  }, [session?.user?.id]);
 
-  const markAsRead = async (notificationId: string) => {
+  const fetchPreferences = useCallback(async () => {
     if (!session?.user?.id) return;
 
     try {
-      const response = await fetch("/api/notifications", {
-        method: "PATCH",
+      const response = await fetch("/api/notifications/preferences");
+      if (!response.ok) {
+        throw new Error("Failed to fetch preferences");
+      }
+
+      const data = await response.json();
+      setPreferences(data.preferences);
+    } catch (err) {
+      console.error("Error fetching preferences:", err);
+    }
+  }, [session?.user?.id]);
+
+  const markAsRead = async (id: string) => {
+    if (!session?.user?.id) return;
+
+    try {
+      const response = await fetch(`/api/notifications/${id}`, {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          notificationIds: [notificationId],
-        }),
+        body: JSON.stringify({ action: "mark-read" }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to mark notification as read");
+        throw new Error("Failed to mark notification as read");
       }
 
-      // Update local state
-      setNotifications(prev => 
-        prev.map(notification => 
-          notification.id === notificationId 
+      setNotifications(prev =>
+        prev.map(notification =>
+          notification.id === id
             ? { ...notification, read: true }
             : notification
         )
       );
-      
-      setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to mark notification as read");
+      setError(err instanceof Error ? err.message : "Failed to mark as read");
     }
   };
 
@@ -120,76 +117,81 @@ export function useNotifications(filters?: NotificationFilters): UseNotification
     if (!session?.user?.id) return;
 
     try {
-      const response = await fetch("/api/notifications", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          markAllAsRead: true,
-        }),
+      const response = await fetch("/api/notifications/mark-all-read", {
+        method: "PUT",
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to mark all notifications as read");
+        throw new Error("Failed to mark all notifications as read");
       }
 
-      // Update local state
-      setNotifications(prev => 
+      setNotifications(prev =>
         prev.map(notification => ({ ...notification, read: true }))
       );
-      
-      setUnreadCount(0);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to mark all notifications as read");
+      setError(err instanceof Error ? err.message : "Failed to mark all as read");
     }
   };
 
-  const createNotification = async (data: {
-    type: string;
-    title: string;
-    message: string;
-    data?: Record<string, any>;
-  }) => {
+  const deleteNotification = async (id: string) => {
     if (!session?.user?.id) return;
 
     try {
-      const response = await fetch("/api/notifications", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...data,
-          userIds: [session.user.id],
-        }),
+      const response = await fetch(`/api/notifications/${id}`, {
+        method: "DELETE",
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to create notification");
+        throw new Error("Failed to delete notification");
       }
 
-      // Refetch notifications to get the new one
-      await fetchNotifications();
+      setNotifications(prev =>
+        prev.filter(notification => notification.id !== id)
+      );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create notification");
+      setError(err instanceof Error ? err.message : "Failed to delete notification");
+    }
+  };
+
+  const updatePreferences = async (newPreferences: NotificationPreferences) => {
+    if (!session?.user?.id) return;
+
+    try {
+      const response = await fetch("/api/notifications/preferences", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ preferences: newPreferences }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update preferences");
+      }
+
+      setPreferences(newPreferences);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update preferences");
     }
   };
 
   useEffect(() => {
     fetchNotifications();
-  }, [fetchNotifications]);
+    fetchPreferences();
+  }, [fetchNotifications, fetchPreferences]);
+
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   return {
     notifications,
-    unreadCount,
+    preferences,
     isLoading,
     error,
-    refetch: fetchNotifications,
+    unreadCount,
     markAsRead,
     markAllAsRead,
-    createNotification,
+    deleteNotification,
+    updatePreferences,
+    refetch: fetchNotifications
   };
 }

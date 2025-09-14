@@ -1,260 +1,335 @@
-import { prisma } from "@/lib/prisma";
+import { Resend } from 'resend';
+import { prisma } from '@/lib/prisma';
+
+// Initialize Resend
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export interface NotificationData {
-  type: "APPLICATION_STATUS_CHANGE" | "JOB_ALERT" | "MESSAGE" | "SYSTEM" | "COURSE_UPDATE";
+  userId: string;
+  type: 'job_application' | 'job_offer' | 'youth_application' | 'message' | 'course' | 'certificate' | 'system';
   title: string;
   message: string;
-  userId: string;
-  data?: Record<string, any>;
-  jobApplicationId?: string;
+  data?: Record<string, string | number | boolean | null>;
+  email?: boolean;
+  push?: boolean;
+  inApp?: boolean;
+}
+
+export interface EmailTemplate {
+  subject: string;
+  html: string;
+  text: string;
+}
+
+export interface NotificationPreferences {
+  email: boolean;
+  push: boolean;
+  inApp: boolean;
+  jobApplications: boolean;
+  jobOffers: boolean;
+  messages: boolean;
+  courses: boolean;
+  certificates: boolean;
 }
 
 export class NotificationService {
-  static async createNotification(data: NotificationData) {
+  /**
+   * Send notification to user
+   */
+  static async sendNotification(notificationData: NotificationData): Promise<void> {
     try {
-      const notification = await prisma.notification.create({
-        data: {
-          userId: data.userId,
-          type: data.type,
-          title: data.title,
-          message: data.message,
-          data: data.data || {},
-          jobApplicationId: data.jobApplicationId,
-        },
+      // Get user preferences
+      const user = await prisma.user.findUnique({
+        where: { id: notificationData.userId },
+        include: { profile: true }
       });
 
-      return notification;
-    } catch (error) {
-      console.error("Error creating notification:", error);
-      throw error;
-    }
-  }
-
-  static async createApplicationStatusNotification(
-    applicationId: string,
-    oldStatus: string,
-    newStatus: string
-  ) {
-    try {
-      // Get application details
-      const application = await prisma.jobApplication.findUnique({
-        where: { id: applicationId },
-        include: {
-          jobOffer: {
-            include: {
-              company: true,
-            },
-          },
-          applicant: true,
-        },
-      });
-
-      if (!application) {
-        throw new Error("Application not found");
+      if (!user) {
+        throw new Error('User not found');
       }
 
-      const { title, message } = this.getApplicationStatusMessage(
-        oldStatus,
-        newStatus,
-        application.jobOffer.title,
-        application.jobOffer.company.name
-      );
+      // Create in-app notification
+      if (notificationData.inApp !== false) {
+        await this.createInAppNotification(notificationData);
+      }
 
-      const notification = await this.createNotification({
-        type: "APPLICATION_STATUS_CHANGE",
-        title,
-        message,
-        userId: application.applicantId,
-        data: {
-          applicationId,
-          oldStatus,
-          newStatus,
-          jobTitle: application.jobOffer.title,
-          companyName: application.jobOffer.company.name,
-        },
-        jobApplicationId: applicationId,
-      });
+      // Send email notification
+      if (notificationData.email && user.email) {
+        await this.sendEmailNotification(notificationData, user.email);
+      }
 
-      return notification;
+      // Send push notification (placeholder for future implementation)
+      if (notificationData.push) {
+        await this.sendPushNotification(notificationData);
+      }
+
     } catch (error) {
-      console.error("Error creating application status notification:", error);
+      console.error('Error sending notification:', error);
       throw error;
     }
   }
 
-  static async createJobAlertNotification(
-    userId: string,
-    jobTitle: string,
-    companyName: string,
-    jobId: string
-  ) {
-    try {
-      const notification = await this.createNotification({
-        type: "JOB_ALERT",
-        title: "Nueva oferta de trabajo disponible",
-        message: `Se ha publicado una nueva oferta: ${jobTitle} en ${companyName}`,
-        userId,
-        data: {
-          jobId,
-          jobTitle,
-          companyName,
-        },
-      });
+  /**
+   * Create in-app notification
+   * Note: This is a placeholder implementation since the Notification model doesn't exist in the schema yet
+   */
+  private static async createInAppNotification(data: NotificationData): Promise<void> {
+    // TODO: Implement notification storage when Notification model is added to schema
+    console.log('In-app notification would be created:', data);
+  }
 
-      return notification;
-    } catch (error) {
-      console.error("Error creating job alert notification:", error);
-      throw error;
+  /**
+   * Send email notification using Resend
+   */
+  private static async sendEmailNotification(data: NotificationData, email: string): Promise<void> {
+    const template = this.getEmailTemplate(data);
+    
+    await resend.emails.send({
+      from: 'CEMSE <noreply@cemse.com>',
+      to: [email],
+      subject: template.subject,
+      html: template.html,
+      text: template.text
+    });
+  }
+
+  /**
+   * Send push notification (placeholder)
+   */
+  private static async sendPushNotification(data: NotificationData): Promise<void> {
+    // TODO: Implement push notification service (Firebase, OneSignal, etc.)
+    console.log('Push notification would be sent:', data);
+  }
+
+  /**
+   * Get email template based on notification type
+   */
+  private static getEmailTemplate(data: NotificationData): EmailTemplate {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    
+    switch (data.type) {
+      case 'job_application':
+        return {
+          subject: `Nueva aplicación de trabajo - ${data.title}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #2563eb;">Nueva Aplicación de Trabajo</h2>
+              <p>Hola,</p>
+              <p>Has recibido una nueva aplicación para el puesto: <strong>${data.title}</strong></p>
+              <p>${data.message}</p>
+              <div style="margin: 20px 0;">
+                <a href="${baseUrl}/companies/${data.data?.companyId}/applications" 
+                   style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">
+                  Ver Aplicación
+                </a>
+              </div>
+              <p style="color: #666; font-size: 14px;">
+                Este es un mensaje automático de CEMSE.
+              </p>
+            </div>
+          `,
+          text: `Nueva aplicación de trabajo - ${data.title}\n\n${data.message}\n\nVer aplicación: ${baseUrl}/companies/${data.data?.companyId}/applications`
+        };
+
+      case 'job_offer':
+        return {
+          subject: `Nueva oferta de trabajo - ${data.title}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #059669;">Nueva Oferta de Trabajo</h2>
+              <p>Hola,</p>
+              <p>Se ha publicado una nueva oferta de trabajo que podría interesarte: <strong>${data.title}</strong></p>
+              <p>${data.message}</p>
+              <div style="margin: 20px 0;">
+                <a href="${baseUrl}/jobs/${data.data?.jobId}" 
+                   style="background-color: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">
+                  Ver Oferta
+                </a>
+              </div>
+              <p style="color: #666; font-size: 14px;">
+                Este es un mensaje automático de CEMSE.
+              </p>
+            </div>
+          `,
+          text: `Nueva oferta de trabajo - ${data.title}\n\n${data.message}\n\nVer oferta: ${baseUrl}/jobs/${data.data?.jobId}`
+        };
+
+      case 'youth_application':
+        return {
+          subject: `Interés en tu aplicación - ${data.title}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #7c3aed;">Interés en tu Aplicación</h2>
+              <p>Hola,</p>
+              <p>Una empresa ha mostrado interés en tu aplicación: <strong>${data.title}</strong></p>
+              <p>${data.message}</p>
+              <div style="margin: 20px 0;">
+                <a href="${baseUrl}/applications/youth" 
+                   style="background-color: #7c3aed; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">
+                  Ver Aplicación
+                </a>
+              </div>
+              <p style="color: #666; font-size: 14px;">
+                Este es un mensaje automático de CEMSE.
+              </p>
+            </div>
+          `,
+          text: `Interés en tu aplicación - ${data.title}\n\n${data.message}\n\nVer aplicación: ${baseUrl}/applications/youth`
+        };
+
+      case 'message':
+        return {
+          subject: `Nuevo mensaje - ${data.title}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #dc2626;">Nuevo Mensaje</h2>
+              <p>Hola,</p>
+              <p>Has recibido un nuevo mensaje: <strong>${data.title}</strong></p>
+              <p>${data.message}</p>
+              <div style="margin: 20px 0;">
+                <a href="${baseUrl}/messages" 
+                   style="background-color: #dc2626; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">
+                  Ver Mensaje
+                </a>
+              </div>
+              <p style="color: #666; font-size: 14px;">
+                Este es un mensaje automático de CEMSE.
+              </p>
+            </div>
+          `,
+          text: `Nuevo mensaje - ${data.title}\n\n${data.message}\n\nVer mensaje: ${baseUrl}/messages`
+        };
+
+      case 'course':
+        return {
+          subject: `Actualización del curso - ${data.title}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #ea580c;">Actualización del Curso</h2>
+              <p>Hola,</p>
+              <p>Hay una actualización en el curso: <strong>${data.title}</strong></p>
+              <p>${data.message}</p>
+              <div style="margin: 20px 0;">
+                <a href="${baseUrl}/courses/${data.data?.courseId}" 
+                   style="background-color: #ea580c; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">
+                  Ver Curso
+                </a>
+              </div>
+              <p style="color: #666; font-size: 14px;">
+                Este es un mensaje automático de CEMSE.
+              </p>
+            </div>
+          `,
+          text: `Actualización del curso - ${data.title}\n\n${data.message}\n\nVer curso: ${baseUrl}/courses/${data.data?.courseId}`
+        };
+
+      case 'certificate':
+        return {
+          subject: `¡Certificado obtenido! - ${data.title}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #16a34a;">¡Felicitaciones!</h2>
+              <p>Hola,</p>
+              <p>Has obtenido un nuevo certificado: <strong>${data.title}</strong></p>
+              <p>${data.message}</p>
+              <div style="margin: 20px 0;">
+                <a href="${baseUrl}/certificates" 
+                   style="background-color: #16a34a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">
+                  Ver Certificado
+                </a>
+              </div>
+              <p style="color: #666; font-size: 14px;">
+                Este es un mensaje automático de CEMSE.
+              </p>
+            </div>
+          `,
+          text: `¡Certificado obtenido! - ${data.title}\n\n${data.message}\n\nVer certificado: ${baseUrl}/certificates`
+        };
+
+      default:
+        return {
+          subject: data.title,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2>${data.title}</h2>
+              <p>${data.message}</p>
+              <p style="color: #666; font-size: 14px;">
+                Este es un mensaje automático de CEMSE.
+              </p>
+            </div>
+          `,
+          text: `${data.title}\n\n${data.message}`
+        };
     }
   }
 
-  static async createMessageNotification(
-    userId: string,
-    senderName: string,
-    messagePreview: string
-  ) {
-    try {
-      const notification = await this.createNotification({
-        type: "MESSAGE",
-        title: `Nuevo mensaje de ${senderName}`,
-        message: messagePreview,
-        userId,
-        data: {
-          senderName,
-          messagePreview,
-        },
-      });
-
-      return notification;
-    } catch (error) {
-      console.error("Error creating message notification:", error);
-      throw error;
-    }
+  /**
+   * Get user notifications
+   * Note: This is a placeholder implementation since the Notification model doesn't exist in the schema yet
+   */
+  static async getUserNotifications(userId: string, _limit = 20, _offset = 0) {
+    // TODO: Implement when Notification model is added to schema
+    console.log('Getting notifications for user:', userId);
+    return [];
   }
 
-  static async createCourseUpdateNotification(
-    userId: string,
-    courseTitle: string,
-    updateType: string
-  ) {
-    try {
-      const notification = await this.createNotification({
-        type: "COURSE_UPDATE",
-        title: "Actualización de curso",
-        message: `${courseTitle}: ${updateType}`,
-        userId,
-        data: {
-          courseTitle,
-          updateType,
-        },
-      });
-
-      return notification;
-    } catch (error) {
-      console.error("Error creating course update notification:", error);
-      throw error;
-    }
-  }
-
+  /**
+   * Mark notification as read
+   * Note: This is a placeholder implementation since the Notification model doesn't exist in the schema yet
+   */
   static async markAsRead(notificationId: string, userId: string) {
-    try {
-      await prisma.notification.update({
-        where: {
-          id: notificationId,
-          userId: userId,
-        },
-        data: { read: true },
-      });
-    } catch (error) {
-      console.error("Error marking notification as read:", error);
-      throw error;
-    }
+    // TODO: Implement when Notification model is added to schema
+    console.log('Marking notification as read:', notificationId, userId);
+    return { count: 0 };
   }
 
+  /**
+   * Mark all notifications as read
+   * Note: This is a placeholder implementation since the Notification model doesn't exist in the schema yet
+   */
   static async markAllAsRead(userId: string) {
-    try {
-      await prisma.notification.updateMany({
-        where: { userId, read: false },
-        data: { read: true },
-      });
-    } catch (error) {
-      console.error("Error marking all notifications as read:", error);
-      throw error;
-    }
+    // TODO: Implement when Notification model is added to schema
+    console.log('Marking all notifications as read for user:', userId);
+    return { count: 0 };
   }
 
-  static async getUnreadCount(userId: string): Promise<number> {
-    try {
-      return await prisma.notification.count({
-        where: { userId, read: false },
-      });
-    } catch (error) {
-      console.error("Error getting unread count:", error);
-      return 0;
-    }
+  /**
+   * Delete notification
+   * Note: This is a placeholder implementation since the Notification model doesn't exist in the schema yet
+   */
+  static async deleteNotification(notificationId: string, userId: string) {
+    // TODO: Implement when Notification model is added to schema
+    console.log('Deleting notification:', notificationId, userId);
+    return { count: 0 };
   }
 
-  private static getApplicationStatusMessage(
-    oldStatus: string,
-    newStatus: string,
-    jobTitle: string,
-    companyName: string
-  ): { title: string; message: string } {
-    const statusMessages = {
-      "SENT": {
-        "UNDER_REVIEW": {
-          title: "Aplicación en revisión",
-          message: `Tu aplicación para ${jobTitle} en ${companyName} está siendo revisada.`,
-        },
-        "PRE_SELECTED": {
-          title: "¡Has sido preseleccionado!",
-          message: `¡Excelente! Has sido preseleccionado para ${jobTitle} en ${companyName}.`,
-        },
-        "REJECTED": {
-          title: "Aplicación no seleccionada",
-          message: `Tu aplicación para ${jobTitle} en ${companyName} no fue seleccionada en esta ocasión.`,
-        },
-        "HIRED": {
-          title: "¡Felicitaciones! Has sido contratado",
-          message: `¡Increíble! Has sido seleccionado para ${jobTitle} en ${companyName}.`,
-        },
-      },
-      "UNDER_REVIEW": {
-        "PRE_SELECTED": {
-          title: "¡Has sido preseleccionado!",
-          message: `¡Excelente! Has sido preseleccionado para ${jobTitle} en ${companyName}.`,
-        },
-        "REJECTED": {
-          title: "Aplicación no seleccionada",
-          message: `Tu aplicación para ${jobTitle} en ${companyName} no fue seleccionada en esta ocasión.`,
-        },
-        "HIRED": {
-          title: "¡Felicitaciones! Has sido contratado",
-          message: `¡Increíble! Has sido seleccionado para ${jobTitle} en ${companyName}.`,
-        },
-      },
-      "PRE_SELECTED": {
-        "REJECTED": {
-          title: "Aplicación no seleccionada",
-          message: `Tu aplicación para ${jobTitle} en ${companyName} no fue seleccionada en esta ocasión.`,
-        },
-        "HIRED": {
-          title: "¡Felicitaciones! Has sido contratado",
-          message: `¡Increíble! Has sido seleccionado para ${jobTitle} en ${companyName}.`,
-        },
-      },
-    };
-
-    const statusTransition = statusMessages[oldStatus as keyof typeof statusMessages]?.[newStatus as keyof typeof statusMessages[typeof oldStatus]];
-
-    if (statusTransition) {
-      return statusTransition;
-    }
-
-    // Fallback for unknown status transitions
+  /**
+   * Get notification preferences
+   * Note: This returns default preferences since notificationPreferences field doesn't exist in User model yet
+   */
+  static async getNotificationPreferences(userId: string): Promise<NotificationPreferences> {
+    // TODO: Implement when notificationPreferences field is added to User model
+    console.log('Getting notification preferences for user:', userId);
+    
     return {
-      title: "Estado de aplicación actualizado",
-      message: `El estado de tu aplicación para ${jobTitle} en ${companyName} ha cambiado a ${newStatus}.`,
+      email: true,
+      push: true,
+      inApp: true,
+      jobApplications: true,
+      jobOffers: true,
+      messages: true,
+      courses: true,
+      certificates: true
     };
+  }
+
+  /**
+   * Update notification preferences
+   * Note: This is a placeholder implementation since notificationPreferences field doesn't exist in User model yet
+   */
+  static async updateNotificationPreferences(userId: string, preferences: Partial<NotificationPreferences>) {
+    // TODO: Implement when notificationPreferences field is added to User model
+    console.log('Updating notification preferences for user:', userId, preferences);
+    return { id: userId };
   }
 }

@@ -1,28 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { 
   Search, 
   Filter, 
-  Plus, 
   Users, 
   UserPlus, 
   UserCheck,
   Clock,
-  ArrowLeft,
-  MessageCircle,
-  UserX
+  ArrowLeft
 } from "lucide-react";
 import { UserCard } from "@/components/entrepreneurship/UserCard";
 import { ConnectionCard } from "@/components/entrepreneurship/ConnectionCard";
 import { 
   useEntrepreneurshipConnections,
-  useEntrepreneurshipUsers,
   useSentConnections,
   useReceivedConnections,
   useAcceptedConnections,
@@ -50,11 +45,11 @@ export default function EntrepreneurshipConnectionsPage() {
     console.log("Connecting to user:", userId);
   };
 
-  const handleViewProfile = (user: any) => {
+  const handleViewProfile = (user: Record<string, unknown>) => {
     console.log("Viewing profile:", user.id);
   };
 
-  const handleMessage = (connection: any) => {
+  const handleMessage = (connection: Record<string, unknown>) => {
     console.log("Messaging connection:", connection.id);
   };
 

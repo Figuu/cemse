@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,13 +10,11 @@ import {
   ArrowLeft, 
   BookOpen, 
   Clock, 
-  Users, 
   Star, 
   Play,
   CheckCircle,
   AlertCircle,
   RefreshCw,
-  Download,
   Share2
 } from "lucide-react";
 import { RoleGuard } from "@/components/auth/RoleGuard";
@@ -71,9 +69,9 @@ export default function CourseDetailPage() {
   const handleModuleClick = (moduleId: string) => {
     // Find first lesson in module
     if (progress) {
-      const module = progress.modules.find(m => m.id === moduleId);
-      if (module && module.lessons.length > 0) {
-        setSelectedLessonId(module.lessons[0].id);
+      const moduleData = progress.modules.find(m => m.id === moduleId);
+      if (moduleData && moduleData.lessons.length > 0) {
+        setSelectedLessonId(moduleData.lessons[0].id);
         setActiveTab("lesson");
       }
     }
@@ -89,15 +87,15 @@ export default function CourseDetailPage() {
   const handlePreviousLesson = () => {
     if (progress && selectedLessonId) {
       // Find current lesson and get previous one
-      for (const module of progress.modules) {
-        const lessonIndex = module.lessons.findIndex(l => l.id === selectedLessonId);
+      for (const moduleData of progress.modules) {
+        const lessonIndex = moduleData.lessons.findIndex(l => l.id === selectedLessonId);
         if (lessonIndex > 0) {
-          setSelectedLessonId(module.lessons[lessonIndex - 1].id);
+          setSelectedLessonId(moduleData.lessons[lessonIndex - 1].id);
           return;
         }
         if (lessonIndex === 0) {
           // Go to previous module's last lesson
-          const moduleIndex = progress.modules.findIndex(m => m.id === module.id);
+          const moduleIndex = progress.modules.findIndex(m => m.id === moduleData.id);
           if (moduleIndex > 0) {
             const prevModule = progress.modules[moduleIndex - 1];
             if (prevModule.lessons.length > 0) {
@@ -113,15 +111,15 @@ export default function CourseDetailPage() {
   const handleNextLesson = () => {
     if (progress && selectedLessonId) {
       // Find current lesson and get next one
-      for (const module of progress.modules) {
-        const lessonIndex = module.lessons.findIndex(l => l.id === selectedLessonId);
-        if (lessonIndex >= 0 && lessonIndex < module.lessons.length - 1) {
-          setSelectedLessonId(module.lessons[lessonIndex + 1].id);
+      for (const moduleData of progress.modules) {
+        const lessonIndex = moduleData.lessons.findIndex(l => l.id === selectedLessonId);
+        if (lessonIndex >= 0 && lessonIndex < moduleData.lessons.length - 1) {
+          setSelectedLessonId(moduleData.lessons[lessonIndex + 1].id);
           return;
         }
-        if (lessonIndex === module.lessons.length - 1) {
+        if (lessonIndex === moduleData.lessons.length - 1) {
           // Go to next module's first lesson
-          const moduleIndex = progress.modules.findIndex(m => m.id === module.id);
+          const moduleIndex = progress.modules.findIndex(m => m.id === moduleData.id);
           if (moduleIndex < progress.modules.length - 1) {
             const nextModule = progress.modules[moduleIndex + 1];
             if (nextModule.lessons.length > 0) {

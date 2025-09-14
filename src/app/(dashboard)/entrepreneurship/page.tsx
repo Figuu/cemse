@@ -1,464 +1,295 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-  Search, 
-  Filter, 
-  Plus, 
-  TrendingUp, 
-  BookOpen, 
-  Newspaper, 
-  Calculator,
-  Users,
-  Lightbulb,
-  ArrowRight,
-  Star,
-  BarChart3
+  Lightbulb, 
+  FileText, 
+  Calculator, 
+  Users, 
+  TrendingUp,
+  Plus,
+  Search,
+  Filter
 } from "lucide-react";
-import { ResourceCard } from "@/components/entrepreneurship/ResourceCard";
-import { NewsCard } from "@/components/entrepreneurship/NewsCard";
-import { 
-  useEntrepreneurshipResources, 
-  useFeaturedResources,
-  ResourceType 
-} from "@/hooks/useEntrepreneurshipResources";
-import { 
-  useEntrepreneurshipNews, 
-  useLatestNews 
-} from "@/hooks/useEntrepreneurshipNews";
-
-const resourceCategories = [
-  "Finanzas",
-  "Marketing",
-  "Tecnología",
-  "Legal",
-  "Operaciones",
-  "Recursos Humanos",
-  "Estrategia",
-  "Otros"
-];
-
-const newsCategories = [
-  "Tecnología",
-  "Finanzas",
-  "Startups",
-  "Innovación",
-  "Política",
-  "Mercado",
-  "Otros"
-];
-
-const resourceTypes: { value: ResourceType; label: string }[] = [
-  { value: "ARTICLE", label: "Artículos" },
-  { value: "VIDEO", label: "Videos" },
-  { value: "PODCAST", label: "Podcasts" },
-  { value: "TOOL", label: "Herramientas" },
-  { value: "TEMPLATE", label: "Plantillas" },
-  { value: "GUIDE", label: "Guías" },
-  { value: "CASE_STUDY", label: "Casos de Estudio" },
-];
+import { BusinessPlanBuilder } from "@/components/entrepreneurship/BusinessPlanBuilder";
+import { FinancialCalculator } from "@/components/entrepreneurship/FinancialCalculator";
 
 export default function EntrepreneurshipPage() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedResourceCategory, setSelectedResourceCategory] = useState("all");
-  const [selectedNewsCategory, setSelectedNewsCategory] = useState("all");
-  const [selectedResourceType, setSelectedResourceType] = useState<ResourceType | "all">("all");
-
-  // Fetch data
-  const { resources, isLoading: resourcesLoading } = useEntrepreneurshipResources({
-    search: searchTerm || undefined,
-    category: selectedResourceCategory !== "all" ? selectedResourceCategory : undefined,
-    type: selectedResourceType !== "all" ? selectedResourceType : undefined,
-    limit: 12,
-  });
-
-  const { news, isLoading: newsLoading } = useEntrepreneurshipNews({
-    search: searchTerm || undefined,
-    category: selectedNewsCategory !== "all" ? selectedNewsCategory : undefined,
-    published: true,
-    limit: 12,
-  });
-
-  const { resources: featuredResources, isLoading: featuredLoading } = useFeaturedResources();
-  const { news: latestNews, isLoading: latestLoading } = useLatestNews();
-
-  const handleResourceView = (resource: any) => {
-    if (resource.url) {
-      window.open(resource.url, "_blank");
-    }
-  };
-
-  const handleNewsView = (news: any) => {
-    if (news.sourceUrl) {
-      window.open(news.sourceUrl, "_blank");
-    }
-  };
-
-  const handleResourceLike = (resourceId: string) => {
-    // TODO: Implement like functionality
-    console.log("Liking resource:", resourceId);
-  };
-
-  const handleNewsLike = (newsId: string) => {
-    // TODO: Implement like functionality
-    console.log("Liking news:", newsId);
-  };
-
-  const handleResourceShare = (resourceId: string) => {
-    // TODO: Implement share functionality
-    console.log("Sharing resource:", resourceId);
-  };
-
-  const handleNewsShare = (newsId: string) => {
-    // TODO: Implement share functionality
-    console.log("Sharing news:", newsId);
-  };
+  const [activeTab, setActiveTab] = useState("overview");
+  const [showBusinessPlanBuilder, setShowBusinessPlanBuilder] = useState(false);
+  const [showFinancialCalculator, setShowFinancialCalculator] = useState(false);
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-8">
-      {/* Header */}
-      <div className="text-center space-y-4">
-        <div className="flex items-center justify-center gap-2 mb-4">
-          <Lightbulb className="h-8 w-8 text-primary" />
-          <h1 className="text-4xl font-bold">Centro de Emprendimiento</h1>
-        </div>
-        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Recursos, noticias y herramientas para jóvenes emprendedores. 
-          Conecta, aprende y haz crecer tu proyecto empresarial.
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold">Emprendimiento</h1>
+        <p className="text-muted-foreground mt-2">
+          Desarrolla tu idea de negocio, crea planes de negocio y calcula métricas financieras
         </p>
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="hover:shadow-md transition-shadow cursor-pointer">
-          <CardContent className="p-6 text-center">
-            <BookOpen className="h-8 w-8 text-primary mx-auto mb-2" />
-            <h3 className="font-semibold mb-1">Plan de Negocios</h3>
-            <p className="text-sm text-muted-foreground">Crea tu plan paso a paso</p>
-          </CardContent>
-        </Card>
-        <Link href="/entrepreneurship/calculator">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="p-6 text-center">
-              <Calculator className="h-8 w-8 text-primary mx-auto mb-2" />
-              <h3 className="font-semibold mb-1">Calculadora Financiera</h3>
-              <p className="text-sm text-muted-foreground">Calcula costos y proyecciones</p>
-            </CardContent>
-          </Card>
-        </Link>
-        <Link href="/entrepreneurship/network">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="p-6 text-center">
-              <Users className="h-8 w-8 text-primary mx-auto mb-2" />
-              <h3 className="font-semibold mb-1">Red de Emprendedores</h3>
-              <p className="text-sm text-muted-foreground">Conecta con otros jóvenes</p>
-            </CardContent>
-          </Card>
-        </Link>
-        <Link href="/entrepreneurship/connections">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="p-6 text-center">
-              <Users className="h-8 w-8 text-primary mx-auto mb-2" />
-              <h3 className="font-semibold mb-1">Conexiones</h3>
-              <p className="text-sm text-muted-foreground">Conecta con otros emprendedores</p>
-            </CardContent>
-          </Card>
-        </Link>
-        <Link href="/entrepreneurship/analytics">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="p-6 text-center">
-              <BarChart3 className="h-8 w-8 text-primary mx-auto mb-2" />
-              <h3 className="font-semibold mb-1">Analytics</h3>
-              <p className="text-sm text-muted-foreground">Analiza tu rendimiento</p>
-            </CardContent>
-          </Card>
-        </Link>
-        <Card className="hover:shadow-md transition-shadow cursor-pointer">
-          <CardContent className="p-6 text-center">
-            <TrendingUp className="h-8 w-8 text-primary mx-auto mb-2" />
-            <h3 className="font-semibold mb-1">Mi Startup</h3>
-            <p className="text-sm text-muted-foreground">Gestiona tu proyecto</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Search and Filters */}
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                placeholder="Buscar recursos y noticias..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Button variant="outline" className="flex items-center gap-2">
-              <Filter className="h-4 w-4" />
-              Filtros
-            </Button>
-          </div>
-        </CardHeader>
-      </Card>
-
-      {/* Main Content */}
-      <Tabs defaultValue="resources" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="resources" className="flex items-center gap-2">
-            <BookOpen className="h-4 w-4" />
-            Recursos
-          </TabsTrigger>
-          <TabsTrigger value="news" className="flex items-center gap-2">
-            <Newspaper className="h-4 w-4" />
-            Noticias
-          </TabsTrigger>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="overview">Resumen</TabsTrigger>
+          <TabsTrigger value="business-plans">Planes de Negocio</TabsTrigger>
+          <TabsTrigger value="calculator">Calculadora</TabsTrigger>
+          <TabsTrigger value="network">Red</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="resources" className="space-y-6">
-          {/* Featured Resources */}
-          {featuredResources.length > 0 && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Star className="h-5 w-5 text-yellow-500" />
-                <h2 className="text-2xl font-bold">Recursos Destacados</h2>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {featuredResources.map((resource) => (
-                  <ResourceCard
-                    key={resource.id}
-                    resource={resource}
-                    variant="featured"
-                    onView={handleResourceView}
-                    onLike={handleResourceLike}
-                    onShare={handleResourceShare}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Resource Categories */}
-          <div className="space-y-4">
-            <h2 className="text-2xl font-bold">Categorías de Recursos</h2>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant={selectedResourceCategory === "all" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedResourceCategory("all")}
-              >
-                Todas
-              </Button>
-              {resourceCategories.map((category) => (
-                <Button
-                  key={category}
-                  variant={selectedResourceCategory === category ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSelectedResourceCategory(category)}
-                >
-                  {category}
+        {/* Overview Tab */}
+        <TabsContent value="overview" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setShowBusinessPlanBuilder(true)}>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <FileText className="h-5 w-5 mr-2" />
+                  Plan de Negocio
+                </CardTitle>
+                <CardDescription>
+                  Crea y gestiona tu plan de negocio paso a paso
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button className="w-full">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Crear Plan
                 </Button>
-              ))}
-            </div>
-          </div>
+              </CardContent>
+            </Card>
 
-          {/* Resource Types */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Tipos de Recursos</h3>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant={selectedResourceType === "all" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedResourceType("all")}
-              >
-                Todos
-              </Button>
-              {resourceTypes.map((type) => (
-                <Button
-                  key={type.value}
-                  variant={selectedResourceType === type.value ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSelectedResourceType(type.value)}
-                >
-                  {type.label}
+            <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setShowFinancialCalculator(true)}>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Calculator className="h-5 w-5 mr-2" />
+                  Calculadora Financiera
+                </CardTitle>
+                <CardDescription>
+                  Calcula métricas financieras y proyecciones
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button className="w-full">
+                  <Calculator className="h-4 w-4 mr-2" />
+                  Abrir Calculadora
                 </Button>
-              ))}
-            </div>
-          </div>
+              </CardContent>
+            </Card>
 
-          {/* Resources Grid */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">
-                Recursos {selectedResourceCategory !== "all" && `- ${selectedResourceCategory}`}
-                {selectedResourceType !== "all" && ` - ${resourceTypes.find(t => t.value === selectedResourceType)?.label}`}
-              </h3>
-              <Button variant="outline" size="sm" className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                Agregar Recurso
-              </Button>
-            </div>
-            
-            {resourcesLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <Card key={i} className="animate-pulse">
-                    <CardHeader>
-                      <div className="h-4 bg-muted rounded w-3/4"></div>
-                      <div className="h-3 bg-muted rounded w-1/2"></div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        <div className="h-3 bg-muted rounded"></div>
-                        <div className="h-3 bg-muted rounded w-5/6"></div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : resources.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {resources.map((resource) => (
-                  <ResourceCard
-                    key={resource.id}
-                    resource={resource}
-                    onView={handleResourceView}
-                    onLike={handleResourceLike}
-                    onShare={handleResourceShare}
-                  />
-                ))}
-              </div>
-            ) : (
-              <Card>
-                <CardContent className="text-center py-12">
-                  <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No se encontraron recursos</h3>
-                  <p className="text-muted-foreground mb-4">
-                    No hay recursos disponibles con los filtros seleccionados.
-                  </p>
-                  <Button variant="outline">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Agregar Primer Recurso
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
+            <Card className="cursor-pointer hover:shadow-md transition-shadow">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Users className="h-5 w-5 mr-2" />
+                  Red de Emprendedores
+                </CardTitle>
+                <CardDescription>
+                  Conecta con otros emprendedores y mentores
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button className="w-full">
+                  <Users className="h-4 w-4 mr-2" />
+                  Explorar Red
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="cursor-pointer hover:shadow-md transition-shadow">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <TrendingUp className="h-5 w-5 mr-2" />
+                  Proyectos Destacados
+                </CardTitle>
+                <CardDescription>
+                  Descubre proyectos innovadores de otros emprendedores
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button className="w-full">
+                  <Search className="h-4 w-4 mr-2" />
+                  Explorar Proyectos
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="cursor-pointer hover:shadow-md transition-shadow">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Lightbulb className="h-5 w-5 mr-2" />
+                  Ideas de Negocio
+                </CardTitle>
+                <CardDescription>
+                  Comparte y explora ideas de negocio innovadoras
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button className="w-full">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Compartir Idea
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="cursor-pointer hover:shadow-md transition-shadow">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Filter className="h-5 w-5 mr-2" />
+                  Filtros Avanzados
+                </CardTitle>
+                <CardDescription>
+                  Encuentra proyectos por industria, etapa y más
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button className="w-full">
+                  <Filter className="h-4 w-4 mr-2" />
+                  Aplicar Filtros
+                </Button>
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
 
-        <TabsContent value="news" className="space-y-6">
-          {/* Latest News */}
-          {latestNews.length > 0 && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-primary" />
-                <h2 className="text-2xl font-bold">Últimas Noticias</h2>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {latestNews.map((news) => (
-                  <NewsCard
-                    key={news.id}
-                    news={news}
-                    variant="featured"
-                    onView={handleNewsView}
-                    onLike={handleNewsLike}
-                    onShare={handleNewsShare}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* News Categories */}
-          <div className="space-y-4">
-            <h2 className="text-2xl font-bold">Categorías de Noticias</h2>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant={selectedNewsCategory === "all" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedNewsCategory("all")}
-              >
-                Todas
-              </Button>
-              {newsCategories.map((category) => (
-                <Button
-                  key={category}
-                  variant={selectedNewsCategory === category ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSelectedNewsCategory(category)}
-                >
-                  {category}
-                </Button>
-              ))}
-            </div>
+        {/* Business Plans Tab */}
+        <TabsContent value="business-plans" className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold">Mis Planes de Negocio</h2>
+            <Button onClick={() => setShowBusinessPlanBuilder(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nuevo Plan
+            </Button>
           </div>
 
-          {/* News Grid */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">
-                Noticias {selectedNewsCategory !== "all" && `- ${selectedNewsCategory}`}
-              </h3>
-              <Button variant="outline" size="sm" className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                Agregar Noticia
-              </Button>
-            </div>
-            
-            {newsLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <Card key={i} className="animate-pulse">
-                    <CardHeader>
-                      <div className="h-4 bg-muted rounded w-3/4"></div>
-                      <div className="h-3 bg-muted rounded w-1/2"></div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        <div className="h-3 bg-muted rounded"></div>
-                        <div className="h-3 bg-muted rounded w-5/6"></div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : news.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {news.map((newsItem) => (
-                  <NewsCard
-                    key={newsItem.id}
-                    news={newsItem}
-                    onView={handleNewsView}
-                    onLike={handleNewsLike}
-                    onShare={handleNewsShare}
-                  />
-                ))}
-              </div>
-            ) : (
-              <Card>
-                <CardContent className="text-center py-12">
-                  <Newspaper className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No se encontraron noticias</h3>
-                  <p className="text-muted-foreground mb-4">
-                    No hay noticias disponibles con los filtros seleccionados.
-                  </p>
-                  <Button variant="outline">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Agregar Primera Noticia
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Placeholder for business plans list */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Mi Primer Plan de Negocio</CardTitle>
+                <CardDescription>
+                  Plan de negocio para mi startup de tecnología
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Progreso:</span>
+                    <span>75%</span>
+                  </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="bg-blue-600 h-2 rounded-full" style={{ width: "75%" } as React.CSSProperties}></div>
+                    </div>
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>Última actualización:</span>
+                    <span>Hace 2 días</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Calculator Tab */}
+        <TabsContent value="calculator" className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold">Calculadora Financiera</h2>
+            <Button onClick={() => setShowFinancialCalculator(true)}>
+              <Calculator className="h-4 w-4 mr-2" />
+              Abrir Calculadora
+            </Button>
+          </div>
+
+          <FinancialCalculator />
+        </TabsContent>
+
+        {/* Network Tab */}
+        <TabsContent value="network" className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold">Red de Emprendedores</h2>
+            <Button>
+              <Users className="h-4 w-4 mr-2" />
+              Conectar
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Placeholder for network connections */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Juan Pérez</CardTitle>
+                <CardDescription>
+                  Emprendedor en tecnología con 5 años de experiencia
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="text-sm">
+                    <span className="font-medium">Industria:</span> Tecnología
+                  </div>
+                  <div className="text-sm">
+                    <span className="font-medium">Etapa:</span> Crecimiento
+                  </div>
+                  <div className="text-sm">
+                    <span className="font-medium">Ubicación:</span> Madrid, España
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Business Plan Builder Modal */}
+      {showBusinessPlanBuilder && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-6xl max-h-[90vh] overflow-y-auto">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Constructor de Plan de Negocio</CardTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowBusinessPlanBuilder(false)}
+                >
+                  ✕
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <BusinessPlanBuilder
+                onSave={(plan) => {
+                  console.log("Business plan saved:", plan);
+                  setShowBusinessPlanBuilder(false);
+                }}
+              />
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Financial Calculator Modal */}
+      {showFinancialCalculator && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Calculadora Financiera</CardTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowFinancialCalculator(false)}
+                >
+                  ✕
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <FinancialCalculator />
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

@@ -72,7 +72,6 @@ export class RecommendationService {
       where: { userId },
       select: {
         skills: true,
-        experienceLevel: true,
         educationLevel: true,
         interests: true,
       },
@@ -82,19 +81,19 @@ export class RecommendationService {
       where: { studentId: userId },
       select: {
         courseId: true,
-        isCompleted: true,
+        completedAt: true,
       },
     });
 
     const enrolledCourses = enrollments.map(e => e.courseId);
     const completedCourses = enrollments
-      .filter(e => e.isCompleted)
+      .filter(e => e.completedAt !== null)
       .map(e => e.courseId);
 
     return {
       userId,
       skills: (profile?.skills as string[]) || [],
-      experienceLevel: profile?.experienceLevel || "NO_EXPERIENCE",
+      experienceLevel: "NO_EXPERIENCE", // Default value since field doesn't exist
       educationLevel: profile?.educationLevel || "HIGH_SCHOOL",
       interests: (profile?.interests as string[]) || [],
       enrolledCourses,
@@ -115,7 +114,7 @@ export class RecommendationService {
 
     const courses = await prisma.course.findMany({
       where: {
-        status: "ACTIVE",
+        isActive: true,
         id: { notIn: userProfile.enrolledCourses },
         OR: [
           { tags: { hasSome: userProfile.skills } },
@@ -214,10 +213,10 @@ export class RecommendationService {
       acc[courseId].count++;
       acc[courseId].users.add(enrollment.studentId);
       return acc;
-    }, {} as Record<string, { course: any; count: number; users: Set<string> }>);
+    }, {} as Record<string, { course: { id: string; title: string; level: string; category: string }; count: number; users: Set<string> }>);
 
     return Object.values(coursePopularity)
-      .map(({ course, count, users }) => {
+      .map(({ course, count }) => {
         const score = count * 5; // Base score from popularity
         const confidence = Math.min(count / similarUsers.length, 1);
         
@@ -261,7 +260,7 @@ export class RecommendationService {
     // Find courses with similar content
     const similarCourses = await prisma.course.findMany({
       where: {
-        status: "ACTIVE",
+        isActive: true,
         id: { notIn: userProfile.enrolledCourses },
         OR: [
           { level: { in: completedCourses.map(c => c.level) } },
@@ -281,7 +280,7 @@ export class RecommendationService {
 
     return similarCourses.map(course => {
       let score = 0;
-      let reasons: string[] = [];
+      const reasons: string[] = [];
 
       // Level similarity
       const levelMatches = completedCourses.filter(c => c.level === course.level).length;
@@ -335,7 +334,7 @@ export class RecommendationService {
 
     const trendingCourses = await prisma.course.findMany({
       where: {
-        status: "ACTIVE",
+        isActive: true,
         id: { notIn: userProfile.enrolledCourses },
         enrollments: {
           some: {
@@ -444,8 +443,8 @@ export class RecommendationService {
    * Calculate content similarity between courses
    */
   private static calculateContentSimilarity(
-    course: any, 
-    completedCourses: any[]
+    course: { title: string; description: string }, 
+    completedCourses: Array<{ title: string; description: string }>
   ): number {
     let totalSimilarity = 0;
     
@@ -500,7 +499,7 @@ export class RecommendationService {
       const similarCourses = await prisma.course.findMany({
         where: {
           id: { notIn: [courseId, ...enrolledCourseIds] },
-          status: "ACTIVE",
+          isActive: true,
           OR: [
             { level: targetCourse.level },
             { category: targetCourse.category },
@@ -520,7 +519,7 @@ export class RecommendationService {
 
       return similarCourses.map(course => {
         let score = 0;
-        let reasons: string[] = [];
+        const reasons: string[] = [];
 
         // Level similarity
         if (course.level === targetCourse.level) {

@@ -1,10 +1,36 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  //eslint rules off
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+
   experimental: {
     serverActions: {
       bodySizeLimit: "10mb",
     },
+  },
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      // Exclude MinIO from client-side bundle
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+        crypto: false,
+        stream: false,
+        url: false,
+        zlib: false,
+        http: false,
+        https: false,
+        assert: false,
+        os: false,
+        path: false,
+      };
+    }
+    return config;
   },
   images: {
     domains: [

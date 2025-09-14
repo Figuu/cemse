@@ -9,9 +9,9 @@ import {
   Calendar,
   Users,
   Briefcase,
-  Eye,
   Heart,
-  Share2
+  Target,
+  Award
 } from "lucide-react";
 import { CompanyAnalytics, HiringMetrics, formatNumber, formatPercentage } from "@/hooks/useCompanyAnalytics";
 

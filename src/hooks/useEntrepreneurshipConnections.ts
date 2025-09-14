@@ -1,11 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ConnectionStatus } from "@prisma/client";
+import { EntrepreneurshipConnectionStatus } from "@prisma/client";
 
 export interface EntrepreneurshipConnection {
   id: string;
   requesterId: string;
   addresseeId: string;
-  status: ConnectionStatus;
+  status: EntrepreneurshipConnectionStatus;
   message?: string;
   requestedAt: string;
   acceptedAt?: string;
@@ -36,7 +36,7 @@ export interface User {
   };
   connectionStatus?: {
     id: string;
-    status: ConnectionStatus;
+    status: EntrepreneurshipConnectionStatus;
     isRequester: boolean;
   } | null;
 }
@@ -49,7 +49,7 @@ export interface CreateConnectionData {
 export interface ConnectionsFilters {
   page?: number;
   limit?: number;
-  status?: ConnectionStatus;
+  status?: EntrepreneurshipConnectionStatus;
   type?: "sent" | "received" | "all";
 }
 
@@ -109,7 +109,7 @@ export function useEntrepreneurshipConnections(filters: ConnectionsFilters = {})
   });
 
   const updateConnectionMutation = useMutation({
-    mutationFn: async ({ connectionId, status }: { connectionId: string; status: ConnectionStatus }) => {
+    mutationFn: async ({ connectionId, status }: { connectionId: string; status: EntrepreneurshipConnectionStatus }) => {
       const response = await fetch(`/api/entrepreneurship/connections/${connectionId}`, {
         method: "PUT",
         headers: {
@@ -164,8 +164,6 @@ export function useEntrepreneurshipConnections(filters: ConnectionsFilters = {})
 }
 
 export function useEntrepreneurshipUsers(filters: UsersFilters = {}) {
-  const queryClient = useQueryClient();
-
   const {
     data,
     isLoading,
@@ -199,8 +197,6 @@ export function useEntrepreneurshipUsers(filters: UsersFilters = {}) {
 }
 
 export function useConnection(connectionId: string) {
-  const queryClient = useQueryClient();
-
   const {
     data,
     isLoading,

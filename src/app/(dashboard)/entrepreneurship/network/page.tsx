@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -30,7 +29,7 @@ import {
 } from "@/hooks/useEntrepreneurshipPosts";
 import Link from "next/link";
 
-const postTypeIcons: Record<PostType, any> = {
+const postTypeIcons: Record<PostType, React.ComponentType<{ className?: string }>> = {
   TEXT: MessageSquare,
   IMAGE: ImageIcon,
   VIDEO: Video,
@@ -56,7 +55,6 @@ export default function EntrepreneurshipNetworkPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedType, setSelectedType] = useState<PostType | "all">("all");
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [selectedPost, setSelectedPost] = useState<EntrepreneurshipPost | null>(null);
 
   // Mock current user - in real app, this would come from auth context
   const currentUser = {
@@ -71,7 +69,6 @@ export default function EntrepreneurshipNetworkPage() {
     isLoading, 
     error, 
     refetch,
-    createPost,
     deletePost 
   } = useEntrepreneurshipPosts({
     search: searchTerm || undefined,

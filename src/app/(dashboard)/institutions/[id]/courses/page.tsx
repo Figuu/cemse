@@ -1,20 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useParams } from "next/navigation";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   ArrowLeft, 
   BookOpen, 
-  Plus, 
-  Search, 
-  Filter,
   BarChart3,
   Users,
   Award,
-  Calendar,
   Settings
 } from "lucide-react";
 import { CourseManagement } from "@/components/institutions/CourseManagement";
@@ -24,7 +20,6 @@ import Link from "next/link";
 
 export default function InstitutionCoursesPage() {
   const params = useParams();
-  const router = useRouter();
   const institutionId = params.id as string;
   const [activeTab, setActiveTab] = useState("courses");
 

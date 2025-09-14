@@ -41,7 +41,6 @@ model Profile {
   status                    UserStatus          @default(ACTIVE)
   firstName                 String?
   lastName                  String?
-  email                     String?
   phone                     String?
   address                   String?
   institutionId             String?
@@ -64,7 +63,6 @@ model Profile {
   parentEmail               String?
   consentDate               DateTime?
   achievements              Json?
-  addressLine               String?
   city                      String?
   state                     String?
   cityState                 String?
@@ -101,13 +99,18 @@ model Profile {
   institution               Institution?        @relation(fields: [institutionId], references: [id])
   courseEnrollments         CourseEnrollment[]
   instructedCourses         Course[]            @relation("CourseInstructor")
-  discussions               Discussion[]
   entrepreneurships         Entrepreneurship[]
   jobApplications           JobApplication[]
   youthApplications         YouthApplication[]  @relation("YouthApplications")
-  newsComments              NewsComment[]
   quizAttempts              QuizAttempt[]
-  studentNotes              StudentNote[]
+  sentMessages              Message[]      @relation("MessageSender")
+  receivedMessages          Message[]      @relation("MessageRecipient")
+  entrepreneurshipConnectionsSent     EntrepreneurshipConnection[] @relation("EntrepreneurshipConnectionRequester")
+  entrepreneurshipConnectionsReceived EntrepreneurshipConnection[] @relation("EntrepreneurshipConnectionAddressee")
+  companyEmployments        CompanyEmployee[] @relation("CompanyEmployee")
+  certificates              Certificate[] @relation("Certificates")
+  moduleCertificates        ModuleCertificate[] @relation("ModuleCertificates")
+  lessonProgress            LessonProgress[] @relation("LessonProgress")
 
   @@index([userId])
   @@index([institutionId])
@@ -199,11 +202,8 @@ model Lesson {
   
   // Relations
   module      CourseModule     @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  discussions Discussion[]
   progress    LessonProgress[]
-  resources   LessonResource[]
   quizzes     Quiz[]
-  notes       StudentNote[]
 
   @@index([moduleId])
   @@index([orderIndex])
@@ -274,17 +274,21 @@ model JobApplication {
   coverLetterFile String?
   cvFile          String?
   decisionReason  String?
+  hiredAt         DateTime?
+  terminatedAt    DateTime?
+  employeeStatus  EmployeeStatus?
   
   // Relations
   applicant       Profile                 @relation(fields: [applicantId], references: [userId])
   jobOffer        JobOffer                @relation(fields: [jobOfferId], references: [id])
-  messages        JobApplicationMessage[]
   questionAnswers JobQuestionAnswer[]
 
   @@unique([applicantId, jobOfferId])
   @@index([applicantId])
   @@index([jobOfferId])
   @@index([status])
+  @@index([hiredAt])
+  @@index([employeeStatus])
   @@map("job_applications")
 }
 
@@ -307,7 +311,6 @@ model YouthApplication {
   // Relations
   youthProfile      Profile                           @relation("YouthApplications", fields: [youthProfileId], references: [userId])
   companyInterests  YouthApplicationCompanyInterest[]
-  messages          YouthApplicationMessage[]
 
   @@index([youthProfileId])
   @@index([status])
@@ -388,7 +391,6 @@ model NewsArticle {
   
   // Relations
   author         User          @relation("NewsCreator", fields: [authorId], references: [id])
-  comments       NewsComment[]
 
   @@index([authorId])
   @@index([status])
@@ -444,7 +446,7 @@ model Company {
   foundedYear               Int?
   logoUrl                   String?
   isActive                  Boolean                           @default(true)
-  institutionId             String
+  institutionId             String?
   createdBy                 String
   createdAt                 DateTime                          @default(now())
   updatedAt                 DateTime                          @updatedAt
@@ -452,11 +454,12 @@ model Company {
   
   // Relations
   creator                   User                              @relation("CompanyCreator", fields: [createdBy], references: [id])
-  institution               Institution                      @relation(fields: [institutionId], references: [id])
+  institution               Institution?                     @relation(fields: [institutionId], references: [id])
   jobOffers                 JobOffer[]
   youthApplicationInterests YouthApplicationCompanyInterest[]
+  employees                 CompanyEmployee[]
 
-  @@unique([name, institutionId])
+  @@unique([name, institutionId], map: "company_name_institution_unique")
   @@index([institutionId])
   @@index([businessSector])
   @@index([isActive])
@@ -506,7 +509,6 @@ enum UserRole {
   COMPANIES
   INSTITUTION
   SUPERADMIN
-  INSTRUCTOR
 }
 
 enum UserStatus {
@@ -612,8 +614,8 @@ enum BusinessStage {
 
 enum NewsType {
   COMPANY
-  GOVERNMENT
-  NGO
+  INSTITUTION
+  ADMIN
 }
 
 enum NewsStatus {
@@ -642,6 +644,26 @@ enum CompanyInterestStatus {
   INTERVIEW_SCHEDULED
   HIRED
   NOT_INTERESTED
+}
+
+enum MessageContextType {
+  JOB_APPLICATION      // Messages related to job applications
+  YOUTH_APPLICATION    // Messages related to youth open applications
+  ENTREPRENEURSHIP     // Messages between entrepreneurs
+  GENERAL              // General messages between users
+}
+
+enum EntrepreneurshipConnectionStatus {
+  PENDING              // Connection request sent, waiting for response
+  ACCEPTED             // Connection request accepted
+  DECLINED             // Connection request declined
+  BLOCKED              // User blocked the connection
+}
+
+enum EmployeeStatus {
+  ACTIVE
+  TERMINATED
+  ON_LEAVE
 }
 
 // Additional Models for Course System
@@ -674,7 +696,9 @@ model Certificate {
   
   // Relations
   course      Course   @relation(fields: [courseId], references: [id])
+  student     Profile  @relation("Certificates", fields: [studentId], references: [userId])
   
+  @@unique([courseId, studentId])
   @@index([courseId])
   @@index([studentId])
   @@map("certificates")
@@ -689,7 +713,9 @@ model ModuleCertificate {
   
   // Relations
   module    CourseModule @relation(fields: [moduleId], references: [id])
+  student   Profile      @relation("ModuleCertificates", fields: [studentId], references: [userId])
   
+  @@unique([moduleId, studentId])
   @@index([moduleId])
   @@index([studentId])
   @@map("module_certificates")
@@ -705,6 +731,7 @@ model LessonProgress {
   
   // Relations
   lesson     Lesson   @relation(fields: [lessonId], references: [id])
+  student    Profile  @relation("LessonProgress", fields: [studentId], references: [userId])
   
   @@unique([studentId, lessonId])
   @@index([studentId])
@@ -712,22 +739,6 @@ model LessonProgress {
   @@map("lesson_progress")
 }
 
-model LessonResource {
-  id          String   @id @default(cuid())
-  lessonId    String
-  title       String
-  description String?
-  url         String
-  type        String
-  orderIndex  Int
-  
-  // Relations
-  lesson      Lesson   @relation(fields: [lessonId], references: [id])
-  
-  @@index([lessonId])
-  @@index([orderIndex])
-  @@map("lesson_resources")
-}
 
 model Quiz {
   id          String   @id @default(cuid())
@@ -744,7 +755,7 @@ model Quiz {
   // Relations
   course      Course?  @relation(fields: [courseId], references: [id])
   lesson      Lesson?  @relation(fields: [lessonId], references: [id])
-  attempts    QuizAttempt[]
+  quizAttempts QuizAttempt[]
   
   @@index([courseId])
   @@index([lessonId])
@@ -770,42 +781,6 @@ model QuizAttempt {
   @@map("quiz_attempts")
 }
 
-model Discussion {
-  id          String   @id @default(cuid())
-  courseId    String?
-  lessonId    String?
-  authorId    String
-  title       String
-  content     String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  isResolved  Boolean  @default(false)
-  
-  // Relations
-  author      Profile  @relation(fields: [authorId], references: [userId])
-  lesson      Lesson?  @relation(fields: [lessonId], references: [id])
-  
-  @@index([authorId])
-  @@index([lessonId])
-  @@map("discussions")
-}
-
-model StudentNote {
-  id          String   @id @default(cuid())
-  studentId   String
-  lessonId    String?
-  content     String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  // Relations
-  student     Profile  @relation(fields: [studentId], references: [userId])
-  lesson      Lesson?  @relation(fields: [lessonId], references: [id])
-  
-  @@index([studentId])
-  @@index([lessonId])
-  @@map("student_notes")
-}
 
 // Job System Models
 model JobQuestion {
@@ -843,22 +818,30 @@ model JobQuestionAnswer {
   @@map("job_question_answers")
 }
 
-model JobApplicationMessage {
-  id          String   @id @default(cuid())
-  applicationId String
+// Unified Messaging System
+model Message {
+  id          String      @id @default(cuid())
   senderId    String
+  recipientId String
   content     String
-  messageType String   @default("text")
+  messageType String      @default("text")
   attachments Json?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime    @default(now())
   readAt      DateTime?
   
-  // Relations
-  application JobApplication @relation(fields: [applicationId], references: [id])
+  // Context - what conversation this message belongs to
+  contextType MessageContextType
+  contextId   String?  // Optional: ID of the specific context (job application, entrepreneurship, etc.)
   
-  @@index([applicationId])
+  // Relations
+  sender      Profile    @relation("MessageSender", fields: [senderId], references: [userId])
+  recipient   Profile    @relation("MessageRecipient", fields: [recipientId], references: [userId])
+  
   @@index([senderId])
-  @@map("job_application_messages")
+  @@index([recipientId])
+  @@index([contextType, contextId])
+  @@index([createdAt])
+  @@map("messages")
 }
 
 model YouthApplicationCompanyInterest {
@@ -877,25 +860,9 @@ model YouthApplicationCompanyInterest {
   @@unique([applicationId, companyId])
   @@index([applicationId])
   @@index([companyId])
+  @@index([status])
+  @@index([interestedAt])
   @@map("youth_application_company_interests")
-}
-
-model YouthApplicationMessage {
-  id                String   @id @default(cuid())
-  applicationId     String
-  senderId          String
-  content           String
-  messageType       String   @default("text")
-  attachments       Json?
-  createdAt         DateTime @default(now())
-  readAt            DateTime?
-  
-  // Relations
-  application       YouthApplication @relation(fields: [applicationId], references: [id])
-  
-  @@index([applicationId])
-  @@index([senderId])
-  @@map("youth_application_messages")
 }
 
 // Entrepreneurship Models
@@ -914,20 +881,47 @@ model BusinessPlan {
   @@map("business_plans")
 }
 
-// News System Models
-model NewsComment {
-  id          String   @id @default(cuid())
-  newsId      String
-  authorId    String
-  content     String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+model EntrepreneurshipConnection {
+  id                String                        @id @default(cuid())
+  requesterId       String                        // User who sent the connection request
+  addresseeId       String                        // User who receives the connection request
+  status            EntrepreneurshipConnectionStatus @default(PENDING)
+  message           String?                       // Optional message with the connection request
+  createdAt         DateTime                      @default(now())
+  updatedAt         DateTime                      @updatedAt
+  acceptedAt        DateTime?
   
   // Relations
-  news        NewsArticle @relation(fields: [newsId], references: [id])
-  author      Profile     @relation(fields: [authorId], references: [userId])
+  requester         Profile                       @relation("EntrepreneurshipConnectionRequester", fields: [requesterId], references: [userId])
+  addressee         Profile                       @relation("EntrepreneurshipConnectionAddressee", fields: [addresseeId], references: [userId])
   
-  @@index([newsId])
-  @@index([authorId])
-  @@map("news_comments")
+  @@unique([requesterId, addresseeId])
+  @@index([requesterId])
+  @@index([addresseeId])
+  @@index([status])
+  @@map("entrepreneurship_connections")
 }
+
+model CompanyEmployee {
+  id            String         @id @default(cuid())
+  companyId     String
+  employeeId    String
+  position      String?
+  hiredAt       DateTime       @default(now())
+  terminatedAt  DateTime?
+  status        EmployeeStatus @default(ACTIVE)
+  notes         String?
+  salary        Decimal?
+  contractType  ContractType?
+  
+  // Relations
+  company       Company        @relation(fields: [companyId], references: [id])
+  employee      Profile        @relation("CompanyEmployee", fields: [employeeId], references: [userId])
+  
+  @@unique([companyId, employeeId])
+  @@index([companyId])
+  @@index([employeeId])
+  @@index([status])
+  @@map("company_employees")
+}
+

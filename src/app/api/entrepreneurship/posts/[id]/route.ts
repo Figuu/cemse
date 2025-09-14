@@ -5,11 +5,12 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: postId } = await params;
     const post = await prisma.entrepreneurshipPost.findUnique({
-      where: { id: params.id },
+      where: { id: postId },
       include: {
         author: {
           select: {
@@ -72,7 +73,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -80,12 +81,13 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id: postId } = await params;
     const body = await request.json();
     const { content, images, tags } = body;
 
     // Check if user owns the post
     const existingPost = await prisma.entrepreneurshipPost.findUnique({
-      where: { id: params.id },
+      where: { id: postId },
       select: { authorId: true },
     });
 
@@ -98,7 +100,7 @@ export async function PUT(
     }
 
     const post = await prisma.entrepreneurshipPost.update({
-      where: { id: params.id },
+      where: { id: postId },
       data: {
         content,
         images: images || [],
@@ -152,7 +154,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -160,9 +162,10 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id: postId } = await params;
     // Check if user owns the post
     const existingPost = await prisma.entrepreneurshipPost.findUnique({
-      where: { id: params.id },
+      where: { id: postId },
       select: { authorId: true },
     });
 
@@ -175,7 +178,7 @@ export async function DELETE(
     }
 
     await prisma.entrepreneurshipPost.delete({
-      where: { id: params.id },
+      where: { id: postId },
     });
 
     return NextResponse.json({ message: "Post deleted successfully" });

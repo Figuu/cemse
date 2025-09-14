@@ -8,18 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Slider } from "@/components/ui/slider";
 import { 
   Search, 
   Filter, 
   X, 
-  MapPin, 
-  Calendar,
-  DollarSign,
-  Users,
-  TrendingUp,
-  Star,
-  Clock,
   RefreshCw
 } from "lucide-react";
 
@@ -150,12 +142,12 @@ export function StartupFilters({
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
 
-  const updateFilter = (key: keyof StartupFilters, value: any) => {
+  const updateFilter = (key: keyof StartupFilters, value: StartupFilters[keyof StartupFilters]) => {
     const newFilters = { ...filters, [key]: value };
     onFiltersChange(newFilters);
     
     // Update active filters
-    if (value && value !== "" && value !== false) {
+    if (value && value !== "") {
       if (!activeFilters.includes(key)) {
         setActiveFilters([...activeFilters, key]);
       }
@@ -324,7 +316,7 @@ export function StartupFilters({
                 } else if (filterKey === "minEmployees" || filterKey === "maxEmployees") {
                   displayValue = `${value} empleados`;
                 } else if (filterKey === "minRevenue" || filterKey === "maxRevenue") {
-                  displayValue = formatCurrency(value);
+                  displayValue = formatCurrency(Number(value));
                 }
 
                 return (

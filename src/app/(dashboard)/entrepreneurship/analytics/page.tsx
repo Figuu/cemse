@@ -1,13 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
   TrendingUp, 
-  TrendingDown, 
   Eye, 
   Heart, 
   MessageCircle, 
@@ -15,9 +12,7 @@ import {
   ArrowLeft,
   BarChart3,
   Target,
-  Award,
-  Clock,
-  Users
+  Award
 } from "lucide-react";
 import { useEntrepreneurshipPosts } from "@/hooks/useEntrepreneurshipPosts";
 import { PostEngagementService } from "@/lib/postEngagementService";
@@ -25,8 +20,6 @@ import { EnhancedPostCard } from "@/components/entrepreneurship/EnhancedPostCard
 import Link from "next/link";
 
 export default function PostAnalyticsPage() {
-  const [selectedTimeRange, setSelectedTimeRange] = useState("7d");
-  const [selectedMetric, setSelectedMetric] = useState("engagement");
 
   // Mock current user - in real app, this would come from auth context
   const currentUserId = "user-1";

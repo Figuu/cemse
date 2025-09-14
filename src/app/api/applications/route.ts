@@ -263,7 +263,7 @@ async function getApplicationTimeline(applicationId: string) {
   return timeline;
 }
 
-function calculatePriority(application: any) {
+function calculatePriority(application: Record<string, unknown>) {
   const daysSinceApplied = Math.floor((new Date().getTime() - application.appliedAt.getTime()) / (1000 * 60 * 60 * 24));
   
   // High priority if it's been more than 14 days without response

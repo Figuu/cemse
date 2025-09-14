@@ -43,16 +43,7 @@ interface PaginationInfo {
   hasPreviousPage: boolean;
 }
 
-interface UseProfilesReturn {
-  profiles: Profile[];
-  pagination: PaginationInfo;
-  filters: any;
-  isLoading: boolean;
-  error: string | null;
-  refetch: () => Promise<void>;
-}
-
-export function useProfiles(filters?: {
+interface ProfileFilters {
   search?: string;
   location?: string;
   experience?: string;
@@ -64,7 +55,18 @@ export function useProfiles(filters?: {
   isVerified?: boolean | null;
   page?: number;
   limit?: number;
-}): UseProfilesReturn {
+}
+
+interface UseProfilesReturn {
+  profiles: Profile[];
+  pagination: PaginationInfo;
+  filters: ProfileFilters;
+  isLoading: boolean;
+  error: string | null;
+  refetch: () => Promise<void>;
+}
+
+export function useProfiles(filters?: ProfileFilters): UseProfilesReturn {
   const { data: session } = useSession();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [pagination, setPagination] = useState<PaginationInfo>({
@@ -75,7 +77,7 @@ export function useProfiles(filters?: {
     hasNextPage: false,
     hasPreviousPage: false,
   });
-  const [appliedFilters, setAppliedFilters] = useState<any>({});
+  const [appliedFilters, setAppliedFilters] = useState<ProfileFilters>({});
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

@@ -28,7 +28,6 @@ import {
 import { formatDate, formatDateTime } from "@/lib/utils";
 import { useApplications } from "@/hooks/useApplications";
 import { ApplicationTimeline } from "@/components/jobs/ApplicationTimeline";
-import { ApplicationStatusTracker } from "@/components/jobs/ApplicationStatusTracker";
 import { ApplicationAnalytics } from "@/components/jobs/ApplicationAnalytics";
 
 

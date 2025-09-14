@@ -4,12 +4,10 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Sparkles, 
   TrendingUp, 
-  Star, 
-  MapPin, 
   Building2,
   RefreshCw,
   Grid3X3,
@@ -19,6 +17,7 @@ import {
 } from "lucide-react";
 import { StartupCard } from "./StartupCard";
 import { StartupFilters, StartupFilters as FilterType } from "./StartupFilters";
+import { Startup } from "@/hooks/useStartups";
 import { 
   useTrendingStartups,
   useRecommendedStartups,
@@ -243,7 +242,7 @@ export function StartupDiscoverySection({
 
           {/* Tabs */}
           {showTabs && (
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "trending" | "recommendations" | "all")} className="mb-6">
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="trending" className="flex items-center gap-2">
                   {getTabIcon("trending")}
@@ -306,7 +305,7 @@ export function StartupDiscoverySection({
               {startups.map((startup) => (
                 <StartupCard
                   key={startup.id}
-                  startup={startup}
+                  startup={startup as unknown as Startup}
                   variant={viewMode === "list" ? "compact" : "default"}
                   onView={onView}
                   onFollow={onFollow}

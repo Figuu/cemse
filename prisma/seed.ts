@@ -7,12 +7,12 @@ async function main() {
   console.log('🌱 Iniciando seed de la base de datos...');
 
   // Create super admin user
-  const adminPassword = await bcrypt.hash('admin123', 12);
+  const adminPassword = await bcrypt.hash('12345678', 12);
   const admin = await prisma.user.upsert({
-    where: { email: 'admin@cemse.com' },
+    where: { email: 'admin@demo.com' },
     update: {},
     create: {
-      email: 'admin@cemse.com',
+      email: 'admin@demo.com',
       password: adminPassword,
       role: 'SUPERADMIN',
       isActive: true,
@@ -20,7 +20,6 @@ async function main() {
         create: {
           firstName: 'Administrador',
           lastName: 'Sistema',
-          email: 'admin@cemse.com',
           profileCompletion: 100,
           status: 'ACTIVE',
         },
@@ -33,44 +32,13 @@ async function main() {
 
   console.log('✅ Usuario administrador creado:', admin.email);
 
-  // Create sample municipality
-  const municipalityPassword = await bcrypt.hash('municipality123', 12);
-  const municipality = await prisma.municipality.upsert({
-    where: { 
-      name_department: {
-        name: 'Cochabamba',
-        department: 'Cochabamba'
-      }
-    },
-    update: {},
-    create: {
-      name: 'Cochabamba',
-      department: 'Cochabamba',
-      region: 'Valle',
-      population: 630587,
-      mayorName: 'Manuel Rojas',
-      mayorEmail: 'alcalde@cochabamba.bo',
-      mayorPhone: '+591 4 4250000',
-      address: 'Plaza 14 de Septiembre',
-      website: 'https://cochabamba.bo',
-      email: 'info@cochabamba.bo',
-      phone: '+591 4 4250000',
-      password: municipalityPassword,
-      isActive: true,
-      createdBy: admin.id,
-      institutionType: 'MUNICIPALITY',
-    },
-  });
-
-  console.log('✅ Municipio creado:', municipality.name);
-
   // Create sample institution
-  const institutionPassword = await bcrypt.hash('institution123', 12);
+  const institutionPassword = await bcrypt.hash('12345678', 12);
   const institution = await prisma.user.upsert({
-    where: { email: 'institution@cemse.com' },
+    where: { email: 'insti@demo.com' },
     update: {},
     create: {
-      email: 'institution@cemse.com',
+      email: 'insti@demo.com',
       password: institutionPassword,
       role: 'INSTITUTION',
       isActive: true,
@@ -78,7 +46,6 @@ async function main() {
         create: {
           firstName: 'Institución',
           lastName: 'Ejemplo',
-          email: 'institution@cemse.com',
           profileCompletion: 80,
           status: 'ACTIVE',
         },
@@ -101,7 +68,7 @@ async function main() {
       name: 'Fundación CEMSE',
       department: 'Cochabamba',
       region: 'Valle',
-      email: 'institution@cemse.com',
+      email: 'insti@demo.com',
       password: institutionPassword,
       phone: '+591 4 4250000',
       institutionType: 'NGO',
@@ -113,12 +80,12 @@ async function main() {
   console.log('✅ Institución creada:', institutionData.name);
 
   // Create sample company
-  const companyPassword = await bcrypt.hash('company123', 12);
+  const companyPassword = await bcrypt.hash('12345678', 12);
   const company = await prisma.user.upsert({
-    where: { email: 'company@cemse.com' },
+    where: { email: 'comp@demo.com' },
     update: {},
     create: {
-      email: 'company@cemse.com',
+      email: 'comp@demo.com',
       password: companyPassword,
       role: 'COMPANIES',
       isActive: true,
@@ -126,7 +93,6 @@ async function main() {
         create: {
           firstName: 'Empresa',
           lastName: 'Ejemplo',
-          email: 'company@cemse.com',
           profileCompletion: 70,
           status: 'ACTIVE',
         },
@@ -139,22 +105,22 @@ async function main() {
 
   const companyData = await prisma.company.upsert({
     where: {
-      name_municipalityId: {
+      name_institutionId: {
         name: 'Tech Solutions Bolivia',
-        municipalityId: municipality.id
+        institutionId: institutionData.id
       }
     },
     update: {},
     create: {
       name: 'Tech Solutions Bolivia',
       description: 'Empresa de tecnología especializada en desarrollo de software',
-      email: 'company@cemse.com',
+      email: 'comp@demo.com',
       phone: '+591 4 4250000',
       address: 'Av. Heroínas 1234',
       businessSector: 'Tecnología',
       companySize: 'MEDIUM',
       website: 'https://techsolutions.bo',
-      municipalityId: municipality.id,
+      institutionId: institutionData.id,
       isActive: true,
       createdBy: admin.id,
       password: companyPassword,
@@ -164,12 +130,12 @@ async function main() {
   console.log('✅ Empresa creada:', companyData.name);
 
   // Create sample youth user
-  const youthPassword = await bcrypt.hash('youth123', 12);
+  const youthPassword = await bcrypt.hash('12345678', 12);
   const youth = await prisma.user.upsert({
-    where: { email: 'youth@cemse.com' },
+    where: { email: 'joven@demo.com' },
     update: {},
     create: {
-      email: 'youth@cemse.com',
+      email: 'joven@demo.com',
       password: youthPassword,
       role: 'YOUTH',
       isActive: true,
@@ -177,10 +143,8 @@ async function main() {
         create: {
           firstName: 'Juan',
           lastName: 'Pérez',
-          email: 'youth@cemse.com',
           phone: '+591 7 12345678',
           address: 'Av. Heroínas 5678',
-          municipalityId: municipality.id,
           country: 'Bolivia',
           birthDate: new Date('2000-01-15'),
           gender: 'Masculino',
@@ -303,7 +267,7 @@ async function main() {
       summary: 'CEMSE presenta su plataforma integral para el desarrollo juvenil',
       authorId: institution.profile?.userId || '',
       authorName: institutionData.name,
-      authorType: 'NGO',
+          authorType: 'INSTITUTION',
       status: 'PUBLISHED',
       priority: 'HIGH',
       featured: true,

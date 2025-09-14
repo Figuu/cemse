@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,14 +18,9 @@ import {
   ExternalLink,
   Clock,
   DollarSign,
-  Globe,
   Phone,
   Mail,
-  GraduationCap,
-  Award,
-  TrendingUp,
-  Eye,
-  Save
+  Award
 } from "lucide-react";
 import { useCandidate } from "@/hooks/useCandidates";
 import { formatDistanceToNow } from "date-fns";
@@ -34,7 +29,6 @@ import Link from "next/link";
 
 export default function CandidateProfilePage() {
   const params = useParams();
-  const router = useRouter();
   const candidateId = params.id as string;
   const [activeTab, setActiveTab] = useState("overview");
 
@@ -214,7 +208,7 @@ export default function CandidateProfilePage() {
                   {candidate.profile?.avatarUrl ? (
                     <img
                       src={candidate.profile.avatarUrl}
-                      alt={`${candidate.profile.firstName} ${candidate.profile.lastName}`}
+                      alt={`Avatar de ${candidate.profile.firstName} ${candidate.profile.lastName}`}
                       className="h-full w-full object-cover"
                     />
                   ) : (

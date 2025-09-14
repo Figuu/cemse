@@ -6,7 +6,7 @@ import { NotificationService } from "@/lib/notificationService";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -15,7 +15,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const applicationId = params.id;
+    const { id: applicationId } = await params;
 
     // Get application with full details
     const application = await prisma.jobApplication.findFirst({
@@ -113,7 +113,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -122,9 +122,9 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const applicationId = params.id;
+    const { id: applicationId } = await params;
     const body = await request.json();
-    const { notes, priority, status } = body;
+    const { notes, status } = body;
 
     // Verify application belongs to user
     const existingApplication = await prisma.jobApplication.findFirst({
@@ -182,7 +182,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -191,7 +191,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const applicationId = params.id;
+    const { id: applicationId } = await params;
 
     // Verify application belongs to user
     const existingApplication = await prisma.jobApplication.findFirst({
@@ -329,7 +329,7 @@ async function getDetailedTimeline(applicationId: string) {
   return timeline;
 }
 
-function calculatePriority(application: any) {
+function calculatePriority(application: Record<string, unknown>) {
   const daysSinceApplied = Math.floor((new Date().getTime() - application.appliedAt.getTime()) / (1000 * 60 * 60 * 24));
   
   // High priority if it's been more than 14 days without response

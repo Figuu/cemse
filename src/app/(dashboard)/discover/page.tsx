@@ -15,7 +15,6 @@ import {
   MapPin,
   Star,
   Users,
-  Calendar,
   RefreshCw,
   Grid3X3,
   List,
@@ -37,9 +36,7 @@ export default function DiscoverPage() {
   const [showFilters, setShowFilters] = useState(false);
 
   const {
-    discoveryResult,
     isLoading,
-    error,
     discoverStartups,
   } = useStartupDiscovery(filters);
 
@@ -329,7 +326,7 @@ export default function DiscoverPage() {
                   <div>
                     <h3 className="text-lg font-semibold mb-4">Distribución por Categoría</h3>
                     <div className="space-y-2">
-                      {analytics.categoryStats.slice(0, 5).map((category, index) => (
+                      {analytics.categoryStats.slice(0, 5).map((category) => (
                         <div key={category.name} className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <div className="w-3 h-3 rounded-full bg-blue-500"></div>

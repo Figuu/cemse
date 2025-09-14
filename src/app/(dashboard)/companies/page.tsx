@@ -4,21 +4,13 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Search, 
   Filter, 
   Plus, 
   Building2, 
-  MapPin, 
-  Users, 
   Star,
-  TrendingUp,
-  Eye,
-  Briefcase,
-  Calendar,
-  Globe
+  Briefcase
 } from "lucide-react";
 import { CompanyCard } from "@/components/companies/CompanyCard";
 import { useCompanies, useFeaturedCompanies } from "@/hooks/useCompanies";

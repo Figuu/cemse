@@ -3,6 +3,41 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 
+export interface FinancialProjections {
+  revenue?: {
+    year1?: number;
+    year2?: number;
+    year3?: number;
+  };
+  expenses?: {
+    year1?: number;
+    year2?: number;
+    year3?: number;
+  };
+  profit?: {
+    year1?: number;
+    year2?: number;
+    year3?: number;
+  };
+  funding?: {
+    amount?: number;
+    source?: string;
+    date?: string;
+  };
+}
+
+export interface BusinessPlan {
+  id: string;
+  executiveSummary?: string;
+  marketAnalysis?: string;
+  financialProjections?: FinancialProjections;
+  marketingStrategy?: string;
+  operationsPlan?: string;
+  riskAnalysis?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Startup {
   id: string;
   name: string;
@@ -42,17 +77,7 @@ export interface Startup {
     lastName?: string;
     avatarUrl?: string;
   };
-  businessPlan?: {
-    id: string;
-    executiveSummary?: string;
-    marketAnalysis?: string;
-    financialProjections?: any;
-    marketingStrategy?: string;
-    operationsPlan?: string;
-    riskAnalysis?: string;
-    createdAt: string;
-    updatedAt: string;
-  };
+  businessPlan?: BusinessPlan;
 }
 
 export interface StartupFilters {
@@ -173,7 +198,7 @@ export function useStartups(filters?: StartupFilters): UseStartupsReturn {
 
       const data = await response.json();
       setStartups(data.startups || []);
-      setPagination(data.pagination || pagination);
+      setPagination(data.pagination || (prev => prev));
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -293,7 +318,7 @@ export function useStartups(filters?: StartupFilters): UseStartupsReturn {
 // Hook for managing business plans
 export function useBusinessPlan(startupId: string) {
   const { data: session } = useSession();
-  const [businessPlan, setBusinessPlan] = useState<any>(null);
+  const [businessPlan, setBusinessPlan] = useState<BusinessPlan | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

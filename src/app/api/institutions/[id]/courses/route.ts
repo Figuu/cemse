@@ -19,26 +19,10 @@ const createCourseSchema = z.object({
   prerequisites: z.array(z.string()).default([]),
 });
 
-const updateCourseSchema = z.object({
-  name: z.string().min(1).optional(),
-  description: z.string().optional(),
-  code: z.string().min(1).optional(),
-  credits: z.number().int().positive().optional(),
-  level: z.enum(["BEGINNER", "INTERMEDIATE", "ADVANCED", "EXPERT"]).optional(),
-  status: z.enum(["ACTIVE", "INACTIVE", "COMPLETED", "CANCELLED"]).optional(),
-  programId: z.string().optional(),
-  instructorId: z.string().optional(),
-  startDate: z.string().datetime().optional(),
-  endDate: z.string().datetime().optional(),
-  maxStudents: z.number().int().positive().optional(),
-  schedule: z.string().optional(),
-  location: z.string().optional(),
-  prerequisites: z.array(z.string()).optional(),
-});
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { searchParams } = new URL(request.url);
@@ -54,8 +38,9 @@ export async function GET(
 
     const skip = (page - 1) * limit;
 
+    const { id: institutionId } = await params;
     const where: any = {
-      institutionId: params.id,
+      institutionId: institutionId,
     };
 
     if (search) {
@@ -145,9 +130,10 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: institutionId } = await params;
     const body = await request.json();
     const validatedData = createCourseSchema.parse(body);
 
@@ -156,7 +142,7 @@ export async function POST(
 
     // Check if user has permission to manage this institution
     const institution = await prisma.institution.findUnique({
-      where: { id: params.id },
+      where: { id: institutionId },
       select: { createdBy: true },
     });
 
@@ -178,7 +164,7 @@ export async function POST(
     const existingCourse = await prisma.institutionCourse.findFirst({
       where: {
         code: validatedData.code,
-        institutionId: params.id,
+        institutionId: institutionId,
       },
     });
 
@@ -192,7 +178,7 @@ export async function POST(
     const course = await prisma.institutionCourse.create({
       data: {
         ...validatedData,
-        institutionId: params.id,
+        institutionId: institutionId,
       },
       include: {
         program: {

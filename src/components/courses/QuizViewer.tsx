@@ -17,7 +17,7 @@ import {
   RotateCcw,
   ArrowLeft,
   ArrowRight,
-  Submit,
+  Send,
   AlertCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -275,7 +275,7 @@ export function QuizViewer({
             {currentQuestion.type === "multiple_choice" && (
               <RadioGroup
                 value={answers[currentQuestion.id] || ""}
-                onValueChange={(value) => handleAnswerChange(currentQuestion.id, value)}
+                onValueChange={(value: string) => handleAnswerChange(currentQuestion.id, value)}
               >
                 {currentQuestion.options?.map((option, index) => (
                   <div key={index} className="flex items-center space-x-2">
@@ -294,7 +294,7 @@ export function QuizViewer({
             {currentQuestion.type === "true_false" && (
               <RadioGroup
                 value={answers[currentQuestion.id] || ""}
-                onValueChange={(value) => handleAnswerChange(currentQuestion.id, value === "true")}
+                onValueChange={(value: string) => handleAnswerChange(currentQuestion.id, value === "true")}
               >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="true" id={`${currentQuestion.id}-true`} />
@@ -377,7 +377,7 @@ export function QuizViewer({
                 </>
               ) : (
                 <>
-                  <Submit className="h-4 w-4 mr-2" />
+                  <Send className="h-4 w-4 mr-2" />
                   Enviar Cuestionario
                 </>
               )}

@@ -2,6 +2,73 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
+// Type definitions for student data
+export interface StudentSkills {
+  name: string;
+  level: 'beginner' | 'intermediate' | 'advanced' | 'expert';
+}
+
+export interface StudentSocialLinks {
+  linkedin?: string;
+  github?: string;
+  twitter?: string;
+  facebook?: string;
+  instagram?: string;
+}
+
+export interface StudentWorkExperience {
+  company: string;
+  position: string;
+  startDate: string;
+  endDate?: string;
+  description?: string;
+  current: boolean;
+}
+
+export interface StudentAchievement {
+  title: string;
+  description?: string;
+  date: string;
+  issuer?: string;
+}
+
+export interface StudentLanguage {
+  name: string;
+  proficiency: 'basic' | 'conversational' | 'professional' | 'native';
+}
+
+export interface StudentProject {
+  name: string;
+  description?: string;
+  technologies: string[];
+  startDate: string;
+  endDate?: string;
+  url?: string;
+}
+
+export interface StudentWebsite {
+  name: string;
+  url: string;
+  description?: string;
+}
+
+export interface StudentExtracurricularActivity {
+  name: string;
+  description?: string;
+  startDate: string;
+  endDate?: string;
+  role?: string;
+}
+
+export interface PaginationInfo {
+  page: number;
+  limit: number;
+  totalCount: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
+
 export interface InstitutionStudent {
   id: string;
   studentId: string;
@@ -31,21 +98,21 @@ export interface InstitutionStudent {
     educationLevel?: string;
     currentInstitution?: string;
     graduationYear?: number;
-    skills?: any;
-    interests?: any;
-    socialLinks?: any;
-    workExperience?: any;
-    achievements?: any;
-    academicAchievements?: any;
+    skills?: string[];
+    interests?: string[];
+    socialLinks?: StudentSocialLinks;
+    workExperience?: StudentWorkExperience[];
+    achievements?: StudentAchievement[];
+    academicAchievements?: StudentAchievement[];
     currentDegree?: string;
     universityName?: string;
     universityStatus?: string;
     gpa?: number;
-    languages?: any;
-    projects?: any;
-    skillsWithLevel?: any;
-    websites?: any;
-    extracurricularActivities?: any;
+    languages?: StudentLanguage[];
+    projects?: StudentProject[];
+    skillsWithLevel?: StudentSkills[];
+    websites?: StudentWebsite[];
+    extracurricularActivities?: StudentExtracurricularActivity[];
     professionalSummary?: string;
     targetPosition?: string;
     targetCompany?: string;
@@ -195,11 +262,9 @@ export interface CourseFilters {
 }
 
 export function useInstitutionStudents(institutionId: string, filters: StudentFilters = {}) {
-  const queryClient = useQueryClient();
-
   const query = useQuery({
     queryKey: ["institution-students", institutionId, filters],
-    queryFn: async (): Promise<{ students: InstitutionStudent[]; pagination: any }> => {
+    queryFn: async (): Promise<{ students: InstitutionStudent[]; pagination: PaginationInfo }> => {
       const params = new URLSearchParams();
       
       if (filters.page) params.append("page", filters.page.toString());
@@ -315,7 +380,7 @@ export function useDeleteInstitutionStudent(institutionId: string, studentId: st
 export function useInstitutionPrograms(institutionId: string, filters: ProgramFilters = {}) {
   const query = useQuery({
     queryKey: ["institution-programs", institutionId, filters],
-    queryFn: async (): Promise<{ programs: InstitutionProgram[]; pagination: any }> => {
+    queryFn: async (): Promise<{ programs: InstitutionProgram[]; pagination: PaginationInfo }> => {
       const params = new URLSearchParams();
       
       if (filters.page) params.append("page", filters.page.toString());
@@ -341,7 +406,7 @@ export function useInstitutionPrograms(institutionId: string, filters: ProgramFi
 export function useInstitutionCourses(institutionId: string, filters: CourseFilters = {}) {
   const query = useQuery({
     queryKey: ["institution-courses", institutionId, filters],
-    queryFn: async (): Promise<{ courses: InstitutionCourse[]; pagination: any }> => {
+    queryFn: async (): Promise<{ courses: InstitutionCourse[]; pagination: PaginationInfo }> => {
       const params = new URLSearchParams();
       
       if (filters.page) params.append("page", filters.page.toString());

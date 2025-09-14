@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Building2, Save, X } from "lucide-react";
+import { ArrowLeft, Building2, X } from "lucide-react";
 import { CompanyProfileForm } from "@/components/companies/CompanyProfileForm";
 import { useCreateCompany } from "@/hooks/useCompanies";
 import { Company } from "@/types/company";
@@ -29,13 +29,6 @@ export default function CreateCompanyPage() {
     }
   };
 
-  const handleExit = () => {
-    if (showExitDialog) {
-      router.push("/companies");
-    } else {
-      setShowExitDialog(true);
-    }
-  };
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">

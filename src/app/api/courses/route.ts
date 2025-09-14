@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     // Build where clause
-    const where: any = {
+    const where: Record<string, unknown> = {
       isActive: isActive,
     };
 
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Build orderBy clause
-    const orderBy: any = {};
+    const orderBy: Record<string, string> = {};
     switch (sortBy) {
       case "title":
         orderBy.title = sortOrder;

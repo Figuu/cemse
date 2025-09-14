@@ -34,7 +34,6 @@ const createCompanySchema = z.object({
   isFeatured: z.boolean().default(false),
 });
 
-const updateCompanySchema = createCompanySchema.partial();
 
 export async function GET(request: NextRequest) {
   try {
@@ -52,7 +51,7 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit;
 
-    const where: any = {
+    const where: Record<string, unknown> = {
       isActive: true,
     };
 
@@ -89,7 +88,7 @@ export async function GET(request: NextRequest) {
       where.isFeatured = isFeatured === "true";
     }
 
-    const orderBy: any = {};
+    const orderBy: Record<string, string> = {};
     orderBy[sortBy] = sortOrder;
 
     const [companies, total] = await Promise.all([

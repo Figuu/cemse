@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     // Build where clause
-    const where: any = {};
+    const where: Record<string, unknown> = {};
 
     if (courseId) {
       where.courseId = courseId;
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Build orderBy clause
-    const orderBy: any = {};
+    const orderBy: Record<string, string> = {};
     orderBy[sortBy] = sortOrder;
 
     const [discussions, totalCount] = await Promise.all([

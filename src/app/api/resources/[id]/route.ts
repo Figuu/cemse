@@ -1,0 +1,223 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id } = params;
+
+    const resource = await prisma.resource.findUnique({
+      where: { id },
+      include: {
+        author: {
+          include: {
+            profile: true
+          }
+        },
+        downloads: {
+          include: {
+            user: {
+              include: {
+                profile: true
+              }
+            }
+          }
+        },
+        likes: {
+          include: {
+            user: {
+              include: {
+                profile: true
+              }
+            }
+          }
+        },
+        comments: {
+          include: {
+            user: {
+              include: {
+                profile: true
+              }
+            }
+          },
+          orderBy: { createdAt: "desc" }
+        },
+        _count: {
+          select: {
+            downloads: true,
+            likes: true,
+            comments: true
+          }
+        }
+      }
+    });
+
+    if (!resource) {
+      return NextResponse.json({ error: "Resource not found" }, { status: 404 });
+    }
+
+    // Check if user can view this resource
+    if (resource.status !== "PUBLISHED" && 
+        resource.authorId !== session.user.id && 
+        session.user.role !== "SUPERADMIN") {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      resource
+    });
+
+  } catch (error) {
+    console.error("Error fetching resource:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch resource" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id } = params;
+    const body = await request.json();
+
+    // Check if user owns the resource or is admin
+    const resource = await prisma.resource.findUnique({
+      where: { id },
+      select: { authorId: true }
+    });
+
+    if (!resource) {
+      return NextResponse.json({ error: "Resource not found" }, { status: 404 });
+    }
+
+    if (resource.authorId !== session.user.id && session.user.role !== "SUPERADMIN") {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    }
+
+    const {
+      title,
+      description,
+      category,
+      type,
+      fileUrl,
+      fileSize,
+      tags,
+      status,
+      scheduledAt
+    } = body;
+
+    const updateData: any = {
+      title,
+      description,
+      category,
+      type,
+      fileUrl,
+      fileSize,
+      tags,
+      status,
+      updatedAt: new Date()
+    };
+
+    if (scheduledAt) {
+      updateData.scheduledAt = new Date(scheduledAt);
+    }
+
+    if (status === "PUBLISHED" && !resource.publishedAt) {
+      updateData.publishedAt = new Date();
+    }
+
+    const updatedResource = await prisma.resource.update({
+      where: { id },
+      data: updateData,
+      include: {
+        author: {
+          include: {
+            profile: true
+          }
+        },
+        _count: {
+          select: {
+            downloads: true,
+            likes: true,
+            comments: true
+          }
+        }
+      }
+    });
+
+    return NextResponse.json({
+      success: true,
+      resource: updatedResource
+    });
+
+  } catch (error) {
+    console.error("Error updating resource:", error);
+    return NextResponse.json(
+      { error: "Failed to update resource" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id } = params;
+
+    // Check if user owns the resource or is admin
+    const resource = await prisma.resource.findUnique({
+      where: { id },
+      select: { authorId: true }
+    });
+
+    if (!resource) {
+      return NextResponse.json({ error: "Resource not found" }, { status: 404 });
+    }
+
+    if (resource.authorId !== session.user.id && session.user.role !== "SUPERADMIN") {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    }
+
+    await prisma.resource.delete({
+      where: { id }
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Resource deleted successfully"
+    });
+
+  } catch (error) {
+    console.error("Error deleting resource:", error);
+    return NextResponse.json(
+      { error: "Failed to delete resource" },
+      { status: 500 }
+    );
+  }
+}

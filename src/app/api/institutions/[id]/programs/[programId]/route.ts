@@ -16,13 +16,14 @@ const updateProgramSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string; programId: string } }
+  { params }: { params: Promise<{ id: string; programId: string }> }
 ) {
   try {
+    const { id: institutionId, programId } = await params;
     const program = await prisma.institutionProgram.findFirst({
       where: {
-        id: params.programId,
-        institutionId: params.id,
+        id: programId,
+        institutionId: institutionId,
       },
       include: {
         institution: {
@@ -98,9 +99,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string; programId: string } }
+  { params }: { params: Promise<{ id: string; programId: string }> }
 ) {
   try {
+    const { id: institutionId, programId } = await params;
     const body = await request.json();
     const validatedData = updateProgramSchema.parse(body);
 
@@ -109,7 +111,7 @@ export async function PUT(
 
     // Check if user has permission to manage this institution
     const institution = await prisma.institution.findUnique({
-      where: { id: params.id },
+      where: { id: institutionId },
       select: { createdBy: true },
     });
 
@@ -128,7 +130,7 @@ export async function PUT(
     }
 
     const updatedProgram = await prisma.institutionProgram.update({
-      where: { id: params.programId },
+      where: { id: programId },
       data: validatedData,
       include: {
         _count: {
@@ -159,15 +161,16 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; programId: string } }
+  { params }: { params: Promise<{ id: string; programId: string }> }
 ) {
   try {
+    const { id: institutionId, programId } = await params;
     // Get user ID from session (in real app, this would come from auth)
     const userId = "user-1"; // Mock user ID
 
     // Check if user has permission to manage this institution
     const institution = await prisma.institution.findUnique({
-      where: { id: params.id },
+      where: { id: institutionId },
       select: { createdBy: true },
     });
 
@@ -188,7 +191,7 @@ export async function DELETE(
     // Check if program has active enrollments
     const activeEnrollments = await prisma.institutionEnrollment.count({
       where: {
-        programId: params.programId,
+        programId: programId,
         status: "ACTIVE",
       },
     });
@@ -202,7 +205,7 @@ export async function DELETE(
 
     // Delete program
     await prisma.institutionProgram.delete({
-      where: { id: params.programId },
+      where: { id: programId },
     });
 
     return NextResponse.json({ message: "Program deleted successfully" });

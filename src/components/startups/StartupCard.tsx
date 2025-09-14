@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -114,7 +115,7 @@ export function StartupCard({
             <div className="flex items-center space-x-3 flex-1 min-w-0">
               <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center flex-shrink-0">
                 {startup.logo ? (
-                  <img src={startup.logo} alt={startup.name} className="w-8 h-8 rounded" />
+                  <Image src={startup.logo} alt={startup.name} width={32} height={32} className="w-8 h-8 rounded" />
                 ) : (
                   <Building2 className="h-5 w-5 text-muted-foreground" />
                 )}
@@ -154,7 +155,7 @@ export function StartupCard({
             <div className="flex items-center space-x-3 flex-1 min-w-0">
               <div className="w-16 h-16 bg-muted rounded-lg flex items-center justify-center flex-shrink-0">
                 {startup.logo ? (
-                  <img src={startup.logo} alt={startup.name} className="w-12 h-12 rounded" />
+                  <Image src={startup.logo} alt={startup.name} width={48} height={48} className="w-12 h-12 rounded" />
                 ) : (
                   <Building2 className="h-8 w-8 text-muted-foreground" />
                 )}
@@ -303,7 +304,7 @@ export function StartupCard({
           <div className="flex items-center space-x-3">
             <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
               {startup.logo ? (
-                <img src={startup.logo} alt={startup.name} className="w-8 h-8 rounded" />
+                <Image src={startup.logo} alt={startup.name} width={32} height={32} className="w-8 h-8 rounded" />
               ) : (
                 <Building2 className="h-6 w-6 text-muted-foreground" />
               )}

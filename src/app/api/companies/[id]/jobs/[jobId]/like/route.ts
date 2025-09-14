@@ -3,17 +3,18 @@ import { prisma } from "@/lib/prisma";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string; jobId: string } }
+  { params }: { params: Promise<{ id: string; jobId: string }> }
 ) {
   try {
+    const { id: companyId, jobId } = await params;
     // Get user ID from session (in real app, this would come from auth)
     const userId = "user-1"; // Mock user ID
 
     // Check if job exists
     const job = await prisma.jobPosting.findFirst({
       where: { 
-        id: params.jobId,
-        companyId: params.id,
+        id: jobId,
+        companyId: companyId,
         isActive: true,
       },
     });
@@ -29,7 +30,7 @@ export async function POST(
     const existingLike = await prisma.jobLike.findUnique({
       where: {
         jobId_userId: {
-          jobId: params.jobId,
+          jobId: jobId,
           userId: userId,
         },
       },
@@ -40,7 +41,7 @@ export async function POST(
       await prisma.jobLike.delete({
         where: {
           jobId_userId: {
-            jobId: params.jobId,
+            jobId: jobId,
             userId: userId,
           },
         },
@@ -48,7 +49,7 @@ export async function POST(
 
       // Decrement like count
       await prisma.jobPosting.update({
-        where: { id: params.jobId },
+        where: { id: jobId },
         data: { totalLikes: { decrement: 1 } },
       });
 
@@ -60,14 +61,14 @@ export async function POST(
       // Like the job
       await prisma.jobLike.create({
         data: {
-          jobId: params.jobId,
+          jobId: jobId,
           userId: userId,
         },
       });
 
       // Increment like count
       await prisma.jobPosting.update({
-        where: { id: params.jobId },
+        where: { id: jobId },
         data: { totalLikes: { increment: 1 } },
       });
 
@@ -87,9 +88,10 @@ export async function POST(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string; jobId: string } }
+  { params }: { params: Promise<{ id: string; jobId: string }> }
 ) {
   try {
+    const { id: companyId, jobId } = await params;
     // Get user ID from session (in real app, this would come from auth)
     const userId = "user-1"; // Mock user ID
 
@@ -97,7 +99,7 @@ export async function GET(
     const like = await prisma.jobLike.findUnique({
       where: {
         jobId_userId: {
-          jobId: params.jobId,
+          jobId: jobId,
           userId: userId,
         },
       },

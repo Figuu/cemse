@@ -1,0 +1,967 @@
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                    String         @id @default(cuid())
+  email                 String         @unique
+  password              String
+  role                  UserRole
+  isActive              Boolean        @default(true)
+  refreshToken          String?
+  refreshTokenExpires   DateTime?
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+  
+  // Relations
+  profile               Profile?
+  createdCompanies      Company[]      @relation("CompanyCreator")
+  createdInstitutions   Institution[]  @relation("InstitutionCreator")
+  createdResources      Resource[]     @relation("ResourceCreator")
+  createdNews           NewsArticle[]  @relation("NewsCreator")
+
+  @@index([role])
+  @@index([isActive])
+  @@map("users")
+}
+
+model Profile {
+  id                        String              @id @default(cuid())
+  userId                    String              @unique
+  avatarUrl                 String?
+  createdAt                 DateTime            @default(now())
+  updatedAt                 DateTime            @updatedAt
+  active                    Boolean             @default(true)
+  status                    UserStatus          @default(ACTIVE)
+  firstName                 String?
+  lastName                  String?
+  email                     String?
+  phone                     String?
+  address                   String?
+  municipalityId            String?
+  country                   String?             @default("Bolivia")
+  birthDate                 DateTime?
+  gender                    String?
+  documentType              String?
+  documentNumber            String?
+  educationLevel            EducationLevel?
+  currentInstitution        String?
+  graduationYear            Int?
+  isStudying                Boolean?
+  skills                    Json?
+  interests                 Json?
+  socialLinks               Json?
+  workExperience            Json?
+  profileCompletion         Int                 @default(0)
+  lastLoginAt               DateTime?
+  parentalConsent           Boolean             @default(false)
+  parentEmail               String?
+  consentDate               DateTime?
+  achievements              Json?
+  addressLine               String?
+  city                      String?
+  state                     String?
+  cityState                 String?
+  professionalSummary       String?
+  extracurricularActivities Json?
+  jobTitle                  String?
+  languages                 Json?
+  projects                  Json?
+  skillsWithLevel           Json?
+  websites                  Json?
+  coverLetterContent        String?
+  coverLetterRecipient      Json?
+  coverLetterSubject        String?
+  coverLetterTemplate       String?             @default("professional")
+  academicAchievements      Json?
+  currentDegree             String?
+  educationHistory          Json?
+  gpa                       Float?
+  universityEndDate         DateTime?
+  universityName            String?
+  universityStartDate       DateTime?
+  universityStatus          String?
+  targetPosition            String?
+  targetCompany             String?
+  relevantSkills            String[]
+
+  // CV Builder fields
+  cvUrl                     String?
+  coverLetterUrl            String?
+  cvTemplate                String?
+
+  // Relations
+  user                      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  municipality              Municipality?       @relation(fields: [municipalityId], references: [id])
+  courseEnrollments         CourseEnrollment[]
+  instructedCourses         Course[]            @relation("CourseInstructor")
+  discussions               Discussion[]
+  entrepreneurships         Entrepreneurship[]
+  jobApplications           JobApplication[]
+  youthApplications         YouthApplication[]  @relation("YouthApplications")
+  newsComments              NewsComment[]
+  quizAttempts              QuizAttempt[]
+  studentNotes              StudentNote[]
+
+  @@index([userId])
+  @@index([municipalityId])
+  @@index([status])
+  @@map("profiles")
+}
+
+model Course {
+  id                String             @id @default(cuid())
+  title             String
+  slug              String             @unique
+  description       String
+  shortDescription  String?
+  thumbnail         String?
+  videoPreview      String?
+  objectives        String[]
+  prerequisites     String[]
+  duration          Int
+  level             CourseLevel
+  category          CourseCategory
+  isMandatory       Boolean?           @default(false)
+  isActive          Boolean?           @default(true)
+  rating            Decimal?           @default(0)
+  studentsCount     Int                @default(0)
+  completionRate    Decimal?           @default(0)
+  totalLessons      Int                @default(0)
+  totalQuizzes      Int                @default(0)
+  totalResources    Int                @default(0)
+  tags              String[]
+  certification     Boolean?           @default(true)
+  includedMaterials String[]
+  instructorId      String?
+  institutionName   String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  publishedAt       DateTime?
+  
+  // Relations
+  certificates      Certificate[]
+  enrollments       CourseEnrollment[]
+  modules           CourseModule[]
+  instructor        Profile?           @relation("CourseInstructor", fields: [instructorId], references: [userId])
+  quizzes           Quiz[]
+
+  @@index([category])
+  @@index([level])
+  @@index([isMandatory])
+  @@index([isActive])
+  @@index([instructorId])
+  @@map("courses")
+}
+
+model CourseModule {
+  id                  String              @id @default(cuid())
+  courseId            String
+  title               String
+  description         String?
+  orderIndex          Int
+  estimatedDuration   Int
+  isLocked            Boolean             @default(false)
+  prerequisites       String[]
+  certificateTemplate String?
+  hasCertificate      Boolean             @default(true)
+  
+  // Relations
+  course              Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons             Lesson[]
+  moduleCertificates  ModuleCertificate[]
+
+  @@index([courseId])
+  @@index([orderIndex])
+  @@map("course_modules")
+}
+
+model Lesson {
+  id          String           @id @default(cuid())
+  moduleId    String
+  title       String
+  description String?
+  content     String
+  contentType LessonType
+  videoUrl    String?
+  audioUrl    String?
+  duration    Int?
+  orderIndex  Int
+  isRequired  Boolean          @default(true)
+  isPreview   Boolean          @default(false)
+  attachments Json?
+  
+  // Relations
+  module      CourseModule     @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  discussions Discussion[]
+  progress    LessonProgress[]
+  resources   LessonResource[]
+  quizzes     Quiz[]
+  notes       StudentNote[]
+
+  @@index([moduleId])
+  @@index([orderIndex])
+  @@map("lessons")
+}
+
+model JobOffer {
+  id                  String           @id @default(cuid())
+  title               String
+  description         String
+  requirements        String
+  benefits            String?
+  salaryMin           Decimal?
+  salaryMax           Decimal?
+  salaryCurrency      String?          @default("BOB")
+  contractType        ContractType
+  workSchedule        String
+  workModality        WorkModality
+  location            String
+  municipality        String
+  department          String           @default("Cochabamba")
+  experienceLevel     ExperienceLevel
+  educationRequired   EducationLevel?
+  skillsRequired      String[]
+  desiredSkills       String[]
+  applicationDeadline DateTime?
+  isActive            Boolean          @default(true)
+  status              JobStatus        @default(ACTIVE)
+  viewsCount          Int              @default(0)
+  applicationsCount   Int              @default(0)
+  featured            Boolean          @default(false)
+  expiresAt           DateTime?
+  publishedAt         DateTime         @default(now())
+  companyId           String
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  latitude            Float?
+  longitude           Float?
+  images              String[]
+  logo                String?
+  
+  // Relations
+  company             Company          @relation(fields: [companyId], references: [id])
+  applications        JobApplication[]
+  jobQuestions        JobQuestion[]
+
+  @@index([companyId])
+  @@index([municipality])
+  @@index([contractType])
+  @@index([workModality])
+  @@index([isActive])
+  @@index([status])
+  @@map("job_offers")
+}
+
+model JobApplication {
+  id              String                  @id @default(cuid())
+  applicantId     String
+  jobOfferId      String
+  coverLetter     String?
+  status          ApplicationStatus       @default(SENT)
+  appliedAt       DateTime                @default(now())
+  reviewedAt      DateTime?
+  notes           String?
+  rating          Int?
+  cvData          Json?
+  profileImage    String?
+  coverLetterFile String?
+  cvFile          String?
+  decisionReason  String?
+  
+  // Relations
+  applicant       Profile                 @relation(fields: [applicantId], references: [userId])
+  jobOffer        JobOffer                @relation(fields: [jobOfferId], references: [id])
+  messages        JobApplicationMessage[]
+  questionAnswers JobQuestionAnswer[]
+
+  @@unique([applicantId, jobOfferId])
+  @@index([applicantId])
+  @@index([jobOfferId])
+  @@index([status])
+  @@map("job_applications")
+}
+
+model YouthApplication {
+  id                String                            @id @default(cuid())
+  title             String
+  description       String
+  cvFile            String?
+  coverLetterFile   String?
+  cvUrl             String?
+  coverLetterUrl    String?
+  status            YouthApplicationStatus            @default(ACTIVE)
+  isPublic          Boolean                           @default(true)
+  viewsCount        Int                               @default(0)
+  applicationsCount Int                               @default(0)
+  createdAt         DateTime                          @default(now())
+  updatedAt         DateTime                          @updatedAt
+  youthProfileId    String
+  
+  // Relations
+  youthProfile      Profile                           @relation("YouthApplications", fields: [youthProfileId], references: [userId])
+  companyInterests  YouthApplicationCompanyInterest[]
+  messages          YouthApplicationMessage[]
+
+  @@index([youthProfileId])
+  @@index([status])
+  @@index([isPublic])
+  @@index([createdAt])
+  @@map("youth_applications")
+}
+
+model Entrepreneurship {
+  id            String        @id @default(cuid())
+  ownerId       String
+  name          String
+  description   String
+  category      String
+  subcategory   String?
+  businessStage BusinessStage
+  logo          String?
+  images        String[]
+  website       String?
+  email         String?
+  phone         String?
+  address       String?
+  municipality  String
+  department    String        @default("Cochabamba")
+  socialMedia   Json?
+  founded       DateTime?
+  employees     Int?
+  annualRevenue Decimal?
+  businessModel String?
+  targetMarket  String?
+  isPublic      Boolean       @default(true)
+  isActive      Boolean       @default(true)
+  viewsCount    Int           @default(0)
+  rating        Decimal?      @default(0)
+  reviewsCount  Int           @default(0)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  
+  // Relations
+  businessPlan  BusinessPlan?
+  owner         Profile       @relation(fields: [ownerId], references: [userId])
+
+  @@index([ownerId])
+  @@index([category])
+  @@index([municipality])
+  @@index([businessStage])
+  @@index([isActive, isPublic])
+  @@map("entrepreneurships")
+}
+
+model NewsArticle {
+  id             String        @id @default(cuid())
+  title          String
+  content        String
+  summary        String
+  imageUrl       String?
+  videoUrl       String?
+  authorId       String
+  authorName     String
+  authorType     NewsType
+  authorLogo     String?
+  status         NewsStatus    @default(DRAFT)
+  priority       NewsPriority  @default(MEDIUM)
+  featured       Boolean       @default(false)
+  tags           String[]
+  category       String
+  publishedAt    DateTime?
+  expiresAt      DateTime?
+  viewCount      Int           @default(0)
+  likeCount      Int           @default(0)
+  commentCount   Int           @default(0)
+  targetAudience String[]
+  region         String?
+  relatedLinks   Json?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  isEntrepreneurshipRelated Boolean @default(false)
+  
+  // Relations
+  author         User          @relation("NewsCreator", fields: [authorId], references: [id])
+  comments       NewsComment[]
+
+  @@index([authorId])
+  @@index([status])
+  @@index([category])
+  @@index([publishedAt])
+  @@index([targetAudience])
+  @@map("news_articles")
+}
+
+model Resource {
+  id              String   @id @default(cuid())
+  title           String
+  description     String
+  type            String
+  category        String
+  format          String
+  downloadUrl     String?
+  externalUrl     String?
+  thumbnail       String
+  author          String
+  publishedDate   DateTime
+  downloads       Int      @default(0)
+  rating          Float    @default(0)
+  tags            String[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  isPublic        Boolean  @default(true)
+  isEntrepreneurshipRelated Boolean @default(false)
+  createdByUserId String
+  
+  // Relations
+  createdBy       User     @relation("ResourceCreator", fields: [createdByUserId], references: [id], onDelete: Cascade)
+
+  @@index([createdByUserId])
+  @@index([type])
+  @@index([category])
+  @@index([isPublic])
+  @@map("resources")
+}
+
+model Company {
+  id                        String                            @id @default(cuid())
+  name                      String
+  description               String?
+  taxId                     String?
+  legalRepresentative       String?
+  businessSector            String?
+  companySize               CompanySize?
+  website                   String?
+  email                     String?                           @unique
+  phone                     String?
+  address                   String?
+  foundedYear               Int?
+  logoUrl                   String?
+  isActive                  Boolean                           @default(true)
+  municipalityId            String
+  createdBy                 String
+  createdAt                 DateTime                          @default(now())
+  updatedAt                 DateTime                          @updatedAt
+  password                  String
+  
+  // Relations
+  creator                   User                              @relation("CompanyCreator", fields: [createdBy], references: [id])
+  municipality              Municipality                      @relation(fields: [municipalityId], references: [id])
+  jobOffers                 JobOffer[]
+  youthApplicationInterests YouthApplicationCompanyInterest[]
+
+  @@unique([name, municipalityId])
+  @@index([municipalityId])
+  @@index([businessSector])
+  @@index([isActive])
+  @@index([createdBy])
+  @@map("companies")
+}
+
+model Institution {
+  id              String          @id @default(cuid())
+  name            String
+  department      String
+  region          String?
+  population      Int?
+  mayorName       String?
+  mayorEmail      String?
+  mayorPhone      String?
+  address         String?
+  website         String?
+  isActive        Boolean         @default(true)
+  email           String          @unique
+  password        String
+  phone           String?
+  institutionType InstitutionType
+  customType      String?
+  primaryColor    String?
+  secondaryColor  String?
+  createdBy       String
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  
+  // Relations
+  creator         User            @relation("InstitutionCreator", fields: [createdBy], references: [id])
+
+  @@unique([name, department])
+  @@index([department])
+  @@index([isActive])
+  @@index([createdBy])
+  @@index([institutionType])
+  @@map("institutions")
+}
+
+model Municipality {
+  id              String          @id @default(cuid())
+  name            String
+  department      String
+  region          String?
+  population      Int?
+  mayorName       String?
+  mayorEmail      String?
+  mayorPhone      String?
+  address         String?
+  website         String?
+  isActive        Boolean         @default(true)
+  email           String          @unique
+  password        String
+  phone           String?
+  createdBy       String
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  customType      String?
+  institutionType InstitutionType @default(MUNICIPALITY)
+  primaryColor    String?
+  secondaryColor  String?
+  
+  // Relations
+  companies       Company[]
+  profiles        Profile[]
+  creator         User            @relation("MunicipalityCreator", fields: [createdBy], references: [id])
+
+  @@unique([name, department])
+  @@index([department])
+  @@index([isActive])
+  @@index([createdBy])
+  @@index([institutionType])
+  @@map("municipalities")
+}
+
+// Enums
+enum UserRole {
+  YOUTH
+  COMPANIES
+  INSTITUTION
+  SUPERADMIN
+  INSTRUCTOR
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  PENDING_VERIFICATION
+  SUSPENDED
+}
+
+enum InstitutionType {
+  MUNICIPALITY
+  NGO
+  TRAINING_CENTER
+  FOUNDATION
+  OTHER
+}
+
+enum EducationLevel {
+  PRIMARY
+  SECONDARY
+  TECHNICAL
+  UNIVERSITY
+  POSTGRADUATE
+  OTHER
+}
+
+enum CompanySize {
+  MICRO
+  SMALL
+  MEDIUM
+  LARGE
+}
+
+enum JobStatus {
+  ACTIVE
+  PAUSED
+  CLOSED
+  DRAFT
+}
+
+enum ApplicationStatus {
+  SENT
+  UNDER_REVIEW
+  PRE_SELECTED
+  REJECTED
+  HIRED
+}
+
+enum ContractType {
+  FULL_TIME
+  PART_TIME
+  INTERNSHIP
+  VOLUNTEER
+  FREELANCE
+}
+
+enum WorkModality {
+  ON_SITE
+  REMOTE
+  HYBRID
+}
+
+enum ExperienceLevel {
+  NO_EXPERIENCE
+  ENTRY_LEVEL
+  MID_LEVEL
+  SENIOR_LEVEL
+}
+
+enum CourseCategory {
+  SOFT_SKILLS
+  BASIC_COMPETENCIES
+  JOB_PLACEMENT
+  ENTREPRENEURSHIP
+  TECHNICAL_SKILLS
+  DIGITAL_LITERACY
+  COMMUNICATION
+  LEADERSHIP
+}
+
+enum CourseLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum LessonType {
+  VIDEO
+  AUDIO
+  TEXT
+  QUIZ
+  EXERCISE
+  DOCUMENT
+  INTERACTIVE
+}
+
+enum BusinessStage {
+  IDEA
+  STARTUP
+  GROWING
+  ESTABLISHED
+}
+
+enum NewsType {
+  COMPANY
+  GOVERNMENT
+  NGO
+}
+
+enum NewsStatus {
+  PUBLISHED
+  DRAFT
+  ARCHIVED
+}
+
+enum NewsPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum YouthApplicationStatus {
+  ACTIVE
+  PAUSED
+  CLOSED
+  HIRED
+}
+
+enum CompanyInterestStatus {
+  INTERESTED
+  CONTACTED
+  INTERVIEW_SCHEDULED
+  HIRED
+  NOT_INTERESTED
+}
+
+// Additional Models for Course System
+model CourseEnrollment {
+  id          String      @id @default(cuid())
+  studentId   String
+  courseId    String
+  enrolledAt  DateTime    @default(now())
+  completedAt DateTime?
+  progress    Decimal     @default(0)
+  status      String      @default("active")
+  
+  // Relations
+  student     Profile     @relation(fields: [studentId], references: [userId])
+  course      Course      @relation(fields: [courseId], references: [id])
+  
+  @@unique([studentId, courseId])
+  @@index([studentId])
+  @@index([courseId])
+  @@map("course_enrollments")
+}
+
+model Certificate {
+  id          String   @id @default(cuid())
+  courseId    String
+  studentId   String
+  issuedAt    DateTime @default(now())
+  fileUrl     String?
+  certificateType String @default("course")
+  
+  // Relations
+  course      Course   @relation(fields: [courseId], references: [id])
+  
+  @@index([courseId])
+  @@index([studentId])
+  @@map("certificates")
+}
+
+model ModuleCertificate {
+  id        String   @id @default(cuid())
+  moduleId  String
+  studentId String
+  issuedAt  DateTime @default(now())
+  fileUrl   String?
+  
+  // Relations
+  module    CourseModule @relation(fields: [moduleId], references: [id])
+  
+  @@index([moduleId])
+  @@index([studentId])
+  @@map("module_certificates")
+}
+
+model LessonProgress {
+  id         String   @id @default(cuid())
+  studentId  String
+  lessonId   String
+  completed  Boolean  @default(false)
+  completedAt DateTime?
+  timeSpent  Int      @default(0)
+  
+  // Relations
+  lesson     Lesson   @relation(fields: [lessonId], references: [id])
+  
+  @@unique([studentId, lessonId])
+  @@index([studentId])
+  @@index([lessonId])
+  @@map("lesson_progress")
+}
+
+model LessonResource {
+  id          String   @id @default(cuid())
+  lessonId    String
+  title       String
+  description String?
+  url         String
+  type        String
+  orderIndex  Int
+  
+  // Relations
+  lesson      Lesson   @relation(fields: [lessonId], references: [id])
+  
+  @@index([lessonId])
+  @@index([orderIndex])
+  @@map("lesson_resources")
+}
+
+model Quiz {
+  id          String   @id @default(cuid())
+  courseId    String?
+  lessonId    String?
+  title       String
+  description String?
+  questions   Json
+  passingScore Int     @default(70)
+  timeLimit   Int?
+  attempts    Int      @default(0) // 0 = unlimited
+  isActive    Boolean  @default(true)
+  
+  // Relations
+  course      Course?  @relation(fields: [courseId], references: [id])
+  lesson      Lesson?  @relation(fields: [lessonId], references: [id])
+  attempts    QuizAttempt[]
+  
+  @@index([courseId])
+  @@index([lessonId])
+  @@map("quizzes")
+}
+
+model QuizAttempt {
+  id          String   @id @default(cuid())
+  quizId      String
+  studentId   String
+  answers     Json
+  score       Decimal
+  passed      Boolean
+  completedAt DateTime @default(now())
+  timeSpent   Int?
+  
+  // Relations
+  quiz        Quiz     @relation(fields: [quizId], references: [id])
+  student     Profile  @relation(fields: [studentId], references: [userId])
+  
+  @@index([quizId])
+  @@index([studentId])
+  @@map("quiz_attempts")
+}
+
+model Discussion {
+  id          String   @id @default(cuid())
+  courseId    String?
+  lessonId    String?
+  authorId    String
+  title       String
+  content     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  isResolved  Boolean  @default(false)
+  
+  // Relations
+  author      Profile  @relation(fields: [authorId], references: [userId])
+  lesson      Lesson?  @relation(fields: [lessonId], references: [id])
+  
+  @@index([authorId])
+  @@index([lessonId])
+  @@map("discussions")
+}
+
+model StudentNote {
+  id          String   @id @default(cuid())
+  studentId   String
+  lessonId    String?
+  content     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  student     Profile  @relation(fields: [studentId], references: [userId])
+  lesson      Lesson?  @relation(fields: [lessonId], references: [id])
+  
+  @@index([studentId])
+  @@index([lessonId])
+  @@map("student_notes")
+}
+
+// Job System Models
+model JobQuestion {
+  id          String   @id @default(cuid())
+  jobOfferId  String
+  question    String
+  type        String   @default("text") // text, multiple_choice, etc.
+  options     Json?
+  isRequired  Boolean  @default(true)
+  orderIndex  Int
+  
+  // Relations
+  jobOffer    JobOffer @relation(fields: [jobOfferId], references: [id])
+  answers     JobQuestionAnswer[]
+  
+  @@index([jobOfferId])
+  @@index([orderIndex])
+  @@map("job_questions")
+}
+
+model JobQuestionAnswer {
+  id          String   @id @default(cuid())
+  applicationId String
+  questionId  String
+  answer      String
+  createdAt   DateTime @default(now())
+  
+  // Relations
+  application JobApplication @relation(fields: [applicationId], references: [id])
+  question    JobQuestion    @relation(fields: [questionId], references: [id])
+  
+  @@unique([applicationId, questionId])
+  @@index([applicationId])
+  @@index([questionId])
+  @@map("job_question_answers")
+}
+
+model JobApplicationMessage {
+  id          String   @id @default(cuid())
+  applicationId String
+  senderId    String
+  content     String
+  messageType String   @default("text")
+  attachments Json?
+  createdAt   DateTime @default(now())
+  readAt      DateTime?
+  
+  // Relations
+  application JobApplication @relation(fields: [applicationId], references: [id])
+  
+  @@index([applicationId])
+  @@index([senderId])
+  @@map("job_application_messages")
+}
+
+model YouthApplicationCompanyInterest {
+  id                String                    @id @default(cuid())
+  applicationId     String
+  companyId         String
+  status            CompanyInterestStatus     @default(INTERESTED)
+  interestedAt      DateTime                  @default(now())
+  contactedAt       DateTime?
+  notes             String?
+  
+  // Relations
+  application       YouthApplication          @relation(fields: [applicationId], references: [id])
+  company           Company                   @relation(fields: [companyId], references: [id])
+  
+  @@unique([applicationId, companyId])
+  @@index([applicationId])
+  @@index([companyId])
+  @@map("youth_application_company_interests")
+}
+
+model YouthApplicationMessage {
+  id                String   @id @default(cuid())
+  applicationId     String
+  senderId          String
+  content           String
+  messageType       String   @default("text")
+  attachments       Json?
+  createdAt         DateTime @default(now())
+  readAt            DateTime?
+  
+  // Relations
+  application       YouthApplication @relation(fields: [applicationId], references: [id])
+  
+  @@index([applicationId])
+  @@index([senderId])
+  @@map("youth_application_messages")
+}
+
+// Entrepreneurship Models
+model BusinessPlan {
+  id                String   @id @default(cuid())
+  entrepreneurshipId String  @unique
+  content           Json
+  status            String   @default("draft")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Relations
+  entrepreneurship  Entrepreneurship @relation(fields: [entrepreneurshipId], references: [id])
+  
+  @@index([entrepreneurshipId])
+  @@map("business_plans")
+}
+
+// News System Models
+model NewsComment {
+  id          String   @id @default(cuid())
+  newsId      String
+  authorId    String
+  content     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  news        NewsArticle @relation(fields: [newsId], references: [id])
+  author      Profile     @relation(fields: [authorId], references: [userId])
+  
+  @@index([newsId])
+  @@index([authorId])
+  @@map("news_comments")
+}

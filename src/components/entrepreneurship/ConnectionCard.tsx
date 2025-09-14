@@ -28,7 +28,7 @@ interface ConnectionCardProps {
   variant?: "default" | "compact";
 }
 
-const connectionStatusIcons: Record<ConnectionStatus, any> = {
+const connectionStatusIcons: Record<ConnectionStatus, React.ComponentType<{ className?: string }>> = {
   PENDING: Clock,
   ACCEPTED: UserCheck,
   DECLINED: UserX,
@@ -203,7 +203,7 @@ export function ConnectionCard({
               </p>
               {connection.message && (
                 <p className="text-xs text-muted-foreground truncate">
-                  "{connection.message}"
+                  &ldquo;{connection.message}&rdquo;
                 </p>
               )}
             </div>
@@ -256,7 +256,7 @@ export function ConnectionCard({
         {connection.message && (
           <div className="bg-muted p-3 rounded-lg">
             <p className="text-sm text-muted-foreground">
-              "{connection.message}"
+              &ldquo;{connection.message}&rdquo;
             </p>
           </div>
         )}

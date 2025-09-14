@@ -23,7 +23,7 @@ import { BusinessPlanTemplateSelector } from "@/components/startups/BusinessPlan
 import { BusinessPlanBuilder } from "@/components/startups/BusinessPlanBuilder";
 import { BusinessPlanValidationService, ValidationResult } from "@/lib/businessPlanValidationService";
 import { BusinessPlanExportService } from "@/lib/businessPlanExportService";
-import { useStartups } from "@/hooks/useStartups";
+import { useBusinessPlan } from "@/hooks/useStartups";
 
 export default function BusinessPlanPage() {
   const router = useRouter();
@@ -39,7 +39,7 @@ export default function BusinessPlanPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  const { updateBusinessPlan, isLoading: isUpdating } = useStartups();
+  const { updateBusinessPlan, isLoading: isUpdating } = useBusinessPlan(startupId || "");
 
   useEffect(() => {
     if (templateId) {
@@ -65,7 +65,7 @@ export default function BusinessPlanPage() {
     setError(null);
 
     try {
-      await updateBusinessPlan(startupId, {
+      await updateBusinessPlan({
         executiveSummary: data.executiveSummary || "",
         marketAnalysis: data.marketAnalysis || "",
         financialProjections: data.financialProjections || {},
@@ -234,7 +234,9 @@ export default function BusinessPlanPage() {
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div
                           className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${section.percentage}%` }}
+                          style={{ 
+                            inlineSize: `${Math.min(100, Math.max(0, section.percentage))}%`
+                          }}
                         ></div>
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
@@ -245,7 +247,7 @@ export default function BusinessPlanPage() {
                 </div>
 
                 {/* Errors and Warnings */}
-                {(validationResult.errors.length > 0 || validationResult.warnings.length > 0) && (
+                {(validationResult.errors.length > 0 || validationResult._warnings.length > 0) && (
                   <div className="space-y-4">
                     {validationResult.errors.length > 0 && (
                       <div>
@@ -264,11 +266,11 @@ export default function BusinessPlanPage() {
                       </div>
                     )}
 
-                    {validationResult.warnings.length > 0 && (
+                    {validationResult._warnings.length > 0 && (
                       <div>
                         <h4 className="font-medium text-yellow-600 mb-2">Advertencias:</h4>
                         <div className="space-y-2">
-                          {validationResult.warnings.map((warning, index) => (
+                          {validationResult._warnings.map((warning: any, index: number) => (
                             <div key={index} className="flex items-start gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                               <Lightbulb className="h-4 w-4 text-yellow-600 mt-0.5" />
                               <div>

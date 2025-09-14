@@ -6,7 +6,7 @@ import { ConnectionStatus } from "@prisma/client";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -14,8 +14,9 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id: connectionId } = await params;
     const connection = await prisma.entrepreneurshipConnection.findUnique({
-      where: { id: params.id },
+      where: { id: connectionId },
       include: {
         requester: {
           select: {
@@ -57,7 +58,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -65,6 +66,7 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id: connectionId } = await params;
     const body = await request.json();
     const { status } = body;
 
@@ -74,7 +76,7 @@ export async function PUT(
 
     // Check if connection exists and user is the addressee
     const existingConnection = await prisma.entrepreneurshipConnection.findUnique({
-      where: { id: params.id },
+      where: { id: connectionId },
       select: { 
         id: true, 
         addresseeId: true, 
@@ -95,7 +97,7 @@ export async function PUT(
     }
 
     const connection = await prisma.entrepreneurshipConnection.update({
-      where: { id: params.id },
+      where: { id: connectionId },
       data: {
         status,
         acceptedAt: status === ConnectionStatus.ACCEPTED ? new Date() : null,
@@ -132,7 +134,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -140,9 +142,10 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id: connectionId } = await params;
     // Check if connection exists and user is part of it
     const existingConnection = await prisma.entrepreneurshipConnection.findUnique({
-      where: { id: params.id },
+      where: { id: connectionId },
       select: { 
         id: true, 
         requesterId: true, 
@@ -159,7 +162,7 @@ export async function DELETE(
     }
 
     await prisma.entrepreneurshipConnection.delete({
-      where: { id: params.id },
+      where: { id: connectionId },
     });
 
     return NextResponse.json({ message: "Connection deleted successfully" });

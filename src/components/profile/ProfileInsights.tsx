@@ -48,11 +48,6 @@ export function ProfileInsights({ analytics, className }: ProfileInsightsProps) 
     return "text-red-600";
   };
 
-  const getCompletenessBgColor = (percentage: number) => {
-    if (percentage >= 90) return "bg-green-500";
-    if (percentage >= 70) return "bg-yellow-500";
-    return "bg-red-500";
-  };
 
   const getSkillLevelColor = (level: number) => {
     if (level >= 4) return "text-green-600";

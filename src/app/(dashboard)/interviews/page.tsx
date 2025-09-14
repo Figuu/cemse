@@ -1,18 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Calendar, 
   Plus, 
   Search, 
   Filter,
-  MessageSquare,
   Clock,
-  CheckCircle,
   XCircle,
   AlertCircle,
   RefreshCw
@@ -37,7 +34,6 @@ export default function InterviewsPage() {
     isLoading,
     error,
     refetch,
-    createInterview,
     updateInterview,
     sendMessage,
   } = useInterviews();
@@ -71,12 +67,12 @@ export default function InterviewsPage() {
   }) => {
     // This would need to be passed from a parent component with application data
     // For now, we'll show an error
-    console.error("Interview creation requires application context");
+    console.error("Interview creation requires application context", data);
     return;
   };
 
   const handleUpdateInterview = async (id: string, status: string) => {
-    await updateInterview(id, { status: status as any });
+    await updateInterview(id, { status: status as "SCHEDULED" | "CONFIRMED" | "DECLINED" | "COMPLETED" | "CANCELLED" });
   };
 
   const handleSendMessage = async (message: string) => {

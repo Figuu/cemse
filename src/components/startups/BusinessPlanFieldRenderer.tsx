@@ -5,25 +5,29 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
   Plus, 
-  Minus, 
   DollarSign, 
   Calendar,
   BarChart3,
   Table,
-  Trash2
+  Trash2,
+  AlertCircle
 } from "lucide-react";
 import { BusinessPlanField } from "@/lib/businessPlanTemplates";
 
+interface TableData {
+  headers: string[];
+  rows: Record<string, unknown>[];
+}
+
 interface BusinessPlanFieldRendererProps {
   field: BusinessPlanField;
-  value: any;
-  onChange: (value: any) => void;
+  value: unknown;
+  onChange: (value: unknown) => void;
   error?: string;
 }
 
@@ -33,17 +37,17 @@ export function BusinessPlanFieldRenderer({
   onChange,
   error,
 }: BusinessPlanFieldRendererProps) {
-  const [tableData, setTableData] = useState(
-    value || field.defaultValue || { headers: [], rows: [] }
+  const [tableData, setTableData] = useState<TableData>(
+    (value as TableData) || (field.defaultValue as TableData) || { headers: [], rows: [] }
   );
 
-  const handleTableChange = (newData: any) => {
+  const handleTableChange = (newData: TableData) => {
     setTableData(newData);
     onChange(newData);
   };
 
   const addTableRow = () => {
-    const newRow: any = {};
+    const newRow: Record<string, string> = {};
     tableData.headers.forEach((header: string) => {
       newRow[header] = "";
     });
@@ -57,15 +61,15 @@ export function BusinessPlanFieldRenderer({
   const removeTableRow = (index: number) => {
     const newData = {
       ...tableData,
-      rows: tableData.rows.filter((_: any, i: number) => i !== index)
+      rows: tableData.rows.filter((_: unknown, i: number) => i !== index)
     };
     handleTableChange(newData);
   };
 
-  const updateTableRow = (rowIndex: number, header: string, newValue: any) => {
+  const updateTableRow = (rowIndex: number, header: string, newValue: string) => {
     const newData = {
       ...tableData,
-      rows: tableData.rows.map((row: any, index: number) => 
+      rows: tableData.rows.map((row: Record<string, unknown>, index: number) => 
         index === rowIndex ? { ...row, [header]: newValue } : row
       )
     };
@@ -86,7 +90,7 @@ export function BusinessPlanFieldRenderer({
         return (
           <Input
             id={field.id}
-            value={value || ""}
+            value={String(value || "")}
             onChange={(e) => onChange(e.target.value)}
             placeholder={field.placeholder}
             className={error ? "border-red-500" : ""}
@@ -97,7 +101,7 @@ export function BusinessPlanFieldRenderer({
         return (
           <Textarea
             id={field.id}
-            value={value || ""}
+            value={String(value || "")}
             onChange={(e) => onChange(e.target.value)}
             placeholder={field.placeholder}
             className={error ? "border-red-500" : ""}
@@ -110,7 +114,7 @@ export function BusinessPlanFieldRenderer({
           <Input
             id={field.id}
             type="number"
-            value={value || ""}
+            value={String(value || "")}
             onChange={(e) => onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
             placeholder={field.placeholder}
             className={error ? "border-red-500" : ""}
@@ -126,18 +130,23 @@ export function BusinessPlanFieldRenderer({
             <Input
               id={field.id}
               type="number"
-              value={value || ""}
+              value={String(value || "")}
               onChange={(e) => onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
               placeholder={field.placeholder}
               className={`pl-10 ${error ? "border-red-500" : ""}`}
               min={field.validation?.min}
               max={field.validation?.max}
             />
-            {value && (
-              <div className="mt-1 text-sm text-muted-foreground">
-                {formatCurrency(value)}
-              </div>
-            )}
+            {(() => {
+              if (value && typeof value === 'number') {
+                return (
+                  <div className="mt-1 text-sm text-muted-foreground">
+                    {formatCurrency(value)}
+                  </div>
+                );
+              }
+              return null;
+            })()}
           </div>
         );
 
@@ -148,7 +157,7 @@ export function BusinessPlanFieldRenderer({
             <Input
               id={field.id}
               type="date"
-              value={value || ""}
+              value={String(value || "")}
               onChange={(e) => onChange(e.target.value || undefined)}
               className={`pl-10 ${error ? "border-red-500" : ""}`}
             />
@@ -158,7 +167,7 @@ export function BusinessPlanFieldRenderer({
       case "select":
         return (
           <Select
-            value={value || ""}
+            value={String(value || "")}
             onValueChange={(newValue) => onChange(newValue === "none" ? undefined : newValue)}
           >
             <SelectTrigger className={error ? "border-red-500" : ""}>
@@ -176,7 +185,7 @@ export function BusinessPlanFieldRenderer({
         );
 
       case "multiselect":
-        const selectedValues = value || [];
+        const selectedValues = (Array.isArray(value) ? value : []) as string[];
         return (
           <div className="space-y-2">
             <div className="flex flex-wrap gap-2">
@@ -261,12 +270,12 @@ export function BusinessPlanFieldRenderer({
                     </tr>
                   </thead>
                   <tbody>
-                    {tableData.rows.map((row: any, rowIndex: number) => (
+                    {tableData.rows.map((row: Record<string, unknown>, rowIndex: number) => (
                       <tr key={rowIndex} className="border-b">
                         {tableData.headers.map((header: string, colIndex: number) => (
                           <td key={colIndex} className="p-2">
                             <Input
-                              value={row[header] || ""}
+                              value={String(row[header] || "")}
                               onChange={(e) => updateTableRow(rowIndex, header, e.target.value)}
                               className="w-full"
                               placeholder={`${header} ${rowIndex + 1}`}
@@ -291,7 +300,7 @@ export function BusinessPlanFieldRenderer({
                 {tableData.rows.length === 0 && (
                   <div className="text-center py-8 text-muted-foreground">
                     <Table className="h-8 w-8 mx-auto mb-2" />
-                    <p>No hay filas. Haz clic en "Agregar Fila" para comenzar.</p>
+                    <p>No hay filas. Haz clic en &ldquo;Agregar Fila&rdquo; para comenzar.</p>
                   </div>
                 )}
               </div>
@@ -324,7 +333,7 @@ export function BusinessPlanFieldRenderer({
         return (
           <Input
             id={field.id}
-            value={value || ""}
+            value={String(value || "")}
             onChange={(e) => onChange(e.target.value)}
             placeholder={field.placeholder}
             className={error ? "border-red-500" : ""}

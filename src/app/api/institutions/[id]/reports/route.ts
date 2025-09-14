@@ -19,7 +19,7 @@ const reportQuerySchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { searchParams } = new URL(request.url);
@@ -33,8 +33,9 @@ export async function GET(
 
     const validatedQuery = reportQuerySchema.parse(query);
 
+    const { id: institutionId } = await params;
     const where: any = {
-      institutionId: params.id,
+      institutionId: institutionId,
     };
 
     if (validatedQuery.type) {
@@ -104,9 +105,10 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: institutionId } = await params;
     const body = await request.json();
     const validatedData = createReportSchema.parse(body);
 
@@ -115,7 +117,7 @@ export async function POST(
 
     // Check if user has permission to manage this institution
     const institution = await prisma.institution.findUnique({
-      where: { id: params.id },
+      where: { id: institutionId },
       select: { createdBy: true },
     });
 
@@ -135,32 +137,32 @@ export async function POST(
 
     // Generate report content based on type
     let content = "";
-    let parameters = validatedData.parameters || {};
+    const parameters = validatedData.parameters || {};
 
     switch (validatedData.type) {
       case "STUDENT_ENROLLMENT":
-        content = await generateStudentEnrollmentReport(params.id, parameters);
+        content = await generateStudentEnrollmentReport(institutionId, parameters);
         break;
       case "ACADEMIC_PERFORMANCE":
-        content = await generateAcademicPerformanceReport(params.id, parameters);
+        content = await generateAcademicPerformanceReport(institutionId, parameters);
         break;
       case "ATTENDANCE":
-        content = await generateAttendanceReport(params.id, parameters);
+        content = await generateAttendanceReport(institutionId, parameters);
         break;
       case "GRADUATION":
-        content = await generateGraduationReport(params.id, parameters);
+        content = await generateGraduationReport(institutionId, parameters);
         break;
       case "FINANCIAL":
-        content = await generateFinancialReport(params.id, parameters);
+        content = await generateFinancialReport(institutionId, parameters);
         break;
       case "INSTRUCTOR_PERFORMANCE":
-        content = await generateInstructorPerformanceReport(params.id, parameters);
+        content = await generateInstructorPerformanceReport(institutionId, parameters);
         break;
       case "COURSE_ANALYSIS":
-        content = await generateCourseAnalysisReport(params.id, parameters);
+        content = await generateCourseAnalysisReport(institutionId, parameters);
         break;
       case "CUSTOM":
-        content = await generateCustomReport(params.id, parameters);
+        content = await generateCustomReport(institutionId, parameters);
         break;
       default:
         content = "Report content not implemented yet";
@@ -169,7 +171,7 @@ export async function POST(
     const report = await prisma.institutionReport.create({
       data: {
         ...validatedData,
-        institutionId: params.id,
+        institutionId: institutionId,
         authorId: userId,
         content: JSON.stringify(content),
         parameters: JSON.stringify(parameters),
@@ -205,7 +207,7 @@ export async function POST(
 }
 
 // Helper functions to generate different types of reports
-async function generateStudentEnrollmentReport(institutionId: string, parameters: any) {
+async function generateStudentEnrollmentReport(institutionId: string, _parameters: Record<string, unknown>) {
   const students = await prisma.institutionStudent.findMany({
     where: { institutionId },
     include: {
@@ -238,7 +240,7 @@ async function generateStudentEnrollmentReport(institutionId: string, parameters
   };
 }
 
-async function generateAcademicPerformanceReport(institutionId: string, parameters: any) {
+async function generateAcademicPerformanceReport(institutionId: string, _parameters: Record<string, unknown>) {
   const enrollments = await prisma.institutionEnrollment.findMany({
     where: { 
       institutionId,
@@ -275,7 +277,7 @@ async function generateAcademicPerformanceReport(institutionId: string, paramete
   };
 }
 
-async function generateAttendanceReport(institutionId: string, parameters: any) {
+async function generateAttendanceReport(_institutionId: string, _parameters: Record<string, unknown>) {
   // This would require attendance tracking data
   return {
     type: "attendance",
@@ -287,7 +289,7 @@ async function generateAttendanceReport(institutionId: string, parameters: any) 
   };
 }
 
-async function generateGraduationReport(institutionId: string, parameters: any) {
+async function generateGraduationReport(institutionId: string, _parameters: Record<string, unknown>) {
   const graduatedStudents = await prisma.institutionStudent.findMany({
     where: { 
       institutionId,
@@ -325,7 +327,7 @@ async function generateGraduationReport(institutionId: string, parameters: any) 
   };
 }
 
-async function generateFinancialReport(institutionId: string, parameters: any) {
+async function generateFinancialReport(institutionId: string, _parameters: Record<string, unknown>) {
   // This would require financial data
   return {
     type: "financial",
@@ -337,7 +339,7 @@ async function generateFinancialReport(institutionId: string, parameters: any) {
   };
 }
 
-async function generateInstructorPerformanceReport(institutionId: string, parameters: any) {
+async function generateInstructorPerformanceReport(institutionId: string, _parameters: Record<string, unknown>) {
   const instructors = await prisma.institutionInstructor.findMany({
     where: { institutionId },
     include: {
@@ -373,7 +375,7 @@ async function generateInstructorPerformanceReport(institutionId: string, parame
   };
 }
 
-async function generateCourseAnalysisReport(institutionId: string, parameters: any) {
+async function generateCourseAnalysisReport(institutionId: string, _parameters: Record<string, unknown>) {
   const courses = await prisma.institutionCourse.findMany({
     where: { institutionId },
     include: {
@@ -415,7 +417,7 @@ async function generateCourseAnalysisReport(institutionId: string, parameters: a
   };
 }
 
-async function generateCustomReport(institutionId: string, parameters: any) {
+async function generateCustomReport(institutionId: string, _parameters: Record<string, unknown>) {
   return {
     type: "custom",
     summary: {

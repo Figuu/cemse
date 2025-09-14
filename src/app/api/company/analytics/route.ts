@@ -50,8 +50,8 @@ export async function GET(request: NextRequest) {
         startDate.setDate(now.getDate() - 30);
     }
 
-    // Build where clause for job filtering
-    const jobWhere = jobId ? { id: jobId } : { companyId: company.id };
+    // Build where clause for job filtering (currently unused)
+    // const jobWhere = jobId ? { id: jobId } : { companyId: company.id };
 
     // Get comprehensive analytics
     const [
@@ -342,7 +342,9 @@ async function getTopPerformingJobs(companyId: string, startDate: Date) {
 
 async function getApplicationSources(companyId: string, startDate: Date, jobId?: string) {
   // This would typically come from tracking data
-  // For now, we'll simulate some data
+  // For now, we'll simulate some data based on the parameters
+  console.log(`Getting application sources for company ${companyId} since ${startDate.toISOString()}${jobId ? ` for job ${jobId}` : ''}`);
+  
   return [
     { source: "Direct", count: 45, percentage: 35 },
     { source: "LinkedIn", count: 30, percentage: 23 },

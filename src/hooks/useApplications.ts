@@ -3,6 +3,36 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 
+interface ApplicationCommunication {
+  id: string;
+  type: "email" | "phone" | "meeting" | "message" | "note";
+  direction: "inbound" | "outbound";
+  subject?: string;
+  content: string;
+  sender: {
+    id: string;
+    name: string;
+    email?: string;
+    role: "applicant" | "recruiter" | "hiring_manager" | "hr";
+  };
+  recipient: {
+    id: string;
+    name: string;
+    email?: string;
+    role: "applicant" | "recruiter" | "hiring_manager" | "hr";
+  };
+  timestamp: string;
+  attachments?: Array<{
+    id: string;
+    name: string;
+    url: string;
+    type: string;
+    size: number;
+  }>;
+  isRead: boolean;
+  priority?: "low" | "medium" | "high";
+}
+
 interface JobApplication {
   id: string;
   jobId: string;
@@ -37,7 +67,7 @@ interface JobApplication {
   responseTime: number | null;
   coverLetter?: string;
   documents?: string[];
-  communication?: any[];
+  communication?: ApplicationCommunication[];
 }
 
 interface ApplicationTimelineEvent {

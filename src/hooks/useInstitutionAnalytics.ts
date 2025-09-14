@@ -2,6 +2,15 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
+export interface PaginationInfo {
+  page: number;
+  limit: number;
+  totalCount: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
+
 export interface InstitutionAnalytics {
   institution: {
     id: string;
@@ -129,7 +138,7 @@ export function useInstitutionAnalytics(institutionId: string, filters: Analytic
 export function useInstitutionReports(institutionId: string, filters: ReportFilters = {}) {
   return useQuery({
     queryKey: ["institution-reports", institutionId, filters],
-    queryFn: async (): Promise<{ reports: InstitutionReport[]; pagination: any }> => {
+    queryFn: async (): Promise<{ reports: InstitutionReport[]; pagination: PaginationInfo }> => {
       const params = new URLSearchParams();
       
       if (filters.page) params.append("page", filters.page.toString());

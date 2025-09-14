@@ -52,8 +52,6 @@ interface ApplicationsResponse {
 }
 
 export function useJobs(filters: JobsFilters = {}) {
-  const queryClient = useQueryClient();
-
   const query = useQuery({
     queryKey: ["jobs", filters],
     queryFn: async (): Promise<JobsResponse> => {

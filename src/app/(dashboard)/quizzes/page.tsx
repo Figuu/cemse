@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   HelpCircle, 
@@ -12,7 +11,6 @@ import {
   AlertCircle,
   Search,
   Filter,
-  BookOpen,
   Clock,
   CheckCircle,
   XCircle
@@ -69,7 +67,7 @@ export default function QuizzesPage() {
     window.location.href = `/quizzes/${quizId}/results`;
   };
 
-  const handleSubmitQuiz = async (answers: Record<string, any>) => {
+  const handleSubmitQuiz = async (answers: Record<string, string | number | boolean>) => {
     if (!selectedQuiz) return null;
     return await submitQuiz(selectedQuiz.id, answers);
   };

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { BusinessStage, Prisma } from "@prisma/client";
 
 export interface DiscoveryFilters {
   search?: string;
@@ -22,8 +23,38 @@ export interface DiscoveryFilters {
   offset?: number;
 }
 
+// Startup data type with owner information
+export type StartupWithOwner = Prisma.EntrepreneurshipGetPayload<{
+  include: {
+    owner: {
+      select: {
+        id: true;
+        firstName: true;
+        lastName: true;
+        avatarUrl: true;
+      };
+    };
+  };
+}>;
+
+// Trending startup with trend score
+export interface TrendingStartup extends StartupWithOwner {
+  trendScore: number;
+}
+
+// Recommended startup with recommendation data
+export interface RecommendedStartup extends StartupWithOwner {
+  recommendationScore: number;
+  recommendationReason: string;
+}
+
+// Search result with search score
+export interface SearchResult extends StartupWithOwner {
+  searchScore: number;
+}
+
 export interface DiscoveryResult {
-  startups: any[];
+  startups: StartupWithOwner[];
   total: number;
   facets: {
     categories: Array<{ name: string; count: number }>;
@@ -31,8 +62,8 @@ export interface DiscoveryResult {
     municipalities: Array<{ name: string; count: number }>;
     departments: Array<{ name: string; count: number }>;
   };
-  trending: any[];
-  recommendations: any[];
+  trending: TrendingStartup[];
+  recommendations: RecommendedStartup[];
 }
 
 export class StartupDiscoveryService {
@@ -53,7 +84,7 @@ export class StartupDiscoveryService {
       const [startups, total, facets] = await Promise.all([
         this.getStartups(where, orderBy, limit, offset),
         this.getTotalCount(where),
-        this.getFacets(where),
+        this.getFacets(),
       ]);
 
       // Get trending and recommendations
@@ -78,7 +109,7 @@ export class StartupDiscoveryService {
   /**
    * Get trending startups based on recent activity
    */
-  static async getTrendingStartups(limit: number = 10) {
+  static async getTrendingStartups(limit: number = 10): Promise<TrendingStartup[]> {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
@@ -101,11 +132,6 @@ export class StartupDiscoveryService {
             avatarUrl: true,
           },
         },
-        _count: {
-          select: {
-            // Add any relations that need counting
-          },
-        },
       },
       orderBy: [
         { viewsCount: "desc" },
@@ -123,14 +149,13 @@ export class StartupDiscoveryService {
   /**
    * Get recommended startups for a user
    */
-  static async getRecommendedStartups(userId: string, limit: number = 10) {
+  static async getRecommendedStartups(userId: string, limit: number = 10): Promise<RecommendedStartup[]> {
     // Get user's profile and preferences
     const userProfile = await prisma.profile.findUnique({
       where: { userId },
       select: {
         skills: true,
         interests: true,
-        experienceLevel: true,
       },
     });
 
@@ -145,7 +170,7 @@ export class StartupDiscoveryService {
     // TODO: Implement when bookmark/follow functionality is added
 
     // Build recommendation query
-    const where: any = {
+    const where: Prisma.EntrepreneurshipWhereInput = {
       isActive: true,
       isPublic: true,
     };
@@ -169,11 +194,6 @@ export class StartupDiscoveryService {
             firstName: true,
             lastName: true,
             avatarUrl: true,
-          },
-        },
-        _count: {
-          select: {
-            // Add any relations that need counting
           },
         },
       },
@@ -211,11 +231,6 @@ export class StartupDiscoveryService {
             avatarUrl: true,
           },
         },
-        _count: {
-          select: {
-            // Add any relations that need counting
-          },
-        },
       },
       orderBy: [
         { rating: "desc" },
@@ -230,10 +245,10 @@ export class StartupDiscoveryService {
   /**
    * Get startups by business stage
    */
-  static async getStartupsByStage(stage: string, limit: number = 20) {
+  static async getStartupsByStage(stage: string, limit: number = 20): Promise<StartupWithOwner[]> {
     const startups = await prisma.entrepreneurship.findMany({
       where: {
-        businessStage: stage as any,
+        businessStage: stage as BusinessStage,
         isActive: true,
         isPublic: true,
       },
@@ -244,11 +259,6 @@ export class StartupDiscoveryService {
             firstName: true,
             lastName: true,
             avatarUrl: true,
-          },
-        },
-        _count: {
-          select: {
-            // Add any relations that need counting
           },
         },
       },
@@ -265,8 +275,8 @@ export class StartupDiscoveryService {
   /**
    * Get startups by location
    */
-  static async getStartupsByLocation(municipality?: string, department?: string, limit: number = 20) {
-    const where: any = {
+  static async getStartupsByLocation(municipality?: string, department?: string, limit: number = 20): Promise<StartupWithOwner[]> {
+    const where: Prisma.EntrepreneurshipWhereInput = {
       isActive: true,
       isPublic: true,
     };
@@ -290,11 +300,6 @@ export class StartupDiscoveryService {
             avatarUrl: true,
           },
         },
-        _count: {
-          select: {
-            // Add any relations that need counting
-          },
-        },
       },
       orderBy: [
         { rating: "desc" },
@@ -309,7 +314,7 @@ export class StartupDiscoveryService {
   /**
    * Search startups with advanced text search
    */
-  static async searchStartups(query: string, limit: number = 20) {
+  static async searchStartups(query: string, limit: number = 20): Promise<SearchResult[]> {
     const startups = await prisma.entrepreneurship.findMany({
       where: {
         isActive: true,
@@ -330,11 +335,6 @@ export class StartupDiscoveryService {
             firstName: true,
             lastName: true,
             avatarUrl: true,
-          },
-        },
-        _count: {
-          select: {
-            // Add any relations that need counting
           },
         },
       },
@@ -382,8 +382,8 @@ export class StartupDiscoveryService {
 
   // Private helper methods
 
-  private static buildWhereClause(filters: DiscoveryFilters): any {
-    const where: any = {
+  private static buildWhereClause(filters: DiscoveryFilters): Prisma.EntrepreneurshipWhereInput {
+    const where: Prisma.EntrepreneurshipWhereInput = {
       isActive: true,
     };
 
@@ -409,7 +409,7 @@ export class StartupDiscoveryService {
     }
 
     if (filters.businessStage) {
-      where.businessStage = filters.businessStage;
+      where.businessStage = filters.businessStage as BusinessStage;
     }
 
     if (filters.municipality) {
@@ -455,21 +455,27 @@ export class StartupDiscoveryService {
     }
 
     if (filters.hasSocialMedia) {
-      where.socialMedia = { not: null };
+      where.socialMedia = { not: Prisma.JsonNull };
     }
 
     return where;
   }
 
-  private static buildOrderByClause(sortBy?: string, sortOrder?: string): any {
-    const orderBy: any = {};
+  private static buildOrderByClause(sortBy?: string, sortOrder?: string): Prisma.EntrepreneurshipOrderByWithRelationInput {
     const field = sortBy || "createdAt";
     const order = sortOrder || "desc";
-    orderBy[field] = order;
-    return orderBy;
+    
+    return {
+      [field]: order,
+    } as Prisma.EntrepreneurshipOrderByWithRelationInput;
   }
 
-  private static async getStartups(where: any, orderBy: any, limit: number, offset: number) {
+  private static async getStartups(
+    where: Prisma.EntrepreneurshipWhereInput, 
+    orderBy: Prisma.EntrepreneurshipOrderByWithRelationInput, 
+    limit: number, 
+    offset: number
+  ): Promise<StartupWithOwner[]> {
     return prisma.entrepreneurship.findMany({
       where,
       orderBy,
@@ -484,20 +490,15 @@ export class StartupDiscoveryService {
             avatarUrl: true,
           },
         },
-        _count: {
-          select: {
-            // Add any relations that need counting
-          },
-        },
       },
     });
   }
 
-  private static async getTotalCount(where: any): Promise<number> {
+  private static async getTotalCount(where: Prisma.EntrepreneurshipWhereInput): Promise<number> {
     return prisma.entrepreneurship.count({ where });
   }
 
-  private static async getFacets(where: any) {
+  private static async getFacets() {
     const [categories, businessStages, municipalities, departments] = await Promise.all([
       this.getCategoryStats(),
       this.getStageStats(),
@@ -583,19 +584,19 @@ export class StartupDiscoveryService {
     });
   }
 
-  private static calculateTrendScore(startup: any): number {
+  private static calculateTrendScore(startup: StartupWithOwner): number {
     const viewsWeight = 0.4;
     const recencyWeight = 0.3;
     const ratingWeight = 0.3;
 
     const viewsScore = Math.min(startup.viewsCount / 100, 1);
     const recencyScore = Math.max(0, 1 - (Date.now() - new Date(startup.createdAt).getTime()) / (30 * 24 * 60 * 60 * 1000));
-    const ratingScore = (startup.rating || 0) / 5;
+    const ratingScore = startup.rating ? Number(startup.rating) / 5 : 0;
 
     return (viewsScore * viewsWeight) + (recencyScore * recencyWeight) + (ratingScore * ratingWeight);
   }
 
-  private static calculateRecommendationScore(startup: any, userProfile: any): number {
+  private static calculateRecommendationScore(startup: StartupWithOwner, userProfile: { skills: Prisma.JsonValue; interests: Prisma.JsonValue }): number {
     let score = 0;
     const userSkills = (userProfile.skills as string[]) || [];
     const userInterests = (userProfile.interests as string[]) || [];
@@ -606,7 +607,7 @@ export class StartupDiscoveryService {
     }
 
     // Subcategory matching
-    if (userInterests.includes(startup.subcategory)) {
+    if (startup.subcategory && userInterests.includes(startup.subcategory)) {
       score += 5;
     }
 
@@ -618,20 +619,20 @@ export class StartupDiscoveryService {
     score += skillMatches * 3;
 
     // Rating and popularity
-    score += (startup.rating || 0) * 2;
+    score += startup.rating ? Number(startup.rating) * 2 : 0;
     score += Math.min(startup.viewsCount / 100, 5);
 
     return Math.min(score, 100);
   }
 
-  private static getRecommendationReason(startup: any, userProfile: any): string {
+  private static getRecommendationReason(startup: StartupWithOwner, userProfile: { skills: Prisma.JsonValue; interests: Prisma.JsonValue }): string {
     const userInterests = (userProfile.interests as string[]) || [];
     
     if (userInterests.includes(startup.category)) {
       return `Basado en tu interés en ${startup.category}`;
     }
     
-    if (startup.rating && startup.rating > 4) {
+    if (startup.rating && Number(startup.rating) > 4) {
       return "Alta calificación y popular";
     }
     
@@ -642,7 +643,7 @@ export class StartupDiscoveryService {
     return "Recomendado para ti";
   }
 
-  private static calculateSearchScore(startup: any, query: string): number {
+  private static calculateSearchScore(startup: StartupWithOwner, query: string): number {
     const queryLower = query.toLowerCase();
     let score = 0;
 
@@ -662,7 +663,7 @@ export class StartupDiscoveryService {
     }
 
     // Subcategory match
-    if (startup.subcategory?.toLowerCase().includes(queryLower)) {
+    if (startup.subcategory && startup.subcategory.toLowerCase().includes(queryLower)) {
       score += 3;
     }
 

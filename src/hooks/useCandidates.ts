@@ -91,8 +91,6 @@ export interface CandidateSearchResponse {
 }
 
 export function useCandidates(filters: CandidateSearchFilters = {}) {
-  const queryClient = useQueryClient();
-
   const query = useQuery({
     queryKey: ["candidates", filters],
     queryFn: async (): Promise<CandidateSearchResponse> => {

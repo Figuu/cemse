@@ -90,10 +90,10 @@ async function getPersonalizedRecommendations(userId: string, limit: number) {
   const enrolledCourseIds = enrolledCourses.map(enrollment => enrollment.course.id);
   const userSkills = (userProfile?.skills as string[]) || [];
   const userExperienceLevel = userProfile?.experienceLevel || "NO_EXPERIENCE";
-  const userEducationLevel = userProfile?.educationLevel || "HIGH_SCHOOL";
+  // const userEducationLevel = userProfile?.educationLevel || "HIGH_SCHOOL";
 
   // Build recommendation query
-  const where: any = {
+  const where: Record<string, unknown> = {
     id: { notIn: enrolledCourseIds },
     status: "ACTIVE",
   };

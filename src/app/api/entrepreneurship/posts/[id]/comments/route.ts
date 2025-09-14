@@ -5,9 +5,10 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: postId } = await params;
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "20");
@@ -16,7 +17,7 @@ export async function GET(
     const [comments, total] = await Promise.all([
       prisma.postComment.findMany({
         where: {
-          postId: params.id,
+          postId: postId,
           parentId: null, // Only top-level comments
         },
         include: {
@@ -52,7 +53,7 @@ export async function GET(
       }),
       prisma.postComment.count({
         where: {
-          postId: params.id,
+          postId: postId,
           parentId: null,
         },
       }),
@@ -78,7 +79,7 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -86,12 +87,13 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id: postId } = await params;
     const body = await request.json();
     const { content, parentId } = body;
 
     // Check if post exists
     const post = await prisma.entrepreneurshipPost.findUnique({
-      where: { id: params.id },
+      where: { id: postId },
       select: { id: true },
     });
 
@@ -114,7 +116,7 @@ export async function POST(
     const comment = await prisma.postComment.create({
       data: {
         content,
-        postId: params.id,
+        postId: postId,
         authorId: session.user.id,
         parentId: parentId || null,
       },
@@ -147,7 +149,7 @@ export async function POST(
 
     // Update comment count on post
     await prisma.entrepreneurshipPost.update({
-      where: { id: params.id },
+      where: { id: postId },
       data: {
         comments: {
           increment: 1,

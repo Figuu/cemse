@@ -13,6 +13,11 @@ export interface QuizQuestion {
   points?: number;
 }
 
+// Type for quiz answers based on question type
+export type QuizAnswer = string | number | string[] | boolean;
+
+export type QuizAnswers = Record<string, QuizAnswer>;
+
 export interface Quiz {
   id: string;
   title: string;
@@ -56,7 +61,7 @@ export interface QuizAttempt {
   id: string;
   score: number;
   passed: boolean;
-  answers: Record<string, any>;
+  answers: QuizAnswers;
   completedAt: string;
 }
 
@@ -73,7 +78,7 @@ interface UseQuizzesReturn {
   isLoading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
-  submitQuiz: (quizId: string, answers: Record<string, any>) => Promise<{ attempt: QuizAttempt; results: QuizResults } | null>;
+  submitQuiz: (quizId: string, answers: QuizAnswers) => Promise<{ attempt: QuizAttempt; results: QuizResults } | null>;
 }
 
 interface QuizFilters {
@@ -120,7 +125,7 @@ export function useQuizzes(filters?: QuizFilters): UseQuizzesReturn {
 
   const submitQuiz = async (
     quizId: string, 
-    answers: Record<string, any>
+    answers: QuizAnswers
   ): Promise<{ attempt: QuizAttempt; results: QuizResults } | null> => {
     if (!session?.user?.id) return null;
 
@@ -202,7 +207,7 @@ export function useQuiz(quizId: string) {
     }
   }, [session?.user?.id, quizId]);
 
-  const submitQuiz = async (answers: Record<string, any>) => {
+  const submitQuiz = async (answers: QuizAnswers) => {
     if (!session?.user?.id || !quizId) return null;
 
     try {

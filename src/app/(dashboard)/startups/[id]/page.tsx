@@ -26,7 +26,6 @@ import {
   Linkedin,
   Instagram,
   AlertCircle,
-  CheckCircle,
   FileText
 } from "lucide-react";
 import { useStartups, Startup } from "@/hooks/useStartups";
@@ -54,7 +53,7 @@ export default function StartupDetailsPage() {
         } else {
           setError("Startup no encontrada");
         }
-      } catch (err) {
+      } catch {
         setError("Error al cargar la startup");
       } finally {
         setIsLoading(false);
@@ -218,7 +217,7 @@ export default function StartupDetailsPage() {
               <div className="flex items-start gap-6">
                 <div className="w-24 h-24 bg-muted rounded-lg flex items-center justify-center flex-shrink-0">
                   {startup.logo ? (
-                    <img src={startup.logo} alt={startup.name} className="w-20 h-20 rounded" />
+                    <img src={startup.logo} alt={`Logo de ${startup.name}`} className="w-20 h-20 rounded" />
                   ) : (
                     <Building2 className="h-12 w-12 text-muted-foreground" />
                   )}
@@ -372,7 +371,7 @@ export default function StartupDetailsPage() {
                       {startup.owner.avatarUrl ? (
                         <img 
                           src={startup.owner.avatarUrl} 
-                          alt={startup.owner.firstName} 
+                          alt={`Avatar de ${startup.owner.firstName} ${startup.owner.lastName}`} 
                           className="w-10 h-10 rounded-full" 
                         />
                       ) : (

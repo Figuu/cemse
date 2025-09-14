@@ -1,28 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   ArrowLeft, 
   BarChart3, 
-  TrendingUp, 
   Users, 
   Briefcase, 
   Eye, 
   Heart,
-  Share2,
   UserPlus,
-  Calendar,
   Target,
-  Award,
   Clock,
   Download,
-  RefreshCw,
-  Filter,
-  Settings
+  RefreshCw
 } from "lucide-react";
 import { CompanyAnalyticsDashboard } from "@/components/analytics/CompanyAnalyticsDashboard";
 import { AnalyticsCharts } from "@/components/analytics/AnalyticsCharts";
@@ -32,7 +26,6 @@ import Link from "next/link";
 
 export default function CompanyAnalyticsPage() {
   const params = useParams();
-  const router = useRouter();
   const companyId = params.id as string;
   const [selectedPeriod, setSelectedPeriod] = useState<"7d" | "30d" | "90d" | "1y" | "all">("30d");
   const [activeTab, setActiveTab] = useState("overview");
@@ -159,7 +152,7 @@ export default function CompanyAnalyticsPage() {
         <div className="flex items-center gap-2">
           <select
             value={selectedPeriod}
-            onChange={(e) => setSelectedPeriod(e.target.value as any)}
+            onChange={(e) => setSelectedPeriod(e.target.value as "7d" | "30d" | "90d" | "1y" | "all")}
             className="p-2 border rounded-md"
           >
             {ANALYTICS_PERIODS.map((period) => (

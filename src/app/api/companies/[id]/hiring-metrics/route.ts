@@ -11,7 +11,7 @@ const hiringMetricsQuerySchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { searchParams } = new URL(request.url);
@@ -24,6 +24,7 @@ export async function GET(
 
     const validatedQuery = hiringMetricsQuerySchema.parse(query);
 
+    const { id: companyId } = await params;
     // Calculate date range based on period
     const now = new Date();
     let startDate: Date;
@@ -55,7 +56,7 @@ export async function GET(
 
     // Build where clause for applications
     const applicationWhere: any = {
-      companyId: params.id,
+      companyId: companyId,
       appliedAt: {
         gte: startDate,
         lte: endDate,

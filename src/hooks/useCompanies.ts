@@ -29,7 +29,6 @@ interface CompaniesResponse {
 }
 
 export function useCompanies(filters: CompaniesFilters = {}) {
-  const queryClient = useQueryClient();
 
   const query = useQuery({
     queryKey: ["companies", filters],

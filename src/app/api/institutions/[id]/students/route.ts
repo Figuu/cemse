@@ -10,18 +10,10 @@ const createStudentSchema = z.object({
   notes: z.string().optional(),
 });
 
-const updateStudentSchema = z.object({
-  studentNumber: z.string().min(1).optional(),
-  programId: z.string().optional(),
-  status: z.enum(["ACTIVE", "INACTIVE", "SUSPENDED", "GRADUATED", "DROPPED_OUT", "TRANSFERRED"]).optional(),
-  graduationDate: z.string().datetime().optional(),
-  gpa: z.number().min(0).max(4).optional(),
-  notes: z.string().optional(),
-});
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { searchParams } = new URL(request.url);

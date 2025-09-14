@@ -3,20 +3,22 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
 const updateApplicationSchema = z.object({
-  status: z.enum(["PENDING", "REVIEWED", "INTERVIEWED", "REJECTED", "HIRED", "WITHDRAWN"]).optional(),
+  status: z.enum(["SENT", "UNDER_REVIEW", "PRE_SELECTED", "REJECTED", "HIRED"]).optional(),
   notes: z.string().optional(),
+  decisionReason: z.string().optional(),
 });
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string; jobId: string; applicationId: string } }
+  { params }: { params: Promise<{ id: string; jobId: string; applicationId: string }> }
 ) {
   try {
+    const { id: companyId, jobId, applicationId } = await params;
     const application = await prisma.jobApplication.findFirst({
       where: { 
-        id: params.applicationId,
-        jobId: params.jobId,
-        companyId: params.id,
+        id: applicationId,
+        jobId: jobId,
+        companyId: companyId,
       },
       include: {
         applicant: {
@@ -74,18 +76,19 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string; jobId: string; applicationId: string } }
+  { params }: { params: Promise<{ id: string; jobId: string; applicationId: string }> }
 ) {
   try {
     const body = await request.json();
     const validatedData = updateApplicationSchema.parse(body);
 
+    const { id: companyId, jobId, applicationId } = await params;
     // Get user ID from session (in real app, this would come from auth)
     const userId = "user-1"; // Mock user ID
 
     // Check if user owns the company
     const company = await prisma.company.findUnique({
-      where: { id: params.id },
+      where: { id: companyId },
       select: { ownerId: true },
     });
 
@@ -125,7 +128,7 @@ export async function PUT(
     }
 
     const updatedApplication = await prisma.jobApplication.update({
-      where: { id: params.applicationId },
+      where: { id: applicationId },
       data: updateData,
       include: {
         applicant: {
@@ -175,18 +178,19 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; jobId: string; applicationId: string } }
+  { params }: { params: Promise<{ id: string; jobId: string; applicationId: string }> }
 ) {
   try {
+    const { id: companyId, jobId, applicationId } = await params;
     // Get user ID from session (in real app, this would come from auth)
     const userId = "user-1"; // Mock user ID
 
     // Check if user owns the company or is the applicant
     const application = await prisma.jobApplication.findFirst({
       where: { 
-        id: params.applicationId,
-        jobId: params.jobId,
-        companyId: params.id,
+        id: applicationId,
+        jobId: jobId,
+        companyId: companyId,
       },
       include: {
         company: {
@@ -213,18 +217,18 @@ export async function DELETE(
     }
 
     await prisma.jobApplication.delete({
-      where: { id: params.applicationId },
+      where: { id: applicationId },
     });
 
     // Update job application count
     await prisma.jobPosting.update({
-      where: { id: params.jobId },
+      where: { id: jobId },
       data: { totalApplications: { decrement: 1 } },
     });
 
     // Update company application count
     await prisma.company.update({
-      where: { id: params.id },
+      where: { id: companyId },
       data: { totalApplications: { decrement: 1 } },
     });
 

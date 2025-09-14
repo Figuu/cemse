@@ -1,12 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   ArrowLeft, 
   Plus, 
@@ -16,15 +14,8 @@ import {
   Users, 
   Eye, 
   Heart,
-  Share2,
   Edit,
-  Trash2,
-  MoreHorizontal,
-  Calendar,
-  DollarSign,
-  MapPin,
-  Clock,
-  Star
+  Trash2
 } from "lucide-react";
 import { useJobs, useDeleteJob } from "@/hooks/useJobs";
 import { useCompany } from "@/hooks/useCompanies";
@@ -34,7 +25,6 @@ import Link from "next/link";
 
 export default function CompanyJobsPage() {
   const params = useParams();
-  const router = useRouter();
   const companyId = params.id as string;
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedEmploymentType, setSelectedEmploymentType] = useState("");
@@ -78,7 +68,7 @@ export default function CompanyJobsPage() {
     setCurrentPage(1);
   };
 
-  const handleDeleteJob = async (jobId: string) => {
+  const handleDeleteJob = async () => {
     if (confirm("¿Estás seguro de que quieres eliminar este trabajo?")) {
       try {
         await deleteJobMutation.mutateAsync();

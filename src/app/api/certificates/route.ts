@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     // Build where clause
-    const where: any = {
+    const where: Record<string, unknown> = {
       studentId: session.user.id,
     };
 
@@ -212,7 +212,7 @@ export async function POST(request: NextRequest) {
       });
     } else if (moduleId) {
       // Verify module access
-      const module = await prisma.courseModule.findFirst({
+      const moduleData = await prisma.courseModule.findFirst({
         where: {
           id: moduleId,
           course: {
@@ -221,7 +221,7 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      if (!module) {
+      if (!moduleData) {
         return NextResponse.json({ error: "Module not found or access denied" }, { status: 404 });
       }
 
