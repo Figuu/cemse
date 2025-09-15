@@ -81,11 +81,13 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
 
   // Fetch applications
   useEffect(() => {
+    console.log("useEffect triggered - fetching applications");
     fetchApplications();
   }, [companyId, educationFilter, cityFilter, sortBy, sortOrder]);
 
   const fetchApplications = async () => {
     try {
+      console.log("fetchApplications called");
       setLoading(true);
       const params = new URLSearchParams({
         ...(educationFilter !== "all" && { education: educationFilter }),
@@ -94,11 +96,18 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
         sortOrder,
       });
 
-      const response = await fetch(`/api/youth-applications?${params}`);
+      const url = `/api/youth-applications?${params}`;
+      console.log("Fetching from URL:", url);
+      const response = await fetch(url);
       const data = await response.json();
       
+      console.log("Youth applications API response:", data);
+      
       if (data.applications) {
+        console.log("Setting applications:", data.applications);
         setApplications(data.applications);
+      } else {
+        console.log("No applications in response");
       }
     } catch (error) {
       console.error("Error fetching applications:", error);
@@ -159,41 +168,64 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
     }
   };
 
-  const filteredApplications = applications.filter(app =>
-    app.youth.profile.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    app.youth.profile.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    app.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    app.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredApplications = applications.filter(app => {
+    // Filter out applications without youth data
+    if (!app.youth?.profile) {
+      console.log("Filtering out app without youth data:", app);
+      return false;
+    }
+    
+    // Apply search filter - temporarily disable to test
+    if (searchTerm) {
+      const matches = app.youth?.profile?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+             app.youth?.profile?.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+             app.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+             app.description?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      if (!matches) {
+        console.log("App doesn't match search term:", app.title, "search:", searchTerm);
+      }
+      
+      return matches;
+    }
+    
+    return true; // If no search term, include all apps
+  });
+  
+  console.log(`Filtered applications: ${filteredApplications.length} out of ${applications.length}`);
 
-  const ApplicationCard = ({ application }: { application: YouthApplication }) => (
+  const ApplicationCard = ({ application }: { application: YouthApplication }) => {
+    // Skip rendering if youth data is missing
+    if (!application.youth?.profile) return null;
+    
+    return (
     <Card className="hover:shadow-md transition-shadow cursor-pointer" 
           onClick={() => setSelectedApplication(application)}>
       <CardContent className="p-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center space-x-4">
             <Avatar className="h-12 w-12">
-              <AvatarImage src={application.youth.profile.avatarUrl} />
+              <AvatarImage src={application.youth?.profile?.avatarUrl} />
               <AvatarFallback>
-                {application.youth.profile.firstName?.[0]}
-                {application.youth.profile.lastName?.[0]}
+                {application.youth?.profile?.firstName?.[0]}
+                {application.youth?.profile?.lastName?.[0]}
               </AvatarFallback>
             </Avatar>
             <div>
               <h4 className="font-semibold text-lg">{application.title}</h4>
               <p className="text-muted-foreground">
-                {application.youth.profile.firstName} {application.youth.profile.lastName}
+                {application.youth?.profile?.firstName} {application.youth?.profile?.lastName}
               </p>
               <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
-                {application.youth.profile.city && (
+                {application.youth?.profile?.city && (
                   <div className="flex items-center gap-1">
                     <MapPin className="h-3 w-3" />
-                    <span>{application.youth.profile.city}</span>
+                    <span>{application.youth?.profile.city}</span>
                   </div>
                 )}
-                {application.youth.profile.education && (
+                {application.youth?.profile?.education && (
                   <Badge variant="outline" className="text-xs">
-                    {application.youth.profile.education}
+                    {application.youth?.profile.education}
                   </Badge>
                 )}
                 <div className="flex items-center gap-1">
@@ -230,17 +262,17 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
         </p>
 
         {/* Skills */}
-        {application.youth.profile.skills && application.youth.profile.skills.length > 0 && (
+        {application.youth?.profile.skills && application.youth?.profile.skills.length > 0 && (
           <div className="mb-4">
             <div className="flex flex-wrap gap-2">
-              {application.youth.profile.skills.slice(0, 4).map((skill: any, index) => (
+              {application.youth?.profile.skills.slice(0, 4).map((skill: any, index) => (
                 <Badge key={index} variant="outline" className="text-xs">
                   {typeof skill === 'string' ? skill : skill.name || skill}
                 </Badge>
               ))}
-              {application.youth.profile.skills.length > 4 && (
+              {application.youth?.profile.skills.length > 4 && (
                 <Badge variant="outline" className="text-xs">
-                  +{application.youth.profile.skills.length - 4} más
+                  +{application.youth?.profile.skills.length - 4} más
                 </Badge>
               )}
             </div>
@@ -255,7 +287,7 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
                 <span>CV disponible</span>
               </div>
             )}
-            {application.youth.profile.phone && (
+            {application.youth?.profile.phone && (
               <div className="flex items-center space-x-1">
                 <Phone className="h-4 w-4" />
                 <span>Contacto</span>
@@ -286,8 +318,11 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
         </div>
       </CardContent>
     </Card>
-  );
+    );
+  };
 
+  console.log("YouthApplicationBrowser render - loading:", loading, "applications:", applications.length, "filtered:", filteredApplications.length);
+  
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -435,7 +470,7 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
       </div>
 
       {/* Application Detail Modal */}
-      {selectedApplication && (
+      {selectedApplication && selectedApplication.youth?.profile && (
         <YouthApplicationDetailModal 
           application={selectedApplication}
           onClose={() => setSelectedApplication(null)}
@@ -446,7 +481,7 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
       )}
 
       {/* Chat Modal */}
-      {showChat && selectedApplication && (
+      {showChat && selectedApplication && selectedApplication.youth?.profile && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <Card className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
             <CardHeader>
@@ -466,8 +501,8 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
                 applicationId={selectedApplication.id}
                 companyName="Empresa" // TODO: Get actual company name
                 companyId={companyId}
-                youthId={selectedApplication.youth.id}
-                youthName={`${selectedApplication.youth.profile.firstName} ${selectedApplication.youth.profile.lastName}`}
+                youthId={selectedApplication.youth?.id || ''}
+                youthName={`${selectedApplication.youth?.profile?.firstName || ''} ${selectedApplication.youth?.profile?.lastName || ''}`}
               />
             </CardContent>
           </Card>
@@ -506,25 +541,25 @@ function YouthApplicationDetailModal({
           {/* Youth Info */}
           <div className="flex items-center space-x-4">
             <Avatar className="h-16 w-16">
-              <AvatarImage src={application.youth.profile.avatarUrl} />
+              <AvatarImage src={application.youth?.profile.avatarUrl} />
               <AvatarFallback>
-                {application.youth.profile.firstName?.[0]}
-                {application.youth.profile.lastName?.[0]}
+                {application.youth?.profile.firstName?.[0]}
+                {application.youth?.profile.lastName?.[0]}
               </AvatarFallback>
             </Avatar>
             <div>
               <h3 className="text-xl font-semibold">
-                {application.youth.profile.firstName} {application.youth.profile.lastName}
+                {application.youth?.profile.firstName} {application.youth?.profile.lastName}
               </h3>
               <p className="text-muted-foreground">{application.youth.email}</p>
               <div className="flex items-center gap-4 mt-2">
                 <Badge className={getStatusColor(application.status)}>
                   {getStatusLabel(application.status)}
                 </Badge>
-                {application.youth.profile.city && (
+                {application.youth?.profile.city && (
                   <div className="flex items-center gap-1 text-sm text-muted-foreground">
                     <MapPin className="h-4 w-4" />
-                    <span>{application.youth.profile.city}</span>
+                    <span>{application.youth?.profile.city}</span>
                   </div>
                 )}
               </div>
@@ -540,11 +575,11 @@ function YouthApplicationDetailModal({
           </div>
 
           {/* Skills */}
-          {application.youth.profile.skills && application.youth.profile.skills.length > 0 && (
+          {application.youth?.profile.skills && application.youth?.profile.skills.length > 0 && (
             <div>
               <h4 className="font-semibold mb-2">Habilidades</h4>
               <div className="flex flex-wrap gap-2">
-                {application.youth.profile.skills.map((skill: any, index) => (
+                {application.youth?.profile.skills.map((skill: any, index) => (
                   <Badge key={index} variant="outline">
                     {typeof skill === 'string' ? skill : skill.name || skill}
                   </Badge>

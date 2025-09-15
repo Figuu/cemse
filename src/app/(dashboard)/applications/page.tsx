@@ -1,454 +1,281 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RoleGuard } from "@/components/auth/RoleGuard";
 import { 
-  Search, 
-  Eye, 
-  MessageCircle, 
-  Calendar,
-  MapPin,
-  Building2,
-  Clock,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
-  FileText,
-  Download,
-  Star,
-  TrendingUp,
-  Briefcase
+  Briefcase, 
+  Calendar, 
+  MapPin, 
+  Clock, 
+  MessageCircle,
+  Eye,
+  Filter,
+  Search
 } from "lucide-react";
-import { formatDate, formatDateTime } from "@/lib/utils";
-import { useApplications } from "@/hooks/useApplications";
-import { ApplicationTimeline } from "@/components/jobs/ApplicationTimeline";
-import { ApplicationAnalytics } from "@/components/jobs/ApplicationAnalytics";
+import { useSession } from "next-auth/react";
+import { ApplicationStatusLabels, EmploymentTypeLabels, ExperienceLevelLabels } from "@/types/company";
+import Link from "next/link";
+import { formatDistanceToNow } from "date-fns";
+import { es } from "date-fns/locale";
 
-
-const statusConfig = {
-  applied: { label: "Aplicado", color: "bg-blue-100 text-blue-800", icon: FileText },
-  reviewing: { label: "En Revisión", color: "bg-yellow-100 text-yellow-800", icon: Clock },
-  shortlisted: { label: "Preseleccionado", color: "bg-purple-100 text-purple-800", icon: Star },
-  interview: { label: "Entrevista", color: "bg-orange-100 text-orange-800", icon: Calendar },
-  offered: { label: "Oferta", color: "bg-green-100 text-green-800", icon: CheckCircle },
-  rejected: { label: "Rechazado", color: "bg-red-100 text-red-800", icon: XCircle },
-  withdrawn: { label: "Retirado", color: "bg-gray-100 text-gray-800", icon: AlertCircle }
-};
-
-const priorityConfig = {
-  low: { label: "Baja", color: "bg-gray-100 text-gray-800" },
-  medium: { label: "Media", color: "bg-yellow-100 text-yellow-800" },
-  high: { label: "Alta", color: "bg-red-100 text-red-800" }
-};
+// Mock data - in real app, this would come from an API
+const mockApplications = [
+  {
+    id: "app1",
+    job: {
+      id: "job1",
+      title: "Desarrollador Frontend",
+      company: {
+        name: "TechCorp",
+        logoUrl: "/placeholder-company.png"
+      },
+      location: "Cochabamba, Bolivia",
+      contractType: "FULL_TIME",
+      experienceLevel: "MID_LEVEL",
+      salaryMin: 8000,
+      salaryMax: 12000,
+      salaryCurrency: "BOB"
+    },
+    status: "UNDER_REVIEW",
+    appliedAt: "2024-01-15T10:30:00Z",
+    lastMessageAt: "2024-01-16T14:20:00Z",
+    unreadMessages: 2
+  },
+  {
+    id: "app2",
+    job: {
+      id: "job2",
+      title: "Diseñador UX/UI",
+      company: {
+        name: "DesignStudio",
+        logoUrl: "/placeholder-company.png"
+      },
+      location: "La Paz, Bolivia",
+      contractType: "PART_TIME",
+      experienceLevel: "ENTRY_LEVEL",
+      salaryMin: 5000,
+      salaryMax: 8000,
+      salaryCurrency: "BOB"
+    },
+    status: "PRE_SELECTED",
+    appliedAt: "2024-01-10T09:15:00Z",
+    lastMessageAt: "2024-01-17T11:45:00Z",
+    unreadMessages: 0
+  },
+  {
+    id: "app3",
+    job: {
+      id: "job3",
+      title: "Analista de Datos",
+      company: {
+        name: "DataCorp",
+        logoUrl: "/placeholder-company.png"
+      },
+      location: "Santa Cruz, Bolivia",
+      contractType: "FULL_TIME",
+      experienceLevel: "SENIOR_LEVEL",
+      salaryMin: 12000,
+      salaryMax: 18000,
+      salaryCurrency: "BOB"
+    },
+    status: "REJECTED",
+    appliedAt: "2024-01-05T16:20:00Z",
+    lastMessageAt: "2024-01-12T10:30:00Z",
+    unreadMessages: 0
+  }
+];
 
 export default function ApplicationsPage() {
+  const { data: session } = useSession();
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [priorityFilter, setPriorityFilter] = useState("all");
-  const [sortBy, setSortBy] = useState("appliedDate");
-  const [activeTab, setActiveTab] = useState("all");
 
-  const { 
-    applications, 
-    isLoading, 
-    error, 
-    refetch 
-  } = useApplications({
-    status: statusFilter !== "all" ? statusFilter : undefined,
-    priority: priorityFilter !== "all" ? priorityFilter : undefined,
-    search: searchTerm || undefined,
+  const filteredApplications = mockApplications.filter(app => {
+    const matchesStatus = statusFilter === "all" || app.status === statusFilter;
+    const matchesSearch = app.job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         app.job.company.name.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesStatus && matchesSearch;
   });
 
-  const filteredApplications = applications.filter(app => {
-    const matchesTab = activeTab === "all" || 
-                      (activeTab === "active" && !["rejected", "withdrawn", "offered"].includes(app.status)) ||
-                      (activeTab === "offers" && app.status === "offered") ||
-                      (activeTab === "rejected" && app.status === "rejected");
-
-    return matchesTab;
-  });
-
-  const sortedApplications = [...filteredApplications].sort((a, b) => {
-    switch (sortBy) {
-      case "appliedDate":
-        return new Date(b.appliedDate).getTime() - new Date(a.appliedDate).getTime();
-      case "company":
-        return a.company.localeCompare(b.company);
-      case "status":
-        return a.status.localeCompare(b.status);
-      case "priority":
-        const priorityOrder = { high: 3, medium: 2, low: 1 };
-        return priorityOrder[b.priority] - priorityOrder[a.priority];
-      default:
-        return 0;
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "HIRED": return "default";
+      case "PRE_SELECTED": return "secondary";
+      case "REJECTED": return "destructive";
+      case "UNDER_REVIEW": return "outline";
+      default: return "outline";
     }
-  });
-
-  const getStatusStats = () => {
-    const stats = {
-      total: applications.length,
-      active: applications.filter(app => !["rejected", "withdrawn", "offered"].includes(app.status)).length,
-      offers: applications.filter(app => app.status === "offered").length,
-      rejected: applications.filter(app => app.status === "rejected").length
-    };
-    return stats;
   };
 
-  const stats = getStatusStats();
-
-  if (isLoading) {
-    return (
-      <RoleGuard allowedRoles={["YOUTH"]}>
-        <div className="space-y-6">
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          </div>
-        </div>
-      </RoleGuard>
-    );
-  }
-
-  if (error) {
-    return (
-      <RoleGuard allowedRoles={["YOUTH"]}>
-        <div className="space-y-6">
-          <Card>
-            <CardContent className="text-center py-12">
-              <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Error al cargar aplicaciones</h3>
-              <p className="text-muted-foreground mb-4">{error}</p>
-              <Button onClick={refetch}>Reintentar</Button>
-            </CardContent>
-          </Card>
-        </div>
-      </RoleGuard>
-    );
-  }
-
   return (
-    <RoleGuard allowedRoles={["YOUTH"]}>
-      <div className="space-y-6">
+    <div className="container mx-auto px-4 py-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Mis Aplicaciones</h1>
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            <Briefcase className="h-8 w-8 text-primary" />
+            Mis Aplicaciones
+          </h1>
           <p className="text-muted-foreground">
-            Rastrea el estado de tus aplicaciones de trabajo
+            Gestiona y da seguimiento a tus aplicaciones de trabajo
           </p>
         </div>
-        <div className="flex space-x-2 mt-4 sm:mt-0">
-          <Button variant="outline">
-            <Download className="h-4 w-4 mr-2" />
-            Exportar
-          </Button>
-        </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total</p>
-                <p className="text-2xl font-bold">{stats.total}</p>
+      {/* Filters */}
+      <Card className="mb-6">
+        <CardContent className="p-4">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Buscar por trabajo o empresa..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                />
               </div>
-              <Briefcase className="h-8 w-8 text-blue-600" />
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Activas</p>
-                <p className="text-2xl font-bold">{stats.active}</p>
-              </div>
-              <TrendingUp className="h-8 w-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Ofertas</p>
-                <p className="text-2xl font-bold">{stats.offers}</p>
-              </div>
-              <CheckCircle className="h-8 w-8 text-purple-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Rechazadas</p>
-                <p className="text-2xl font-bold">{stats.rejected}</p>
-              </div>
-              <XCircle className="h-8 w-8 text-red-600" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filters and Search */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Buscar por título o empresa..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full sm:w-48">
-                  <SelectValue placeholder="Estado" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los estados</SelectItem>
-                  <SelectItem value="applied">Aplicado</SelectItem>
-                  <SelectItem value="reviewing">En Revisión</SelectItem>
-                  <SelectItem value="shortlisted">Preseleccionado</SelectItem>
-                  <SelectItem value="interview">Entrevista</SelectItem>
-                  <SelectItem value="offered">Oferta</SelectItem>
-                  <SelectItem value="rejected">Rechazado</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                <SelectTrigger className="w-full sm:w-48">
-                  <SelectValue placeholder="Prioridad" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas las prioridades</SelectItem>
-                  <SelectItem value="high">Alta</SelectItem>
-                  <SelectItem value="medium">Media</SelectItem>
-                  <SelectItem value="low">Baja</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-full sm:w-48">
-                  <SelectValue placeholder="Ordenar por" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="appliedDate">Fecha de aplicación</SelectItem>
-                  <SelectItem value="company">Empresa</SelectItem>
-                  <SelectItem value="status">Estado</SelectItem>
-                  <SelectItem value="priority">Prioridad</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="flex gap-2">
+              <Button
+                variant={statusFilter === "all" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setStatusFilter("all")}
+              >
+                Todas
+              </Button>
+              <Button
+                variant={statusFilter === "SENT" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setStatusFilter("SENT")}
+              >
+                Enviadas
+              </Button>
+              <Button
+                variant={statusFilter === "UNDER_REVIEW" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setStatusFilter("UNDER_REVIEW")}
+              >
+                En Revisión
+              </Button>
+              <Button
+                variant={statusFilter === "PRE_SELECTED" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setStatusFilter("PRE_SELECTED")}
+              >
+                Pre-seleccionadas
+              </Button>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Applications Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="all">Todas ({stats.total})</TabsTrigger>
-          <TabsTrigger value="active">Activas ({stats.active})</TabsTrigger>
-          <TabsTrigger value="offers">Ofertas ({stats.offers})</TabsTrigger>
-          <TabsTrigger value="rejected">Rechazadas ({stats.rejected})</TabsTrigger>
-          <TabsTrigger value="analytics">Analíticas</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="analytics" className="space-y-4">
-          <ApplicationAnalytics applications={applications.map(app => ({
-            id: app.id,
-            status: app.status,
-            appliedDate: app.appliedDate,
-            daysSinceApplied: app.daysSinceApplied || 0,
-            responseTime: app.responseTime,
-            priority: app.priority,
-            company: app.company
-          }))} />
-        </TabsContent>
-
-        <TabsContent value={activeTab} className="space-y-4">
-          {activeTab !== "analytics" && (
-            <>
-              {sortedApplications.length === 0 ? (
-                <Card>
-                  <CardContent className="text-center py-12">
-                    <Briefcase className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No hay aplicaciones</h3>
-                    <p className="text-muted-foreground">
-                      {searchTerm || statusFilter !== "all" || priorityFilter !== "all" 
-                        ? "No se encontraron aplicaciones con los filtros seleccionados"
-                        : "Aún no has aplicado a ningún trabajo. ¡Comienza a buscar oportunidades!"}
-                    </p>
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="space-y-4">
-                  {sortedApplications.map((application) => {
-                    const StatusIcon = statusConfig[application.status].icon;
+      {/* Applications List */}
+      <div className="space-y-4">
+        {filteredApplications.length === 0 ? (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <Briefcase className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No hay aplicaciones</h3>
+              <p className="text-muted-foreground mb-4">
+                {searchTerm || statusFilter !== "all" 
+                  ? "No se encontraron aplicaciones con los filtros seleccionados"
+                  : "Aún no has aplicado a ningún trabajo"
+                }
+              </p>
+              <Link href="/jobs">
+                <Button>
+                  Buscar Trabajos
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        ) : (
+          filteredApplications.map((application) => (
+            <Card key={application.id} className="hover:shadow-md transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
+                        <Briefcase className="h-6 w-6 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-lg">{application.job.title}</h3>
+                        <p className="text-muted-foreground">{application.job.company.name}</p>
+                      </div>
+                    </div>
                     
-                    return (
-                      <Card key={application.id} className="hover:shadow-lg transition-shadow">
-                        <CardContent className="p-6">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-start space-x-4">
-                                <div className="flex-shrink-0">
-                                  <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                                    <Building2 className="h-6 w-6 text-gray-600" />
-                                  </div>
-                                </div>
-                                
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center space-x-2 mb-1">
-                                    <h3 className="text-lg font-semibold truncate">
-                                      {application.jobTitle}
-                                    </h3>
-                                    <Badge className={statusConfig[application.status].color}>
-                                      <StatusIcon className="h-3 w-3 mr-1" />
-                                      {statusConfig[application.status].label}
-                                    </Badge>
-                                    <Badge variant="outline" className={priorityConfig[application.priority].color}>
-                                      {priorityConfig[application.priority].label}
-                                    </Badge>
-                                  </div>
-                                  
-                                  <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-2">
-                                    <div className="flex items-center">
-                                      <Building2 className="h-4 w-4 mr-1" />
-                                      {application.company}
-                                    </div>
-                                    <div className="flex items-center">
-                                      <MapPin className="h-4 w-4 mr-1" />
-                                      {application.location}
-                                    </div>
-                                    <div className="flex items-center">
-                                      <Clock className="h-4 w-4 mr-1" />
-                                      Aplicado {formatDate(application.appliedDate)}
-                                    </div>
-                                    {(application.daysSinceApplied || 0) > 0 && (
-                                      <div className="flex items-center">
-                                        <span className="text-xs bg-gray-100 px-2 py-1 rounded">
-                                          {application.daysSinceApplied || 0} días
-                                        </span>
-                                      </div>
-                                    )}
-                                  </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <MapPin className="h-4 w-4" />
+                        <span>{application.job.location}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Clock className="h-4 w-4" />
+                        <span>{EmploymentTypeLabels[application.job.contractType]}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Calendar className="h-4 w-4" />
+                        <span>Aplicaste hace {formatDistanceToNow(new Date(application.appliedAt), { addSuffix: true, locale: es })}</span>
+                      </div>
+                    </div>
 
-                                  <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-3">
-                                    <span>{application.jobType}</span>
-                                    {application.remote && <span>• Remoto</span>}
-                                    {application.salary && (
-                                      <span>• {application.salary.min.toLocaleString()} - {application.salary.max.toLocaleString()} {application.salary.currency}</span>
-                                    )}
-                                    <span>• {application.experience}</span>
-                                  </div>
+                    {application.job.salaryMin && application.job.salaryMax && (
+                      <div className="mt-2 text-sm">
+                        <span className="font-medium">Salario: </span>
+                        <span className="text-muted-foreground">
+                          {application.job.salaryMin.toLocaleString()} - {application.job.salaryMax.toLocaleString()} {application.job.salaryCurrency}
+                        </span>
+                      </div>
+                    )}
+                  </div>
 
-                                  <div className="flex flex-wrap gap-1 mb-3">
-                                    {application.skills.slice(0, 4).map((skill) => (
-                                      <Badge key={skill} variant="outline" className="text-xs">
-                                        {skill}
-                                      </Badge>
-                                    ))}
-                                    {application.skills.length > 4 && (
-                                      <Badge variant="outline" className="text-xs">
-                                        +{application.skills.length - 4}
-                                      </Badge>
-                                    )}
-                                  </div>
-
-                                  {application.notes && (
-                                    <p className="text-sm text-muted-foreground mb-3">
-                                      <strong>Notas:</strong> {application.notes}
-                                    </p>
-                                  )}
-
-                                  {application.nextSteps && (
-                                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
-                                      <p className="text-sm text-blue-800">
-                                        <strong>Próximos pasos:</strong> {application.nextSteps}
-                                      </p>
-                                    </div>
-                                  )}
-
-                                  {application.interviewDate && (
-                                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-3">
-                                      <p className="text-sm text-orange-800">
-                                        <strong>Entrevista programada:</strong> {formatDateTime(application.interviewDate)}
-                                      </p>
-                                    </div>
-                                  )}
-
-                                  {application.rejectionReason && (
-                                    <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-3">
-                                      <p className="text-sm text-red-800">
-                                        <strong>Motivo del rechazo:</strong> {application.rejectionReason}
-                                      </p>
-                                    </div>
-                                  )}
-
-                                  {application.offerDetails && (
-                                    <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-3">
-                                      <p className="text-sm text-green-800">
-                                        <strong>Oferta:</strong> {application.offerDetails.salary.toLocaleString()} {application.salary?.currency} • 
-                                        Inicio: {formatDate(application.offerDetails.startDate)}
-                                      </p>
-                                    </div>
-                                  )}
-
-                                  {/* Application Timeline Preview */}
-                                  {application.timeline && application.timeline.length > 0 && (
-                                    <div className="mt-3">
-                                      <ApplicationTimeline 
-                                        timeline={application.timeline.slice(0, 2)} 
-                                        className="border-0 shadow-none"
-                                      />
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="flex flex-col space-y-2 ml-4">
-                              <Button size="sm" variant="outline">
-                                <Eye className="h-4 w-4 mr-2" />
-                                Ver Detalles
-                              </Button>
-                              <Button size="sm" variant="outline">
-                                <MessageCircle className="h-4 w-4 mr-2" />
-                                Contactar
-                              </Button>
-                              {application.status === "offered" && (
-                                <Button size="sm" className="bg-green-600 hover:bg-green-700">
-                                  Responder Oferta
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
+                  <div className="flex flex-col items-end gap-3">
+                    <Badge variant={getStatusColor(application.status)}>
+                      {ApplicationStatusLabels[application.status as keyof typeof ApplicationStatusLabels] || application.status}
+                    </Badge>
+                    
+                    <div className="flex gap-2">
+                      <Link href={`/jobs/${application.job.id}`}>
+                        <Button variant="outline" size="sm">
+                          <Eye className="h-4 w-4 mr-1" />
+                          Ver Trabajo
+                        </Button>
+                      </Link>
+                      
+                      {application.unreadMessages > 0 && (
+                        <Link href={`/jobs/${application.job.id}/chat`}>
+                          <Button size="sm" className="relative">
+                            <MessageCircle className="h-4 w-4 mr-1" />
+                            Chat
+                            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                              {application.unreadMessages}
+                            </span>
+                          </Button>
+                        </Link>
+                      )}
+                      
+                      {application.unreadMessages === 0 && (
+                        <Link href={`/jobs/${application.job.id}/chat`}>
+                          <Button variant="outline" size="sm">
+                            <MessageCircle className="h-4 w-4 mr-1" />
+                            Chat
+                          </Button>
+                        </Link>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              )}
-            </>
-          )}
-        </TabsContent>
-      </Tabs>
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
-    </RoleGuard>
+    </div>
   );
 }

@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
 const createApplicationSchema = z.object({
   coverLetter: z.string().optional(),
-  resume: z.string().optional(),
-  portfolio: z.string().optional(),
-  linkedinProfile: z.string().url().optional().or(z.literal("")),
-  githubProfile: z.string().url().optional().or(z.literal("")),
   notes: z.string().optional(),
+  cvData: z.any().optional(), // JSON field for additional CV data
+  cvFile: z.string().optional(), // File path/URL for CV
+  coverLetterFile: z.string().optional(), // File path/URL for cover letter
 });
 
 export async function GET(
@@ -46,18 +47,19 @@ export async function GET(
         include: {
           applicant: {
             select: {
-              id: true,
-              email: true,
-              profile: {
+              userId: true,
+              firstName: true,
+              lastName: true,
+              avatarUrl: true,
+              phone: true,
+              address: true,
+              user: {
                 select: {
-                  firstName: true,
-                  lastName: true,
-                  avatarUrl: true,
-                  phone: true,
-                  address: true,
+                  id: true,
+                  email: true,
                 },
               },
-            } as any,
+            },
           },
           jobOffer: {
             select: {
@@ -107,8 +109,13 @@ export async function POST(
     const validatedData = createApplicationSchema.parse(body);
 
     const { id: companyId, jobId } = await params;
-    // Get user ID from session (in real app, this would come from auth)
-    const userId = "user-1"; // Mock user ID
+    
+    // Get user ID from session
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const userId = session.user.id;
 
     // Check if job exists and is active
     const job = await prisma.jobOffer.findFirst({
@@ -130,7 +137,7 @@ export async function POST(
     const existingApplication = await prisma.jobApplication.findFirst({
       where: {
         jobOfferId: jobId,
-        applicantId: userId,
+        applicantId: userId, // This should be the userId from Profile
       },
     });
 
@@ -150,16 +157,17 @@ export async function POST(
       include: {
         applicant: {
           select: {
-            id: true,
-            email: true,
-            profile: {
+            userId: true,
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
+            user: {
               select: {
-                firstName: true,
-                lastName: true,
-                avatarUrl: true,
+                id: true,
+                email: true,
               },
             },
-          } as any,
+          },
         },
       },
     });

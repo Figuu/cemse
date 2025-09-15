@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { 
   ArrowLeft, 
   Briefcase, 
@@ -18,13 +20,20 @@ import {
   GraduationCap,
   Star,
   Filter,
-  Search
+  Search,
+  CheckCircle,
+  XCircle,
+  User,
+  Mail,
+  Phone
 } from "lucide-react";
 import { useJob, useJobApplications } from "@/hooks/useJobs";
 import { useSession } from "next-auth/react";
 import { useCompanyByUser } from "@/hooks/useCompanies";
-import { ApplicationStatusLabels } from "@/types/company";
+import { ApplicationStatusLabels, ApplicationStatus, JobApplication } from "@/types/company";
+import { useMessages, useSendMessage } from "@/hooks/useMessages";
 import Link from "next/link";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export default function JobApplicationsPage() {
   const params = useParams();
@@ -33,6 +42,11 @@ export default function JobApplicationsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
+  const [selectedProfile, setSelectedProfile] = useState<JobApplication | null>(null);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [selectedChatUser, setSelectedChatUser] = useState<JobApplication | null>(null);
+  const [isChatModalOpen, setIsChatModalOpen] = useState(false);
+  const [messageText, setMessageText] = useState("");
 
   // Get the company for the current user
   const { data: company, isLoading: companyLoading } = useCompanyByUser(session?.user?.id || "");
@@ -43,13 +57,74 @@ export default function JobApplicationsPage() {
   });
 
   const applications = applicationsData?.applications || [];
+  const queryClient = useQueryClient();
+
+  // Status change mutation
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ applicationId, status }: { applicationId: string; status: ApplicationStatus }) => {
+      const response = await fetch(`/api/companies/${company?.id}/jobs/${jobId}/applications/${applicationId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update application status');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      // Invalidate and refetch applications
+      queryClient.invalidateQueries({ queryKey: ['jobApplications', company?.id, jobId] });
+    },
+  });
+
+  const handleStatusChange = (applicationId: string, status: string) => {
+    updateStatusMutation.mutate({ applicationId, status: status as ApplicationStatus });
+  };
+
+  const handleContact = (application: JobApplication) => {
+    setSelectedChatUser(application);
+    setIsChatModalOpen(true);
+  };
+
+  const handleViewProfile = (application: JobApplication) => {
+    setSelectedProfile(application);
+    setIsProfileModalOpen(true);
+  };
+
+  // Get messages for the selected chat user
+  const { data: messagesData } = useMessages({
+    recipientId: selectedChatUser?.applicant.userId,
+    contextType: "JOB_APPLICATION",
+    contextId: jobId,
+    enabled: !!selectedChatUser,
+  });
+
+  const sendMessageMutation = useSendMessage();
+
+  const handleSendMessage = () => {
+    if (!messageText.trim() || !selectedChatUser) return;
+    
+    sendMessageMutation.mutate({
+      recipientId: selectedChatUser.applicant.userId,
+      content: messageText,
+      contextType: "JOB_APPLICATION",
+      contextId: jobId,
+    });
+    
+    setMessageText("");
+  };
 
   // Filter applications
   const filteredApplications = applications.filter(app => {
     const matchesSearch = !searchTerm || 
-      app.applicant.profile?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      app.applicant.profile?.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      app.applicant.email.toLowerCase().includes(searchTerm.toLowerCase());
+      app.applicant.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      app.applicant.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      app.applicant.user.email.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === "all" || app.status === statusFilter;
     
@@ -162,7 +237,7 @@ export default function JobApplicationsPage() {
               <span className="text-sm font-medium">Pendientes</span>
             </div>
             <p className="text-2xl font-bold">
-              {applications.filter(app => app.status === "PENDING").length}
+              {applications.filter(app => app.status === "SENT").length}
             </p>
           </CardContent>
         </Card>
@@ -174,7 +249,7 @@ export default function JobApplicationsPage() {
               <span className="text-sm font-medium">Entrevistados</span>
             </div>
             <p className="text-2xl font-bold">
-              {applications.filter(app => app.status === "INTERVIEWED").length}
+              {applications.filter(app => app.status === "PRE_SELECTED").length}
             </p>
           </CardContent>
         </Card>
@@ -274,19 +349,19 @@ export default function JobApplicationsPage() {
                     <div className="flex items-start justify-between">
                       <div className="flex items-start gap-4">
                         <Avatar className="h-12 w-12">
-                          <AvatarImage src={application.applicant.profile?.avatarUrl} />
+                          <AvatarImage src={application.applicant.avatarUrl} />
                           <AvatarFallback>
-                            {application.applicant.profile?.firstName?.[0]}{application.applicant.profile?.lastName?.[0]}
+                            {application.applicant.firstName?.[0]}{application.applicant.lastName?.[0]}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
                             <h3 className="font-semibold">
-                              {application.applicant.profile?.firstName} {application.applicant.profile?.lastName}
+                              {application.applicant.firstName} {application.applicant.lastName}
                             </h3>
                             <Badge variant={
                               application.status === "HIRED" ? "default" :
-                              application.status === "INTERVIEWED" ? "secondary" :
+                              application.status === "PRE_SELECTED" ? "secondary" :
                               application.status === "REJECTED" ? "destructive" :
                               "outline"
                             }>
@@ -294,7 +369,7 @@ export default function JobApplicationsPage() {
                             </Badge>
                           </div>
                           <p className="text-sm text-muted-foreground mb-2">
-                            {application.applicant.email}
+                            {application.applicant.user.email}
                           </p>
                           {application.coverLetter && (
                             <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
@@ -306,30 +381,96 @@ export default function JobApplicationsPage() {
                               <Calendar className="h-3 w-3" />
                               Aplicó el {new Date(application.appliedAt).toLocaleDateString()}
                             </div>
- @                            {(application.applicant.profile as any)?.address && (
+ @                            {application.applicant.address && (
                               <div className="flex items-center gap-1">
                                 <MapPin className="h-3 w-3" />
-                                {(application.applicant.profile as any).address}
+                                {application.applicant.address}
                               </div>
                             )}
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        {application.resume && (
-                          <Button variant="outline" size="sm">
-                            <Download className="h-4 w-4 mr-2" />
-                            CV
-                          </Button>
-                        )}
-                        <Button variant="outline" size="sm">
-                          <MessageCircle className="h-4 w-4 mr-2" />
-                          Contactar
-                        </Button>
-                        <Button size="sm">
-                          Ver Perfil
-                        </Button>
-                      </div>
+                       <div className="flex items-center gap-2">
+                         {application.resume && (
+                           <Button variant="outline" size="sm">
+                             <Download className="h-4 w-4 mr-2" />
+                             CV
+                           </Button>
+                         )}
+                         <Button 
+                           variant="outline" 
+                           size="sm"
+                           onClick={() => handleContact(application)}
+                         >
+                           <MessageCircle className="h-4 w-4 mr-2" />
+                           Contactar
+                         </Button>
+                         <Button 
+                           size="sm"
+                           onClick={() => handleViewProfile(application)}
+                         >
+                           Ver Perfil
+                         </Button>
+                         
+                         {/* Status Change Buttons */}
+                         <div className="flex items-center gap-1">
+                           {application.status === "SENT" && (
+                             <Button 
+                               variant="outline" 
+                               size="sm"
+                               onClick={() => handleStatusChange(application.id, "UNDER_REVIEW")}
+                               disabled={updateStatusMutation.isPending}
+                             >
+                               <Eye className="h-4 w-4 mr-1" />
+                               Revisar
+                             </Button>
+                           )}
+                           {application.status === "UNDER_REVIEW" && (
+                             <>
+                               <Button 
+                                 variant="outline" 
+                                 size="sm"
+                                 onClick={() => handleStatusChange(application.id, "PRE_SELECTED")}
+                                 disabled={updateStatusMutation.isPending}
+                               >
+                                 <CheckCircle className="h-4 w-4 mr-1" />
+                                 Pre-seleccionar
+                               </Button>
+                               <Button 
+                                 variant="destructive" 
+                                 size="sm"
+                                 onClick={() => handleStatusChange(application.id, "REJECTED")}
+                                 disabled={updateStatusMutation.isPending}
+                               >
+                                 <XCircle className="h-4 w-4 mr-1" />
+                                 Rechazar
+                               </Button>
+                             </>
+                           )}
+                           {application.status === "PRE_SELECTED" && (
+                             <>
+                               <Button 
+                                 variant="default" 
+                                 size="sm"
+                                 onClick={() => handleStatusChange(application.id, "HIRED")}
+                                 disabled={updateStatusMutation.isPending}
+                               >
+                                 <Star className="h-4 w-4 mr-1" />
+                                 Contratar
+                               </Button>
+                               <Button 
+                                 variant="destructive" 
+                                 size="sm"
+                                 onClick={() => handleStatusChange(application.id, "REJECTED")}
+                                 disabled={updateStatusMutation.isPending}
+                               >
+                                 <XCircle className="h-4 w-4 mr-1" />
+                                 Rechazar
+                               </Button>
+                             </>
+                           )}
+                         </div>
+                       </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -362,6 +503,229 @@ export default function JobApplicationsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Profile Modal */}
+      <Dialog open={isProfileModalOpen} onOpenChange={setIsProfileModalOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Perfil del Candidato
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedProfile && (
+            <div className="space-y-6">
+              {/* Basic Info */}
+              <div className="flex items-start gap-4">
+                <Avatar className="h-16 w-16">
+                  <AvatarImage src={selectedProfile.applicant.avatarUrl} />
+                  <AvatarFallback className="text-lg">
+                    {selectedProfile.applicant.firstName?.[0]}{selectedProfile.applicant.lastName?.[0]}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <h3 className="text-xl font-semibold">
+                    {selectedProfile.applicant.firstName} {selectedProfile.applicant.lastName}
+                  </h3>
+                  <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <Mail className="h-4 w-4" />
+                      {selectedProfile.applicant.user.email}
+                    </div>
+                    {selectedProfile.applicant.phone && (
+                      <div className="flex items-center gap-1">
+                        <Phone className="h-4 w-4" />
+                        {selectedProfile.applicant.phone}
+                      </div>
+                    )}
+                  </div>
+                  {selectedProfile.applicant.address && (
+                    <div className="flex items-center gap-1 mt-1 text-sm text-muted-foreground">
+                      <MapPin className="h-4 w-4" />
+                      {selectedProfile.applicant.address}
+                    </div>
+                  )}
+                </div>
+                <Badge variant={
+                  selectedProfile.status === "HIRED" ? "default" :
+                  selectedProfile.status === "PRE_SELECTED" ? "secondary" :
+                  selectedProfile.status === "REJECTED" ? "destructive" :
+                  "outline"
+                }>
+                  {ApplicationStatusLabels[selectedProfile.status]}
+                </Badge>
+              </div>
+
+              {/* Application Details */}
+              <div className="space-y-4">
+                <h4 className="font-medium text-lg">Detalles de la Aplicación</h4>
+                
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Fecha de Aplicación:</span>
+                    <p className="font-medium">
+                      {new Date(selectedProfile.appliedAt).toLocaleDateString('es-ES', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Estado:</span>
+                    <p className="font-medium">{ApplicationStatusLabels[selectedProfile.status]}</p>
+                  </div>
+                </div>
+
+                {selectedProfile.coverLetter && (
+                  <div>
+                    <span className="text-muted-foreground text-sm">Carta de Presentación:</span>
+                    <div className="mt-2 p-3 bg-muted/50 rounded-lg">
+                      <p className="text-sm whitespace-pre-wrap">{selectedProfile.coverLetter}</p>
+                    </div>
+                  </div>
+                )}
+
+                {selectedProfile.notes && (
+                  <div>
+                    <span className="text-muted-foreground text-sm">Notas Internas:</span>
+                    <div className="mt-2 p-3 bg-muted/50 rounded-lg">
+                      <p className="text-sm whitespace-pre-wrap">{selectedProfile.notes}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-2 pt-4 border-t">
+                <Button 
+                  onClick={() => {
+                    setIsProfileModalOpen(false);
+                    handleContact(selectedProfile);
+                  }}
+                  className="flex-1"
+                >
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  Contactar
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => setIsProfileModalOpen(false)}
+                >
+                  Cerrar
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Chat Modal */}
+      <Dialog open={isChatModalOpen} onOpenChange={setIsChatModalOpen}>
+        <DialogContent className="max-w-2xl h-[600px] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageCircle className="h-5 w-5" />
+              Conversación con {selectedChatUser?.applicant.firstName} {selectedChatUser?.applicant.lastName}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedChatUser && (
+            <div className="flex-1 flex flex-col">
+              {/* Chat Messages */}
+              <div className="flex-1 overflow-y-auto space-y-4 p-4 border rounded-lg bg-muted/20">
+                {messagesData?.messages?.length === 0 ? (
+                  <div className="text-center text-muted-foreground py-8">
+                    <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p>No hay mensajes aún. ¡Inicia la conversación!</p>
+                  </div>
+                ) : (
+                  messagesData?.messages?.map((message) => {
+                    const isFromApplicant = message.senderId === selectedChatUser?.applicant.userId;
+                    return (
+                      <div
+                        key={message.id}
+                        className={`flex ${isFromApplicant ? 'justify-start' : 'justify-end'}`}
+                      >
+                        <div
+                          className={`max-w-[70%] p-3 rounded-lg ${
+                            isFromApplicant
+                              ? 'bg-background border'
+                              : 'bg-primary text-primary-foreground'
+                          }`}
+                        >
+                          <p className="text-sm">{message.content}</p>
+                          <p className={`text-xs mt-1 ${
+                            isFromApplicant ? 'text-muted-foreground' : 'text-primary-foreground/70'
+                          }`}>
+                            {new Date(message.createdAt).toLocaleTimeString('es-ES', {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Message Input */}
+              <div className="flex items-center gap-2 pt-4 border-t">
+                <Input
+                  value={messageText}
+                  onChange={(e) => setMessageText(e.target.value)}
+                  placeholder="Escribe tu mensaje..."
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      handleSendMessage();
+                    }
+                  }}
+                  className="flex-1"
+                />
+                <Button 
+                  onClick={handleSendMessage}
+                  disabled={!messageText.trim() || sendMessageMutation.isPending}
+                >
+                  {sendMessageMutation.isPending ? "Enviando..." : "Enviar"}
+                </Button>
+              </div>
+
+              {/* Quick Actions */}
+              <div className="flex items-center gap-2 pt-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    setMessageText("Hola! Gracias por tu interés en la posición. ¿Podrías contarme más sobre tu experiencia?");
+                  }}
+                >
+                  Mensaje de bienvenida
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    setMessageText("Nos gustaría programar una entrevista contigo. ¿Qué horarios te funcionan mejor?");
+                  }}
+                >
+                  Programar entrevista
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setIsChatModalOpen(false)}
+                >
+                  Cerrar
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

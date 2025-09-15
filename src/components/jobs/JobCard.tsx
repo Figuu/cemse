@@ -137,7 +137,7 @@ export function JobCard({
               >
                 <Heart className={`h-4 w-4 ${isLiked ? 'fill-current text-red-500' : ''}`} />
               </Button>
-              <Link href={`/companies/${job.company.id}/jobs/${job.id}`}>
+              <Link href={`/jobs/${job.id}`}>
                 <Button variant="outline" size="sm">
                   Ver
                 </Button>
@@ -256,7 +256,7 @@ export function JobCard({
                   Ya Aplicaste
                 </Button>
               )}
-              <Link href={`/companies/${job.company.id}/jobs/${job.id}`}>
+              <Link href={`/jobs/${job.id}`}>
                 <Button variant="outline">
                   Ver Detalles
                 </Button>
@@ -392,7 +392,7 @@ export function JobCard({
                   Ya Aplicaste
                 </Button>
               )}
-              <Link href={`/companies/${job.company.id}/jobs/${job.id}`}>
+              <Link href={`/jobs/${job.id}`}>
                 <Button variant="outline" size="sm">
                   Ver Detalles
                 </Button>

@@ -102,6 +102,13 @@ export interface JobPosting {
   _count?: {
     applications: number;
   };
+  // Additional fields for youth view
+  isApplied?: boolean;
+  application?: JobApplication;
+  // Additional fields that might be returned by API
+  contractType?: ContractType;
+  salaryCurrency?: string;
+  viewsCount?: number;
 }
 
 export interface JobApplication {
@@ -122,12 +129,15 @@ export interface JobApplication {
   job: JobPosting;
   applicantId: string;
   applicant: {
-    id: string;
-    email: string;
-    profile?: {
-      firstName?: string;
-      lastName?: string;
-      avatarUrl?: string;
+    userId: string;
+    firstName: string;
+    lastName: string;
+    avatarUrl?: string;
+    phone?: string;
+    address?: string;
+    user: {
+      id: string;
+      email: string;
     };
   };
   companyId: string;
@@ -232,6 +242,15 @@ export enum EmploymentType {
   TEMPORARY = "TEMPORARY",
 }
 
+export enum ContractType {
+  FULL_TIME = "FULL_TIME",
+  PART_TIME = "PART_TIME",
+  CONTRACT = "CONTRACT",
+  INTERNSHIP = "INTERNSHIP",
+  FREELANCE = "FREELANCE",
+  TEMPORARY = "TEMPORARY",
+}
+
 export enum ExperienceLevel {
   ENTRY_LEVEL = "ENTRY_LEVEL",
   MID_LEVEL = "MID_LEVEL",
@@ -241,12 +260,11 @@ export enum ExperienceLevel {
 }
 
 export enum ApplicationStatus {
-  PENDING = "PENDING",
-  REVIEWED = "REVIEWED",
-  INTERVIEWED = "INTERVIEWED",
+  SENT = "SENT",
+  UNDER_REVIEW = "UNDER_REVIEW",
+  PRE_SELECTED = "PRE_SELECTED",
   REJECTED = "REJECTED",
   HIRED = "HIRED",
-  WITHDRAWN = "WITHDRAWN",
 }
 
 export const CompanySizeLabels: Record<CompanySize, string> = {
@@ -275,10 +293,9 @@ export const ExperienceLevelLabels: Record<ExperienceLevel, string> = {
 };
 
 export const ApplicationStatusLabels: Record<ApplicationStatus, string> = {
-  [ApplicationStatus.PENDING]: "Pendiente",
-  [ApplicationStatus.REVIEWED]: "Revisado",
-  [ApplicationStatus.INTERVIEWED]: "Entrevistado",
+  [ApplicationStatus.SENT]: "Enviado",
+  [ApplicationStatus.UNDER_REVIEW]: "En Revisión",
+  [ApplicationStatus.PRE_SELECTED]: "Pre-seleccionado",
   [ApplicationStatus.REJECTED]: "Rechazado",
   [ApplicationStatus.HIRED]: "Contratado",
-  [ApplicationStatus.WITHDRAWN]: "Retirado",
 };

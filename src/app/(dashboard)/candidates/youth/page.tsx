@@ -1,13 +1,40 @@
 "use client";
 
+import { useSession } from "next-auth/react";
 import { YouthApplicationBrowser } from "@/components/companies/YouthApplicationBrowser";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Users, Briefcase, BarChart3 } from "lucide-react";
 import Link from "next/link";
+import { useCompanyByUser } from "@/hooks/useCompanies";
 
 export default function YouthCandidatesPage() {
-  // In a real app, this would come from auth context
-  const companyId = "company-1"; // Mock company ID
+  const { data: session } = useSession();
+  const { data: company, isLoading: companyLoading } = useCompanyByUser(session?.user?.id || "");
+
+  // Show loading state while fetching company data
+  if (companyLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center py-12">
+          <p>Cargando información de la empresa...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error if no company found
+  if (!company) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center py-12">
+          <h3 className="text-lg font-semibold mb-2">Empresa no encontrada</h3>
+          <p className="text-muted-foreground">
+            No se pudo encontrar la información de tu empresa. Por favor, contacta al administrador.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -50,7 +77,7 @@ export default function YouthCandidatesPage() {
       </div>
 
       {/* Youth Application Browser */}
-      <YouthApplicationBrowser companyId={companyId} />
+      <YouthApplicationBrowser companyId={company.id} />
     </div>
   );
 }

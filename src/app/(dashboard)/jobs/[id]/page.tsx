@@ -17,12 +17,13 @@ import {
   Target,
   Share2,
   Copy,
-  Trash2
+  Trash2,
+  MessageCircle
 } from "lucide-react";
-import { useJob, useJobApplications, useDeleteJob } from "@/hooks/useJobs";
+import { useJob, useJobById, useJobApplications, useDeleteJob } from "@/hooks/useJobs";
 import { useSession } from "next-auth/react";
 import { useCompanyByUser } from "@/hooks/useCompanies";
-import { EmploymentTypeLabels, ExperienceLevelLabels } from "@/types/company";
+import { EmploymentTypeLabels, ExperienceLevelLabels, ApplicationStatusLabels } from "@/types/company";
 import Link from "next/link";
 import { safePercentage } from "@/lib/utils";
 
@@ -33,9 +34,22 @@ export default function JobDetailPage() {
   const jobId = params.id as string;
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  // Get the company for the current user
+  // Determine user role and fetch data accordingly
+  const isCompany = session?.user?.role === "COMPANIES";
+  const isYouth = session?.user?.role === "YOUTH";
+
+  // Get the company for company users
   const { data: company, isLoading: companyLoading } = useCompanyByUser(session?.user?.id || "");
-  const { data: job, isLoading: jobLoading } = useJob(company?.id || "", jobId);
+  
+  // Get job data based on user role
+  const { data: companyJob, isLoading: companyJobLoading } = useJob(company?.id || "", jobId);
+  const { data: youthJob, isLoading: youthJobLoading } = useJobById(jobId);
+  
+  // Use appropriate job data
+  const job = isCompany ? companyJob : youthJob;
+  const jobLoading = isCompany ? companyJobLoading : youthJobLoading;
+  
+  // Get applications only for company users
   const { data: applicationsData, isLoading: applicationsLoading } = useJobApplications({
     companyId: company?.id,
     jobId: jobId,
@@ -63,7 +77,7 @@ export default function JobDetailPage() {
     }
   };
 
-  if (companyLoading || jobLoading) {
+  if (jobLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="animate-pulse space-y-8">
@@ -81,7 +95,8 @@ export default function JobDetailPage() {
     );
   }
 
-  if (!company) {
+  // Show company not found only for company users
+  if (isCompany && companyLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center py-12">
@@ -137,7 +152,10 @@ export default function JobDetailPage() {
             {job.title}
           </h1>
           <p className="text-muted-foreground">
-            Gestiona este trabajo y sus aplicaciones
+            {isCompany 
+              ? "Gestiona este trabajo y sus aplicaciones"
+              : `Oferta de trabajo en ${job.company?.name || "Empresa"}`
+            }
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -145,67 +163,143 @@ export default function JobDetailPage() {
             <Share2 className="h-4 w-4 mr-2" />
             Compartir
           </Button>
-          <Link href={`/jobs/${jobId}/edit`}>
-            <Button variant="outline" size="sm">
-              Editar
-            </Button>
-          </Link>
-          <Button 
-            variant="destructive" 
-            size="sm" 
-            onClick={() => setShowDeleteDialog(true)}
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Eliminar
-          </Button>
+          {isCompany && (
+            <>
+              <Link href={`/jobs/${jobId}/edit`}>
+                <Button variant="outline" size="sm">
+                  Editar
+                </Button>
+              </Link>
+              <Button 
+                variant="destructive" 
+                size="sm" 
+                onClick={() => setShowDeleteDialog(true)}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Eliminar
+              </Button>
+            </>
+          )}
+          {isYouth && (
+            <>
+              <Link href={`/jobs/${jobId}/apply`}>
+                <Button size="sm">
+                  {(job as any).isApplied ? "Ver Aplicación" : "Aplicar Ahora"}
+                </Button>
+              </Link>
+              <Link href={`/jobs/${jobId}/apply`}>
+                <Button variant="outline" size="sm">
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  Contactar Empresa
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Eye className="h-4 w-4 text-blue-600" />
-              <span className="text-sm font-medium">Vistas</span>
-            </div>
-            <p className="text-2xl font-bold">{job.totalViews || 0}</p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Users className="h-4 w-4 text-green-600" />
-              <span className="text-sm font-medium">Aplicaciones</span>
-            </div>
-            <p className="text-2xl font-bold">{applications.length}</p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Target className="h-4 w-4 text-purple-600" />
-              <span className="text-sm font-medium">Tasa de Conversión</span>
-            </div>
-            <p className="text-2xl font-bold">
-              {safePercentage(applications.length, job.totalViews)}%
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Calendar className="h-4 w-4 text-orange-600" />
-              <span className="text-sm font-medium">Días Activo</span>
-            </div>
-            <p className="text-2xl font-bold">
-              {Math.ceil((Date.now() - new Date(job.createdAt).getTime()) / (1000 * 60 * 60 * 24))}
-            </p>
-          </CardContent>
-        </Card>
+        {isCompany ? (
+          <>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Eye className="h-4 w-4 text-blue-600" />
+                  <span className="text-sm font-medium">Vistas</span>
+                </div>
+                <p className="text-2xl font-bold">{(job as any).viewsCount || 0}</p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Users className="h-4 w-4 text-green-600" />
+                  <span className="text-sm font-medium">Aplicaciones</span>
+                </div>
+                <p className="text-2xl font-bold">{applications.length}</p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Target className="h-4 w-4 text-purple-600" />
+                  <span className="text-sm font-medium">Tasa de Conversión</span>
+                </div>
+                <p className="text-2xl font-bold">
+                  {safePercentage(applications.length, (job as any).viewsCount)}%
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Calendar className="h-4 w-4 text-orange-600" />
+                  <span className="text-sm font-medium">Días Activo</span>
+                </div>
+                <p className="text-2xl font-bold">
+                  {Math.ceil((Date.now() - new Date(job.createdAt).getTime()) / (1000 * 60 * 60 * 24))}
+                </p>
+              </CardContent>
+            </Card>
+          </>
+        ) : (
+          <>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Calendar className="h-4 w-4 text-blue-600" />
+                  <span className="text-sm font-medium">Publicado</span>
+                </div>
+                <p className="text-2xl font-bold">
+                  {Math.ceil((Date.now() - new Date(job.createdAt).getTime()) / (1000 * 60 * 60 * 24))} días
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Target className="h-4 w-4 text-green-600" />
+                  <span className="text-sm font-medium">Experiencia</span>
+                </div>
+                <p className="text-2xl font-bold">
+                  {ExperienceLevelLabels[job.experienceLevel] || job.experienceLevel}
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Clock className="h-4 w-4 text-purple-600" />
+                  <span className="text-sm font-medium">Tipo</span>
+                </div>
+                <p className="text-2xl font-bold">
+                  {EmploymentTypeLabels[(job as any).contractType] || (job as any).contractType}
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <DollarSign className="h-4 w-4 text-orange-600" />
+                  <span className="text-sm font-medium">Salario</span>
+                </div>
+                <p className="text-2xl font-bold">
+                  {job.salaryMin && job.salaryMax 
+                    ? `${job.salaryMin.toLocaleString()} - ${job.salaryMax.toLocaleString()} ${(job as any).salaryCurrency || job.currency}`
+                    : "A convenir"
+                  }
+                </p>
+              </CardContent>
+            </Card>
+          </>
+        )}
       </div>
 
       {/* Job Details */}
@@ -248,12 +342,12 @@ export default function JobDetailPage() {
             </div>
             
             <div className="space-y-4">
-              {job.salaryMin && job.salaryMax && (
+              {((job as any).salaryMin || job.salaryMin) && ((job as any).salaryMax || job.salaryMax) && (
                 <div className="flex items-center gap-2">
                   <DollarSign className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm font-medium">Salario:</span>
                   <span className="text-sm text-muted-foreground">
-                    {job.salaryMin.toLocaleString()} - {job.salaryMax.toLocaleString()} {job.currency}
+                    {((job as any).salaryMin || job.salaryMin)?.toLocaleString()} - {((job as any).salaryMax || job.salaryMax)?.toLocaleString()} {(job as any).salaryCurrency || job.currency || 'USD'}
                   </span>
                 </div>
               )}
@@ -267,12 +361,12 @@ export default function JobDetailPage() {
                 )}
               </div>
               
-              {job.applicationDeadline && (
+              {((job as any).applicationDeadline || job.applicationDeadline) && (
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm font-medium">Fecha límite:</span>
                   <span className="text-sm text-muted-foreground">
-                    {new Date(job.applicationDeadline).toLocaleDateString()}
+                    {new Date((job as any).applicationDeadline || job.applicationDeadline).toLocaleDateString()}
                   </span>
                 </div>
               )}
@@ -284,27 +378,47 @@ export default function JobDetailPage() {
             <p className="text-muted-foreground whitespace-pre-wrap">{job.description}</p>
           </div>
           
-          {job.requirements && (
-            <div>
-              <h4 className="font-medium mb-2">Requisitos</h4>
-              <ul className="text-muted-foreground space-y-1">
-                {job.requirements.map((req, index) => (
-                  <li key={index}>• {req}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-          
-          {job.benefits && job.benefits.length > 0 && (
-            <div>
-              <h4 className="font-medium mb-2">Beneficios</h4>
-              <ul className="text-muted-foreground space-y-1">
-                {job.benefits.map((benefit, index) => (
-                  <li key={index}>• {benefit}</li>
-                ))}
-              </ul>
-            </div>
-          )}
+           {job.requirements && (
+             <div>
+               <h4 className="font-medium mb-2">Requisitos</h4>
+               <ul className="text-muted-foreground space-y-1">
+                 {(() => {
+                   const requirements = (job as any).requirements;
+                   if (Array.isArray(requirements)) {
+                     return requirements.map((req, index) => (
+                       <li key={index}>• {req}</li>
+                     ));
+                   } else if (typeof requirements === 'string') {
+                     return requirements.split('\n').filter(r => r.trim()).map((req, index) => (
+                       <li key={index}>• {req}</li>
+                     ));
+                   }
+                   return null;
+                 })()}
+               </ul>
+             </div>
+           )}
+           
+           {job.benefits && (
+             <div>
+               <h4 className="font-medium mb-2">Beneficios</h4>
+               <ul className="text-muted-foreground space-y-1">
+                 {(() => {
+                   const benefits = (job as any).benefits;
+                   if (Array.isArray(benefits)) {
+                     return benefits.map((benefit, index) => (
+                       <li key={index}>• {benefit}</li>
+                     ));
+                   } else if (typeof benefits === 'string') {
+                     return benefits.split('\n').filter(b => b.trim()).map((benefit, index) => (
+                       <li key={index}>• {benefit}</li>
+                     ));
+                   }
+                   return null;
+                 })()}
+               </ul>
+             </div>
+           )}
         </CardContent>
       </Card>
 
@@ -315,31 +429,60 @@ export default function JobDetailPage() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Link href={`/jobs/${jobId}/applications`}>
-              <Button className="w-full">
-                <Users className="h-4 w-4 mr-2" />
-                Ver Aplicaciones ({applications.length})
-              </Button>
-            </Link>
-            
-            <Link href={`/jobs/${jobId}/analytics`}>
-              <Button variant="outline" className="w-full">
-                <Target className="h-4 w-4 mr-2" />
-                Ver Analytics
-              </Button>
-            </Link>
-            
-            <Link href={`/jobs/${jobId}/edit`}>
-              <Button variant="outline" className="w-full">
-                Editar Trabajo
-              </Button>
-            </Link>
+            {isCompany ? (
+              <>
+                <Link href={`/jobs/${jobId}/applications`}>
+                  <Button className="w-full">
+                    <Users className="h-4 w-4 mr-2" />
+                    Ver Aplicaciones ({applications.length})
+                  </Button>
+                </Link>
+                
+                <Link href={`/jobs/${jobId}/analytics`}>
+                  <Button variant="outline" className="w-full">
+                    <Target className="h-4 w-4 mr-2" />
+                    Ver Analytics
+                  </Button>
+                </Link>
+                
+                <Link href={`/jobs/${jobId}/edit`}>
+                  <Button variant="outline" className="w-full">
+                    Editar Trabajo
+                  </Button>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href={`/jobs/${jobId}/apply`}>
+                  <Button className="w-full">
+                    {(job as any).isApplied ? "Ver Mi Aplicación" : "Aplicar Ahora"}
+                  </Button>
+                </Link>
+                
+                <Link href={`/jobs/${jobId}/apply`}>
+                  <Button variant="outline" className="w-full">
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    Contactar Empresa
+                  </Button>
+                </Link>
+                
+                <Button variant="outline" className="w-full" onClick={handleShare}>
+                  <Share2 className="h-4 w-4 mr-2" />
+                  Compartir Trabajo
+                </Button>
+                
+                <Button variant="outline" className="w-full">
+                  <Copy className="h-4 w-4 mr-2" />
+                  Guardar
+                </Button>
+              </>
+            )}
           </div>
         </CardContent>
       </Card>
 
-      {/* Recent Applications Preview */}
-      {applications.length > 0 && (
+      {/* Recent Applications Preview - Only for company users */}
+      {isCompany && applications.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>Aplicaciones Recientes</CardTitle>
@@ -350,23 +493,23 @@ export default function JobDetailPage() {
                 <div key={application.id} className="flex items-center justify-between p-4 border rounded-lg">
                   <div>
                     <h4 className="font-medium">
-                      {application.applicant.profile?.firstName} {application.applicant.profile?.lastName}
+                      {application.applicant.firstName} {application.applicant.lastName}
                     </h4>
                     <p className="text-sm text-muted-foreground">
-                      {application.applicant.email}
+                      {application.applicant.user.email}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       Aplicó el {new Date(application.appliedAt).toLocaleDateString()}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant={
-                      application.status === "HIRED" ? "default" :
-                      application.status === "INTERVIEWED" ? "secondary" :
-                      application.status === "REJECTED" ? "destructive" :
-                      "outline"
-                    }>
-                      {application.status}
+                     <Badge variant={
+                       application.status === "HIRED" ? "default" :
+                       application.status === "PRE_SELECTED" ? "secondary" :
+                       application.status === "REJECTED" ? "destructive" :
+                       "outline"
+                     }>
+                      {ApplicationStatusLabels[application.status as keyof typeof ApplicationStatusLabels] || application.status}
                     </Badge>
                     <Link href={`/jobs/${jobId}/applications`}>
                       <Button variant="outline" size="sm">
@@ -391,8 +534,8 @@ export default function JobDetailPage() {
         </Card>
       )}
 
-      {/* Delete Confirmation Dialog */}
-      {showDeleteDialog && (
+      {/* Delete Confirmation Dialog - Only for company users */}
+      {isCompany && showDeleteDialog && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <Card className="max-w-md w-full">
             <CardHeader>

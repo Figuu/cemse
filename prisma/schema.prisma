@@ -225,7 +225,8 @@ model JobOffer {
   title               String
   description         String
   requirements        String
-  benefits            String?
+  responsibilities    String[]
+  benefits            String
   salaryMin           Decimal?
   salaryMax           Decimal?
   salaryCurrency      String?          @default("BOB")
@@ -233,13 +234,21 @@ model JobOffer {
   workSchedule        String
   workModality        WorkModality
   location            String
+  city                String?
+  state               String?
+  country             String?
   municipality        String
   department          String           @default("Cochabamba")
   experienceLevel     ExperienceLevel
   educationRequired   EducationLevel?
   skillsRequired      String[]
   desiredSkills       String[]
+  skills              String[]
+  tags                String[]
   applicationDeadline DateTime?
+  startDate           DateTime?
+  reportingTo         String?
+  isUrgent            Boolean          @default(false)
   isActive            Boolean          @default(true)
   status              JobStatus        @default(ACTIVE)
   viewsCount          Int              @default(0)

@@ -43,8 +43,9 @@ export default function JobAnalyticsPage() {
 
   // Calculate application status distribution
   const statusDistribution = {
-    pending: applications.filter(app => app.status === "PENDING").length,
-    interviewed: applications.filter(app => app.status === "INTERVIEWED").length,
+    sent: applications.filter(app => app.status === "SENT").length,
+    underReview: applications.filter(app => app.status === "UNDER_REVIEW").length,
+    preSelected: applications.filter(app => app.status === "PRE_SELECTED").length,
     hired: applications.filter(app => app.status === "HIRED").length,
     rejected: applications.filter(app => app.status === "REJECTED").length,
   };
@@ -208,13 +209,13 @@ export default function JobAnalyticsPage() {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-yellow-600">{statusDistribution.pending}</div>
-              <div className="text-sm text-muted-foreground">Pendientes</div>
+              <div className="text-2xl font-bold text-yellow-600">{statusDistribution.sent}</div>
+              <div className="text-sm text-muted-foreground">Enviados</div>
               <div className="w-full bg-muted rounded-full h-2 mt-2">
                 <div 
                   className="bg-yellow-600 h-2 rounded-full transition-all duration-300" 
                   style={{ 
-                    width: `${totalApplications > 0 ? (statusDistribution.pending / totalApplications) * 100 : 0}%`,
+                    width: `${totalApplications > 0 ? (statusDistribution.sent / totalApplications) * 100 : 0}%`,
                     minWidth: '0%'
                   }}
                 ></div>
@@ -222,13 +223,27 @@ export default function JobAnalyticsPage() {
             </div>
             
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{statusDistribution.interviewed}</div>
-              <div className="text-sm text-muted-foreground">Entrevistados</div>
+              <div className="text-2xl font-bold text-blue-600">{statusDistribution.underReview}</div>
+              <div className="text-sm text-muted-foreground">En Revisión</div>
               <div className="w-full bg-muted rounded-full h-2 mt-2">
                 <div 
                   className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
                   style={{ 
-                    width: `${totalApplications > 0 ? (statusDistribution.interviewed / totalApplications) * 100 : 0}%`,
+                    width: `${totalApplications > 0 ? (statusDistribution.underReview / totalApplications) * 100 : 0}%`,
+                    minWidth: '0%'
+                  }}
+                ></div>
+              </div>
+            </div>
+            
+            <div className="text-center">
+              <div className="text-2xl font-bold text-purple-600">{statusDistribution.preSelected}</div>
+              <div className="text-sm text-muted-foreground">Pre-seleccionados</div>
+              <div className="w-full bg-muted rounded-full h-2 mt-2">
+                <div 
+                  className="bg-purple-600 h-2 rounded-full transition-all duration-300" 
+                  style={{ 
+                    width: `${totalApplications > 0 ? (statusDistribution.preSelected / totalApplications) * 100 : 0}%`,
                     minWidth: '0%'
                   }}
                 ></div>
@@ -357,11 +372,11 @@ export default function JobAnalyticsPage() {
                   </div>
                 )}
                 
-                {statusDistribution.pending > 0 && (
+                {statusDistribution.sent > 0 && (
                   <div className="p-4 bg-yellow-50 rounded-lg">
                     <h4 className="font-medium text-yellow-900 mb-2">⏳ Acción Requerida</h4>
                     <p className="text-sm text-yellow-800">
-                      Tienes {statusDistribution.pending} aplicaciones pendientes de revisión. 
+                      Tienes {statusDistribution.sent} aplicaciones enviadas pendientes de revisión. 
                       Considera revisarlas pronto para no perder candidatos calificados.
                     </p>
                   </div>

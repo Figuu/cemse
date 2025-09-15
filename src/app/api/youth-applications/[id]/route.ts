@@ -5,12 +5,12 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
 const updateYouthApplicationSchema = z.object({
-  title: z.string().min(1).optional(),
-  description: z.string().min(1).optional(),
+  title: z.string().min(1, "Title is required").optional(),
+  description: z.string().min(1, "Description is required").optional(),
   cvFile: z.string().optional(),
   coverLetterFile: z.string().optional(),
-  cvUrl: z.string().optional(),
-  coverLetterUrl: z.string().optional(),
+  cvUrl: z.string().url().optional().or(z.literal("")),
+  coverLetterUrl: z.string().url().optional().or(z.literal("")),
   status: z.enum(["ACTIVE", "PAUSED", "CLOSED", "HIRED"]).optional(),
   isPublic: z.boolean().optional(),
 });
@@ -39,15 +39,12 @@ export async function GET(
             avatarUrl: true,
             phone: true,
             address: true,
-            city: true,
-            skillsWithLevel: true,
-            workExperience: true,
-            educationLevel: true,
-            professionalSummary: true,
-            birthDate: true,
-            languages: true,
-            projects: true,
-            achievements: true,
+            user: {
+              select: {
+                id: true,
+                email: true,
+              },
+            },
           },
         },
         companyInterests: {
@@ -57,13 +54,13 @@ export async function GET(
                 id: true,
                 name: true,
                 logoUrl: true,
-                // industry: true, // This field doesn't exist
-                // location: true, // This field doesn't exist in Company model
-                website: true,
+                ownerId: true,
               },
             },
           },
-          orderBy: { interestedAt: "desc" },
+          orderBy: {
+            interestedAt: "desc",
+          },
         },
         _count: {
           select: {
@@ -75,55 +72,21 @@ export async function GET(
 
     if (!application) {
       return NextResponse.json(
-        { error: "Application not found" },
+        { error: "Youth application not found" },
         { status: 404 }
       );
     }
 
-    // Check permissions
-    const canView = 
-      application.youthProfileId === session.user.id || // Owner
-      application.isPublic || // Public application
-      session.user.role === "SUPERADMIN"; // Admin can see all
-
+    // Check if user can view this application
+    const canView = application.isPublic || application.youthProfileId === session.user.id;
     if (!canView) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Forbidden" },
+        { status: 403 }
+      );
     }
 
-    // Increment view count if not the owner
-    if (application.youthProfileId !== session.user.id) {
-      await prisma.youthApplication.update({
-        where: { id },
-        data: { viewsCount: { increment: 1 } },
-      });
-    }
-
-    return NextResponse.json({
-      success: true,
-      application: {
-        id: application.id,
-        title: application.title,
-        description: application.description,
-        status: application.status,
-        isPublic: application.isPublic,
-        viewsCount: application.viewsCount,
-        applicationsCount: application.applicationsCount,
-        createdAt: application.createdAt.toISOString(),
-        updatedAt: application.updatedAt.toISOString(),
-        cvFile: application.cvFile,
-        coverLetterFile: application.coverLetterFile,
-        cvUrl: application.cvUrl,
-        coverLetterUrl: application.coverLetterUrl,
-        youth: {
-          id: application.youthProfile.userId,
-          email: '', // Email not available in profile
-          profile: application.youthProfile,
-        },
-        companyInterests: application.companyInterests,
-        totalInterests: application._count.companyInterests,
-      },
-    });
-
+    return NextResponse.json(application);
   } catch (error) {
     console.error("Error fetching youth application:", error);
     return NextResponse.json(
@@ -149,54 +112,53 @@ export async function PUT(
     const validatedData = updateYouthApplicationSchema.parse(body);
 
     // Check if application exists and user owns it
-    const application = await prisma.youthApplication.findUnique({
+    const existingApplication = await prisma.youthApplication.findUnique({
       where: { id },
-      select: { youthProfileId: true },
     });
 
-    if (!application) {
+    if (!existingApplication) {
       return NextResponse.json(
-        { error: "Application not found" },
+        { error: "Youth application not found" },
         { status: 404 }
       );
     }
 
-    if (application.youthProfileId !== session.user.id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    if (existingApplication.youthProfileId !== session.user.id) {
+      return NextResponse.json(
+        { error: "Forbidden" },
+        { status: 403 }
+      );
     }
 
-    const updatedApplication = await prisma.youthApplication.update({
+    const application = await prisma.youthApplication.update({
       where: { id },
       data: validatedData,
       include: {
-          youthProfile: {
-            select: {
-              userId: true,
-              firstName: true,
-              lastName: true,
-              avatarUrl: true,
+        youthProfile: {
+          select: {
+            userId: true,
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
+            phone: true,
+            address: true,
+            user: {
+              select: {
+                id: true,
+                email: true,
+              },
             },
           },
-      },
-    });
-
-    return NextResponse.json({
-      success: true,
-      application: {
-        id: updatedApplication.id,
-        title: updatedApplication.title,
-        description: updatedApplication.description,
-        status: updatedApplication.status,
-        isPublic: updatedApplication.isPublic,
-        updatedAt: updatedApplication.updatedAt.toISOString(),
-        youth: {
-          id: updatedApplication.youthProfile.userId,
-          email: '', // Email not available in profile
-          profile: updatedApplication.youthProfile,
+        },
+        _count: {
+          select: {
+            companyInterests: true,
+          },
         },
       },
     });
 
+    return NextResponse.json(application);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -227,33 +189,29 @@ export async function DELETE(
     const { id } = await params;
 
     // Check if application exists and user owns it
-    const application = await prisma.youthApplication.findUnique({
+    const existingApplication = await prisma.youthApplication.findUnique({
       where: { id },
-      select: { youthProfileId: true },
     });
 
-    if (!application) {
+    if (!existingApplication) {
       return NextResponse.json(
-        { error: "Application not found" },
+        { error: "Youth application not found" },
         { status: 404 }
       );
     }
 
-    if (application.youthProfileId !== session.user.id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    if (existingApplication.youthProfileId !== session.user.id) {
+      return NextResponse.json(
+        { error: "Forbidden" },
+        { status: 403 }
+      );
     }
 
-    // Soft delete by setting status to CLOSED
-    await prisma.youthApplication.update({
+    await prisma.youthApplication.delete({
       where: { id },
-      data: { status: "CLOSED" },
     });
 
-    return NextResponse.json({
-      success: true,
-      message: "Application closed successfully",
-    });
-
+    return NextResponse.json({ message: "Youth application deleted successfully" });
   } catch (error) {
     console.error("Error deleting youth application:", error);
     return NextResponse.json(

@@ -44,8 +44,8 @@ const jobFormSchema = z.object({
   salaryMin: z.number().positive().optional(),
   salaryMax: z.number().positive().optional(),
   currency: z.string(),
-  applicationDeadline: z.string().datetime().optional(),
-  startDate: z.string().datetime().optional(),
+  applicationDeadline: z.string().optional(),
+  startDate: z.string().optional(),
   tags: z.array(z.string()),
   skills: z.array(z.string()),
   department: z.string().optional(),
@@ -86,28 +86,52 @@ export function JobPostingForm({
     defaultValues: job ? {
       title: job.title,
       description: job.description,
-      requirements: job.requirements || [],
-      responsibilities: job.responsibilities || [],
-      benefits: job.benefits || [],
+      requirements: (() => {
+        const requirements = (job as any).requirements;
+        if (Array.isArray(requirements)) return requirements;
+        if (typeof requirements === 'string') return requirements.split('\n').filter(r => r.trim());
+        return [];
+      })(),
+      responsibilities: (job as any).responsibilities || job.responsibilities || [],
+      benefits: (() => {
+        const benefits = (job as any).benefits;
+        if (Array.isArray(benefits)) return benefits;
+        if (typeof benefits === 'string') return benefits.split('\n').filter(b => b.trim());
+        return [];
+      })(),
       location: job.location,
       city: job.city || "",
       state: job.state || "",
       country: job.country || "",
-      remoteWork: job.remoteWork,
-      hybridWork: job.hybridWork,
-      officeWork: job.officeWork,
-      employmentType: job.employmentType,
-      experienceLevel: job.experienceLevel,
-      salaryMin: job.salaryMin,
-      salaryMax: job.salaryMax,
-      currency: job.currency,
-      applicationDeadline: job.applicationDeadline || "",
-      startDate: job.startDate || "",
-      tags: job.tags || [],
-      skills: job.skills || [],
-      department: job.department || "",
-      reportingTo: job.reportingTo || "",
-      isUrgent: job.isUrgent,
+      remoteWork: (job as any).remoteWork || false,
+      hybridWork: (job as any).hybridWork || false,
+      officeWork: (job as any).officeWork || true,
+      employmentType: (job as any).contractType || job.employmentType || "FULL_TIME",
+      experienceLevel: job.experienceLevel || "ENTRY_LEVEL",
+      salaryMin: (job as any).salaryMin || job.salaryMin,
+      salaryMax: (job as any).salaryMax || job.salaryMax,
+      currency: (job as any).salaryCurrency || job.currency || "USD",
+      applicationDeadline: (() => {
+        const deadline = (job as any).applicationDeadline || job.applicationDeadline;
+        if (deadline) {
+          const date = new Date(deadline);
+          return date.toISOString().slice(0, 16); // Format for datetime-local input
+        }
+        return "";
+      })(),
+      startDate: (() => {
+        const startDate = (job as any).startDate || job.startDate;
+        if (startDate) {
+          const date = new Date(startDate);
+          return date.toISOString().slice(0, 16); // Format for datetime-local input
+        }
+        return "";
+      })(),
+      tags: (job as any).tags || job.tags || [],
+      skills: (job as any).skills || job.skills || [],
+      department: (job as any).department || job.department || "",
+      reportingTo: (job as any).reportingTo || job.reportingTo || "",
+      isUrgent: (job as any).isUrgent || job.isUrgent || false,
     } : {
       title: "",
       description: "",
@@ -203,8 +227,38 @@ export function JobPostingForm({
     setValue("skills", currentSkills.filter((_, i) => i !== index));
   };
 
+  const handleFormSubmit = (data: JobFormData) => {
+    console.log("JobPostingForm: Form submitted with data:", data);
+    
+    // Convert datetime-local format to ISO datetime for API
+    const processedData = {
+      ...data,
+      applicationDeadline: data.applicationDeadline 
+        ? new Date(data.applicationDeadline).toISOString() 
+        : undefined,
+      startDate: data.startDate 
+        ? new Date(data.startDate).toISOString() 
+        : undefined,
+    };
+    
+    console.log("JobPostingForm: Processed data for API:", processedData);
+    onSubmit(processedData);
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+      {/* Form Errors */}
+      {Object.keys(errors).length > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <h4 className="text-sm font-medium text-red-800 mb-2">Por favor corrige los siguientes errores:</h4>
+          <ul className="text-sm text-red-700 space-y-1">
+            {Object.entries(errors).map(([field, error]) => (
+              <li key={field}>• {error?.message}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      
       {/* Basic Information */}
       <Card>
         <CardHeader>
@@ -643,6 +697,9 @@ export function JobPostingForm({
                 type="datetime-local"
                 {...register("applicationDeadline")}
               />
+              {errors.applicationDeadline && (
+                <p className="text-sm text-red-500">{errors.applicationDeadline.message}</p>
+              )}
             </div>
             
             <div className="space-y-2">
@@ -652,6 +709,9 @@ export function JobPostingForm({
                 type="datetime-local"
                 {...register("startDate")}
               />
+              {errors.startDate && (
+                <p className="text-sm text-red-500">{errors.startDate.message}</p>
+              )}
             </div>
           </div>
 
@@ -671,7 +731,11 @@ export function JobPostingForm({
         <Button type="button" variant="outline" onClick={() => reset()}>
           Cancelar
         </Button>
-        <Button type="submit" disabled={isLoading}>
+        <Button 
+          type="submit" 
+          disabled={isLoading}
+          onClick={() => console.log("Submit button clicked")}
+        >
           {isLoading ? "Guardando..." : mode === "create" ? "Publicar Trabajo" : "Actualizar Trabajo"}
         </Button>
       </div>

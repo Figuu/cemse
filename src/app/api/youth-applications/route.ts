@@ -9,8 +9,8 @@ const createYouthApplicationSchema = z.object({
   description: z.string().min(1, "Description is required"),
   cvFile: z.string().optional(),
   coverLetterFile: z.string().optional(),
-  cvUrl: z.string().optional(),
-  coverLetterUrl: z.string().optional(),
+  cvUrl: z.string().url().optional().or(z.literal("")),
+  coverLetterUrl: z.string().url().optional().or(z.literal("")),
   isPublic: z.boolean().default(true),
 });
 
@@ -25,58 +25,35 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
-    const search = searchParams.get("search");
-    const status = searchParams.get("status");
+    const search = searchParams.get("search") || "";
+    const status = searchParams.get("status") || "";
     const sortBy = searchParams.get("sortBy") || "createdAt";
     const sortOrder = searchParams.get("sortOrder") || "desc";
-    const userId = searchParams.get("userId"); // To filter by specific user
 
     const skip = (page - 1) * limit;
 
-    // Build where clause based on user role
-    const where: Record<string, unknown> = {};
+    // Build where clause
+    const where: any = {
+      isPublic: true,
+      status: "ACTIVE",
+    };
 
-    if (session.user.role === "YOUTH") {
-      // Youth users can only see their own applications
-      where.youthProfileId = session.user.id;
-    } else if (session.user.role === "COMPANIES") {
-      // Companies can see all public applications
-      where.isPublic = true;
-      where.status = "ACTIVE"; // Only show active applications to companies
-    } else {
-      // Admin and institutions can see all applications
-      where.isPublic = true;
-    }
-
-    // Apply additional filters
     if (search) {
       where.OR = [
         { title: { contains: search, mode: "insensitive" } },
         { description: { contains: search, mode: "insensitive" } },
-        { youthProfile: { 
-            profile: {
-              OR: [
-                { firstName: { contains: search, mode: "insensitive" } },
-                { lastName: { contains: search, mode: "insensitive" } }
-              ]
-            }
-          }
-        }
       ];
     }
 
-    if (status && status !== "all") {
+    if (status) {
       where.status = status;
     }
 
-    if (userId) {
-      where.youthProfileId = userId;
-    }
-
-    // Build orderBy clause
-    const orderBy: Record<string, string> = {};
+    const orderBy: any = {};
     orderBy[sortBy] = sortOrder;
 
+    console.log("Youth applications query where clause:", JSON.stringify(where, null, 2));
+    
     const [applications, total] = await Promise.all([
       prisma.youthApplication.findMany({
         where,
@@ -86,26 +63,32 @@ export async function GET(request: NextRequest) {
         include: {
           youthProfile: {
             select: {
-              // userId: true, // This field doesn't exist on User model
+              userId: true,
               firstName: true,
               lastName: true,
               avatarUrl: true,
+              phone: true,
+              address: true,
               city: true,
-              skillsWithLevel: true,
+              skills: true,
               workExperience: true,
               educationLevel: true,
-              phone: true,
+              currentInstitution: true,
+              user: {
+                select: {
+                  id: true,
+                  email: true,
+                },
+              },
             },
           },
           companyInterests: {
-            where: session.user.role === "COMPANIES" ? { companyId: session.user.id } : {},
             include: {
               company: {
                 select: {
                   id: true,
                   name: true,
                   logoUrl: true,
-                  // industry: true, // This field doesn't exist
                 },
               },
             },
@@ -120,55 +103,42 @@ export async function GET(request: NextRequest) {
       prisma.youthApplication.count({ where }),
     ]);
 
-    const totalPages = Math.ceil(total / limit);
-
-    // Transform applications for frontend
+    console.log(`Found ${applications.length} youth applications out of ${total} total`);
+    console.log("Raw applications:", JSON.stringify(applications, null, 2));
+    
+    // Transform the data to match the expected structure
     const transformedApplications = applications.map(app => ({
-      id: app.id,
-      title: app.title,
-      description: app.description,
-      status: app.status,
-      isPublic: app.isPublic,
-      viewsCount: app.viewsCount,
-      applicationsCount: app.applicationsCount,
-      createdAt: app.createdAt.toISOString(),
-      updatedAt: app.updatedAt.toISOString(),
-      cvFile: app.cvFile,
-      coverLetterFile: app.coverLetterFile,
-      cvUrl: app.cvUrl,
-      coverLetterUrl: app.coverLetterUrl,
+      ...app,
       youth: {
-        id: app.youthProfileId,
-        email: '', // Email not available in profile
+        id: app.youthProfile.userId,
+        email: app.youthProfile.user.email,
         profile: {
-          firstName: app.youthProfile.firstName || "",
-          lastName: app.youthProfile.lastName || "",
+          firstName: app.youthProfile.firstName || '',
+          lastName: app.youthProfile.lastName || '',
           avatarUrl: app.youthProfile.avatarUrl,
           city: app.youthProfile.city,
-          skills: app.youthProfile.skillsWithLevel || [],
+          skills: app.youthProfile.skills || [],
           experience: app.youthProfile.workExperience || [],
-          education: app.youthProfile.educationLevel,
+          education: app.youthProfile.educationLevel || app.youthProfile.currentInstitution,
           phone: app.youthProfile.phone,
         },
       },
-      companyInterests: app.companyInterests,
       totalInterests: app._count.companyInterests,
-      hasInterest: session.user.role === "COMPANIES" ? app.companyInterests.length > 0 : false,
     }));
+    
+    console.log("Transformed applications:", JSON.stringify(transformedApplications, null, 2));
 
     return NextResponse.json({
-      success: true,
       applications: transformedApplications,
       pagination: {
         page,
         limit,
         total,
-        totalPages,
-        hasNext: page < totalPages,
+        totalPages: Math.ceil(total / limit),
+        hasNext: page < Math.ceil(total / limit),
         hasPrev: page > 1,
       },
     });
-
   } catch (error) {
     console.error("Error fetching youth applications:", error);
     return NextResponse.json(
@@ -186,28 +156,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Only YOUTH role can create youth applications
+    // Check if user is a youth
     if (session.user.role !== "YOUTH") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const body = await request.json();
     const validatedData = createYouthApplicationSchema.parse(body);
-
-    // Check if user has an active application already
-    const existingApplication = await prisma.youthApplication.findFirst({
-      where: {
-        youthProfileId: session.user.id,
-        status: "ACTIVE",
-      },
-    });
-
-    if (existingApplication) {
-      return NextResponse.json(
-        { error: "You already have an active application. Please close it before creating a new one." },
-        { status: 400 }
-      );
-    }
 
     const application = await prisma.youthApplication.create({
       data: {
@@ -217,36 +172,29 @@ export async function POST(request: NextRequest) {
       include: {
         youthProfile: {
           select: {
-            id: true,
+            userId: true,
             firstName: true,
             lastName: true,
             avatarUrl: true,
+            phone: true,
+            address: true,
+            user: {
+              select: {
+                id: true,
+                email: true,
+              },
+            },
+          },
+        },
+        _count: {
+          select: {
+            companyInterests: true,
           },
         },
       },
     });
 
-    return NextResponse.json({
-      success: true,
-      application: {
-        id: application.id,
-        title: application.title,
-        description: application.description,
-        status: application.status,
-        isPublic: application.isPublic,
-        createdAt: application.createdAt.toISOString(),
-        youth: {
-          id: application.youthProfileId,
-          email: "",
-          profile: {
-            firstName: application.youthProfile.firstName,
-            lastName: application.youthProfile.lastName,
-            avatarUrl: application.youthProfile.avatarUrl,
-          },
-        },
-      },
-    });
-
+    return NextResponse.json(application, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
@@ -146,16 +148,37 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Check if user is a company
+    if (session.user.role !== "COMPANIES") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const body = await request.json();
     const validatedData = createCompanySchema.parse(body);
 
-    // Get user ID from session (in real app, this would come from auth)
-    const userId = "user-1"; // Mock user ID
+    // Check if user already has a company
+    const existingCompany = await prisma.company.findFirst({
+      where: { createdBy: session.user.id }
+    });
+
+    if (existingCompany) {
+      return NextResponse.json(
+        { error: "User already has a company" },
+        { status: 400 }
+      );
+    }
 
     const company = await prisma.company.create({
       data: {
         ...validatedData,
-        createdBy: userId,
+        createdBy: session.user.id,
+        ownerId: session.user.id,
         password: "default-password", // This should be properly handled in production
       },
       include: {

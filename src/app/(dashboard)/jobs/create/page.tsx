@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Briefcase, X } from "lucide-react";
+import { ArrowLeft, Briefcase, X, Plus } from "lucide-react";
 import { JobPostingForm } from "@/components/jobs/JobPostingForm";
 import { useCreateJob } from "@/hooks/useJobs";
 import { useSession } from "next-auth/react";
@@ -18,18 +18,29 @@ export default function CreateJobPage() {
   const [showExitDialog, setShowExitDialog] = useState(false);
 
   // Get the company for the current user
-  const { data: company, isLoading: companyLoading } = useCompanyByUser(session?.user?.id || "");
+  const { data: company, isLoading: companyLoading, error: companyError } = useCompanyByUser(session?.user?.id || "");
   const createJobMutation = useCreateJob(company?.id || "");
 
+  console.log("Company loading state:", { companyLoading, company, companyError, userId: session?.user?.id });
+
   const handleSubmit = async (data: any) => {
-    if (!company?.id) return;
+    console.log("Form submitted with data:", data);
+    console.log("Company ID:", company?.id);
+    
+    if (!company?.id) {
+      console.error("No company ID found");
+      return;
+    }
     
     setIsSubmitting(true);
     try {
+      console.log("Creating job...");
       const newJob = await createJobMutation.mutateAsync(data);
+      console.log("Job created successfully:", newJob);
       router.push(`/jobs/${newJob.id}`);
     } catch (error) {
       console.error("Error creating job:", error);
+      // You could add a toast notification here
     } finally {
       setIsSubmitting(false);
     }
@@ -60,14 +71,22 @@ export default function CreateJobPage() {
           <Briefcase className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <h3 className="text-lg font-semibold mb-2">Empresa no encontrada</h3>
           <p className="text-muted-foreground mb-4">
-            Primero necesitas crear o configurar tu empresa
+            Primero necesitas crear o configurar tu empresa para publicar trabajos
           </p>
-          <Link href="/company">
-            <Button>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Ir a Mi Empresa
-            </Button>
-          </Link>
+          <div className="flex gap-2 justify-center">
+            <Link href="/companies/create">
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Crear Empresa
+              </Button>
+            </Link>
+            <Link href="/company">
+              <Button variant="outline">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Ir a Mi Empresa
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
     );

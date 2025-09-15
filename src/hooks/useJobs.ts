@@ -97,6 +97,20 @@ export function useJob(companyId: string, jobId: string) {
   });
 }
 
+export function useJobById(jobId: string) {
+  return useQuery({
+    queryKey: ["job-by-id", jobId],
+    queryFn: async (): Promise<JobPosting> => {
+      const response = await fetch(`/api/jobs/${jobId}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch job");
+      }
+      return response.json();
+    },
+    enabled: !!jobId,
+  });
+}
+
 export function useCreateJob(companyId: string) {
   const queryClient = useQueryClient();
 

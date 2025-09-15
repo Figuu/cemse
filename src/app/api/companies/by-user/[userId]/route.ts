@@ -1,12 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const { userId } = params;
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { userId } = await params;
 
     if (!userId) {
       return NextResponse.json(
@@ -15,11 +23,28 @@ export async function GET(
       );
     }
 
+    // Check if the user is requesting their own company or is an admin
+    if (session.user.id !== userId && session.user.role !== "SUPERADMIN") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     // Find the company owned by this user
+    console.log(`Looking for company with userId: ${userId}`);
+    
+    // Debug: Check all companies to see what's in the database
+    const allCompanies = await prisma.company.findMany({
+      select: { id: true, name: true, createdBy: true, ownerId: true, isActive: true }
+    });
+    console.log('All companies in database:', allCompanies);
+    
     const company = await prisma.company.findFirst({
       where: {
-        createdBy: userId,
-        isActive: true,
+        OR: [
+          { createdBy: userId },
+          { ownerId: userId }
+        ],
+        // Temporarily remove isActive filter to debug
+        // isActive: true,
       },
       include: {
         creator: {
@@ -45,7 +70,10 @@ export async function GET(
       },
     });
 
+    console.log('Found company:', company);
+    
     if (!company) {
+      console.log(`No company found for userId: ${userId}`);
       return NextResponse.json(
         { error: "Company not found for this user" },
         { status: 404 }

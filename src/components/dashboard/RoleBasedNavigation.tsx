@@ -21,7 +21,8 @@ import {
   Award,
   Bookmark,
   Search,
-  Compass
+  Compass,
+  UserPlus
 } from "lucide-react";
 import { UserRole } from "@/types";
 
@@ -49,7 +50,9 @@ export function RoleBasedNavigation({ role, className }: RoleBasedNavigationProp
           { name: "Cursos", href: "/courses", icon: GraduationCap },
           { name: "Descubrir", href: "/discover", icon: Compass },
           { name: "Empleos", href: "/jobs", icon: Briefcase },
+          { name: "Mis Aplicaciones", href: "/youth-applications", icon: UserPlus },
           { name: "Aplicaciones", href: "/applications", icon: FileText },
+          { name: "Mensajes", href: "/messages", icon: MessageSquare },
           { name: "Trabajos Guardados", href: "/jobs/bookmarked", icon: Bookmark },
           { name: "Búsquedas Guardadas", href: "/jobs/saved-searches", icon: Search },
           { name: "Perfiles", href: "/profiles", icon: Users },
@@ -62,7 +65,9 @@ export function RoleBasedNavigation({ role, className }: RoleBasedNavigationProp
         return [
           { name: "Inicio", href: "/dashboard", icon: BookOpen },
           { name: "Ofertas de Trabajo", href: "/jobs", icon: Briefcase },
+          { name: "Descubrir Talento", href: "/talent", icon: UserPlus },
           { name: "Candidatos", href: "/candidates", icon: UserCheck },
+          { name: "Candidatos Jóvenes", href: "/candidates/youth", icon: UserPlus },
           { name: "Mi Empresa", href: "/company", icon: Building2 },
           { name: "Mensajes", href: "/messages", icon: MessageSquare },
           { name: "Estadísticas", href: "/analytics", icon: BarChart3 },

@@ -18,7 +18,12 @@ export async function GET() {
 
     // Get company ID from user
     const company = await prisma.company.findFirst({
-      where: { createdBy: session.user.id },
+      where: { 
+        OR: [
+          { createdBy: session.user.id },
+          { ownerId: session.user.id }
+        ]
+      },
       select: { id: true }
     });
 

@@ -2,6 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { z } from "zod";
+
+const sendMessageSchema = z.object({
+  recipientId: z.string(),
+  content: z.string().min(1, "Message content is required"),
+  contextType: z.enum(["JOB_APPLICATION", "YOUTH_APPLICATION", "ENTREPRENEURSHIP", "GENERAL"]),
+  contextId: z.string().optional(),
+});
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,20 +19,24 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    console.log("Messages API - Session user ID:", session.user.id);
+
     const { searchParams } = new URL(request.url);
-    const contextType = searchParams.get("contextType") as "JOB_APPLICATION" | "YOUTH_APPLICATION" | "ENTREPRENEURSHIP" | "GENERAL" | null;
-    const contextId = searchParams.get("contextId");
     const recipientId = searchParams.get("recipientId");
+    const contextType = searchParams.get("contextType");
+    const contextId = searchParams.get("contextId");
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "50");
 
+    console.log("Messages API - Query params:", { recipientId, contextType, contextId, page, limit });
+
     const skip = (page - 1) * limit;
 
-    // Build where clause based on filters
-    const where: Record<string, unknown> = {
+    // Build where clause
+    const where: any = {
       OR: [
-        { senderId: session.user.id },
-        { recipientId: session.user.id }
+        { senderId: session.user.id, recipientId: recipientId || undefined },
+        { senderId: recipientId || undefined, recipientId: session.user.id }
       ]
     };
 
@@ -36,22 +48,10 @@ export async function GET(request: NextRequest) {
       where.contextId = contextId;
     }
 
-    if (recipientId) {
-      where.AND = [
-        {
-          OR: [
-            { senderId: session.user.id, recipientId },
-            { senderId: recipientId, recipientId: session.user.id }
-          ]
-        }
-      ];
-    }
-
-    // Get messages with pagination
-    const [messages, totalCount] = await Promise.all([
+    const [messages, total] = await Promise.all([
       prisma.message.findMany({
         where,
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: "asc" },
         skip,
         take: limit,
         include: {
@@ -61,13 +61,6 @@ export async function GET(request: NextRequest) {
               firstName: true,
               lastName: true,
               avatarUrl: true,
-              user: {
-                select: {
-                  id: true,
-                  email: true,
-                  role: true,
-                },
-              },
             },
           },
           recipient: {
@@ -76,13 +69,6 @@ export async function GET(request: NextRequest) {
               firstName: true,
               lastName: true,
               avatarUrl: true,
-              user: {
-                select: {
-                  id: true,
-                  email: true,
-                  role: true,
-                },
-              },
             },
           },
         },
@@ -90,45 +76,27 @@ export async function GET(request: NextRequest) {
       prisma.message.count({ where }),
     ]);
 
-    // Transform messages for frontend
-    const transformedMessages = messages.map(message => ({
-      id: message.id,
-      senderId: message.senderId,
-      recipientId: message.recipientId,
-      content: message.content,
-      messageType: message.messageType,
-      isRead: !!message.readAt,
-      contextType: message.contextType,
-      contextId: message.contextId,
-      createdAt: message.createdAt.toISOString(),
-      updatedAt: message.createdAt.toISOString(), // Use createdAt since updatedAt doesn't exist
-      sender: {
-        id: message.sender.user.id,
-        name: `${message.sender.firstName || ''} ${message.sender.lastName || ''}`.trim(),
-        role: message.sender.user.role,
-        avatar: message.sender.avatarUrl,
+    // Mark messages as read
+    await prisma.message.updateMany({
+      where: {
+        recipientId: session.user.id,
+        senderId: recipientId || undefined,
+        readAt: null,
       },
-      recipient: {
-        id: message.recipient.user.id,
-        name: `${message.recipient.firstName || ''} ${message.recipient.lastName || ''}`.trim(),
-        role: message.recipient.user.role,
-        avatar: message.recipient.avatarUrl,
-      },
-    }));
-
-    return NextResponse.json({
-      success: true,
-      messages: transformedMessages,
-      pagination: {
-        page,
-        limit,
-        totalCount,
-        totalPages: Math.ceil(totalCount / limit),
-        hasNextPage: page < Math.ceil(totalCount / limit),
-        hasPreviousPage: page > 1,
+      data: {
+        readAt: new Date(),
       },
     });
 
+    return NextResponse.json({
+      messages,
+      pagination: {
+        page,
+        limit,
+        total,
+        hasMore: skip + limit < total,
+      },
+    });
   } catch (error) {
     console.error("Error fetching messages:", error);
     return NextResponse.json(
@@ -147,36 +115,29 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { 
-      recipientId, 
-      content, 
-      messageType = "text", 
-      contextType = "GENERAL", 
-      contextId = null 
-    } = body;
+    console.log("Messages API - POST body:", body);
+    const validatedData = sendMessageSchema.parse(body);
+    console.log("Messages API - Validated data:", validatedData);
 
-    if (!recipientId || !content || content.trim().length === 0) {
-      return NextResponse.json({ error: "Recipient ID and content are required" }, { status: 400 });
-    }
-
-    // Verify recipient exists
+    // Check if recipient exists
     const recipient = await prisma.profile.findUnique({
-      where: { userId: recipientId },
+      where: { userId: validatedData.recipientId },
     });
 
     if (!recipient) {
-      return NextResponse.json({ error: "Recipient not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Recipient not found" },
+        { status: 404 }
+      );
     }
 
-    // Create message
-    const newMessage = await prisma.message.create({
+    const message = await prisma.message.create({
       data: {
         senderId: session.user.id,
-        recipientId,
-        content: content.trim(),
-        messageType,
-        contextType,
-        contextId,
+        recipientId: validatedData.recipientId,
+        content: validatedData.content,
+        contextType: validatedData.contextType,
+        contextId: validatedData.contextId,
       },
       include: {
         sender: {
@@ -185,13 +146,6 @@ export async function POST(request: NextRequest) {
             firstName: true,
             lastName: true,
             avatarUrl: true,
-            user: {
-              select: {
-                id: true,
-                email: true,
-                role: true,
-              },
-            },
           },
         },
         recipient: {
@@ -200,52 +154,23 @@ export async function POST(request: NextRequest) {
             firstName: true,
             lastName: true,
             avatarUrl: true,
-            user: {
-              select: {
-                id: true,
-                email: true,
-                role: true,
-              },
-            },
           },
         },
       },
     });
 
-    // Note: Notification creation removed as Notification model doesn't exist
-
-    return NextResponse.json({
-      success: true,
-      message: {
-        id: newMessage.id,
-        senderId: newMessage.senderId,
-        recipientId: newMessage.recipientId,
-        content: newMessage.content,
-        messageType: newMessage.messageType,
-        isRead: !!newMessage.readAt,
-        contextType: newMessage.contextType,
-        contextId: newMessage.contextId,
-        createdAt: newMessage.createdAt.toISOString(),
-        updatedAt: newMessage.createdAt.toISOString(), // Use createdAt since updatedAt doesn't exist
-        sender: {
-          id: newMessage.sender.user.id,
-          name: `${newMessage.sender.firstName || ''} ${newMessage.sender.lastName || ''}`.trim(),
-          role: newMessage.sender.user.role,
-          avatar: newMessage.sender.avatarUrl,
-        },
-        recipient: {
-          id: newMessage.recipient.user.id,
-          name: `${newMessage.recipient.firstName || ''} ${newMessage.recipient.lastName || ''}`.trim(),
-          role: newMessage.recipient.user.role,
-          avatar: newMessage.recipient.avatarUrl,
-        },
-      },
-    });
-
+    return NextResponse.json(message, { status: 201 });
   } catch (error) {
-    console.error("Error creating message:", error);
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: "Validation error", details: error.issues },
+        { status: 400 }
+      );
+    }
+
+    console.error("Error sending message:", error);
     return NextResponse.json(
-      { error: "Failed to create message" },
+      { error: "Failed to send message" },
       { status: 500 }
     );
   }

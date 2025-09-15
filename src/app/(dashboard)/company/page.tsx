@@ -27,6 +27,7 @@ import {
   AlertTriangle,
   RefreshCw
 } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 
 
@@ -68,6 +69,40 @@ function CompanyPageContent() {
   }
 
   if (error) {
+    // If the error is "Company not found", show company creation option
+    if (error.includes("Company not found")) {
+      return (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Panel de Empresa</h1>
+              <p className="text-muted-foreground">Gestiona tus ofertas de trabajo y candidatos</p>
+            </div>
+          </div>
+          
+          <Card className="p-8 text-center">
+            <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Empresa no encontrada</h3>
+            <p className="text-muted-foreground mb-4">
+              Primero necesitas crear o configurar tu empresa para acceder al panel de empresa.
+            </p>
+            <div className="flex gap-2 justify-center">
+              <Link href="/companies/create">
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Crear Empresa
+                </Button>
+              </Link>
+              <Button onClick={refetch} variant="outline">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Reintentar
+              </Button>
+            </div>
+          </Card>
+        </div>
+      );
+    }
+
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">

@@ -25,11 +25,10 @@ import { JobPosting } from "@/types/company";
 
 const applicationFormSchema = z.object({
   coverLetter: z.string().optional(),
-  resume: z.string().optional(),
-  portfolio: z.string().url().optional().or(z.literal("")),
-  linkedinProfile: z.string().url().optional().or(z.literal("")),
-  githubProfile: z.string().url().optional().or(z.literal("")),
   notes: z.string().optional(),
+  cvData: z.any().optional(), // JSON field for additional CV data
+  cvFile: z.string().optional(), // File path/URL for CV
+  coverLetterFile: z.string().optional(), // File path/URL for cover letter
 });
 
 type ApplicationFormData = z.infer<typeof applicationFormSchema>;
@@ -58,7 +57,8 @@ export function JobApplicationForm({
   isLoading = false,
   currentUser
 }: JobApplicationFormProps) {
-  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [cvFile, setCvFile] = useState<File | null>(null);
+  const [coverLetterFile, setCoverLetterFile] = useState<File | null>(null);
 
   const {
     register,
@@ -69,37 +69,49 @@ export function JobApplicationForm({
     resolver: zodResolver(applicationFormSchema),
     defaultValues: {
       coverLetter: "",
-      resume: "",
-      portfolio: "",
-      linkedinProfile: "",
-      githubProfile: "",
       notes: "",
+      cvData: null,
+      cvFile: "",
+      coverLetterFile: "",
     },
   });
 
   const watchedValues = watch();
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCvFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      setResumeFile(file);
+      setCvFile(file);
+      // In a real app, you would upload the file and get a URL
+      // For now, we'll just store the file name
+    }
+  };
+
+  const handleCoverLetterFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setCoverLetterFile(file);
       // In a real app, you would upload the file and get a URL
       // For now, we'll just store the file name
     }
   };
 
   const formatSalary = () => {
-    if (!job.salaryMin && !job.salaryMax) return null;
+    const salaryMin = (job as any).salaryMin || job.salaryMin;
+    const salaryMax = (job as any).salaryMax || job.salaryMax;
+    const currency = (job as any).salaryCurrency || job.currency || "USD";
     
-    const min = job.salaryMin ? job.salaryMin.toLocaleString() : "";
-    const max = job.salaryMax ? job.salaryMax.toLocaleString() : "";
+    if (!salaryMin && !salaryMax) return null;
+    
+    const min = salaryMin ? salaryMin.toLocaleString() : "";
+    const max = salaryMax ? salaryMax.toLocaleString() : "";
     
     if (min && max) {
-      return `${min} - ${max} ${job.currency}`;
+      return `${min} - ${max} ${currency}`;
     } else if (min) {
-      return `Desde ${min} ${job.currency}`;
+      return `Desde ${min} ${currency}`;
     } else if (max) {
-      return `Hasta ${max} ${job.currency}`;
+      return `Hasta ${max} ${currency}`;
     }
     
     return null;
@@ -119,21 +131,21 @@ export function JobApplicationForm({
           <div className="space-y-4">
             <div>
               <h3 className="text-xl font-semibold">{job.title}</h3>
-              <p className="text-muted-foreground">{job.company.name}</p>
+              <p className="text-muted-foreground">{(job as any).company?.name || job.company?.name || "Empresa no especificada"}</p>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div className="flex items-center gap-2">
                 <MapPin className="h-4 w-4 text-muted-foreground" />
-                <span>{job.location}</span>
+                <span>{job.location || "Ubicación no especificada"}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span>{job.employmentType}</span>
+                <span>{(job as any).contractType || job.employmentType || "No especificado"}</span>
               </div>
               <div className="flex items-center gap-2">
                 <User className="h-4 w-4 text-muted-foreground" />
-                <span>{job.experienceLevel}</span>
+                <span>{job.experienceLevel || "No especificado"}</span>
               </div>
               {formatSalary() && (
                 <div className="flex items-center gap-2">
@@ -151,11 +163,16 @@ export function JobApplicationForm({
               </div>
             )}
 
-            {job.requirements.length > 0 && (
+            {job.requirements && job.requirements.length > 0 && (
               <div>
                 <h4 className="font-medium mb-2">Requisitos</h4>
                 <ul className="text-sm text-muted-foreground space-y-1">
-                  {job.requirements.map((requirement, index) => (
+                  {(() => {
+                    const requirements = (job as any).requirements;
+                    if (Array.isArray(requirements)) return requirements;
+                    if (typeof requirements === 'string') return requirements.split('\n').filter(r => r.trim());
+                    return [];
+                  })().map((requirement, index) => (
                     <li key={index} className="flex items-start gap-2">
                       <span className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0"></span>
                       {requirement}
@@ -165,19 +182,25 @@ export function JobApplicationForm({
               </div>
             )}
 
-            {job.responsibilities.length > 0 && (
-              <div>
-                <h4 className="font-medium mb-2">Responsabilidades</h4>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  {job.responsibilities.map((responsibility, index) => (
-                    <li key={index} className="flex items-start gap-2">
-                      <span className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0"></span>
-                      {responsibility}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            {(() => {
+              const responsibilities = (job as any).responsibilities;
+              if (responsibilities && responsibilities.length > 0) {
+                return (
+                  <div>
+                    <h4 className="font-medium mb-2">Responsabilidades</h4>
+                    <ul className="text-sm text-muted-foreground space-y-1">
+                      {responsibilities.map((responsibility: string, index: number) => (
+                        <li key={index} className="flex items-start gap-2">
+                          <span className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0"></span>
+                          {responsibility}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              }
+              return null;
+            })()}
           </div>
         </CardContent>
       </Card>
@@ -230,13 +253,13 @@ export function JobApplicationForm({
             <div className="space-y-4">
               <h4 className="font-medium">Documentos</h4>
               <div className="space-y-2">
-                <Label htmlFor="resume">CV/Resume</Label>
+                <Label htmlFor="cvFile">CV/Resume</Label>
                 <div className="flex items-center gap-2">
                   <Input
-                    id="resume"
+                    id="cvFile"
                     type="file"
                     accept=".pdf,.doc,.docx"
-                    onChange={handleFileUpload}
+                    onChange={handleCvFileUpload}
                     className="flex-1"
                   />
                   <Button type="button" variant="outline" size="sm">
@@ -244,66 +267,14 @@ export function JobApplicationForm({
                     Subir
                   </Button>
                 </div>
-                {resumeFile && (
+                {cvFile && (
                   <p className="text-sm text-muted-foreground">
-                    Archivo seleccionado: {resumeFile.name}
+                    Archivo seleccionado: {cvFile.name}
                   </p>
                 )}
               </div>
             </div>
 
-            {/* Portfolio and Profiles */}
-            <div className="space-y-4">
-              <h4 className="font-medium">Portfolio y Perfiles</h4>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="portfolio">Portfolio (URL)</Label>
-                  <div className="flex gap-2">
-                    <ExternalLink className="h-4 w-4 mt-3 text-muted-foreground" />
-                    <Input
-                      id="portfolio"
-                      {...register("portfolio")}
-                      placeholder="https://tu-portfolio.com"
-                    />
-                  </div>
-                  {errors.portfolio && (
-                    <p className="text-sm text-destructive">{errors.portfolio.message}</p>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="linkedinProfile">LinkedIn</Label>
-                    <div className="flex gap-2">
-                      <ExternalLink className="h-4 w-4 mt-3 text-muted-foreground" />
-                      <Input
-                        id="linkedinProfile"
-                        {...register("linkedinProfile")}
-                        placeholder="https://linkedin.com/in/tu-perfil"
-                      />
-                    </div>
-                    {errors.linkedinProfile && (
-                      <p className="text-sm text-destructive">{errors.linkedinProfile.message}</p>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="githubProfile">GitHub</Label>
-                    <div className="flex gap-2">
-                      <ExternalLink className="h-4 w-4 mt-3 text-muted-foreground" />
-                      <Input
-                        id="githubProfile"
-                        {...register("githubProfile")}
-                        placeholder="https://github.com/tu-usuario"
-                      />
-                    </div>
-                    {errors.githubProfile && (
-                      <p className="text-sm text-destructive">{errors.githubProfile.message}</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
 
             {/* Cover Letter */}
             <div className="space-y-4">
@@ -346,19 +317,7 @@ export function JobApplicationForm({
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">CV/Resume:</span>
-                    <span>{resumeFile ? resumeFile.name : "No seleccionado"}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Portfolio:</span>
-                    <span>{watchedValues.portfolio || "No proporcionado"}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">LinkedIn:</span>
-                    <span>{watchedValues.linkedinProfile || "No proporcionado"}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">GitHub:</span>
-                    <span>{watchedValues.githubProfile || "No proporcionado"}</span>
+                    <span>{cvFile ? cvFile.name : "No seleccionado"}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Carta de Presentación:</span>

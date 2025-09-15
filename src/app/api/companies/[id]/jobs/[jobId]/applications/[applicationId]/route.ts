@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
@@ -79,13 +81,18 @@ export async function PUT(
     const validatedData = updateApplicationSchema.parse(body);
 
     const { id: companyId, jobId, applicationId } = await params;
-    // Get user ID from session (in real app, this would come from auth)
-    const userId = "user-1"; // Mock user ID
+    
+    // Get user ID from session
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const userId = session.user.id;
 
     // Check if user owns the company
     const company = await prisma.company.findUnique({
       where: { id: companyId },
-      select: { createdBy: true },
+      select: { ownerId: true },
     });
 
     if (!company) {
@@ -95,7 +102,7 @@ export async function PUT(
       );
     }
 
-    if (company.createdBy !== userId) {
+    if (company.ownerId !== userId) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 403 }
@@ -173,8 +180,13 @@ export async function DELETE(
 ) {
   try {
     const { id: companyId, jobId, applicationId } = await params;
-    // Get user ID from session (in real app, this would come from auth)
-    const userId = "user-1"; // Mock user ID
+    
+    // Get user ID from session
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const userId = session.user.id;
 
     // Check if user owns the company or is the applicant
     const application = await prisma.jobApplication.findFirst({
@@ -189,7 +201,7 @@ export async function DELETE(
         jobOffer: {
           select: {
             company: {
-              select: { createdBy: true },
+              select: { ownerId: true },
             },
           },
         },
@@ -203,7 +215,7 @@ export async function DELETE(
       );
     }
 
-    const isCompanyOwner = application.jobOffer.company.createdBy === userId;
+    const isCompanyOwner = application.jobOffer.company.ownerId === userId;
     const isApplicant = application.applicantId === userId;
 
     if (!isCompanyOwner && !isApplicant) {

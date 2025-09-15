@@ -228,8 +228,6 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const { firstName, lastName, phone, address, jobTitle, professionalSummary, experienceLevel } = body;
 
-    console.log("Profile update request:", { userId: session.user.id, body });
-
     // Update user's profile
     const updatedProfile = await prisma.profile.update({
       where: { userId: session.user.id },
@@ -252,8 +250,6 @@ export async function PUT(request: NextRequest) {
         }
       },
     });
-
-    console.log("Profile updated successfully:", updatedProfile);
 
     return NextResponse.json({
       success: true,
