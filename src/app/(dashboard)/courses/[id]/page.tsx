@@ -243,7 +243,7 @@ export default function CourseDetailPage() {
     : null;
 
   return (
-    <RoleGuard allowedRoles={["YOUTH", "COMPANIES", "INSTITUTION", "ADMIN", "INSTRUCTOR"]}>
+    <RoleGuard allowedRoles={["YOUTH", "COMPANIES", "INSTITUTION", "SUPERADMIN"]}>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">

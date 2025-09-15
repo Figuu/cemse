@@ -352,7 +352,7 @@ export default function CourseEditPage() {
   }
 
   return (
-    <RoleGuard allowedRoles={["INSTITUTION", "ADMIN"]}>
+    <RoleGuard allowedRoles={["INSTITUTION", "SUPERADMIN"]}>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">

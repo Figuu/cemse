@@ -217,6 +217,69 @@ export async function GET(request: NextRequest) {
   }
 }
 
+export async function PUT(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { firstName, lastName, phone, address, jobTitle, professionalSummary, experienceLevel } = body;
+
+    console.log("Profile update request:", { userId: session.user.id, body });
+
+    // Update user's profile
+    const updatedProfile = await prisma.profile.update({
+      where: { userId: session.user.id },
+      data: {
+        firstName: firstName || null,
+        lastName: lastName || null,
+        phone: phone || null,
+        address: address || null,
+        jobTitle: jobTitle || null,
+        professionalSummary: professionalSummary || null,
+        experienceLevel: experienceLevel || null,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            role: true,
+          }
+        }
+      },
+    });
+
+    console.log("Profile updated successfully:", updatedProfile);
+
+    return NextResponse.json({
+      success: true,
+      profile: {
+        id: updatedProfile.user.id,
+        firstName: updatedProfile.firstName,
+        lastName: updatedProfile.lastName,
+        email: updatedProfile.user.email,
+        phone: updatedProfile.phone,
+        address: updatedProfile.address,
+        jobTitle: updatedProfile.jobTitle,
+        professionalSummary: updatedProfile.professionalSummary,
+        experienceLevel: updatedProfile.experienceLevel,
+        role: updatedProfile.user.role,
+      },
+    });
+
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    return NextResponse.json(
+      { error: "Failed to update profile" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function PATCH(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);

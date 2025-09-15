@@ -1,5 +1,7 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { formatDistanceToNow } from "date-fns";
+import { es } from "date-fns/locale";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -100,4 +102,39 @@ export function throttle<T extends (...args: unknown[]) => unknown>(
       setTimeout(() => (inThrottle = false), limit);
     }
   };
+}
+
+export function formatTimeAgo(date: Date | string, fallback: string = "Fecha no disponible"): string {
+  try {
+    const dateObj = new Date(date);
+    if (isNaN(dateObj.getTime())) {
+      return fallback;
+    }
+    return formatDistanceToNow(dateObj, { 
+      addSuffix: true, 
+      locale: es 
+    });
+  } catch (error) {
+    return fallback;
+  }
+}
+
+export function safeNumber(value: any, defaultValue: number = 0): number {
+  const num = Number(value);
+  return isNaN(num) ? defaultValue : num;
+}
+
+export function safeSum(values: any[], defaultValue: number = 0): number {
+  const sum = values.reduce((acc, val) => acc + safeNumber(val), 0);
+  return isNaN(sum) ? defaultValue : sum;
+}
+
+export function safePercentage(numerator: any, denominator: any, decimals: number = 1): string {
+  const num = safeNumber(numerator);
+  const den = safeNumber(denominator);
+  
+  if (den === 0) return "0";
+  
+  const percentage = (num / den) * 100;
+  return isNaN(percentage) ? "0" : percentage.toFixed(decimals);
 }

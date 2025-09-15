@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,10 +19,22 @@ import {
   Briefcase,
   Grid,
   List,
-  AlertCircle
+  AlertCircle,
+  Plus,
+  Settings,
+  BarChart3,
+  Users,
+  Eye
 } from "lucide-react";
+import Link from "next/link";
+import { safeSum } from "@/lib/utils";
 
 function JobsPageContent() {
+  const { data: session } = useSession();
+  const userRole = session?.user?.role;
+  const isCompany = userRole === "COMPANIES";
+  const isYouth = userRole === "YOUTH";
+  
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFilters, setSelectedFilters] = useState({
     location: "",
@@ -48,6 +61,8 @@ function JobsPageContent() {
     employmentType: selectedFilters.type || undefined,
     experienceLevel: selectedFilters.experience || undefined,
     sortBy: sortBy,
+    // For companies, we need to get their company ID and filter by it
+    // This would need to be implemented in the hook or we'd need to get the company ID from the session
   });
 
   const jobs = jobsData?.jobs || [];
@@ -171,12 +186,43 @@ function JobsPageContent() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Ofertas de Trabajo</h1>
+          <h1 className="text-2xl font-bold text-foreground">
+            {isCompany ? "Gestionar Trabajos" : "Ofertas de Trabajo"}
+          </h1>
           <p className="text-muted-foreground">
-            {filteredJobs.length} ofertas encontradas
+            {isCompany 
+              ? "Administra y publica ofertas de trabajo para tu empresa"
+              : `${filteredJobs.length} ofertas encontradas`
+            }
           </p>
         </div>
         <div className="flex items-center space-x-2">
+          {isCompany && (
+            <>
+              <Link href="/company">
+                <Button variant="outline">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Mi Empresa
+                </Button>
+              </Link>
+              <Link href="/jobs/create">
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Crear Trabajo
+                </Button>
+              </Link>
+            </>
+          )}
+          {isYouth && (
+            <>
+              <Link href="/jobs/bookmarked">
+                <Button variant="outline">
+                  <Briefcase className="h-4 w-4 mr-2" />
+                  Guardados
+                </Button>
+              </Link>
+            </>
+          )}
           <Button
             variant="outline"
             onClick={() => setShowFilters(!showFilters)}
@@ -202,6 +248,57 @@ function JobsPageContent() {
           </div>
         </div>
       </div>
+
+      {/* Company Stats Section */}
+      {isCompany && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Briefcase className="h-4 w-4 text-blue-600" />
+                <span className="text-sm font-medium">Mis Trabajos</span>
+              </div>
+              <p className="text-2xl font-bold">{filteredJobs.length}</p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Users className="h-4 w-4 text-green-600" />
+                <span className="text-sm font-medium">Aplicaciones</span>
+              </div>
+              <p className="text-2xl font-bold">
+                {safeSum(filteredJobs.map(job => job._count?.applications || 0))}
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Eye className="h-4 w-4 text-purple-600" />
+                <span className="text-sm font-medium">Vistas</span>
+              </div>
+              <p className="text-2xl font-bold">
+                {safeSum(filteredJobs.map(job => job.totalViews || 0))}
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <BarChart3 className="h-4 w-4 text-orange-600" />
+                <span className="text-sm font-medium">Activos</span>
+              </div>
+              <p className="text-2xl font-bold">
+                {filteredJobs.filter(job => job.isActive).length}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Search and Filters */}
       <div className="space-y-4">
@@ -252,14 +349,26 @@ function JobsPageContent() {
           <CardContent className="text-center py-12">
             <Briefcase className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">
-              No se encontraron ofertas
+              {isCompany ? "No tienes trabajos publicados" : "No se encontraron ofertas"}
             </h3>
             <p className="mt-1 text-sm text-gray-500">
-              Intenta ajustar tus filtros de búsqueda
+              {isCompany 
+                ? "Comienza creando tu primer trabajo para atraer candidatos"
+                : "Intenta ajustar tus filtros de búsqueda"
+              }
             </p>
-            <Button onClick={clearFilters} className="mt-4">
-              Limpiar Filtros
-            </Button>
+            {isCompany ? (
+              <Link href="/jobs/create">
+                <Button className="mt-4">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Crear Primer Trabajo
+                </Button>
+              </Link>
+            ) : (
+              <Button onClick={clearFilters} className="mt-4">
+                Limpiar Filtros
+              </Button>
+            )}
           </CardContent>
         </Card>
       ) : (
@@ -269,12 +378,35 @@ function JobsPageContent() {
             : "space-y-4"
         }>
           {filteredJobs.map(job => (
-            <JobCard
-              key={job.id}
-              job={job}
-              onBookmark={handleBookmark}
-              onApply={handleApply}
-            />
+            <div key={job.id} className="relative group">
+              <JobCard
+                job={job}
+                onBookmark={handleBookmark}
+                onApply={handleApply}
+                showActions={!isCompany}
+              />
+              {isCompany && (
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex items-center gap-1">
+                    <Link href={`/jobs/${job.id}/edit`}>
+                      <Button variant="outline" size="sm" className="h-8 w-8 p-0">
+                        <Settings className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                    <Link href={`/jobs/${job.id}/applications`}>
+                      <Button variant="outline" size="sm" className="h-8 w-8 p-0">
+                        <Users className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                    <Link href={`/jobs/${job.id}/analytics`}>
+                      <Button variant="outline" size="sm" className="h-8 w-8 p-0">
+                        <BarChart3 className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
           ))}
         </div>
       )}
@@ -293,7 +425,7 @@ function JobsPageContent() {
 
 export default function JobsPage() {
   return (
-    <RoleGuard allowedRoles={["YOUTH", "COMPANY", "INSTITUTION", "ADMIN"]}>
+    <RoleGuard allowedRoles={["YOUTH", "COMPANIES", "INSTITUTION", "SUPERADMIN"]}>
       <JobsPageContent />
     </RoleGuard>
   );

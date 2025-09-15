@@ -67,6 +67,7 @@ export interface Profile {
   professionalSummary?: string;
   extracurricularActivities?: string[];
   jobTitle?: string;
+  experienceLevel?: ExperienceLevel;
   languages?: Language[];
   projects?: Project[];
   skillsWithLevel?: SkillLevel[];

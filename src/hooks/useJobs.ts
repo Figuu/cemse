@@ -60,8 +60,8 @@ export function useJobs(filters: JobsFilters = {}) {
       if (filters.page) params.append("page", filters.page.toString());
       if (filters.limit) params.append("limit", filters.limit.toString());
       if (filters.search) params.append("search", filters.search);
-      if (filters.employmentType) params.append("employmentType", filters.employmentType);
-      if (filters.experienceLevel) params.append("experienceLevel", filters.experienceLevel);
+      if (filters.employmentType) params.append("type", filters.employmentType);
+      if (filters.experienceLevel) params.append("experience", filters.experienceLevel);
       if (filters.location) params.append("location", filters.location);
       if (filters.isActive !== undefined) params.append("isActive", filters.isActive.toString());
       if (filters.isUrgent !== undefined) params.append("isUrgent", filters.isUrgent.toString());
@@ -177,6 +177,11 @@ export function useJobApplications(filters: ApplicationsFilters = {}) {
   const query = useQuery({
     queryKey: ["job-applications", filters],
     queryFn: async (): Promise<ApplicationsResponse> => {
+      // Only fetch if we have the required parameters
+      if (!filters.companyId || !filters.jobId) {
+        return { applications: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 0, hasNext: false, hasPrev: false } };
+      }
+
       const params = new URLSearchParams();
       
       if (filters.page) params.append("page", filters.page.toString());
@@ -185,9 +190,7 @@ export function useJobApplications(filters: ApplicationsFilters = {}) {
       if (filters.sortBy) params.append("sortBy", filters.sortBy);
       if (filters.sortOrder) params.append("sortOrder", filters.sortOrder);
 
-      const url = filters.companyId && filters.jobId
-        ? `/api/companies/${filters.companyId}/jobs/${filters.jobId}/applications?${params.toString()}`
-        : `/api/applications?${params.toString()}`;
+      const url = `/api/companies/${filters.companyId}/jobs/${filters.jobId}/applications?${params.toString()}`;
 
       const response = await fetch(url);
       if (!response.ok) {
@@ -195,6 +198,7 @@ export function useJobApplications(filters: ApplicationsFilters = {}) {
       }
       return response.json();
     },
+    enabled: !!(filters.companyId && filters.jobId),
   });
 
   return query;

@@ -19,8 +19,7 @@ import {
   Building2
 } from "lucide-react";
 import { JobPosting, EmploymentTypeLabels, ExperienceLevelLabels } from "@/types/company";
-import { formatDistanceToNow } from "date-fns";
-import { es } from "date-fns/locale";
+import { formatTimeAgo } from "@/lib/utils";
 import Link from "next/link";
 
 interface JobCardProps {
@@ -178,10 +177,8 @@ export function JobCard({
                   {job.company.name} • <MapPin className="inline h-3 w-3 mr-1" />{job.location}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  <Calendar className="inline h-3 w-3 mr-1" />{formatDistanceToNow(new Date(job.createdAt), { 
-                    addSuffix: true, 
-                    locale: es 
-                  })}
+                  <Calendar className="inline h-3 w-3 mr-1" />
+                  {formatTimeAgo(job.createdAt)}
                 </p>
               </div>
             </div>
@@ -402,10 +399,8 @@ export function JobCard({
               </Link>
             </div>
             <div className="text-xs text-muted-foreground">
-              <Calendar className="inline h-3 w-3 mr-1" />{formatDistanceToNow(new Date(job.createdAt), { 
-                addSuffix: true, 
-                locale: es
-              })}
+              <Calendar className="inline h-3 w-3 mr-1" />
+              {formatTimeAgo(job.createdAt)}
             </div>
           </div>
         )}

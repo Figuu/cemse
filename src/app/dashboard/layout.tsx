@@ -64,9 +64,9 @@ export default function DashboardLayout({
           </div>
 
           <div className="flex">
-            {/* Desktop sidebar - Full height */}
-            <div className="hidden lg:flex lg:flex-shrink-0">
-              <div className="flex flex-col w-64 h-screen">
+            {/* Desktop sidebar - Fixed position */}
+            <div className="hidden lg:block lg:fixed lg:inset-y-0 lg:left-0 lg:z-40">
+              <div className="flex flex-col w-64 h-full">
                 <div className="flex flex-col h-full border-r border-border bg-card">
                   <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
                     <div className="flex items-center flex-shrink-0 px-4">
@@ -81,12 +81,12 @@ export default function DashboardLayout({
             </div>
 
             {/* Main content area */}
-            <div className="flex flex-col flex-1 min-w-0">
+            <div className="flex flex-col flex-1 min-w-0 lg:ml-64 min-h-screen">
               {/* Header - Full width */}
               <DashboardHeader onMenuClick={() => setSidebarOpen(true)} />
 
               {/* Page content */}
-              <main className="flex-1">
+              <main className="flex-1 overflow-y-auto">
                 <div className="py-6">
                   <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
                     {/* Breadcrumb Navigation */}

@@ -20,7 +20,6 @@ interface SystemStats {
   totalInstitutions: number;
   totalCourses: number;
   totalJobs: number;
-  totalStartups: number;
   systemHealth: "excellent" | "good" | "warning" | "critical";
   userActivityRate: number;
 }

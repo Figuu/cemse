@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
 import { 
   User, 
   Briefcase, 
@@ -25,10 +26,124 @@ import { ProfileCompletion } from "@/components/profile/ProfileCompletion";
 import { ProfileVerification } from "@/components/profile/ProfileVerification";
 import { UserPreferences } from "@/components/profile/UserPreferences";
 
+interface ProfileFormData {
+  firstName: string;
+  lastName: string;
+  phone: string;
+  address: string;
+  jobTitle: string;
+  professionalSummary: string;
+  experienceLevel: string;
+}
+
 export default function ProfilePage() {
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
   const [activeTab, setActiveTab] = useState("overview");
   const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // Form state
+  const [formData, setFormData] = useState<ProfileFormData>({
+    firstName: "",
+    lastName: "",
+    phone: "",
+    address: "",
+    jobTitle: "",
+    professionalSummary: "",
+    experienceLevel: "",
+  });
+
+  // Initialize form data when session loads
+  useEffect(() => {
+    if (session?.user?.profile) {
+      const profile = session.user.profile;
+      setFormData({
+        firstName: profile.firstName || "",
+        lastName: profile.lastName || "",
+        phone: profile.phone || "",
+        address: profile.address || "",
+        jobTitle: profile.jobTitle || "",
+        professionalSummary: profile.professionalSummary || "",
+        experienceLevel: (profile as any).experienceLevel || "",
+      });
+    }
+  }, [session?.user?.profile]);
+
+  // Handle form field changes
+  const handleInputChange = (field: keyof ProfileFormData, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // Handle edit toggle
+  const handleEditToggle = () => {
+    if (isEditing) {
+      // Reset form data to original values when canceling
+      if (session?.user?.profile) {
+        const profile = session.user.profile;
+        setFormData({
+          firstName: profile.firstName || "",
+          lastName: profile.lastName || "",
+          phone: profile.phone || "",
+          address: profile.address || "",
+          jobTitle: profile.jobTitle || "",
+          professionalSummary: profile.professionalSummary || "",
+          experienceLevel: (profile as any).experienceLevel || "",
+        });
+      }
+    }
+    setIsEditing(!isEditing);
+  };
+
+  // Handle save
+  const handleSave = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/profiles', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al guardar el perfil');
+      }
+
+      const result = await response.json();
+      
+      // Update form data with the response from server
+      if (result.profile) {
+        setFormData({
+          firstName: result.profile.firstName || "",
+          lastName: result.profile.lastName || "",
+          phone: result.profile.phone || "",
+          address: result.profile.address || "",
+          jobTitle: result.profile.jobTitle || "",
+          professionalSummary: result.profile.professionalSummary || "",
+          experienceLevel: result.profile.experienceLevel || "",
+        });
+      }
+
+      toast.success("Perfil actualizado", {
+        description: "Tu perfil se ha actualizado correctamente.",
+      });
+
+      // Update the session with new profile data
+      await update();
+
+      setIsEditing(false);
+    } catch (error) {
+      toast.error("Error", {
+        description: "No se pudo actualizar el perfil. Inténtalo de nuevo.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   if (!session?.user) {
     return <div>Cargando...</div>;
@@ -72,15 +187,16 @@ export default function ProfilePage() {
             <div className="flex items-center space-x-2">
               <Button
                 variant="outline"
-                onClick={() => setIsEditing(!isEditing)}
+                onClick={handleEditToggle}
+                disabled={isLoading}
               >
                 <Edit className="h-4 w-4 mr-2" />
                 {isEditing ? "Cancelar" : "Editar"}
               </Button>
               {isEditing && (
-                <Button>
+                <Button onClick={handleSave} disabled={isLoading}>
                   <Save className="h-4 w-4 mr-2" />
-                  Guardar
+                  {isLoading ? "Guardando..." : "Guardar"}
                 </Button>
               )}
             </div>
@@ -119,7 +235,8 @@ export default function ProfilePage() {
                     <Label htmlFor="firstName">Nombre</Label>
                     <Input
                       id="firstName"
-                      value={profile?.firstName || ""}
+                      value={formData.firstName}
+                      onChange={(e) => handleInputChange('firstName', e.target.value)}
                       disabled={!isEditing}
                     />
                   </div>
@@ -127,7 +244,8 @@ export default function ProfilePage() {
                     <Label htmlFor="lastName">Apellido</Label>
                     <Input
                       id="lastName"
-                      value={profile?.lastName || ""}
+                      value={formData.lastName}
+                      onChange={(e) => handleInputChange('lastName', e.target.value)}
                       disabled={!isEditing}
                     />
                   </div>
@@ -144,7 +262,8 @@ export default function ProfilePage() {
                   <Label htmlFor="phone">Teléfono</Label>
                   <Input
                     id="phone"
-                    value={profile?.phone || ""}
+                    value={formData.phone}
+                    onChange={(e) => handleInputChange('phone', e.target.value)}
                     disabled={!isEditing}
                   />
                 </div>
@@ -152,7 +271,8 @@ export default function ProfilePage() {
                   <Label htmlFor="address">Dirección</Label>
                   <Textarea
                     id="address"
-                    value={profile?.address || ""}
+                    value={formData.address}
+                    onChange={(e) => handleInputChange('address', e.target.value)}
                     disabled={!isEditing}
                     rows={3}
                   />
@@ -173,7 +293,8 @@ export default function ProfilePage() {
                   <Label htmlFor="title">Título Profesional</Label>
                   <Input
                     id="title"
-                    value={profile?.jobTitle || ""}
+                    value={formData.jobTitle}
+                    onChange={(e) => handleInputChange('jobTitle', e.target.value)}
                     disabled={!isEditing}
                   />
                 </div>
@@ -181,7 +302,8 @@ export default function ProfilePage() {
                   <Label htmlFor="bio">Biografía</Label>
                   <Textarea
                     id="bio"
-                    value={profile?.professionalSummary || ""}
+                    value={formData.professionalSummary}
+                    onChange={(e) => handleInputChange('professionalSummary', e.target.value)}
                     disabled={!isEditing}
                     rows={4}
                     placeholder="Cuéntanos sobre ti..."
@@ -189,16 +311,19 @@ export default function ProfilePage() {
                 </div>
                 <div>
                   <Label htmlFor="experience">Años de Experiencia</Label>
-                  <Select disabled={!isEditing}>
+                  <Select 
+                    value={formData.experienceLevel} 
+                    onValueChange={(value) => handleInputChange('experienceLevel', value)}
+                    disabled={!isEditing}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecciona experiencia" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="0-1">0-1 años</SelectItem>
-                      <SelectItem value="2-3">2-3 años</SelectItem>
-                      <SelectItem value="4-5">4-5 años</SelectItem>
-                      <SelectItem value="6-10">6-10 años</SelectItem>
-                      <SelectItem value="10+">10+ años</SelectItem>
+                      <SelectItem value="NO_EXPERIENCE">Sin experiencia</SelectItem>
+                      <SelectItem value="ENTRY_LEVEL">Nivel inicial (0-2 años)</SelectItem>
+                      <SelectItem value="MID_LEVEL">Nivel medio (3-5 años)</SelectItem>
+                      <SelectItem value="SENIOR_LEVEL">Nivel senior (6+ años)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

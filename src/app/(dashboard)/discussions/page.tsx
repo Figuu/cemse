@@ -162,7 +162,7 @@ export default function DiscussionsPage() {
   }
 
   return (
-    <RoleGuard allowedRoles={["YOUTH", "COMPANIES", "INSTITUTION", "ADMIN", "INSTRUCTOR"]}>
+    <RoleGuard allowedRoles={["YOUTH", "COMPANIES", "INSTITUTION", "SUPERADMIN"]}>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">

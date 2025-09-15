@@ -570,7 +570,7 @@ function CompanyPageContent() {
 
 export default function CompanyPage() {
   return (
-    <RoleGuard allowedRoles={["COMPANY"]}>
+    <RoleGuard allowedRoles={["COMPANIES"]}>
       <CompanyPageContent />
     </RoleGuard>
   );

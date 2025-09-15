@@ -71,6 +71,20 @@ export function useCompany(id: string) {
   });
 }
 
+export function useCompanyByUser(userId: string) {
+  return useQuery({
+    queryKey: ["company", "by-user", userId],
+    queryFn: async (): Promise<Company> => {
+      const response = await fetch(`/api/companies/by-user/${userId}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch company by user");
+      }
+      return response.json();
+    },
+    enabled: !!userId,
+  });
+}
+
 export function useCreateCompany() {
   const queryClient = useQueryClient();
 

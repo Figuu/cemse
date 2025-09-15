@@ -370,10 +370,6 @@ function AdminPageContent() {
                     <span className="font-semibold">{stats ? stats.totalJobs : '...'}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Startups</span>
-                    <span className="font-semibold">{stats ? stats.totalStartups : '...'}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Usuarios Activos</span>
                     <span className="font-semibold">{stats ? stats.activeUsers : '...'}</span>
                   </div>
@@ -496,7 +492,7 @@ function AdminPageContent() {
 
 export default function AdminPage() {
   return (
-    <RoleGuard allowedRoles={["ADMIN", "SUPERADMIN"]}>
+    <RoleGuard allowedRoles={["SUPERADMIN"]}>
       <AdminPageContent />
     </RoleGuard>
   );

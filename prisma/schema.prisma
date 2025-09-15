@@ -71,6 +71,7 @@ model Profile {
   professionalSummary       String?
   extracurricularActivities Json?
   jobTitle                  String?
+  experienceLevel           ExperienceLevel?
   languages                 Json?
   projects                  Json?
   skillsWithLevel           Json?
