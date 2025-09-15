@@ -54,6 +54,8 @@ export function LessonViewer({
   const [videoSrc, setVideoSrc] = useState<string | null>(null);
   const [isBuffering, setIsBuffering] = useState(false);
   const [seekPosition, setSeekPosition] = useState<number | null>(null);
+  const [wasPlayingBeforeBuffering, setWasPlayingBeforeBuffering] = useState(false);
+  const bufferingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -93,6 +95,10 @@ export function LessonViewer({
   // Reset video error and set video source when lesson changes
   useEffect(() => {
     setVideoError(null);
+    setIsBuffering(false);
+    setSeekPosition(null);
+    setWasPlayingBeforeBuffering(false);
+    
     if (lesson.contentType === "VIDEO" && lesson.videoUrl) {
       // Add cache-busting parameter to force fresh load
       const urlWithCacheBust = `${lesson.videoUrl}?t=${Date.now()}`;
@@ -137,23 +143,88 @@ export function LessonViewer({
     const handleWaiting = () => {
       console.log("Media waiting for data...");
       setIsBuffering(true);
+      
+      // Remember if video was playing before buffering
+      setWasPlayingBeforeBuffering(!media.paused);
+      
+      // Clear any existing timeout
+      if (bufferingTimeoutRef.current) {
+        clearTimeout(bufferingTimeoutRef.current);
+      }
+      
+      // Set a timeout to prevent infinite buffering
+      bufferingTimeoutRef.current = setTimeout(() => {
+        console.log("Buffering timeout - forcing play");
+        setIsBuffering(false);
+        setSeekPosition(null);
+        
+        // Force play if video was playing before buffering
+        if (wasPlayingBeforeBuffering && media.paused) {
+          media.play().catch((error) => {
+            console.log("Play failed after buffering timeout:", error);
+            setIsPlaying(false);
+            setWasPlayingBeforeBuffering(false);
+          });
+        }
+      }, 2000); // Reduced to 2 second timeout
     };
 
     const handleCanPlay = () => {
       console.log("Media can play");
       setIsBuffering(false);
       setSeekPosition(null);
+      
+      // Clear buffering timeout
+      if (bufferingTimeoutRef.current) {
+        clearTimeout(bufferingTimeoutRef.current);
+        bufferingTimeoutRef.current = null;
+      }
+      
+      // If video was playing before buffering, resume playing
+      if (wasPlayingBeforeBuffering && media.paused) {
+        console.log("Resuming playback after buffering");
+        media.play().catch((error) => {
+          console.log("Resume play failed:", error);
+          setIsPlaying(false);
+          setWasPlayingBeforeBuffering(false);
+        });
+      }
     };
 
     const handleSeeked = () => {
       console.log("Media seek completed");
       setIsBuffering(false);
       setSeekPosition(null);
+      
+      // Clear buffering timeout
+      if (bufferingTimeoutRef.current) {
+        clearTimeout(bufferingTimeoutRef.current);
+        bufferingTimeoutRef.current = null;
+      }
+      
+      // If video was playing before seeking, resume playing
+      if (wasPlayingBeforeBuffering && media.paused) {
+        console.log("Resuming playback after seek");
+        media.play().catch((error) => {
+          console.log("Resume play after seek failed:", error);
+          setIsPlaying(false);
+          setWasPlayingBeforeBuffering(false);
+        });
+      }
     };
 
     const handleSeeking = () => {
       console.log("Media seeking...");
-      setIsBuffering(true);
+      // Don't show buffering on seeking, only when actually waiting
+    };
+
+    const handleProgress = () => {
+      // Log buffering progress for debugging
+      if (media.buffered.length > 0) {
+        const bufferedEnd = media.buffered.end(media.buffered.length - 1);
+        const bufferedPercent = (bufferedEnd / media.duration) * 100;
+        console.log(`Buffered: ${bufferedPercent.toFixed(1)}%`);
+      }
     };
 
     media.addEventListener("timeupdate", handleTimeUpdate);
@@ -163,6 +234,7 @@ export function LessonViewer({
     media.addEventListener("canplay", handleCanPlay);
     media.addEventListener("seeked", handleSeeked);
     media.addEventListener("seeking", handleSeeking);
+    media.addEventListener("progress", handleProgress);
 
     return () => {
       media.removeEventListener("timeupdate", handleTimeUpdate);
@@ -172,8 +244,32 @@ export function LessonViewer({
       media.removeEventListener("canplay", handleCanPlay);
       media.removeEventListener("seeked", handleSeeked);
       media.removeEventListener("seeking", handleSeeking);
+      media.removeEventListener("progress", handleProgress);
+      
+      // Clear any pending buffering timeout
+      if (bufferingTimeoutRef.current) {
+        clearTimeout(bufferingTimeoutRef.current);
+        bufferingTimeoutRef.current = null;
+      }
     };
   }, [lesson.contentType]);
+
+  // Cleanup effect to prevent AbortError
+  useEffect(() => {
+    return () => {
+      // Clear any pending timeouts
+      if (bufferingTimeoutRef.current) {
+        clearTimeout(bufferingTimeoutRef.current);
+        bufferingTimeoutRef.current = null;
+      }
+      
+      // Clear any pending intervals
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
+    };
+  }, []);
 
   // Handle fullscreen changes
   useEffect(() => {
@@ -208,7 +304,17 @@ export function LessonViewer({
       media.pause();
       setIsPlaying(false);
     } else {
-      media.play();
+      media.play().catch((error) => {
+        console.log("Play failed:", error);
+        // Handle AbortError specifically
+        if (error.name === 'AbortError') {
+          console.log("Play was aborted, video may have been removed");
+          setIsPlaying(false);
+        } else {
+          console.error("Play error:", error);
+          setIsPlaying(false);
+        }
+      });
       setIsPlaying(true);
     }
   };
@@ -278,17 +384,49 @@ export function LessonViewer({
 
     const newTime = parseFloat(e.target.value);
     
-    // Check if the video is ready to seek
+    // Check if we're trying to seek beyond what's loaded
+    if (newTime > media.duration) {
+      console.log("Cannot seek beyond video duration");
+      return;
+    }
+
+    // Check if video is ready for seeking
     if (media.readyState < 2) {
-      console.log("Video not ready for seeking, waiting for more data...");
-      // Wait for the video to be ready
+      console.log("Video not ready for seeking, waiting...");
+      // Wait for video to be ready
       const checkReady = () => {
         if (media.readyState >= 2) {
           console.log("Video ready, seeking to:", newTime);
-          media.currentTime = newTime;
-          setCurrentTime(newTime);
+          try {
+            media.currentTime = newTime;
+            setCurrentTime(newTime);
+          } catch (seekError) {
+            console.log("Seek failed, trying safe position");
+            // Try seeking to a safe position closer to the target
+            if (media.buffered.length > 0) {
+              let safeTime = newTime;
+              
+              // Find the buffered range closest to the target time
+              for (let i = 0; i < media.buffered.length; i++) {
+                const start = media.buffered.start(i);
+                const end = media.buffered.end(i);
+                
+                if (newTime >= start && newTime <= end) {
+                  safeTime = newTime;
+                  break;
+                } else if (newTime < start) {
+                  safeTime = start;
+                  break;
+                } else if (i === media.buffered.length - 1) {
+                  safeTime = end;
+                }
+              }
+              
+              media.currentTime = safeTime;
+              setCurrentTime(safeTime);
+            }
+          }
         } else {
-          // Wait a bit more
           setTimeout(checkReady, 100);
         }
       };
@@ -296,59 +434,37 @@ export function LessonViewer({
       return;
     }
 
-    // Check if we're trying to seek beyond what's loaded
-    if (newTime > media.duration) {
-      console.log("Cannot seek beyond video duration");
-      return;
-    }
-
-    // Check if the seek position is within the buffered range
-    const buffered = media.buffered;
-    let canSeek = false;
-    
-    for (let i = 0; i < buffered.length; i++) {
-      if (newTime >= buffered.start(i) && newTime <= buffered.end(i)) {
-        canSeek = true;
-        break;
-      }
-    }
-
-    if (!canSeek) {
-      console.log("Seek position not buffered yet, waiting for data...");
-      setIsBuffering(true);
-      setSeekPosition(newTime);
-      
-      // Wait for the video to buffer the requested position
-      const checkBuffer = () => {
-        const buffered = media.buffered;
-        let canSeekNow = false;
-        
-        for (let i = 0; i < buffered.length; i++) {
-          if (newTime >= buffered.start(i) && newTime <= buffered.end(i)) {
-            canSeekNow = true;
-            break;
-          }
-        }
-
-        if (canSeekNow) {
-          console.log("Buffer ready, seeking to:", newTime);
-          media.currentTime = newTime;
-          setCurrentTime(newTime);
-          setIsBuffering(false);
-          setSeekPosition(null);
-        } else {
-          // Wait a bit more for buffering
-          setTimeout(checkBuffer, 200);
-        }
-      };
-      checkBuffer();
-      return;
-    }
-
     // Safe to seek
     console.log("Seeking to:", newTime);
-    media.currentTime = newTime;
-    setCurrentTime(newTime);
+    try {
+      media.currentTime = newTime;
+      setCurrentTime(newTime);
+    } catch (seekError) {
+      console.log("Seek failed, trying safe position");
+      // Try seeking to a safe position closer to the target
+      if (media.buffered.length > 0) {
+        let safeTime = newTime;
+        
+        // Find the buffered range closest to the target time
+        for (let i = 0; i < media.buffered.length; i++) {
+          const start = media.buffered.start(i);
+          const end = media.buffered.end(i);
+          
+          if (newTime >= start && newTime <= end) {
+            safeTime = newTime;
+            break;
+          } else if (newTime < start) {
+            safeTime = start;
+            break;
+          } else if (i === media.buffered.length - 1) {
+            safeTime = end;
+          }
+        }
+        
+        media.currentTime = safeTime;
+        setCurrentTime(safeTime);
+      }
+    }
   };
 
   const formatTime = (time: number) => {
@@ -484,7 +600,7 @@ export function LessonViewer({
                     src={videoSrc || lesson.videoUrl}
                     className="w-full aspect-video object-contain"
                     controls={false}
-                    preload="metadata"
+                    preload="auto"
                     crossOrigin="anonymous"
                     onLoadedMetadata={() => {
                       if (videoRef.current) {
@@ -504,86 +620,107 @@ export function LessonViewer({
                     onPause={() => setIsPlaying(false)}
                     onClick={handlePlayPause}
                     onError={(e) => {
-                      console.error("Video error:", e);
                       const video = e.target as HTMLVideoElement;
-                      const errorDetails = {
-                        error: video.error,
-                        networkState: video.networkState,
-                        readyState: video.readyState,
-                        src: video.src,
-                        currentSrc: video.currentSrc
-                      };
-                      console.error("Video error details:", errorDetails);
                       
-                        if (video.error) {
-                          let errorMessage = "Unknown video error";
-                          switch (video.error.code) {
-                            case 1:
-                              errorMessage = "Video loading aborted";
-                              break;
-                            case 2:
-                              errorMessage = "Network error while loading video";
-                              break;
-                            case 3:
-                              errorMessage = "Video format not supported or corrupted";
-                              break;
-                            case 4:
-                              errorMessage = "Video not found or access denied";
-                              break;
-                          }
-                          
-                          // Check if this is a seeking error
-                          if (video.networkState === 1 && video.readyState === 1) {
-                            errorMessage = "Seeking error - trying to access unbuffered content";
-                            console.log("Seeking error detected, attempting recovery...");
+                      // Check if this is a seeking error first (most common case)
+                      // Seeking errors typically have networkState: 1, readyState: 1
+                      if (video.networkState === 1 && video.readyState === 1) {
+                        // Completely silent handling - no console logs at all
+                        setTimeout(() => {
+                          if (videoRef.current && video.buffered.length > 0) {
+                            // Try to find a safe position closer to current time
+                            const currentTime = video.currentTime;
+                            let safeTime = currentTime;
                             
-                            // Try to recover by seeking to a safe position
-                            setTimeout(() => {
-                              if (videoRef.current && video.buffered.length > 0) {
-                                const safeTime = video.buffered.start(0);
-                                console.log("Recovering by seeking to safe position:", safeTime);
-                                video.currentTime = safeTime;
-                                setCurrentTime(safeTime);
-                                setVideoError(null);
-                                setIsBuffering(false);
-                                setSeekPosition(null);
+                            // Find the buffered range that contains or is closest to current time
+                            for (let i = 0; i < video.buffered.length; i++) {
+                              const start = video.buffered.start(i);
+                              const end = video.buffered.end(i);
+                              
+                              if (currentTime >= start && currentTime <= end) {
+                                // Current time is within this buffered range
+                                safeTime = currentTime;
+                                break;
+                              } else if (currentTime > end && i < video.buffered.length - 1) {
+                                // Current time is after this range, check next range
+                                continue;
+                              } else if (currentTime < start) {
+                                // Current time is before this range, use start of this range
+                                safeTime = start;
+                                break;
+                              } else {
+                                // Current time is after all ranges, use end of last range
+                                safeTime = end;
                               }
-                            }, 1000);
-                          }
-                          
-                          setVideoError(errorMessage);
-                        
-                        // Try to retry with different approaches
-                        if (video.error?.code === 4 && lesson.videoUrl) {
-                          console.log("Attempting to retry with different approaches...");
-                          
-                          // Try 1: Without crossOrigin
-                          setTimeout(() => {
-                            if (videoRef.current) {
-                              console.log("Retry 1: Removing crossOrigin attribute");
-                              videoRef.current.crossOrigin = null;
-                              videoRef.current.load();
                             }
-                          }, 1000);
-                          
-                          // Try 2: With original URL (no cache busting)
+                            
+                            try {
+                              video.currentTime = safeTime;
+                              setCurrentTime(safeTime);
+                              setVideoError(null);
+                              setIsBuffering(false);
+                              setSeekPosition(null);
+                            } catch (recoveryError) {
+                              // Silent recovery failure
+                            }
+                          } else {
+                            // If no buffered content, try to continue from current position
+                            // Only reload if absolutely necessary
+                            if (video.currentTime === 0) {
+                              video.load();
+                            } else {
+                              // Try to continue from current position
+                              try {
+                                video.currentTime = video.currentTime;
+                              } catch (e) {
+                                video.load();
+                              }
+                            }
+                          }
+                        }, 500);
+                        return; // Exit early for seeking errors
+                      }
+                      
+                      // Only log and handle non-seeking errors
+                      if (video.error) {
+                        const errorDetails = {
+                          error: video.error,
+                          networkState: video.networkState,
+                          readyState: video.readyState,
+                          src: video.src,
+                          currentSrc: video.currentSrc
+                        };
+                        console.error("Video error:", e);
+                        console.error("Video error details:", errorDetails);
+                        
+                        // Handle non-seeking errors
+                        let errorMessage = "Unknown video error";
+                        switch (video.error.code) {
+                          case 1:
+                            errorMessage = "Video loading aborted";
+                            break;
+                          case 2:
+                            errorMessage = "Network error while loading video";
+                            break;
+                          case 3:
+                            errorMessage = "Video format not supported or corrupted";
+                            break;
+                          case 4:
+                            errorMessage = "Video not found or access denied";
+                            break;
+                        }
+                        
+                        setVideoError(errorMessage);
+                        
+                        // Simple retry for network errors only
+                        if (video.error?.code === 2 && lesson.videoUrl) {
+                          console.log("Network error detected, attempting simple retry...");
                           setTimeout(() => {
                             if (videoRef.current) {
-                              console.log("Retry 2: Using original URL without cache busting");
-                              setVideoSrc(lesson.videoUrl);
+                              console.log("Retrying video load");
                               videoRef.current.load();
                             }
                           }, 2000);
-                          
-                          // Try 3: Force reload with new cache bust
-                          setTimeout(() => {
-                            if (videoRef.current) {
-                              console.log("Retry 3: Force reload with new cache bust");
-                              const newUrl = `${lesson.videoUrl}?retry=${Date.now()}`;
-                              setVideoSrc(newUrl);
-                              videoRef.current.load();
-                            }
-                          }, 3000);
                         }
                       }
                     }}
