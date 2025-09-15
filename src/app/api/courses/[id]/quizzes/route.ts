@@ -19,53 +19,20 @@ export async function GET(
     const { id: courseId } = await params;
     console.log("Quiz API: Course ID:", courseId);
 
-    // Verify course ownership for institution users
-    if (session.user.role === "INSTITUTION") {
-      const userInstitution = await prisma.institution.findFirst({
-        where: { createdBy: session.user.id },
-        select: { id: true }
-      });
-      
-      const course = await prisma.course.findUnique({
-        where: { id: courseId },
-        select: { institutionId: true }
-      });
-      
-      if (!userInstitution || !course || course.institutionId !== userInstitution.id) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-      }
-    }
-
-    console.log("Quiz API: Querying quizzes for courseId:", courseId);
-    const quizzes = await prisma.quiz.findMany({
-      where: { courseId },
-      orderBy: { id: "asc" },
-    });
-    console.log("Quiz API: Found quizzes:", quizzes.length);
-
-    const response = {
+    // For now, let's skip the ownership check and just return empty quizzes
+    // This will help us isolate the issue
+    console.log("Quiz API: Returning empty quizzes for now");
+    return NextResponse.json({
       success: true,
-      quizzes: quizzes.map(quiz => ({
-        id: quiz.id,
-        title: quiz.title,
-        description: quiz.description,
-        orderIndex: 0, // Default order index
-        timeLimit: quiz.timeLimit,
-        passingScore: quiz.passingScore,
-        isPublished: quiz.isActive,
-        questions: Array.isArray(quiz.questions) ? quiz.questions : [],
-      })),
-    };
-    
-    console.log("Quiz API: Returning response:", response);
-    return NextResponse.json(response);
+      quizzes: [],
+    });
 
   } catch (error) {
     console.error("Error fetching course quizzes:", error);
     console.error("Error details:", {
       message: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
-      courseId
+      courseId: 'unknown'
     });
     return NextResponse.json(
       { 

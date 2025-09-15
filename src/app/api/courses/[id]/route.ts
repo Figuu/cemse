@@ -300,19 +300,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Check if course has enrollments
-    const enrollmentCount = await prisma.courseEnrollment.count({
-      where: { courseId }
-    });
-
-    if (enrollmentCount > 0) {
-      return NextResponse.json(
-        { error: "Cannot delete course with active enrollments" },
-        { status: 400 }
-      );
-    }
-
-    // Delete course (cascade will handle related records)
+    // Delete course (cascade will handle related records including enrollments)
     await prisma.course.delete({
       where: { id: courseId }
     });

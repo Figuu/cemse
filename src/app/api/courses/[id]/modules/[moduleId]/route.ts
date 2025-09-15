@@ -205,18 +205,7 @@ export async function DELETE(
       }
     }
 
-    // Check if module has lessons
-    const lessonCount = await prisma.lesson.count({
-      where: { moduleId }
-    });
-
-    if (lessonCount > 0) {
-      return NextResponse.json(
-        { error: "Cannot delete module with lessons. Delete lessons first." },
-        { status: 400 }
-      );
-    }
-
+    // Delete module (cascade will handle related records including lessons and quizzes)
     await prisma.courseModule.delete({
       where: { id: moduleId }
     });

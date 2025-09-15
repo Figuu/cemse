@@ -38,6 +38,8 @@ import {
   Image
 } from "lucide-react";
 import { LessonFileUpload } from "./LessonFileUpload";
+import { LessonResources } from "./LessonResources";
+import { LessonQuizzes } from "./LessonQuizzes";
 
 interface CourseLesson {
   id: string;
@@ -81,6 +83,8 @@ export function LessonManager({ courseId, moduleId, lessons, onLessonsChange }: 
   });
 
   const [uploadedFileUrl, setUploadedFileUrl] = useState<string | null>(null);
+  const [lessonResources, setLessonResources] = useState<Record<string, any[]>>({});
+  const [lessonQuizzes, setLessonQuizzes] = useState<Record<string, any[]>>({});
 
   const resetForm = () => {
     setFormData({
@@ -528,6 +532,26 @@ export function LessonManager({ courseId, moduleId, lessons, onLessonsChange }: 
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
+                </div>
+                
+                {/* Resources and Quizzes Sections */}
+                <div className="mt-6 space-y-6">
+                  <LessonResources
+                    lessonId={lesson.id}
+                    resources={lessonResources[lesson.id] || []}
+                    onResourcesChange={(resources) => 
+                      setLessonResources(prev => ({ ...prev, [lesson.id]: resources }))
+                    }
+                  />
+                  
+                  <LessonQuizzes
+                    lessonId={lesson.id}
+                    courseId={courseId}
+                    quizzes={lessonQuizzes[lesson.id] || []}
+                    onQuizzesChange={(quizzes) => 
+                      setLessonQuizzes(prev => ({ ...prev, [lesson.id]: quizzes }))
+                    }
+                  />
                 </div>
               </CardContent>
             </Card>

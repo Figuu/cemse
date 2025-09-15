@@ -255,7 +255,7 @@ model JobOffer {
   logo                String?
   
   // Relations
-  company             Company          @relation(fields: [companyId], references: [id])
+  company             Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
   applications        JobApplication[]
   jobQuestions        JobQuestion[]
 
@@ -288,8 +288,8 @@ model JobApplication {
   employeeStatus  EmployeeStatus?
   
   // Relations
-  applicant       Profile                 @relation(fields: [applicantId], references: [userId])
-  jobOffer        JobOffer                @relation(fields: [jobOfferId], references: [id])
+  applicant       Profile                 @relation(fields: [applicantId], references: [userId], onDelete: Cascade)
+  jobOffer        JobOffer                @relation(fields: [jobOfferId], references: [id], onDelete: Cascade)
   questionAnswers JobQuestionAnswer[]
 
   @@unique([applicantId, jobOfferId])
@@ -318,7 +318,7 @@ model YouthApplication {
   youthProfileId    String
   
   // Relations
-  youthProfile      Profile                           @relation("YouthApplications", fields: [youthProfileId], references: [userId])
+  youthProfile      Profile                           @relation("YouthApplications", fields: [youthProfileId], references: [userId], onDelete: Cascade)
   companyInterests  YouthApplicationCompanyInterest[]
 
   @@index([youthProfileId])
@@ -714,8 +714,8 @@ model CourseEnrollment {
   status      String      @default("active")
   
   // Relations
-  student     Profile     @relation(fields: [studentId], references: [userId])
-  course      Course      @relation(fields: [courseId], references: [id])
+  student     Profile     @relation(fields: [studentId], references: [userId], onDelete: Cascade)
+  course      Course      @relation(fields: [courseId], references: [id], onDelete: Cascade)
   
   @@unique([studentId, courseId])
   @@index([studentId])
@@ -732,8 +732,8 @@ model Certificate {
   certificateType String @default("course")
   
   // Relations
-  course      Course   @relation(fields: [courseId], references: [id])
-  student     Profile  @relation("Certificates", fields: [studentId], references: [userId])
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  student     Profile  @relation("Certificates", fields: [studentId], references: [userId], onDelete: Cascade)
   
   @@unique([courseId, studentId])
   @@index([courseId])
@@ -749,8 +749,8 @@ model ModuleCertificate {
   fileUrl   String?
   
   // Relations
-  module    CourseModule @relation(fields: [moduleId], references: [id])
-  student   Profile      @relation("ModuleCertificates", fields: [studentId], references: [userId])
+  module    CourseModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  student   Profile      @relation("ModuleCertificates", fields: [studentId], references: [userId], onDelete: Cascade)
   
   @@unique([moduleId, studentId])
   @@index([moduleId])
@@ -767,8 +767,8 @@ model LessonProgress {
   timeSpent  Int      @default(0)
   
   // Relations
-  lesson     Lesson   @relation(fields: [lessonId], references: [id])
-  student    Profile  @relation("LessonProgress", fields: [studentId], references: [userId])
+  lesson     Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  student    Profile  @relation("LessonProgress", fields: [studentId], references: [userId], onDelete: Cascade)
   
   @@unique([studentId, lessonId])
   @@index([studentId])
@@ -789,8 +789,8 @@ model Quiz {
   attempts    Int      @default(0) // 0 = unlimited
   isActive    Boolean  @default(true)
   // Relations
-  course      Course?  @relation(fields: [courseId], references: [id])
-  lesson      Lesson?  @relation(fields: [lessonId], references: [id])
+  course      Course?  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lesson      Lesson?  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   quizAttempts QuizAttempt[]
   
   @@index([courseId])
@@ -809,8 +809,8 @@ model QuizAttempt {
   timeSpent   Int?
   
   // Relations
-  quiz        Quiz     @relation(fields: [quizId], references: [id])
-  student     Profile  @relation(fields: [studentId], references: [userId])
+  quiz        Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  student     Profile  @relation(fields: [studentId], references: [userId], onDelete: Cascade)
   
   @@index([quizId])
   @@index([studentId])
@@ -829,7 +829,7 @@ model JobQuestion {
   orderIndex  Int
   
   // Relations
-  jobOffer    JobOffer @relation(fields: [jobOfferId], references: [id])
+  jobOffer    JobOffer @relation(fields: [jobOfferId], references: [id], onDelete: Cascade)
   answers     JobQuestionAnswer[]
   
   @@index([jobOfferId])
@@ -845,8 +845,8 @@ model JobQuestionAnswer {
   createdAt   DateTime @default(now())
   
   // Relations
-  application JobApplication @relation(fields: [applicationId], references: [id])
-  question    JobQuestion    @relation(fields: [questionId], references: [id])
+  application JobApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  question    JobQuestion    @relation(fields: [questionId], references: [id], onDelete: Cascade)
   
   @@unique([applicationId, questionId])
   @@index([applicationId])
@@ -890,8 +890,8 @@ model YouthApplicationCompanyInterest {
   notes             String?
   
   // Relations
-  application       YouthApplication          @relation(fields: [applicationId], references: [id])
-  company           Company                   @relation(fields: [companyId], references: [id])
+  application       YouthApplication          @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  company           Company                   @relation(fields: [companyId], references: [id], onDelete: Cascade)
   
   @@unique([applicationId, companyId])
   @@index([applicationId])
