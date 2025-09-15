@@ -138,7 +138,7 @@ export async function PUT(
     }
     
     if (isRead !== undefined && existingMessage.recipientId === session.user.id) {
-      updateData.isRead = isRead;
+      updateData.readAt = isRead ? new Date() : null;
     }
 
     if (Object.keys(updateData).length === 0) {

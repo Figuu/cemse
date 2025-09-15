@@ -21,6 +21,7 @@ import {
 import { cn } from "@/lib/utils";
 import { formatDateTime } from "@/lib/utils";
 import { useMessages, useConversations, useSendMessage, useMarkAsRead, Conversation } from "@/hooks/useMessages";
+import { useSession } from "next-auth/react";
 
 interface MessageInterfaceProps {
   contextType?: 'JOB_APPLICATION' | 'YOUTH_APPLICATION' | 'ENTREPRENEURSHIP' | 'GENERAL';
@@ -32,8 +33,10 @@ interface MessageInterfaceProps {
 export function MessageInterface({ 
   contextType = 'GENERAL', 
   contextId, 
+  recipientId,
   className 
 }: MessageInterfaceProps) {
+  const { data: session } = useSession();
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
@@ -47,9 +50,9 @@ export function MessageInterface({
 
   // Fetch messages for selected conversation
   const { data: messagesData, isLoading: messagesLoading } = useMessages({
+    recipientId,
     contextType,
     contextId,
-    recipientId: selectedConversation?.otherUser.id,
   });
 
   const sendMessage = useSendMessage();
@@ -79,22 +82,46 @@ export function MessageInterface({
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!message.trim() || isSending || !selectedConversation) return;
+    if (!message.trim() || isSending) {
+      console.log("MessageInterface - Cannot send message:", { 
+        message: message.trim(), 
+        isSending 
+      });
+      return;
+    }
+
+    // For direct chat mode, we need recipientId
+    if (recipientId && !selectedConversation) {
+      if (!recipientId) {
+        console.log("MessageInterface - No recipientId for direct chat");
+        return;
+      }
+    } else if (!recipientId && !selectedConversation) {
+      console.log("MessageInterface - No conversation selected and no recipientId");
+      return;
+    }
 
     const messageText = message.trim();
+    console.log("MessageInterface - Sending message:", { 
+      recipientId: recipientId || selectedConversation?.otherUser.id, 
+      content: messageText, 
+      contextType, 
+      contextId 
+    });
+    
     setMessage("");
     setIsSending(true);
 
     try {
-      await sendMessage.mutateAsync({
-        recipientId: selectedConversation.otherUser.id,
+      const result = await sendMessage.mutateAsync({
+        recipientId: recipientId || selectedConversation!.otherUser.id,
         content: messageText,
-        messageType: "text",
         contextType,
         contextId,
       });
+      console.log("MessageInterface - Message sent successfully:", result);
     } catch (error) {
-      console.error("Error sending message:", error);
+      console.error("MessageInterface - Error sending message:", error);
       // Restore message if sending failed
       setMessage(messageText);
     } finally {
@@ -153,6 +180,117 @@ export function MessageInterface({
         return contextType;
     }
   };
+
+  // If we have a recipientId, show direct chat without conversations sidebar
+  if (recipientId) {
+    console.log("MessageInterface - Direct chat mode:", { recipientId, contextType, contextId });
+    console.log("MessageInterface - Messages data:", { messages, messagesLoading, messagesData });
+    
+    return (
+      <div className={cn("flex flex-col h-full", className)}>
+        {/* Direct Chat */}
+        <div className="flex-1 flex flex-col">
+          {/* Messages Area */}
+          <ScrollArea className="flex-1 p-4">
+            <div className="space-y-4">
+              {messagesLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                  <span className="ml-2">Cargando mensajes...</span>
+                </div>
+              ) : messages.length === 0 ? (
+                <div className="text-center py-8">
+                  <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Inicia la conversación</h3>
+                  <p className="text-muted-foreground text-sm">
+                    Envía tu primer mensaje para comenzar a chatear.
+                  </p>
+                  <div className="text-xs text-muted-foreground mt-2">
+                    Debug: recipientId={recipientId}, contextType={contextType}, contextId={contextId}
+                  </div>
+                </div>
+              ) : (
+                messages.map((msg) => {
+                  const isOwnMessage = msg.senderId === session?.user?.id;
+                  return (
+                    <div
+                      key={msg.id}
+                      className={cn(
+                        "flex gap-3",
+                        isOwnMessage ? "justify-end" : "justify-start"
+                      )}
+                    >
+                      <div className={cn(
+                        "flex gap-3 max-w-[80%]",
+                        isOwnMessage ? "flex-row-reverse" : "flex-row"
+                      )}>
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={msg.sender.avatarUrl} />
+                          <AvatarFallback>
+                            {getInitials(msg.sender.firstName + " " + msg.sender.lastName)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className={cn(
+                          "rounded-lg px-3 py-2",
+                          isOwnMessage 
+                            ? "bg-blue-600 text-white" 
+                            : "bg-gray-100"
+                        )}>
+                          <p className="text-sm">{msg.content}</p>
+                          <div className={cn(
+                            "flex items-center gap-1 mt-1 text-xs",
+                            isOwnMessage ? "text-blue-100" : "text-muted-foreground"
+                          )}>
+                            <span>{formatDateTime(msg.createdAt)}</span>
+                            {isOwnMessage && (
+                              <span>
+                                {msg.readAt ? <CheckCheck className="h-3 w-3" /> : <Check className="h-3 w-3" />}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+          </ScrollArea>
+
+          {/* Message Input */}
+          <div className="border-t p-4">
+            <form onSubmit={handleSendMessage} className="flex gap-2">
+              <Textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Escribe tu mensaje..."
+                className="min-h-[40px] max-h-[120px] resize-none"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage(e);
+                  }
+                }}
+              />
+              <Button 
+                type="submit" 
+                disabled={!message.trim() || isSending}
+                size="sm"
+                className="self-end"
+              >
+                {isSending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+              </Button>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={cn("flex h-[600px] border rounded-lg overflow-hidden", className)}>

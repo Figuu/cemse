@@ -31,6 +31,22 @@ export interface SendMessageData {
   contextId?: string;
 }
 
+export interface Conversation {
+  id: string;
+  otherUser: {
+    id: string;
+    firstName?: string;
+    lastName?: string;
+    avatarUrl?: string;
+  };
+  lastMessage?: {
+    content: string;
+    createdAt: string;
+    readAt?: string;
+  };
+  unreadCount: number;
+}
+
 export function useMessages({
   recipientId,
   contextType,
@@ -55,13 +71,16 @@ export function useMessages({
       console.log("useMessages - Fetching from URL:", url);
 
       const response = await fetch(url);
+      console.log("useMessages - Response status:", response.status);
+      
       if (!response.ok) {
         const errorText = await response.text();
         console.error("useMessages - Error response:", response.status, errorText);
-        throw new Error("Failed to fetch messages");
+        throw new Error(`Failed to fetch messages: ${response.status} ${errorText}`);
       }
       const data = await response.json();
       console.log("useMessages - Received data:", data);
+      console.log("useMessages - Messages count:", data.messages?.length || 0);
       return data;
     },
     enabled: enabled && (!!recipientId || !!contextType),
@@ -84,6 +103,8 @@ export function useSendMessage() {
         body: JSON.stringify(data),
       });
 
+      console.log("useSendMessage - Response status:", response.status);
+
       if (!response.ok) {
         const error = await response.json();
         console.error("useSendMessage - Error response:", response.status, error);
@@ -103,17 +124,52 @@ export function useSendMessage() {
   });
 }
 
-export function useConversations() {
+export function useConversations({
+  contextType,
+  contextId,
+}: {
+  contextType?: string;
+  contextId?: string;
+} = {}) {
   return useQuery({
-    queryKey: ["conversations"],
-    queryFn: async (): Promise<Message[]> => {
-      const response = await fetch("/api/messages");
+    queryKey: ["conversations", contextType, contextId],
+    queryFn: async (): Promise<{ conversations: Conversation[] }> => {
+      const params = new URLSearchParams();
+      if (contextType) params.append("contextType", contextType);
+      if (contextId) params.append("contextId", contextId);
+      
+      const response = await fetch(`/api/messages/conversations?${params.toString()}`);
       if (!response.ok) {
         throw new Error("Failed to fetch conversations");
       }
       const data = await response.json();
-      return data.messages;
+      return data;
     },
     refetchInterval: 10000, // Refetch every 10 seconds
+  });
+}
+
+export function useMarkAsRead() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (messageId: string): Promise<void> => {
+      const response = await fetch(`/api/messages/${messageId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ isRead: true }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to mark message as read");
+      }
+    },
+    onSuccess: () => {
+      // Invalidate messages queries to refresh the UI
+      queryClient.invalidateQueries({ queryKey: ["messages"] });
+    },
   });
 }

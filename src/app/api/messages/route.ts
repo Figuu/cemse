@@ -120,9 +120,15 @@ export async function POST(request: NextRequest) {
     console.log("Messages API - Validated data:", validatedData);
 
     // Check if recipient exists
+    console.log("Messages API - Looking for recipient with userId:", validatedData.recipientId);
     const recipient = await prisma.profile.findUnique({
       where: { userId: validatedData.recipientId },
     });
+
+    console.log("Messages API - Recipient found:", recipient ? "Yes" : "No");
+    if (recipient) {
+      console.log("Messages API - Recipient details:", { id: recipient.id, userId: recipient.userId, firstName: recipient.firstName, lastName: recipient.lastName });
+    }
 
     if (!recipient) {
       return NextResponse.json(
@@ -130,6 +136,14 @@ export async function POST(request: NextRequest) {
         { status: 404 }
       );
     }
+
+    console.log("Messages API - Creating message with data:", {
+      senderId: session.user.id,
+      recipientId: validatedData.recipientId,
+      content: validatedData.content,
+      contextType: validatedData.contextType,
+      contextId: validatedData.contextId,
+    });
 
     const message = await prisma.message.create({
       data: {
@@ -159,6 +173,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    console.log("Messages API - Message created successfully:", { id: message.id, content: message.content });
     return NextResponse.json(message, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {

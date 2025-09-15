@@ -29,6 +29,8 @@ import { YouthApplicationStatusLabels } from "@/types/youth-application";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { toast } from "sonner";
+import { YouthApplicationChatInterface } from "@/components/youth-applications/YouthApplicationChatInterface";
+import { InterestedCompaniesList } from "@/components/youth-applications/InterestedCompaniesList";
 
 export default function YouthApplicationDetailPage() {
   const { data: session } = useSession();
@@ -36,6 +38,8 @@ export default function YouthApplicationDetailPage() {
   const router = useRouter();
   const applicationId = params.id as string;
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showChat, setShowChat] = useState(false);
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
 
   const { data: application, isLoading, error } = useYouthApplication(applicationId);
 
@@ -55,6 +59,11 @@ export default function YouthApplicationDetailPage() {
       console.error("Error deleting application:", error);
       toast.error("Error al eliminar la aplicación. Por favor, inténtalo de nuevo.");
     }
+  };
+
+  const handleOpenChat = (companyId: string) => {
+    setSelectedCompanyId(companyId);
+    setShowChat(true);
   };
 
   if (isLoading) {
@@ -88,53 +97,58 @@ export default function YouthApplicationDetailPage() {
   const isCompany = session?.user?.role === "COMPANIES";
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-4">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => router.back()}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Volver
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">
-              {application.title}
-            </h1>
-            <p className="text-muted-foreground">
-              Por {application.youthProfile.firstName} {application.youthProfile.lastName}
-            </p>
-          </div>
-        </div>
-        
-        {isOwner && (
-          <div className="flex items-center gap-2">
+    <YouthApplicationChatInterface 
+      applicationId={applicationId}
+      youthId={application.youthProfileId}
+      className="h-screen"
+    >
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
             <Button 
               variant="outline" 
-              size="sm"
-              onClick={() => router.push(`/youth-applications/${applicationId}/edit`)}
-            >
-              <Edit className="h-4 w-4 mr-2" />
-              Editar
-            </Button>
-            <Button 
-              variant="destructive" 
               size="sm" 
-              onClick={() => setShowDeleteDialog(true)}
+              onClick={() => router.back()}
             >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Eliminar
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Volver
             </Button>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">
+                {application.title}
+              </h1>
+              <p className="text-muted-foreground">
+                Por {application.youthProfile.firstName} {application.youthProfile.lastName}
+              </p>
+            </div>
           </div>
-        )}
-      </div>
+          
+          {isOwner && (
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => router.push(`/youth-applications/${applicationId}/edit`)}
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Editar
+              </Button>
+              <Button 
+                variant="destructive" 
+                size="sm" 
+                onClick={() => setShowDeleteDialog(true)}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Eliminar
+              </Button>
+            </div>
+          )}
+        </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6">
           {/* Application Details */}
           <Card>
             <CardHeader>
@@ -284,56 +298,11 @@ export default function YouthApplicationDetailPage() {
           )}
 
           {/* Company Interests */}
-          {application.companyInterests && application.companyInterests.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Heart className="h-5 w-5" />
-                  Empresas Interesadas ({application.companyInterests.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {application.companyInterests.map((interest) => (
-                    <div key={interest.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={interest.company.logoUrl} />
-                          <AvatarFallback>
-                            {interest.company.name[0]}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">{interest.company.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            Interesado el {new Date(interest.interestedAt).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline">
-                          {interest.status}
-                        </Badge>
-                        {isOwner && (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => {
-                              // TODO: Open chat modal
-                              console.log("Open chat with company:", interest.company.id);
-                            }}
-                          >
-                            <MessageCircle className="h-4 w-4 mr-2" />
-                            Contactar
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          <InterestedCompaniesList
+            companyInterests={application.companyInterests || []}
+            applicationId={applicationId}
+            onOpenChat={handleOpenChat}
+          />
         </div>
 
         {/* Sidebar */}
@@ -460,6 +429,7 @@ export default function YouthApplicationDetailPage() {
           </Card>
         </div>
       )}
-    </div>
+      </div>
+    </YouthApplicationChatInterface>
   );
 }

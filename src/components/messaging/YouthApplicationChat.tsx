@@ -28,12 +28,15 @@ export function YouthApplicationChat({
   applicationId,
   youthName,
   companyName,
+  companyId,
+  youthId,
   className
 }: YouthApplicationChatProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Get recent messages for this youth application
   const { data: messagesData } = useMessages({
+    recipientId: youthId,
     contextType: 'YOUTH_APPLICATION',
     contextId: applicationId,
   });
@@ -129,6 +132,7 @@ export function YouthApplicationChat({
       {isExpanded && (
         <CardContent>
           <MessageInterface
+            recipientId={youthId}
             contextType="YOUTH_APPLICATION"
             contextId={applicationId}
             className="h-[500px]"

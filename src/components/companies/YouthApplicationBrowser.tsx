@@ -25,9 +25,11 @@ import {
   ExternalLink,
   Clock,
   CheckCircle,
-  UserPlus
+  UserPlus,
+  X,
+  Send
 } from "lucide-react";
-import { YouthApplicationChat } from "@/components/messaging/YouthApplicationChat";
+import { MessageInterface } from "@/components/messaging/MessageInterface";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -78,16 +80,15 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
   const [sortOrder, setSortOrder] = useState("desc");
   const [selectedApplication, setSelectedApplication] = useState<YouthApplication | null>(null);
   const [showChat, setShowChat] = useState(false);
+  const [activeChat, setActiveChat] = useState<{ applicationId: string; youthId: string; youthName: string } | null>(null);
 
   // Fetch applications
   useEffect(() => {
-    console.log("useEffect triggered - fetching applications");
     fetchApplications();
   }, [companyId, educationFilter, cityFilter, sortBy, sortOrder]);
 
   const fetchApplications = async () => {
     try {
-      console.log("fetchApplications called");
       setLoading(true);
       const params = new URLSearchParams({
         ...(educationFilter !== "all" && { education: educationFilter }),
@@ -96,18 +97,11 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
         sortOrder,
       });
 
-      const url = `/api/youth-applications?${params}`;
-      console.log("Fetching from URL:", url);
-      const response = await fetch(url);
+      const response = await fetch(`/api/youth-applications?${params}`);
       const data = await response.json();
       
-      console.log("Youth applications API response:", data);
-      
       if (data.applications) {
-        console.log("Setting applications:", data.applications);
         setApplications(data.applications);
-      } else {
-        console.log("No applications in response");
       }
     } catch (error) {
       console.error("Error fetching applications:", error);
@@ -130,6 +124,15 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
     } catch (error) {
       console.error("Error expressing interest:", error);
     }
+  };
+
+  const startChat = (application: YouthApplication) => {
+    setActiveChat({
+      applicationId: application.id,
+      youthId: application.youth.id,
+      youthName: `${application.youth?.profile?.firstName || ''} ${application.youth?.profile?.lastName || ''}`.trim()
+    });
+    setShowChat(true);
   };
 
   const updateInterest = async (applicationId: string, status: string, notes?: string) => {
@@ -171,28 +174,19 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
   const filteredApplications = applications.filter(app => {
     // Filter out applications without youth data
     if (!app.youth?.profile) {
-      console.log("Filtering out app without youth data:", app);
       return false;
     }
     
-    // Apply search filter - temporarily disable to test
+    // Apply search filter
     if (searchTerm) {
-      const matches = app.youth?.profile?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      return app.youth?.profile?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
              app.youth?.profile?.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
              app.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
              app.description?.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      if (!matches) {
-        console.log("App doesn't match search term:", app.title, "search:", searchTerm);
-      }
-      
-      return matches;
     }
     
     return true; // If no search term, include all apps
   });
-  
-  console.log(`Filtered applications: ${filteredApplications.length} out of ${applications.length}`);
 
   const ApplicationCard = ({ application }: { application: YouthApplication }) => {
     // Skip rendering if youth data is missing
@@ -311,6 +305,18 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
                 Expresar Interés
               </Button>
             )}
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                startChat(application);
+              }}
+              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+            >
+              <MessageSquare className="h-4 w-4 mr-1" />
+              Chat
+            </Button>
             <Button variant="ghost" size="sm">
               <Eye className="h-4 w-4" />
             </Button>
@@ -321,8 +327,6 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
     );
   };
 
-  console.log("YouthApplicationBrowser render - loading:", loading, "applications:", applications.length, "filtered:", filteredApplications.length);
-  
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -332,99 +336,102 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Aplicaciones de Jóvenes</h2>
-          <p className="text-muted-foreground">
-            Descubre talento joven disponible para oportunidades laborales
-          </p>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm">
-            <Filter className="h-4 w-4 mr-2" />
-            Filtros Avanzados
-          </Button>
-        </div>
-      </div>
+    <div className="flex h-screen bg-gray-50">
+      {/* Main Content */}
+      <div className={`flex-1 transition-all duration-300 ${showChat ? 'mr-96' : ''}`}>
+        <div className="p-6 space-y-6">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold">Candidatos Jóvenes</h2>
+              <p className="text-muted-foreground">
+                Descubre talento joven disponible para oportunidades laborales
+              </p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" size="sm">
+                <Filter className="h-4 w-4 mr-2" />
+                Filtros
+              </Button>
+            </div>
+          </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <Users className="h-5 w-5 text-blue-600" />
-              <div>
-                <p className="text-2xl font-bold">{filteredApplications.length}</p>
-                <p className="text-sm text-muted-foreground">Aplicaciones</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <CheckCircle className="h-5 w-5 text-green-600" />
-              <div>
-                <p className="text-2xl font-bold">
-                  {filteredApplications.filter(app => app.status === "ACTIVE").length}
-                </p>
-                <p className="text-sm text-muted-foreground">Activas</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <Heart className="h-5 w-5 text-red-600" />
-              <div>
-                <p className="text-2xl font-bold">
-                  {filteredApplications.filter(app => app.hasInterest).length}
-                </p>
-                <p className="text-sm text-muted-foreground">Con Interés</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <Star className="h-5 w-5 text-yellow-600" />
-              <div>
-                <p className="text-2xl font-bold">
-                  {filteredApplications.filter(app => app.totalInterests > 0).length}
-                </p>
-                <p className="text-sm text-muted-foreground">Populares</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+          {/* Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-2">
+                  <Users className="h-5 w-5 text-blue-600" />
+                  <div>
+                    <p className="text-2xl font-bold">{filteredApplications.length}</p>
+                    <p className="text-sm text-muted-foreground">Aplicaciones</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-2">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  <div>
+                    <p className="text-2xl font-bold">
+                      {filteredApplications.filter(app => app.status === "ACTIVE").length}
+                    </p>
+                    <p className="text-sm text-muted-foreground">Activas</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-2">
+                  <Heart className="h-5 w-5 text-red-600" />
+                  <div>
+                    <p className="text-2xl font-bold">
+                      {filteredApplications.filter(app => app.hasInterest).length}
+                    </p>
+                    <p className="text-sm text-muted-foreground">Con Interés</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-2">
+                  <Star className="h-5 w-5 text-yellow-600" />
+                  <div>
+                    <p className="text-2xl font-bold">
+                      {filteredApplications.filter(app => app.totalInterests > 0).length}
+                    </p>
+                    <p className="text-sm text-muted-foreground">Populares</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
-      {/* Filters */}
-      <div className="flex items-center space-x-4">
-        <div className="flex-1">
-          <Input
-            placeholder="Buscar aplicaciones..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="max-w-sm"
-          />
-        </div>
-        <Select value={educationFilter} onValueChange={setEducationFilter}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="Nivel educativo" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos los niveles</SelectItem>
-            <SelectItem value="HIGH_SCHOOL">Bachillerato</SelectItem>
-            <SelectItem value="TECHNICAL">Técnico</SelectItem>
-            <SelectItem value="UNIVERSITY">Universitario</SelectItem>
-            <SelectItem value="GRADUATE">Postgrado</SelectItem>
-          </SelectContent>
-        </Select>
+          {/* Filters */}
+          <div className="flex items-center space-x-4">
+            <div className="flex-1">
+              <Input
+                placeholder="Buscar aplicaciones..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="max-w-sm"
+              />
+            </div>
+            <Select value={educationFilter} onValueChange={setEducationFilter}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Nivel educativo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los niveles</SelectItem>
+                <SelectItem value="HIGH_SCHOOL">Bachillerato</SelectItem>
+                <SelectItem value="TECHNICAL">Técnico</SelectItem>
+                <SelectItem value="UNIVERSITY">Universitario</SelectItem>
+                <SelectItem value="GRADUATE">Postgrado</SelectItem>
+              </SelectContent>
+            </Select>
         <Select value={cityFilter} onValueChange={setCityFilter}>
           <SelectTrigger className="w-48">
             <SelectValue placeholder="Ciudad" />
@@ -469,6 +476,49 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
         )}
       </div>
 
+        </div>
+      </div>
+
+      {/* Chat Sidebar */}
+      {showChat && activeChat && (
+        <div className="fixed right-0 top-0 h-full w-96 bg-white border-l shadow-lg z-50">
+          <div className="flex flex-col h-full">
+            {/* Chat Header */}
+            <div className="p-4 border-b bg-gray-50">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <MessageSquare className="h-5 w-5 text-blue-600" />
+                  <div>
+                    <h3 className="font-semibold">Chat con {activeChat.youthName}</h3>
+                    <p className="text-sm text-muted-foreground">Solicitud abierta</p>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setShowChat(false);
+                    setActiveChat(null);
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Chat Content */}
+            <div className="flex-1 overflow-hidden">
+              <MessageInterface
+                recipientId={activeChat.youthId}
+                contextType="YOUTH_APPLICATION"
+                contextId={activeChat.applicationId}
+                className="h-full"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Application Detail Modal */}
       {selectedApplication && selectedApplication.youth?.profile && (
         <YouthApplicationDetailModal 
@@ -476,37 +526,8 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
           onClose={() => setSelectedApplication(null)}
           onExpressInterest={expressInterest}
           onUpdateInterest={updateInterest}
-          onOpenChat={() => setShowChat(true)}
+          onOpenChat={() => startChat(selectedApplication)}
         />
-      )}
-
-      {/* Chat Modal */}
-      {showChat && selectedApplication && selectedApplication.youth?.profile && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Chat de Aplicación</CardTitle>
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={() => setShowChat(false)}
-                >
-                  ✕
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <YouthApplicationChat
-                applicationId={selectedApplication.id}
-                companyName="Empresa" // TODO: Get actual company name
-                companyId={companyId}
-                youthId={selectedApplication.youth?.id || ''}
-                youthName={`${selectedApplication.youth?.profile?.firstName || ''} ${selectedApplication.youth?.profile?.lastName || ''}`}
-              />
-            </CardContent>
-          </Card>
-        </div>
       )}
     </div>
   );
@@ -594,13 +615,45 @@ function YouthApplicationDetailModal({
               <h4 className="font-semibold mb-2">Documentos</h4>
               <div className="flex items-center space-x-4">
                 {(application.cvFile || application.cvUrl) && (
-                  <Button variant="outline" size="sm">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      const cvUrl = application.cvUrl || application.cvFile;
+                      if (cvUrl) {
+                        // If it's a full URL, open it directly
+                        if (cvUrl.startsWith('http')) {
+                          window.open(cvUrl, '_blank');
+                        } else {
+                          // If it's a file path, construct the full URL
+                          const fullUrl = cvUrl.startsWith('/') ? cvUrl : `/${cvUrl}`;
+                          window.open(fullUrl, '_blank');
+                        }
+                      }
+                    }}
+                  >
                     <Download className="h-4 w-4 mr-2" />
                     Descargar CV
                   </Button>
                 )}
                 {(application.coverLetterFile || application.coverLetterUrl) && (
-                  <Button variant="outline" size="sm">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      const coverLetterUrl = application.coverLetterUrl || application.coverLetterFile;
+                      if (coverLetterUrl) {
+                        // If it's a full URL, open it directly
+                        if (coverLetterUrl.startsWith('http')) {
+                          window.open(coverLetterUrl, '_blank');
+                        } else {
+                          // If it's a file path, construct the full URL
+                          const fullUrl = coverLetterUrl.startsWith('/') ? coverLetterUrl : `/${coverLetterUrl}`;
+                          window.open(fullUrl, '_blank');
+                        }
+                      }
+                    }}
+                  >
                     <Download className="h-4 w-4 mr-2" />
                     Carta de Presentación
                   </Button>

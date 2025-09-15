@@ -52,8 +52,6 @@ export async function GET(request: NextRequest) {
     const orderBy: any = {};
     orderBy[sortBy] = sortOrder;
 
-    console.log("Youth applications query where clause:", JSON.stringify(where, null, 2));
-    
     const [applications, total] = await Promise.all([
       prisma.youthApplication.findMany({
         where,
@@ -103,9 +101,6 @@ export async function GET(request: NextRequest) {
       prisma.youthApplication.count({ where }),
     ]);
 
-    console.log(`Found ${applications.length} youth applications out of ${total} total`);
-    console.log("Raw applications:", JSON.stringify(applications, null, 2));
-    
     // Transform the data to match the expected structure
     const transformedApplications = applications.map(app => ({
       ...app,
@@ -125,8 +120,6 @@ export async function GET(request: NextRequest) {
       },
       totalInterests: app._count.companyInterests,
     }));
-    
-    console.log("Transformed applications:", JSON.stringify(transformedApplications, null, 2));
 
     return NextResponse.json({
       applications: transformedApplications,
