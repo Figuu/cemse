@@ -113,7 +113,7 @@ export function YouthApplicationChat({
             </p>
             <div className="flex items-center justify-between mt-2">
               <span className="text-xs text-green-700">
-                De: {recentMessage.sender.name}
+                De: {(recentMessage.sender.firstName || "") + " " + (recentMessage.sender.lastName || "")}
               </span>
               <Button
                 variant="ghost"

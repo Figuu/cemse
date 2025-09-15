@@ -32,7 +32,7 @@ interface YouthApplicationChatInterfaceProps {
       id: string;
       name: string;
       logoUrl?: string;
-      ownerId: string;
+      ownerId?: string;
     };
   }>;
 }

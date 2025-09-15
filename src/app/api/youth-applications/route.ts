@@ -101,25 +101,49 @@ export async function GET(request: NextRequest) {
       prisma.youthApplication.count({ where }),
     ]);
 
-    // Transform the data to match the expected structure
-    const transformedApplications = applications.map(app => ({
-      ...app,
-      youth: {
-        id: app.youthProfile.userId,
-        email: app.youthProfile.user.email,
-        profile: {
-          firstName: app.youthProfile.firstName || '',
-          lastName: app.youthProfile.lastName || '',
-          avatarUrl: app.youthProfile.avatarUrl,
-          city: app.youthProfile.city,
-          skills: app.youthProfile.skills || [],
-          experience: app.youthProfile.workExperience || [],
-          education: app.youthProfile.educationLevel || app.youthProfile.currentInstitution,
-          phone: app.youthProfile.phone,
+    // Get current company for the user (if they're a company)
+    let currentCompany = null;
+    if (session?.user?.role === "COMPANIES") {
+      currentCompany = await prisma.company.findFirst({
+        where: { 
+          OR: [
+            { createdBy: session.user.id },
+            { ownerId: session.user.id }
+          ]
         },
-      },
-      totalInterests: app._count.companyInterests,
-    }));
+        select: { id: true }
+      });
+    }
+
+    // Transform the data to match the expected structure
+    const transformedApplications = applications.map(app => {
+      // Find current company's interest in this application
+      const currentCompanyInterest = currentCompany 
+        ? app.companyInterests.find(interest => interest.company.id === currentCompany.id)
+        : null;
+
+      return {
+        ...app,
+        youth: {
+          id: app.youthProfile.userId,
+          email: app.youthProfile.user.email,
+          profile: {
+            firstName: app.youthProfile.firstName || '',
+            lastName: app.youthProfile.lastName || '',
+            avatarUrl: app.youthProfile.avatarUrl,
+            city: app.youthProfile.city,
+            skills: app.youthProfile.skills || [],
+            experience: app.youthProfile.workExperience || [],
+            education: app.youthProfile.educationLevel || app.youthProfile.currentInstitution,
+            phone: app.youthProfile.phone,
+          },
+        },
+        totalInterests: app._count.companyInterests,
+        hasInterest: !!currentCompanyInterest,
+        interestStatus: currentCompanyInterest?.status || null,
+        interestId: currentCompanyInterest?.id || null,
+      };
+    });
 
     return NextResponse.json({
       applications: transformedApplications,

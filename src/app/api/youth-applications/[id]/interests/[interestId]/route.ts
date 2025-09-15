@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
 const updateInterestSchema = z.object({
-  status: z.enum(["INTERESTED", "CONTACTED", "INTERVIEW_SCHEDULED", "HIRED", "NOT_INTERESTED"]).optional(),
+  status: z.enum(["INTERESTED", "CONTACTED", "INTERVIEW_SCHEDULED", "HIRED", "NOT_INTERESTED"]),
   notes: z.string().optional(),
 });
 
@@ -18,6 +18,11 @@ export async function PUT(
     
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Check if user is a company
+    if (session.user.role !== "COMPANIES") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const { id: applicationId, interestId } = await params;
@@ -42,9 +47,13 @@ export async function PUT(
       );
     }
 
-    // Check if interest exists and belongs to the company
-    const existingInterest = await prisma.youthApplicationCompanyInterest.findUnique({
-      where: { id: interestId },
+    // Check if interest exists and belongs to this company
+    const existingInterest = await prisma.youthApplicationCompanyInterest.findFirst({
+      where: {
+        id: interestId,
+        applicationId,
+        companyId: company.id,
+      },
     });
 
     if (!existingInterest) {
@@ -54,23 +63,13 @@ export async function PUT(
       );
     }
 
-    if (existingInterest.companyId !== company.id) {
-      return NextResponse.json(
-        { error: "Forbidden" },
-        { status: 403 }
-      );
-    }
-
-    const updateData: any = { ...validatedData };
-    
-    // If status is being updated to CONTACTED, set contactedAt
-    if (validatedData.status === "CONTACTED" && existingInterest.status !== "CONTACTED") {
-      updateData.contactedAt = new Date();
-    }
-
-    const interest = await prisma.youthApplicationCompanyInterest.update({
+    // Update the interest
+    const updatedInterest = await prisma.youthApplicationCompanyInterest.update({
       where: { id: interestId },
-      data: updateData,
+      data: {
+        status: validatedData.status,
+        notes: validatedData.notes,
+      },
       include: {
         application: {
           include: {
@@ -100,7 +99,7 @@ export async function PUT(
       },
     });
 
-    return NextResponse.json(interest);
+    return NextResponse.json(updatedInterest);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -128,7 +127,12 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { interestId } = await params;
+    // Check if user is a company
+    if (session.user.role !== "COMPANIES") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const { id: applicationId, interestId } = await params;
 
     // Get company for the current user
     const company = await prisma.company.findFirst({
@@ -148,9 +152,13 @@ export async function DELETE(
       );
     }
 
-    // Check if interest exists and belongs to the company
-    const existingInterest = await prisma.youthApplicationCompanyInterest.findUnique({
-      where: { id: interestId },
+    // Check if interest exists and belongs to this company
+    const existingInterest = await prisma.youthApplicationCompanyInterest.findFirst({
+      where: {
+        id: interestId,
+        applicationId,
+        companyId: company.id,
+      },
     });
 
     if (!existingInterest) {
@@ -160,18 +168,12 @@ export async function DELETE(
       );
     }
 
-    if (existingInterest.companyId !== company.id) {
-      return NextResponse.json(
-        { error: "Forbidden" },
-        { status: 403 }
-      );
-    }
-
+    // Delete the interest
     await prisma.youthApplicationCompanyInterest.delete({
       where: { id: interestId },
     });
 
-    return NextResponse.json({ message: "Interest removed successfully" });
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting interest:", error);
     return NextResponse.json(

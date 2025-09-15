@@ -64,6 +64,8 @@ interface YouthApplication {
   companyInterests: any[];
   totalInterests: number;
   hasInterest: boolean;
+  interestStatus?: "INTERESTED" | "CONTACTED" | "INTERVIEW_SCHEDULED" | "HIRED" | "NOT_INTERESTED";
+  interestId?: string;
 }
 
 interface YouthApplicationBrowserProps {
@@ -135,9 +137,9 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
     setShowChat(true);
   };
 
-  const updateInterest = async (applicationId: string, status: string, notes?: string) => {
+  const updateInterest = async (applicationId: string, interestId: string, status: string, notes?: string) => {
     try {
-      const response = await fetch(`/api/youth-applications/${applicationId}/interests`, {
+      const response = await fetch(`/api/youth-applications/${applicationId}/interests/${interestId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status, notes }),
@@ -290,9 +292,51 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
           </div>
           <div className="flex items-center space-x-2">
             {application.hasInterest ? (
-              <Badge variant="default" className="text-xs">
-                Interés Expresado
-              </Badge>
+              <div className="flex items-center space-x-2">
+                <Badge variant="default" className="text-xs">
+                  {application.interestStatus === "INTERESTED" && "Interés Expresado"}
+                  {application.interestStatus === "CONTACTED" && "Contactado"}
+                  {application.interestStatus === "INTERVIEW_SCHEDULED" && "Entrevista Programada"}
+                  {application.interestStatus === "HIRED" && "Contratado"}
+                  {application.interestStatus === "NOT_INTERESTED" && "No Interesado"}
+                </Badge>
+                {application.interestStatus === "INTERESTED" && (
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      updateInterest(application.id, application.interestId!, "CONTACTED");
+                    }}
+                  >
+                    Contactar
+                  </Button>
+                )}
+                {application.interestStatus === "CONTACTED" && (
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      updateInterest(application.id, application.interestId!, "INTERVIEW_SCHEDULED");
+                    }}
+                  >
+                    Programar Entrevista
+                  </Button>
+                )}
+                {application.interestStatus === "INTERVIEW_SCHEDULED" && (
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      updateInterest(application.id, application.interestId!, "HIRED");
+                    }}
+                  >
+                    Contratar
+                  </Button>
+                )}
+              </div>
             ) : (
               <Button 
                 size="sm" 
@@ -317,7 +361,14 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
               <MessageSquare className="h-4 w-4 mr-1" />
               Chat
             </Button>
-            <Button variant="ghost" size="sm">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedApplication(application);
+              }}
+            >
               <Eye className="h-4 w-4" />
             </Button>
           </div>
@@ -544,7 +595,7 @@ function YouthApplicationDetailModal({
   application: YouthApplication;
   onClose: () => void;
   onExpressInterest: (id: string, notes?: string) => void;
-  onUpdateInterest: (id: string, status: string, notes?: string) => void;
+  onUpdateInterest: (applicationId: string, interestId: string, status: string, notes?: string) => void;
   onOpenChat: () => void;
 }) {
   const [notes, setNotes] = useState("");
@@ -674,19 +725,19 @@ function YouthApplicationDetailModal({
             ) : (
               <>
                 <Button 
-                  onClick={() => onUpdateInterest(application.id, "CONTACTED", notes)}
+                  onClick={() => onUpdateInterest(application.id, application.interestId!, "CONTACTED", notes)}
                 >
                   <MessageSquare className="h-4 w-4 mr-2" />
                   Marcar como Contactado
                 </Button>
                 <Button 
-                  onClick={() => onUpdateInterest(application.id, "INTERVIEW_SCHEDULED", notes)}
+                  onClick={() => onUpdateInterest(application.id, application.interestId!, "INTERVIEW_SCHEDULED", notes)}
                 >
                   <Calendar className="h-4 w-4 mr-2" />
                   Programar Entrevista
                 </Button>
                 <Button 
-                  onClick={() => onUpdateInterest(application.id, "HIRED", notes)}
+                  onClick={() => onUpdateInterest(application.id, application.interestId!, "HIRED", notes)}
                   className="bg-green-600 hover:bg-green-700"
                 >
                   <CheckCircle className="h-4 w-4 mr-2" />

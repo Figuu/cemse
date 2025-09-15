@@ -112,7 +112,7 @@ export function JobApplicationChat({
             </p>
             <div className="flex items-center justify-between mt-2">
               <span className="text-xs text-blue-700">
-                De: {recentMessage.sender.name}
+                De: {(recentMessage.sender.firstName || "") + " " + (recentMessage.sender.lastName || "")}
               </span>
               <Button
                 variant="ghost"
