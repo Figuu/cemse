@@ -29,6 +29,21 @@ export async function GET(request: NextRequest) {
       isActive: isActive,
     };
 
+    // For institution users, filter by their institution's courses
+    if (session.user.role === "INSTITUTION") {
+      const userInstitution = await prisma.institution.findFirst({
+        where: { createdBy: session.user.id },
+        select: { id: true }
+      });
+      
+      if (userInstitution) {
+        where.institutionId = userInstitution.id;
+      } else {
+        // If institution user doesn't have an institution, return empty results
+        where.id = "non-existent";
+      }
+    }
+
     if (search) {
       where.OR = [
         { title: { contains: search, mode: "insensitive" } },
@@ -121,15 +136,6 @@ export async function GET(request: NextRequest) {
       prisma.course.count({ where }),
     ]);
 
-    // Get user's institution ID for role-based filtering
-    let userInstitutionId = null;
-    if (session.user.role === "INSTITUTION") {
-      const userInstitution = await prisma.institution.findFirst({
-        where: { createdBy: session.user.id },
-        select: { id: true }
-      });
-      userInstitutionId = userInstitution?.id;
-    }
 
     // Transform courses for frontend
     const transformedCourses = courses.map(course => {
@@ -140,8 +146,7 @@ export async function GET(request: NextRequest) {
       const lastAccessed = null; // lastAccessedAt not available in CourseEnrollment
       
       // Check if user owns this course (for institutions)
-      const isOwner = session.user.role === "INSTITUTION" && 
-                     course.institutionId === userInstitutionId;
+      const isOwner = session.user.role === "INSTITUTION";
 
       return {
         id: course.id,
@@ -205,16 +210,16 @@ export async function GET(request: NextRequest) {
     let filteredCourses = transformedCourses;
     if (isEnrolled === "true") {
       if (session.user.role === "INSTITUTION") {
-        // For institutions, "enrolled" means "my courses" (courses they created)
-        filteredCourses = transformedCourses.filter(course => course.isOwner);
+        // For institutions, "enrolled" means all their courses (they already filtered by institution)
+        filteredCourses = transformedCourses;
       } else {
         // For students, "enrolled" means courses they're enrolled in
         filteredCourses = transformedCourses.filter(course => course.isEnrolled);
       }
     } else if (isEnrolled === "false") {
       if (session.user.role === "INSTITUTION") {
-        // For institutions, "not enrolled" means "other courses" (courses they didn't create)
-        filteredCourses = transformedCourses.filter(course => !course.isOwner);
+        // For institutions, "not enrolled" means no courses (they only see their own)
+        filteredCourses = [];
       } else {
         // For students, "not enrolled" means courses they're not enrolled in
         filteredCourses = transformedCourses.filter(course => !course.isEnrolled);
@@ -304,7 +309,15 @@ export async function POST(request: NextRequest) {
         where: { createdBy: session.user.id },
         select: { id: true }
       });
-      institutionId = institution?.id;
+      
+      if (!institution) {
+        return NextResponse.json(
+          { error: "Institution profile not found. Please create an institution profile first." },
+          { status: 400 }
+        );
+      }
+      
+      institutionId = institution.id;
     }
 
     // Create course

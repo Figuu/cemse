@@ -103,7 +103,11 @@ export function useCourseProgress(courseId: string): UseCourseProgressReturn {
   const [error, setError] = useState<string | null>(null);
 
   const fetchProgress = useCallback(async () => {
-    if (!session?.user?.id || !courseId) return;
+    if (!session?.user?.id || !courseId) {
+      setProgress(null);
+      setIsLoading(false);
+      return;
+    }
 
     setIsLoading(true);
     setError(null);
@@ -171,8 +175,14 @@ export function useCourseProgress(courseId: string): UseCourseProgressReturn {
   };
 
   useEffect(() => {
-    fetchProgress();
-  }, [fetchProgress]);
+    if (courseId) {
+      fetchProgress();
+    } else {
+      setProgress(null);
+      setIsLoading(false);
+      setError(null);
+    }
+  }, [fetchProgress, courseId]);
 
   return {
     progress,

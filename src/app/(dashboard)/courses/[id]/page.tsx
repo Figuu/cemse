@@ -40,14 +40,14 @@ export default function CourseDetailPage() {
     unenrollFromCourse,
   } = useCourses();
 
+  const course = courses.find(c => c.id === courseId);
+
   const {
     progress,
     isLoading: progressLoading,
     error: progressError,
     updateLessonProgress,
-  } = useCourseProgress(courseId);
-
-  const course = courses.find(c => c.id === courseId);
+  } = useCourseProgress(course?.isEnrolled ? courseId : "");
 
   const handleEnroll = async () => {
     if (course) {
@@ -136,7 +136,7 @@ export default function CourseDetailPage() {
     return (
       <div className="space-y-6">
         <div className="flex items-center space-x-4">
-          <Button variant="outline" size="sm" onClick={() => router.back()}>
+          <Button variant="outline" size="sm" onClick={() => router.push('/courses')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Volver
           </Button>
@@ -174,7 +174,7 @@ export default function CourseDetailPage() {
     return (
       <div className="space-y-6">
         <div className="flex items-center space-x-4">
-          <Button variant="outline" size="sm" onClick={() => router.back()}>
+          <Button variant="outline" size="sm" onClick={() => router.push('/courses')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Volver
           </Button>
@@ -200,7 +200,7 @@ export default function CourseDetailPage() {
     return (
       <div className="space-y-6">
         <div className="flex items-center space-x-4">
-          <Button variant="outline" size="sm" onClick={() => router.back()}>
+          <Button variant="outline" size="sm" onClick={() => router.push('/courses')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Volver
           </Button>
@@ -250,7 +250,7 @@ export default function CourseDetailPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <Button variant="outline" size="sm" onClick={() => router.back()}>
+            <Button variant="outline" size="sm" onClick={() => router.push('/courses')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Volver
             </Button>

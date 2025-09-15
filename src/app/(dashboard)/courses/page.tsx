@@ -1,9 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { 
   BookOpen, 
   Plus,
@@ -20,6 +29,7 @@ import { CourseCreationModal } from "@/components/courses/CourseCreationModal";
 import { cn } from "@/lib/utils";
 
 export default function CoursesPage() {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedLevel, setSelectedLevel] = useState("all");
@@ -29,6 +39,8 @@ export default function CoursesPage() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [activeTab, setActiveTab] = useState("all");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [deleteCourseId, setDeleteCourseId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const {
     courses,
@@ -83,6 +95,37 @@ export default function CoursesPage() {
 
   const handleCreateSuccess = () => {
     refetch();
+  };
+
+  const handleEditCourse = (courseId: string) => {
+    router.push(`/courses/${courseId}/edit`);
+  };
+
+  const handleDeleteCourse = (courseId: string) => {
+    setDeleteCourseId(courseId);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteCourseId) return;
+    
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/courses/${deleteCourseId}`, {
+        method: 'DELETE',
+      });
+      
+      if (response.ok) {
+        refetch();
+        setDeleteCourseId(null);
+      } else {
+        const errorData = await response.json();
+        console.error('Error deleting course:', errorData.error);
+      }
+    } catch (error) {
+      console.error('Error deleting course:', error);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   if (isLoading) {
@@ -236,6 +279,8 @@ export default function CoursesPage() {
                     onEnroll={handleEnroll}
                     onUnenroll={handleUnenroll}
                     onView={handleViewCourse}
+                    onEdit={handleEditCourse}
+                    onDelete={handleDeleteCourse}
                     showActions={true}
                   />
                 ))}
@@ -268,6 +313,8 @@ export default function CoursesPage() {
                     onEnroll={handleEnroll}
                     onUnenroll={handleUnenroll}
                     onView={handleViewCourse}
+                    onEdit={handleEditCourse}
+                    onDelete={handleDeleteCourse}
                     showActions={true}
                   />
                 ))}
@@ -300,6 +347,8 @@ export default function CoursesPage() {
                     onEnroll={handleEnroll}
                     onUnenroll={handleUnenroll}
                     onView={handleViewCourse}
+                    onEdit={handleEditCourse}
+                    onDelete={handleDeleteCourse}
                     showActions={true}
                   />
                 ))}
@@ -316,6 +365,31 @@ export default function CoursesPage() {
       onClose={() => setIsCreateModalOpen(false)}
       onSuccess={handleCreateSuccess}
     />
+
+    {/* Delete Confirmation Dialog */}
+    <Dialog open={!!deleteCourseId} onOpenChange={() => setDeleteCourseId(null)}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>¿Eliminar curso?</DialogTitle>
+          <DialogDescription>
+            Esta acción no se puede deshacer. El curso será eliminado permanentemente
+            y todos los datos asociados se perderán.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setDeleteCourseId(null)}>
+            Cancelar
+          </Button>
+          <Button
+            onClick={confirmDelete}
+            disabled={isDeleting}
+            className="bg-red-600 hover:bg-red-700"
+          >
+            {isDeleting ? "Eliminando..." : "Eliminar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
     </RoleGuard>
   );
 }

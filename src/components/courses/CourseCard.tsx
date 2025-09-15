@@ -5,6 +5,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import Image from "next/image";
 import { 
   BookOpen, 
@@ -18,7 +24,10 @@ import {
   Tag,
   ExternalLink,
   Heart,
-  Share2
+  Share2,
+  Edit,
+  Trash2,
+  MoreVertical
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Course } from "@/hooks/useCourses";
@@ -30,6 +39,8 @@ interface CourseCardProps {
   onEnroll: (courseId: string) => Promise<void>;
   onUnenroll: (courseId: string) => Promise<void>;
   onView: (courseId: string) => void;
+  onEdit?: (courseId: string) => void;
+  onDelete?: (courseId: string) => void;
   showActions?: boolean;
   className?: string;
 }
@@ -39,6 +50,8 @@ export function CourseCard({
   onEnroll, 
   onUnenroll, 
   onView,
+  onEdit,
+  onDelete,
   showActions = true,
   className 
 }: CourseCardProps) {
@@ -336,14 +349,40 @@ export function CourseCard({
               {/* Show different actions based on user role and course ownership */}
               {session?.user?.role === "INSTITUTION" && course.isOwner ? (
                 // Institution viewing their own course
-                <Button
-                  size="sm"
-                  onClick={() => onView(course.id)}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  <BookOpen className="h-4 w-4 mr-1" />
-                  Gestionar
-                </Button>
+                <>
+                  <Button
+                    size="sm"
+                    onClick={() => onView(course.id)}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    <BookOpen className="h-4 w-4 mr-1" />
+                    Gestionar
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      {onEdit && (
+                        <DropdownMenuItem onClick={() => onEdit(course.id)}>
+                          <Edit className="h-4 w-4 mr-2" />
+                          Editar
+                        </DropdownMenuItem>
+                      )}
+                      {onDelete && (
+                        <DropdownMenuItem 
+                          onClick={() => onDelete(course.id)}
+                          className="text-red-600 focus:text-red-600"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Eliminar
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </>
               ) : session?.user?.role === "INSTITUTION" ? (
                 // Institution viewing someone else's course
                 <Button

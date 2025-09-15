@@ -73,7 +73,7 @@ async function main() {
       phone: '+591 4 4250000',
       institutionType: 'NGO',
       isActive: true,
-      createdBy: admin.id,
+      createdBy: institution.id,
     },
   });
 
