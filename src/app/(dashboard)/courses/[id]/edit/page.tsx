@@ -42,7 +42,13 @@ interface CourseModule {
   orderIndex: number;
   estimatedDuration: number;
   isLocked: boolean;
-  lessons: CourseLesson[];
+  prerequisites: string[];
+  hasCertificate: boolean;
+  lessons: Array<{
+    id: string;
+    title: string;
+    orderIndex: number;
+  }>;
 }
 
 interface CourseLesson {
@@ -57,25 +63,29 @@ interface CourseLesson {
   orderIndex: number;
   isRequired: boolean;
   isPreview: boolean;
+  attachments: Record<string, any>;
 }
 
 interface CourseQuiz {
   id: string;
   title: string;
   description: string | null;
-  questions: QuizQuestion[];
+  orderIndex: number;
   timeLimit: number | null;
   passingScore: number;
-  orderIndex: number;
+  isPublished: boolean;
+  questions: QuizQuestion[];
 }
 
 interface QuizQuestion {
-  id: string;
+  id?: string;
   question: string;
   type: "multiple_choice" | "true_false" | "short_answer";
   options: string[];
   correctAnswer: string | number;
-  explanation: string | null;
+  explanation: string;
+  points: number;
+  orderIndex: number;
 }
 
 export default function CourseEditPage() {

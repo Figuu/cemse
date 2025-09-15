@@ -138,14 +138,10 @@ export function LessonFileUpload({
     setUploadedFile(prev => prev ? { ...prev, status: "uploading", progress: 0 } : null);
 
     try {
-      // Simulate upload progress
-      for (let i = 0; i <= 100; i += 10) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-        setUploadedFile(prev => prev ? { ...prev, progress: i } : null);
-      }
-
-      // Call the actual upload function
-      const url = await onUpload(uploadedFile.file);
+      // Use XMLHttpRequest for real upload progress tracking
+      const url = await uploadWithProgress(uploadedFile.file, (progress) => {
+        setUploadedFile(prev => prev ? { ...prev, progress } : null);
+      });
 
       console.log("File uploaded successfully, URL:", url);
 
@@ -155,6 +151,15 @@ export function LessonFileUpload({
         progress: 100,
         url 
       } : null);
+
+      // Call the onUpload prop to notify parent component
+      if (onUpload) {
+        console.log("Calling onUpload callback with file:", uploadedFile.file.name);
+        await onUpload(uploadedFile.file);
+        console.log("onUpload callback completed");
+      } else {
+        console.log("No onUpload callback provided");
+      }
     } catch (error) {
       setUploadedFile(prev => prev ? { 
         ...prev, 
@@ -164,6 +169,60 @@ export function LessonFileUpload({
     } finally {
       setIsUploading(false);
     }
+  };
+
+  const uploadWithProgress = (file: File, onProgress: (progress: number) => void): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("contentType", file.type);
+
+      const xhr = new XMLHttpRequest();
+
+      // Track upload progress
+      xhr.upload.addEventListener("progress", (event) => {
+        if (event.lengthComputable) {
+          const progress = Math.round((event.loaded / event.total) * 100);
+          onProgress(progress);
+        }
+      });
+
+      // Handle successful upload
+      xhr.addEventListener("load", () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const response = JSON.parse(xhr.responseText);
+            resolve(response.url);
+          } catch (error) {
+            reject(new Error("Invalid response format"));
+          }
+        } else {
+          try {
+            const errorResponse = JSON.parse(xhr.responseText);
+            reject(new Error(errorResponse.error || "Upload failed"));
+          } catch {
+            reject(new Error(`Upload failed with status ${xhr.status}`));
+          }
+        }
+      });
+
+      // Handle upload errors
+      xhr.addEventListener("error", () => {
+        reject(new Error("Network error during upload"));
+      });
+
+      // Handle upload timeout
+      xhr.addEventListener("timeout", () => {
+        reject(new Error("Upload timeout"));
+      });
+
+      // Set timeout (5 minutes for large files)
+      xhr.timeout = 5 * 60 * 1000;
+
+      // Start the upload
+      xhr.open("POST", "/api/upload");
+      xhr.send(formData);
+    });
   };
 
   const removeFile = () => {
@@ -273,8 +332,13 @@ export function LessonFileUpload({
 
             <div className="flex items-center space-x-2">
               {uploadedFile.status === "uploading" && (
-                <div className="w-20">
-                  <Progress value={uploadedFile.progress} className="h-2" />
+                <div className="flex items-center space-x-2">
+                  <div className="w-20">
+                    <Progress value={uploadedFile.progress} className="h-2" />
+                  </div>
+                  <span className="text-xs text-muted-foreground min-w-[3rem]">
+                    {uploadedFile.progress}%
+                  </span>
                 </div>
               )}
               
@@ -330,6 +394,24 @@ export function LessonFileUpload({
             </>
           )}
         </Button>
+      )}
+
+      {/* Upload Progress Info */}
+      {uploadedFile && uploadedFile.status === "uploading" && (
+        <div className="text-center space-y-2">
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div 
+              className="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-out"
+              style={{ width: `${uploadedFile.progress}%` }}
+            />
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Subiendo {getContentTypeLabel().toLowerCase()}... {uploadedFile.progress}%
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {formatFileSize(uploadedFile.file.size)} - Por favor espera hasta que se complete
+          </p>
+        </div>
       )}
     </div>
   );

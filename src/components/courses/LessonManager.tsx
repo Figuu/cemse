@@ -83,6 +83,7 @@ export function LessonManager({ courseId, moduleId, lessons, onLessonsChange }: 
   });
 
   const [uploadedFileUrl, setUploadedFileUrl] = useState<string | null>(null);
+  const [isFileUploading, setIsFileUploading] = useState(false);
   const [lessonResources, setLessonResources] = useState<Record<string, any[]>>({});
   const [lessonQuizzes, setLessonQuizzes] = useState<Record<string, any[]>>({});
 
@@ -102,32 +103,49 @@ export function LessonManager({ courseId, moduleId, lessons, onLessonsChange }: 
   };
 
   const handleFileUpload = async (file: File): Promise<string> => {
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("contentType", file.type);
+    console.log("handleFileUpload called with file:", file.name, file.type);
+    setIsFileUploading(true);
+    
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("contentType", file.type);
 
-    const response = await fetch("/api/upload", {
-      method: "POST",
-      body: formData,
-    });
+      console.log("Uploading file to /api/upload...");
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Failed to upload file");
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Upload failed:", errorData);
+        throw new Error(errorData.error || "Failed to upload file");
+      }
+
+      const data = await response.json();
+      const url = data.url;
+      
+      console.log("Upload successful, setting uploadedFileUrl to:", url);
+      
+      // Set the uploaded file URL in state
+      setUploadedFileUrl(url);
+      
+      return url;
+    } catch (error) {
+      console.error("Error in handleFileUpload:", error);
+      throw error;
+    } finally {
+      setIsFileUploading(false);
     }
-
-    const data = await response.json();
-    const url = data.url;
-    
-    console.log("Setting uploadedFileUrl to:", url);
-    
-    // Set the uploaded file URL in state
-    setUploadedFileUrl(url);
-    
-    return url;
   };
 
   const handleCreateLesson = async () => {
+    if (isFileUploading) {
+      setError("Por favor espera a que termine la subida del archivo");
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
@@ -148,19 +166,25 @@ export function LessonManager({ courseId, moduleId, lessons, onLessonsChange }: 
         videoUrl,
         audioUrl,
         formDataVideoUrl: formData.videoUrl,
-        formDataAudioUrl: formData.audioUrl
+        formDataAudioUrl: formData.audioUrl,
+        isFileUploading,
+        formData
       });
+
+      const requestBody = {
+        ...formData,
+        videoUrl,
+        audioUrl,
+      };
+
+      console.log("Sending lesson creation request with body:", requestBody);
 
       const response = await fetch(`/api/courses/${courseId}/modules/${moduleId}/lessons`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          ...formData,
-          videoUrl,
-          audioUrl,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -169,6 +193,7 @@ export function LessonManager({ courseId, moduleId, lessons, onLessonsChange }: 
       }
 
       const data = await response.json();
+      console.log("Lesson creation response:", data);
       onLessonsChange([...lessons, data.lesson]);
       setIsCreateModalOpen(false);
       resetForm();
@@ -181,6 +206,11 @@ export function LessonManager({ courseId, moduleId, lessons, onLessonsChange }: 
 
   const handleEditLesson = async () => {
     if (!editingLesson) return;
+
+    if (isFileUploading) {
+      setError("Por favor espera a que termine la subida del archivo");
+      return;
+    }
 
     try {
       setIsLoading(true);
@@ -451,8 +481,8 @@ export function LessonManager({ courseId, moduleId, lessons, onLessonsChange }: 
               <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>
                 Cancelar
               </Button>
-              <Button onClick={handleCreateLesson} disabled={isLoading}>
-                {isLoading ? "Creando..." : "Crear Lección"}
+              <Button onClick={handleCreateLesson} disabled={isLoading || isFileUploading}>
+                {isFileUploading ? "Subiendo archivo..." : isLoading ? "Creando..." : "Crear Lección"}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -462,6 +492,17 @@ export function LessonManager({ courseId, moduleId, lessons, onLessonsChange }: 
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-md p-4">
           <p className="text-sm text-red-600">{error}</p>
+        </div>
+      )}
+
+      {isFileUploading && (
+        <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+          <div className="flex items-center space-x-2">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+            <p className="text-sm text-blue-600">
+              Subiendo archivo... Por favor espera hasta que se complete
+            </p>
+          </div>
         </div>
       )}
 
@@ -686,8 +727,8 @@ export function LessonManager({ courseId, moduleId, lessons, onLessonsChange }: 
             <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleEditLesson} disabled={isLoading}>
-              {isLoading ? "Guardando..." : "Guardar Cambios"}
+            <Button onClick={handleEditLesson} disabled={isLoading || isFileUploading}>
+              {isFileUploading ? "Subiendo archivo..." : isLoading ? "Guardando..." : "Guardar Cambios"}
             </Button>
           </DialogFooter>
         </DialogContent>

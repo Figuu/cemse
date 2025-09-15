@@ -43,11 +43,20 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(bytes);
 
     // Upload to MinIO
+    console.log("Uploading file to MinIO:", {
+      fileName: file.name,
+      fileSize: file.size,
+      contentType: file.type,
+      bufferSize: buffer.length
+    });
+
     const result = await minioService.uploadFile(
       buffer,
       file.name,
       file.type
     );
+
+    console.log("MinIO upload result:", result);
 
     return NextResponse.json({
       success: true,

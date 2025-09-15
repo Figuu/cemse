@@ -72,6 +72,26 @@ export class MinIOService {
               };
               await this.client.setBucketPolicy(bucketName, JSON.stringify(policy));
               console.log(`✅ Set public policy for bucket: ${bucketName}`);
+              
+              // Set CORS policy for web access
+              try {
+                const corsConfig = {
+                  CORSRules: [
+                    {
+                      AllowedOrigins: ['*'],
+                      AllowedMethods: ['GET', 'HEAD'],
+                      AllowedHeaders: ['*'],
+                      ExposeHeaders: ['ETag'],
+                      MaxAgeSeconds: 3000
+                    }
+                  ]
+                };
+                
+                await this.client.setBucketCors(bucketName, corsConfig);
+                console.log(`✅ Set CORS policy for bucket: ${bucketName}`);
+              } catch (corsError) {
+                console.warn(`⚠️ Could not set CORS policy for ${bucketName}:`, corsError.message);
+              }
             } catch (policyError) {
               console.warn(`⚠️ Could not set policy for bucket ${bucketName}:`, policyError.message);
             }
@@ -91,6 +111,26 @@ export class MinIOService {
               };
               await this.client.setBucketPolicy(bucketName, JSON.stringify(policy));
               console.log(`✅ Updated public policy for existing bucket: ${bucketName}`);
+              
+              // Set CORS policy for existing buckets too
+              try {
+                const corsConfig = {
+                  CORSRules: [
+                    {
+                      AllowedOrigins: ['*'],
+                      AllowedMethods: ['GET', 'HEAD'],
+                      AllowedHeaders: ['*'],
+                      ExposeHeaders: ['ETag'],
+                      MaxAgeSeconds: 3000
+                    }
+                  ]
+                };
+                
+                await this.client.setBucketCors(bucketName, corsConfig);
+                console.log(`✅ Set CORS policy for existing bucket: ${bucketName}`);
+              } catch (corsError) {
+                console.warn(`⚠️ Could not set CORS policy for existing bucket ${bucketName}:`, corsError.message);
+              }
             } catch (policyError) {
               console.warn(`⚠️ Could not update policy for existing bucket ${bucketName}:`, policyError.message);
             }
@@ -333,6 +373,30 @@ export class MinIOService {
   getPublicUrl(bucket: string, key: string): string {
     const baseUrl = process.env.MINIO_PUBLIC_URL || `http://${process.env.MINIO_ENDPOINT}:${process.env.MINIO_PORT}`;
     return `${baseUrl}/${bucket}/${key}`;
+  }
+
+  /**
+   * Test if a file is accessible
+   */
+  async testFileAccess(bucket: string, key: string): Promise<boolean> {
+    try {
+      const url = this.getPublicUrl(bucket, key);
+      console.log(`Testing file access: ${url}`);
+      
+      const response = await fetch(url, { method: 'HEAD' });
+      const isAccessible = response.ok;
+      
+      console.log(`File access test result: ${isAccessible ? 'SUCCESS' : 'FAILED'} (${response.status})`);
+      
+      if (!isAccessible) {
+        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+      }
+      
+      return isAccessible;
+    } catch (error) {
+      console.error('Error testing file access:', error);
+      return false;
+    }
   }
 
   /**

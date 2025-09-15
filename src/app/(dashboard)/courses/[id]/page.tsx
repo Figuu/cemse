@@ -226,21 +226,19 @@ export default function CourseDetailPage() {
             ...progress.modules
               .flatMap(m => m.lessons)
               .find(l => l.id === selectedLessonId)!,
-            content: "",
-            videoUrl: null,
-            audioUrl: null,
-            attachments: {},
             module: {
-              id: "",
-              title: "",
+              id: progress.modules
+                .find(m => m.lessons.some(l => l.id === selectedLessonId))?.id || "",
+              title: progress.modules
+                .find(m => m.lessons.some(l => l.id === selectedLessonId))?.title || "",
               courseId: courseId
             },
             course: {
               id: courseId,
-              title: "",
-              description: null
+              title: course?.title || "",
+              description: course?.description || null
             }
-          }
+          } as any
         : null
     : null;
 
