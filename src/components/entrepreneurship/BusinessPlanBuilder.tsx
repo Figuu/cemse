@@ -73,19 +73,6 @@ export function BusinessPlanBuilder({
   const [isSaving, setIsSaving] = useState(false);
   const [completion, setCompletion] = useState(0);
 
-  // Load business plan if ID provided
-  useEffect(() => {
-    if (businessPlanId) {
-      loadBusinessPlan();
-    }
-  }, [businessPlanId]);
-
-  // Calculate completion percentage
-  useEffect(() => {
-    const completionPercentage = BusinessPlanService.calculateCompletionPercentage(plan);
-    setCompletion(completionPercentage);
-  }, [plan]);
-
   const loadBusinessPlan = async () => {
     if (!businessPlanId) return;
 
@@ -102,6 +89,19 @@ export function BusinessPlanBuilder({
       setIsLoading(false);
     }
   };
+
+  // Load business plan if ID provided
+  useEffect(() => {
+    if (businessPlanId) {
+      loadBusinessPlan();
+    }
+  }, [businessPlanId, loadBusinessPlan]);
+
+  // Calculate completion percentage
+  useEffect(() => {
+    const completionPercentage = BusinessPlanService.calculateCompletionPercentage(plan);
+    setCompletion(completionPercentage);
+  }, [plan]);
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -126,7 +126,7 @@ export function BusinessPlanBuilder({
     }
   };
 
-  const handleInputChange = (field: keyof BusinessPlanData, value: any) => {
+  const handleInputChange = (field: keyof BusinessPlanData, value: string | number | string[] | BusinessPlanData['financialProjections'] | BusinessPlanData['team'] | BusinessPlanData['milestones'] | BusinessPlanData['risks']) => {
     setPlan(prev => ({ ...prev, [field]: value }));
   };
 
@@ -164,9 +164,13 @@ export function BusinessPlanBuilder({
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="flex items-center">
-                <FileText className="h-5 w-5 mr-2" />
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
                 Plan de Negocio
+                <Badge variant="outline" className="ml-2 flex items-center gap-1">
+                  <Target className="h-3 w-3" />
+                  Builder
+                </Badge>
               </CardTitle>
               <CardDescription>
                 Crea y gestiona tu plan de negocio paso a paso
@@ -180,6 +184,10 @@ export function BusinessPlanBuilder({
               <Button onClick={handleSave} disabled={isSaving}>
                 <Save className="h-4 w-4 mr-2" />
                 {isSaving ? "Guardando..." : "Guardar"}
+              </Button>
+              <Button variant="outline" onClick={handleSave}>
+                <Download className="h-4 w-4 mr-2" />
+                Exportar
               </Button>
             </div>
           </div>
@@ -487,7 +495,10 @@ export function BusinessPlanBuilder({
         <TabsContent value="financial" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Proyecciones Financieras</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <DollarSign className="h-5 w-5" />
+                Proyecciones Financieras
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -562,7 +573,10 @@ export function BusinessPlanBuilder({
         <TabsContent value="team" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Equipo</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Equipo
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-4">
@@ -657,7 +671,10 @@ export function BusinessPlanBuilder({
         <TabsContent value="execution" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Plan de Ejecución</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                Plan de Ejecución
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
@@ -695,7 +712,7 @@ export function BusinessPlanBuilder({
                             value={milestone.status}
                             onValueChange={(value) => {
                               const newMilestones = [...plan.milestones];
-                              newMilestones[index] = { ...milestone, status: value as any };
+                              newMilestones[index] = { ...milestone, status: value as 'pending' | 'in_progress' | 'completed' | 'delayed' };
                               handleInputChange("milestones", newMilestones);
                             }}
                           >
@@ -703,10 +720,30 @@ export function BusinessPlanBuilder({
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="pending">Pendiente</SelectItem>
-                              <SelectItem value="in_progress">En Progreso</SelectItem>
-                              <SelectItem value="completed">Completado</SelectItem>
-                              <SelectItem value="delayed">Retrasado</SelectItem>
+                              <SelectItem value="pending">
+                                <div className="flex items-center gap-2">
+                                  <AlertCircle className="h-4 w-4" />
+                                  Pendiente
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="in_progress">
+                                <div className="flex items-center gap-2">
+                                  <TrendingUp className="h-4 w-4" />
+                                  En Progreso
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="completed">
+                                <div className="flex items-center gap-2">
+                                  <CheckCircle className="h-4 w-4" />
+                                  Completado
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="delayed">
+                                <div className="flex items-center gap-2">
+                                  <AlertTriangle className="h-4 w-4" />
+                                  Retrasado
+                                </div>
+                              </SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -716,7 +753,7 @@ export function BusinessPlanBuilder({
                             value={milestone.priority}
                             onValueChange={(value) => {
                               const newMilestones = [...plan.milestones];
-                              newMilestones[index] = { ...milestone, priority: value as any };
+                              newMilestones[index] = { ...milestone, priority: value as 'low' | 'medium' | 'high' };
                               handleInputChange("milestones", newMilestones);
                             }}
                           >

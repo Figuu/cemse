@@ -213,6 +213,16 @@ export function JobApplicationForm({
                     <span className="text-sm">{currentUser?.email}</span>
                   </div>
                 </div>
+                
+                <div className="space-y-2">
+                  <Label>Teléfono</Label>
+                  <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
+                    <Phone className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">
+                      {currentUser?.profile?.phone || "No proporcionado"}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -249,38 +259,47 @@ export function JobApplicationForm({
                 <div className="space-y-2">
                   <Label htmlFor="portfolio">Portfolio (URL)</Label>
                   <div className="flex gap-2">
-                    <LinkIcon className="h-4 w-4 mt-3 text-muted-foreground" />
+                    <ExternalLink className="h-4 w-4 mt-3 text-muted-foreground" />
                     <Input
                       id="portfolio"
                       {...register("portfolio")}
                       placeholder="https://tu-portfolio.com"
                     />
                   </div>
+                  {errors.portfolio && (
+                    <p className="text-sm text-destructive">{errors.portfolio.message}</p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="linkedinProfile">LinkedIn</Label>
                     <div className="flex gap-2">
-                      <LinkIcon className="h-4 w-4 mt-3 text-muted-foreground" />
+                      <ExternalLink className="h-4 w-4 mt-3 text-muted-foreground" />
                       <Input
                         id="linkedinProfile"
                         {...register("linkedinProfile")}
                         placeholder="https://linkedin.com/in/tu-perfil"
                       />
                     </div>
+                    {errors.linkedinProfile && (
+                      <p className="text-sm text-destructive">{errors.linkedinProfile.message}</p>
+                    )}
                   </div>
                   
                   <div className="space-y-2">
                     <Label htmlFor="githubProfile">GitHub</Label>
                     <div className="flex gap-2">
-                      <LinkIcon className="h-4 w-4 mt-3 text-muted-foreground" />
+                      <ExternalLink className="h-4 w-4 mt-3 text-muted-foreground" />
                       <Input
                         id="githubProfile"
                         {...register("githubProfile")}
                         placeholder="https://github.com/tu-usuario"
                       />
                     </div>
+                    {errors.githubProfile && (
+                      <p className="text-sm text-destructive">{errors.githubProfile.message}</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -297,6 +316,9 @@ export function JobApplicationForm({
                   placeholder="Explica por qué eres el candidato ideal para este trabajo..."
                   rows={6}
                 />
+                {errors.coverLetter && (
+                  <p className="text-sm text-destructive">{errors.coverLetter.message}</p>
+                )}
                 <p className="text-xs text-muted-foreground">
                   Una carta de presentación personalizada puede aumentar tus posibilidades de ser seleccionado.
                 </p>

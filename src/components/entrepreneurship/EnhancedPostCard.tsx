@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
+import Image from "next/image";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,7 +26,6 @@ import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { PostInteractions } from "./PostInteractions";
 import { PostAnalytics } from "./PostAnalytics";
-import { PostShareModal } from "./PostShareModal";
 
 interface EnhancedPostCardProps {
   post: EntrepreneurshipPost;
@@ -40,7 +40,7 @@ interface EnhancedPostCardProps {
   variant?: "default" | "featured" | "compact";
 }
 
-const postTypeIcons: Record<PostType, any> = {
+const postTypeIcons: Record<PostType, React.ComponentType<{ className?: string }>> = {
   TEXT: Megaphone,
   IMAGE: ImageIcon,
   VIDEO: Video,
@@ -129,7 +129,8 @@ export function EnhancedPostCard({
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-sm font-medium">{post.author.firstName} {post.author.lastName}</span>
                 {post.isPinned && <Pin className="h-3 w-3 text-amber-500" />}
-                <Badge variant="secondary" className="text-xs">
+                <Badge variant="secondary" className="text-xs flex items-center gap-1">
+                  <IconComponent className="h-3 w-3" />
                   {typeLabel}
                 </Badge>
               </div>
@@ -227,9 +228,11 @@ export function EnhancedPostCard({
               <div className="grid grid-cols-2 gap-2">
                 {post.images.slice(0, 4).map((image, index) => (
                   <div key={index} className="aspect-square overflow-hidden rounded-lg">
-                    <img
+                    <Image
                       src={image}
                       alt={`Post image ${index + 1}`}
+                      width={200}
+                      height={200}
                       className="w-full h-full object-cover hover:scale-105 transition-transform cursor-pointer"
                       onClick={handleView}
                     />
@@ -280,7 +283,8 @@ export function EnhancedPostCard({
               <div className="flex items-center gap-2 mb-1">
                 <h4 className="font-semibold text-sm">{post.author.firstName} {post.author.lastName}</h4>
                 {post.isPinned && <Pin className="h-3 w-3 text-amber-500" />}
-                <Badge variant="secondary" className="text-xs">
+                <Badge variant="secondary" className="text-xs flex items-center gap-1">
+                  <IconComponent className="h-3 w-3" />
                   {typeLabel}
                 </Badge>
               </div>
@@ -304,6 +308,22 @@ export function EnhancedPostCard({
                 <Eye className="h-4 w-4" />
               </Button>
             )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleBookmark}
+              className="h-8 w-8 p-0"
+            >
+              <Bookmark className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleReport}
+              className="h-8 w-8 p-0"
+            >
+              <Flag className="h-4 w-4" />
+            </Button>
             {isAuthor && (
               <Button
                 variant="ghost"
@@ -338,9 +358,11 @@ export function EnhancedPostCard({
             <div className="grid grid-cols-2 gap-2">
               {post.images.slice(0, 4).map((image, index) => (
                 <div key={index} className="aspect-square overflow-hidden rounded-lg">
-                  <img
+                  <Image
                     src={image}
                     alt={`Post image ${index + 1}`}
+                    width={200}
+                    height={200}
                     className="w-full h-full object-cover hover:scale-105 transition-transform cursor-pointer"
                     onClick={handleView}
                   />

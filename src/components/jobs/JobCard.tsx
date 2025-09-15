@@ -46,6 +46,9 @@ export function JobCard({
 }: JobCardProps) {
   const isLiked = false; // This would come from a hook in real app
   const hasApplied = false; // This would come from a hook in real app
+  
+  // Use currentUserId to determine if user can interact with the job
+  const canInteract = Boolean(currentUserId);
 
   const handleLike = () => {
     if (onLike) {
@@ -117,10 +120,10 @@ export function JobCard({
                 )}
               </div>
               <p className="text-sm text-muted-foreground truncate">
-                {job.company.name} • {job.location}
+                {job.company.name} • <MapPin className="inline h-3 w-3 mr-1" />{job.location}
               </p>
               <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                <span>{EmploymentTypeLabels[job.employmentType]}</span>
+                <span><Briefcase className="inline h-3 w-3 mr-1" />{EmploymentTypeLabels[job.employmentType]}</span>
                 <span>{ExperienceLevelLabels[job.experienceLevel]}</span>
                 <span>{job.totalApplications} aplicaciones</span>
               </div>
@@ -130,6 +133,7 @@ export function JobCard({
                 variant="ghost"
                 size="sm"
                 onClick={onBookmark ? handleBookmark : handleLike}
+                disabled={!canInteract}
                 className="h-8 w-8 p-0"
               >
                 <Heart className={`h-4 w-4 ${isLiked ? 'fill-current text-red-500' : ''}`} />
@@ -171,10 +175,10 @@ export function JobCard({
                   </Badge>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {job.company.name} • {job.location}
+                  {job.company.name} • <MapPin className="inline h-3 w-3 mr-1" />{job.location}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {formatDistanceToNow(new Date(job.createdAt), { 
+                  <Calendar className="inline h-3 w-3 mr-1" />{formatDistanceToNow(new Date(job.createdAt), { 
                     addSuffix: true, 
                     locale: es 
                   })}
@@ -186,6 +190,7 @@ export function JobCard({
                 variant="ghost"
                 size="sm"
                 onClick={onBookmark ? handleBookmark : handleLike}
+                disabled={!canInteract}
                 className="flex items-center gap-1"
               >
                 <Heart className={`h-4 w-4 ${isLiked ? 'fill-current text-red-500' : ''}`} />
@@ -195,6 +200,7 @@ export function JobCard({
                 variant="ghost"
                 size="sm"
                 onClick={handleShare}
+                disabled={!canInteract}
                 className="flex items-center gap-1"
               >
                 <Share2 className="h-4 w-4" />
@@ -245,7 +251,7 @@ export function JobCard({
           <div className="flex items-center justify-between pt-4 border-t mt-4">
             <div className="flex items-center gap-2">
               {!hasApplied ? (
-                <Button onClick={handleApply}>
+                <Button onClick={handleApply} disabled={!canInteract}>
                   Aplicar Ahora
                 </Button>
               ) : (
@@ -292,9 +298,9 @@ export function JobCard({
                   </Badge>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground">
-                {job.company.name} • {job.location}
-              </p>
+                <p className="text-xs text-muted-foreground">
+                  {job.company.name} • <MapPin className="inline h-3 w-3 mr-1" />{job.location}
+                </p>
             </div>
           </div>
           
@@ -303,6 +309,7 @@ export function JobCard({
               variant="ghost"
               size="sm"
               onClick={onBookmark ? handleBookmark : handleLike}
+              disabled={!canInteract}
               className="h-8 w-8 p-0"
             >
               <Heart className={`h-4 w-4 ${isLiked ? 'fill-current text-red-500' : ''}`} />
@@ -311,6 +318,7 @@ export function JobCard({
               variant="ghost"
               size="sm"
               onClick={handleShare}
+              disabled={!canInteract}
               className="h-8 w-8 p-0"
             >
               <Share2 className="h-4 w-4" />
@@ -340,7 +348,7 @@ export function JobCard({
           
           <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
             <div className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
+              <Briefcase className="h-3 w-3" />
               <span>{EmploymentTypeLabels[job.employmentType]}</span>
             </div>
             <div className="flex items-center gap-1">
@@ -379,7 +387,7 @@ export function JobCard({
           <div className="flex items-center justify-between pt-3 border-t mt-3">
             <div className="flex items-center gap-2">
               {!hasApplied ? (
-                <Button size="sm" onClick={handleApply}>
+                <Button size="sm" onClick={handleApply} disabled={!canInteract}>
                   Aplicar
                 </Button>
               ) : (
@@ -394,9 +402,9 @@ export function JobCard({
               </Link>
             </div>
             <div className="text-xs text-muted-foreground">
-              {formatDistanceToNow(new Date(job.createdAt), { 
+              <Calendar className="inline h-3 w-3 mr-1" />{formatDistanceToNow(new Date(job.createdAt), { 
                 addSuffix: true, 
-                locale: es 
+                locale: es
               })}
             </div>
           </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,7 +42,6 @@ import {
   ProgramFilters,
   CourseFilters
 } from "@/hooks/useInstitutionStudents";
-import { InstitutionStudent, InstitutionProgram, InstitutionCourse } from "@/hooks/useInstitutionStudents";
 
 interface StudentManagementDashboardProps {
   institutionId: string;
@@ -86,7 +86,7 @@ export function StudentManagementDashboard({ institutionId }: StudentManagementD
     }));
   };
 
-  const handleStudentFilterChange = (key: keyof StudentFilters, value: any) => {
+  const handleStudentFilterChange = (key: keyof StudentFilters, value: string | number | undefined) => {
     setStudentFilters(prev => ({
       ...prev,
       [key]: value,
@@ -94,7 +94,7 @@ export function StudentManagementDashboard({ institutionId }: StudentManagementD
     }));
   };
 
-  const handleProgramFilterChange = (key: keyof ProgramFilters, value: any) => {
+  const handleProgramFilterChange = (key: keyof ProgramFilters, value: string | number | undefined) => {
     setProgramFilters(prev => ({
       ...prev,
       [key]: value,
@@ -102,7 +102,7 @@ export function StudentManagementDashboard({ institutionId }: StudentManagementD
     }));
   };
 
-  const handleCourseFilterChange = (key: keyof CourseFilters, value: any) => {
+  const handleCourseFilterChange = (key: keyof CourseFilters, value: string | number | undefined) => {
     setCourseFilters(prev => ({
       ...prev,
       [key]: value,
@@ -161,7 +161,10 @@ export function StudentManagementDashboard({ institutionId }: StudentManagementD
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Total Estudiantes</p>
-                <p className="text-2xl font-bold">{students.length}</p>
+                <p className="text-2xl font-bold flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  {students.length}
+                </p>
               </div>
               <Users className="h-8 w-8 text-blue-600" />
             </div>
@@ -281,7 +284,10 @@ export function StudentManagementDashboard({ institutionId }: StudentManagementD
                     onChange={(e) => handleStudentFilterChange("sortBy", e.target.value)}
                     className="w-full p-2 border rounded-md"
                   >
-                    <option value="enrollmentDate">Fecha de inscripción</option>
+                    <option value="enrollmentDate">
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Fecha de inscripción
+                    </option>
                     <option value="studentNumber">Número de estudiante</option>
                     <option value="status">Estado</option>
                     <option value="gpa">GPA</option>
@@ -315,9 +321,11 @@ export function StudentManagementDashboard({ institutionId }: StudentManagementD
                     <div key={student.id} className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50">
                       <div className="h-10 w-10 bg-muted rounded-full flex items-center justify-center">
                         {student.student.avatarUrl ? (
-                          <img
+                          <Image
                             src={student.student.avatarUrl}
                             alt={`${student.student.firstName} ${student.student.lastName}`}
+                            width={40}
+                            height={40}
                             className="h-full w-full rounded-full object-cover"
                           />
                         ) : (
@@ -335,7 +343,16 @@ export function StudentManagementDashboard({ institutionId }: StudentManagementD
                         </div>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                           <span>#{student.studentNumber}</span>
-                          <span>{student.student.email}</span>
+                          <span className="flex items-center gap-1">
+                            <Mail className="h-3 w-3" />
+                            {student.student.email}
+                          </span>
+                          {student.student.phone && (
+                            <span className="flex items-center gap-1">
+                              <Phone className="h-3 w-3" />
+                              {student.student.phone}
+                            </span>
+                          )}
                           {student.program && (
                             <span>{student.program.name}</span>
                           )}

@@ -29,11 +29,7 @@ import {
   ANALYTICS_PERIODS, 
   formatPercentage, 
   formatNumber, 
-  calculateGrowthRate, 
-  getPerformanceLevel, 
-  getPerformanceColor 
 } from "@/hooks/useInstitutionAnalytics";
-import { InstitutionAnalytics } from "@/hooks/useInstitutionAnalytics";
 
 interface InstitutionAnalyticsDashboardProps {
   institutionId: string;
@@ -83,22 +79,6 @@ export function InstitutionAnalyticsDashboard({ institutionId }: InstitutionAnal
     );
   }
 
-  const getPerformanceLevel = (value: number, thresholds: { good: number; excellent: number }) => {
-    if (value >= thresholds.excellent) return "excellent";
-    if (value >= thresholds.good) return "good";
-    if (value > 0) return "average";
-    return "poor";
-  };
-
-  const getPerformanceColor = (level: "poor" | "average" | "good" | "excellent") => {
-    const colors = {
-      poor: "text-red-600",
-      average: "text-yellow-600",
-      good: "text-blue-600",
-      excellent: "text-green-600",
-    };
-    return colors[level];
-  };
 
   return (
     <div className="space-y-6">
@@ -106,14 +86,19 @@ export function InstitutionAnalyticsDashboard({ institutionId }: InstitutionAnal
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Analytics de {analytics.institution.name}</h2>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground flex items-center gap-1">
+            <Clock className="h-4 w-4" />
             Período: {ANALYTICS_PERIODS.find(p => p.value === selectedPeriod)?.label}
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm">
+            <Filter className="h-4 w-4 mr-2" />
+            Filtros
+          </Button>
           <select
             value={selectedPeriod}
-            onChange={(e) => setSelectedPeriod(e.target.value as any)}
+            onChange={(e) => setSelectedPeriod(e.target.value as "7d" | "30d" | "90d" | "1y" | "all")}
             className="p-2 border rounded-md"
           >
             {ANALYTICS_PERIODS.map((period) => (
@@ -122,6 +107,10 @@ export function InstitutionAnalyticsDashboard({ institutionId }: InstitutionAnal
               </option>
             ))}
           </select>
+          <Button variant="outline" size="sm">
+            <Bell className="h-4 w-4 mr-2" />
+            Alertas
+          </Button>
           <Button variant="outline" size="sm">
             <Download className="h-4 w-4 mr-2" />
             Exportar
@@ -248,14 +237,19 @@ export function InstitutionAnalyticsDashboard({ institutionId }: InstitutionAnal
           {/* Student Status Distribution */}
           <Card>
             <CardHeader>
-              <CardTitle>Distribución de Estudiantes</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Distribución de Estudiantes
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                 {Object.entries(analytics.studentStatusDistribution).map(([status, count]) => (
                   <div key={status} className="text-center p-4 bg-muted/50 rounded-lg">
                     <div className="text-2xl font-bold mb-1">{count}</div>
-                    <div className="text-sm text-muted-foreground">{status}</div>
+                    <Badge variant="outline" className="text-sm">
+                      {status}
+                    </Badge>
                   </div>
                 ))}
               </div>
@@ -265,7 +259,10 @@ export function InstitutionAnalyticsDashboard({ institutionId }: InstitutionAnal
           {/* Program Level Distribution */}
           <Card>
             <CardHeader>
-              <CardTitle>Distribución por Nivel de Programa</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <PieChart className="h-5 w-5" />
+                Distribución por Nivel de Programa
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -337,6 +334,9 @@ export function InstitutionAnalyticsDashboard({ institutionId }: InstitutionAnal
                       <span className="text-sm text-muted-foreground">
                         ({formatPercentage((count / analytics.overview.totalStudents) * 100)})
                       </span>
+                      {count < 10 && (
+                        <TrendingDown className="h-3 w-3 text-red-500" />
+                      )}
                     </div>
                   </div>
                 ))}

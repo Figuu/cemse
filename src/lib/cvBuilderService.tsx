@@ -780,12 +780,12 @@ export class CVBuilderService {
       await prisma.profile.update({
         where: { userId },
         data: {
-          workExperience: cvData.experiences as any,
-          educationHistory: cvData.educations as any,
-          skills: cvData.skills as any,
-          languages: cvData.languages as any,
-          projects: cvData.projects as any,
-          achievements: cvData.achievements as any,
+          workExperience: cvData.experiences as CVData['experiences'],
+          educationHistory: cvData.educations as CVData['educations'],
+          skills: cvData.skills as CVData['skills'],
+          languages: cvData.languages as CVData['languages'],
+          projects: cvData.projects as CVData['projects'],
+          achievements: cvData.achievements as CVData['achievements'],
           professionalSummary: cvData.personalInfo.summary,
         },
       });
@@ -834,12 +834,12 @@ export class CVBuilderService {
           address: profile.address || '',
           summary: profile.professionalSummary || '',
         },
-        experiences: (profile.workExperience as any) || [],
-        educations: (profile.educationHistory as any) || [],
-        skills: (profile.skills as any) || [],
-        languages: (profile.languages as any) || [],
-        projects: (profile.projects as any) || [],
-        achievements: (profile.achievements as any) || [],
+        experiences: (profile.workExperience as CVData['experiences']) || [],
+        educations: (profile.educationHistory as CVData['educations']) || [],
+        skills: (profile.skills as CVData['skills']) || [],
+        languages: (profile.languages as CVData['languages']) || [],
+        projects: (profile.projects as CVData['projects']) || [],
+        achievements: (profile.achievements as CVData['achievements']) || [],
       };
 
       return cvData;

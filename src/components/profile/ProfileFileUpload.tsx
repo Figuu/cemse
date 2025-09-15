@@ -51,6 +51,17 @@ export function ProfileFileUpload({
 }: ProfileFileUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
 
+  const handleFileUpload = async (files: File[]) => {
+    try {
+      setIsUploading(true);
+      await onFileUpload(files, category);
+    } catch (error) {
+      console.error("Error uploading files:", error);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const getCategoryIcon = (category: string) => {
     switch (category) {
       case "profile-picture":
@@ -169,12 +180,24 @@ export function ProfileFileUpload({
       <CardContent className="space-y-4">
         {/* Upload Area */}
         <ChunkedFileUpload
-          onUploadComplete={(fileUrl) => {
-            console.log("File uploaded successfully:", fileUrl);
-            // The file will be automatically added to the files list via the hook
+          onUploadComplete={async (fileUrl) => {
+            try {
+              console.log("File uploaded successfully:", fileUrl);
+              // Call the onFileUpload callback with the file URL
+              // Note: This is a workaround since ChunkedFileUpload doesn't provide File objects
+              // In a real implementation, you might want to modify ChunkedFileUpload to provide File objects
+              if (onFileUpload) {
+                // Create a mock File object for the callback (this is not ideal but maintains the interface)
+                const mockFile = new File([], fileUrl.split('/').pop() || 'file', { type: 'application/octet-stream' });
+                await onFileUpload([mockFile], category);
+              }
+            } catch (error) {
+              console.error("Error handling upload completion:", error);
+            }
           }}
           onUploadError={(error) => {
             console.error("Upload error:", error);
+            setIsUploading(false);
           }}
           accept={getAcceptTypes(category)}
           maxFiles={maxFiles}

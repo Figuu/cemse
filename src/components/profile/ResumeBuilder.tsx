@@ -190,6 +190,12 @@ export function ResumeBuilder({ className, userId, onSave, onGenerate }: ResumeB
         onSave(cvData);
       }
       
+      // Generate PDF using CVBuilderService
+      if (userId && onGenerate) {
+        const cvUrl = await CVBuilderService.generateCV(userId, selectedTemplate, cvData);
+        onGenerate(cvUrl);
+      }
+      
       console.log("Generating resume...", cvData);
     } catch (error) {
       console.error("Error generating resume:", error);

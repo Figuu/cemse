@@ -153,7 +153,7 @@ export function ApplicationTimeline({ timeline, className }: ApplicationTimeline
                     </h4>
                     <div className="flex items-center space-x-2">
                       {getStatusBadge(event.status)}
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-xs text-muted-foreground" title={formatDateTime(event.date)}>
                         {formatDate(event.date)}
                       </span>
                     </div>
@@ -166,6 +166,11 @@ export function ApplicationTimeline({ timeline, className }: ApplicationTimeline
                   {/* Event details */}
                   {event.details && (
                     <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+                      <div className="flex items-center text-xs text-muted-foreground">
+                        <Calendar className="h-3 w-3 mr-2" />
+                        <span className="font-medium mr-2">Fecha completa:</span>
+                        {formatDateTime(event.date)}
+                      </div>
                       {event.details.method && (
                         <div className="flex items-center text-xs text-muted-foreground">
                           <span className="font-medium mr-2">Método:</span>
@@ -196,6 +201,7 @@ export function ApplicationTimeline({ timeline, className }: ApplicationTimeline
 
                       {event.details.nextStep && (
                         <div className="flex items-center text-xs text-muted-foreground">
+                          <ArrowRight className="h-3 w-3 mr-2" />
                           <span className="font-medium mr-2">Próximo paso:</span>
                           {event.details.nextStep}
                         </div>
@@ -217,6 +223,7 @@ export function ApplicationTimeline({ timeline, className }: ApplicationTimeline
 
                       {event.details.suggestedAction && (
                         <div className="flex items-center text-xs text-blue-600">
+                          <ArrowRight className="h-3 w-3 mr-2" />
                           <span className="font-medium mr-2">Sugerencia:</span>
                           {event.details.suggestedAction}
                         </div>

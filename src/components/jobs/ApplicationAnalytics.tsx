@@ -134,6 +134,7 @@ export function ApplicationAnalytics({ applications, className }: ApplicationAna
                 <p className="text-sm font-medium text-muted-foreground">Tasa de Éxito</p>
                 <p className="text-2xl font-bold">{successRate.toFixed(1)}%</p>
                 <div className="flex items-center text-sm">
+                  <Target className="h-4 w-4 mr-1 text-green-600" />
                   {getTrendIcon(successRate, 20)}
                   <span className="ml-1 text-muted-foreground">ofertas recibidas</span>
                 </div>
@@ -174,15 +175,18 @@ export function ApplicationAnalytics({ applications, className }: ApplicationAna
               {Object.entries(statusDistribution).map(([status, count]) => (
                 <div key={status} className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <div className={cn("w-3 h-3 rounded-full", {
-                      "bg-blue-500": status === "applied",
-                      "bg-yellow-500": status === "reviewing",
-                      "bg-purple-500": status === "shortlisted",
-                      "bg-orange-500": status === "interview",
-                      "bg-green-500": status === "offered",
-                      "bg-red-500": status === "rejected",
-                    })} />
-                    <span className="text-sm font-medium capitalize">{status}</span>
+                    {status === "rejected" ? (
+                      <XCircle className="h-4 w-4 text-red-500" />
+                    ) : (
+                      <div className={cn("w-3 h-3 rounded-full", {
+                        "bg-blue-500": status === "applied",
+                        "bg-yellow-500": status === "reviewing",
+                        "bg-purple-500": status === "shortlisted",
+                        "bg-orange-500": status === "interview",
+                        "bg-green-500": status === "offered",
+                      })} />
+                    )}
+                    <span className={cn("text-sm font-medium capitalize", getStatusColor(status))}>{status}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <span className="text-sm text-muted-foreground">{count}</span>
@@ -208,12 +212,8 @@ export function ApplicationAnalytics({ applications, className }: ApplicationAna
               {Object.entries(priorityDistribution).map(([priority, count]) => (
                 <div key={priority} className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <div className={cn("w-3 h-3 rounded-full", {
-                      "bg-red-500": priority === "high",
-                      "bg-yellow-500": priority === "medium",
-                      "bg-green-500": priority === "low",
-                    })} />
-                    <span className="text-sm font-medium capitalize">{priority}</span>
+                    <Star className={cn("h-4 w-4", getPriorityColor(priority))} />
+                    <span className={cn("text-sm font-medium capitalize", getPriorityColor(priority))}>{priority}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <span className="text-sm text-muted-foreground">{count}</span>

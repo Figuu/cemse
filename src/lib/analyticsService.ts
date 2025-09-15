@@ -391,7 +391,7 @@ export class AnalyticsService {
   /**
    * Get revenue analytics
    */
-  private static async getRevenueData(__dateFilter: DateFilter) {
+  private static async getRevenueData(_dateFilter: DateFilter) {
     // Placeholder revenue data - would need actual revenue tracking
     const totalRevenue = 50000; // USD
     const averageRevenuePerUser = 25; // USD

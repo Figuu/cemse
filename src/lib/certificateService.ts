@@ -103,14 +103,13 @@ export class CertificateService {
       const certificateUrl = await this.generateCertificateUrl(certificateData);
 
       // Create certificate record
-      const certificate = await prisma.certificate.create({
+      await prisma.certificate.create({
         data: {
           studentId: studentId,
           courseId: courseId,
           fileUrl: certificateUrl,
         },
       });
-
 
       return certificateUrl;
     } catch (error) {
@@ -189,14 +188,13 @@ export class CertificateService {
       const certificateUrl = await this.generateCertificateUrl(certificateData);
 
       // Create certificate record
-      const certificate = await prisma.moduleCertificate.create({
+      await prisma.moduleCertificate.create({
         data: {
           studentId: studentId,
           moduleId: moduleId,
           fileUrl: certificateUrl,
         },
       });
-
 
       return certificateUrl;
     } catch (error) {

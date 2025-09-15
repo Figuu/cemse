@@ -238,8 +238,8 @@ export class BusinessPlanValidationService {
     field: BusinessPlanField,
     value: string,
     errors: ValidationError[],
-    __warnings: ValidationWarning[],
-    __suggestions: ValidationSuggestion[]
+    _warnings: ValidationWarning[],
+    _suggestions: ValidationSuggestion[]
   ): number {
     let score = 0;
 
@@ -258,11 +258,21 @@ export class BusinessPlanValidationService {
       }
       
       if (maxLength && value.length > maxLength) {
-        __warnings.push({
+        _warnings.push({
           fieldId: field.id,
           sectionId: "",
           message: `Máximo ${maxLength} caracteres recomendados`,
           suggestion: "Considera acortar el texto"
+        });
+      }
+      
+      // Add suggestions for text improvement
+      if (value.length < 50) {
+        _suggestions.push({
+          fieldId: field.id,
+          sectionId: "",
+          message: "Considera proporcionar más detalles - Añade información adicional para mayor claridad",
+          priority: "medium"
         });
       }
     }
@@ -305,8 +315,8 @@ export class BusinessPlanValidationService {
     field: BusinessPlanField,
     value: number,
     errors: ValidationError[],
-    __warnings: ValidationWarning[],
-    __suggestions: ValidationSuggestion[]
+    _warnings: ValidationWarning[],
+    _suggestions: ValidationSuggestion[]
   ): number {
     let score = 0;
 
@@ -324,11 +334,21 @@ export class BusinessPlanValidationService {
       }
       
       if (max !== undefined && value > max) {
-        __warnings.push({
+        _warnings.push({
           fieldId: field.id,
           sectionId: "",
           message: `Valor máximo recomendado: ${max}`,
           suggestion: "Verifica que el valor sea realista"
+        });
+      }
+      
+      // Add suggestions for number validation
+      if (value === 0) {
+        _suggestions.push({
+          fieldId: field.id,
+          sectionId: "",
+          message: "Considera si el valor cero es apropiado - Verifica que este valor sea correcto para tu plan de negocio",
+          priority: "high"
         });
       }
     }
@@ -371,8 +391,8 @@ export class BusinessPlanValidationService {
     field: BusinessPlanField,
     value: unknown,
     errors: ValidationError[],
-    __warnings: ValidationWarning[],
-    __suggestions: ValidationSuggestion[]
+    _warnings: ValidationWarning[],
+    _suggestions: ValidationSuggestion[]
   ): number {
     let score = 0;
 
@@ -423,11 +443,19 @@ export class BusinessPlanValidationService {
     } else if (completeness >= 50) {
       score += 2;
     } else {
-      __warnings.push({
+      _warnings.push({
         fieldId: field.id,
         sectionId: "",
         message: `Solo ${Math.round(completeness)}% de las celdas están completas`,
         suggestion: "Completa más celdas para mejorar la calidad"
+      });
+      
+      // Add suggestions for table completion
+      _suggestions.push({
+        fieldId: field.id,
+        sectionId: "",
+        message: "Las tablas completas son más convincentes - Considera llenar todas las celdas relevantes de la tabla",
+        priority: "medium"
       });
     }
 
@@ -441,8 +469,8 @@ export class BusinessPlanValidationService {
     field: BusinessPlanField,
     value: string[],
     errors: ValidationError[],
-    __warnings: ValidationWarning[],
-    __suggestions: ValidationSuggestion[]
+    _warnings: ValidationWarning[],
+    _suggestions: ValidationSuggestion[]
   ): number {
     let score = 0;
 
@@ -455,6 +483,21 @@ export class BusinessPlanValidationService {
           severity: "error"
         });
       }
+      
+      _warnings.push({
+        fieldId: field.id,
+        sectionId: "",
+        message: "Este campo requiere al menos una selección",
+        suggestion: "Considera seleccionar las opciones más relevantes para tu negocio"
+      });
+      
+      _suggestions.push({
+        fieldId: field.id,
+        sectionId: "",
+        message: "Las selecciones múltiples mejoran la especificidad - Selecciona todas las opciones que apliquen a tu modelo de negocio",
+        priority: "high"
+      });
+      
       return 0;
     }
 
@@ -466,6 +509,16 @@ export class BusinessPlanValidationService {
 
     if (value.length >= 5) {
       score += 2; // Bonus for comprehensive selections
+    }
+    
+    // Add suggestions for selection quality
+    if (value.length === 1) {
+      _suggestions.push({
+        fieldId: field.id,
+        sectionId: "",
+        message: "Considera seleccionar más opciones - Las selecciones múltiples proporcionan mayor detalle y especificidad",
+        priority: "low"
+      });
     }
 
     return score;
