@@ -83,7 +83,7 @@ export async function GET(
     }
 
     // Transform attempts
-    const transformedAttempts = quiz.attempts.map(attempt => ({
+    const transformedAttempts = quiz.quizAttempts.map(attempt => ({
       id: attempt.id,
       score: Number(attempt.score),
       passed: attempt.passed,

@@ -218,13 +218,9 @@ export async function POST(request: NextRequest) {
         youthProfile: {
           select: {
             id: true,
-            profile: {
-              select: {
-                firstName: true,
-                lastName: true,
-                avatarUrl: true,
-              },
-            },
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
           },
         },
       },
@@ -242,7 +238,11 @@ export async function POST(request: NextRequest) {
         youth: {
           id: application.youthProfileId,
           email: "",
-          profile: null,
+          profile: {
+            firstName: application.youthProfile.firstName,
+            lastName: application.youthProfile.lastName,
+            avatarUrl: application.youthProfile.avatarUrl,
+          },
         },
       },
     });

@@ -78,15 +78,14 @@ export async function GET(request: NextRequest) {
       id: question.id,
       title: question.title,
       content: question.content,
+      category: question.category,
+      difficulty: question.difficulty,
+      points: question.points,
+      isActive: question.isActive,
       createdAt: question.createdAt.toISOString(),
       updatedAt: question.updatedAt.toISOString(),
-      isResolved: false, // Note: isResolved field doesn't exist on Question model
-      student: null,
-      course: null,
-      lesson: null,
-      answers: [], // Mock empty array since answers relation doesn't exist
-      answerCount: 0, // Mock count
-      isUpvoted: false,
+      answers: question.answers,
+      answerCount: question._count.answers,
     }));
 
     return NextResponse.json({
@@ -170,33 +169,17 @@ export async function POST(request: NextRequest) {
     // Create question
     const question = await prisma.question.create({
       data: {
-        // Note: studentId field doesn't exist on Question model
         title,
         content,
-        // courseId: courseId || null, // Field doesn't exist
+        category: courseId ? 'course' : 'general',
       },
       include: {
-        // Note: student relation doesn't exist on Question model
-        course: {
-          include: {
-            instructor: {
-              include: {
-                profile: true,
-              },
-            },
-          },
-        },
         answers: {
-          include: {
-            // student relation doesn't exist
-            // Note: votes relation doesn't exist on Answer model
-          },
           orderBy: { createdAt: "asc" },
         },
         _count: {
           select: {
             answers: true,
-            // Note: votes relation doesn't exist on Question model
           },
         },
       },
@@ -207,15 +190,14 @@ export async function POST(request: NextRequest) {
       id: question.id,
       title: question.title,
       content: question.content,
+      category: question.category,
+      difficulty: question.difficulty,
+      points: question.points,
+      isActive: question.isActive,
       createdAt: question.createdAt.toISOString(),
       updatedAt: question.updatedAt.toISOString(),
-      isResolved: false, // Note: isResolved field doesn't exist on Question model
-      student: null,
-      course: null,
-      lesson: null,
-      answers: [], // Mock empty array since answers relation doesn't exist
-      answerCount: 0, // Mock count
-      isUpvoted: false,
+      answers: question.answers,
+      answerCount: question._count.answers,
     };
 
     return NextResponse.json({

@@ -25,41 +25,6 @@ export async function GET(
             lastName: true,
           }
         },
-        downloads: {
-          include: {
-            user: {
-              include: {
-                profile: true
-              }
-            }
-          }
-        },
-        likes: {
-          include: {
-            user: {
-              include: {
-                profile: true
-              }
-            }
-          }
-        },
-        comments: {
-          include: {
-            user: {
-              include: {
-                profile: true
-              }
-            }
-          },
-          orderBy: { createdAt: "desc" }
-        },
-        _count: {
-          select: {
-            downloads: true,
-            likes: true,
-            comments: true
-          }
-        }
       }
     });
 
@@ -68,7 +33,7 @@ export async function GET(
     }
 
     // Check if user can view this resource
-    if (resource.isPublic !== true &&
+    if (resource.status !== "PUBLISHED" &&
         resource.createdByUserId !== session.user.id &&
         session.user.role !== "SUPERADMIN") {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
@@ -143,8 +108,8 @@ export async function PUT(
       updateData.scheduledAt = new Date(scheduledAt);
     }
 
-    if (status === "PUBLISHED" && resource.isPublic) {
-      updateData.publishedAt = new Date();
+    if (status === "PUBLISHED") {
+      updateData.publishedDate = new Date();
     }
 
     const updatedResource = await prisma.resource.update({
@@ -156,13 +121,6 @@ export async function PUT(
             // userId: true, // This field doesn't exist on User model
             firstName: true,
             lastName: true,
-          }
-        },
-        _count: {
-          select: {
-            downloads: true,
-            likes: true,
-            comments: true
           }
         }
       }

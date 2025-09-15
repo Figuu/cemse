@@ -19,8 +19,7 @@ import {
   X,
   Plus
 } from "lucide-react";
-import { PostType } from "@prisma/client";
-import { useEntrepreneurshipPosts } from "@/hooks/useEntrepreneurshipPosts";
+import { useEntrepreneurshipPosts, PostType } from "@/hooks/useEntrepreneurshipPosts";
 
 interface CreatePostFormProps {
   currentUser?: {
@@ -34,52 +33,46 @@ interface CreatePostFormProps {
 
 const postTypes: { value: PostType; label: string; icon: any; description: string }[] = [
   { 
-    value: PostType.TEXT, 
+    value: "TEXT", 
     label: "Publicación", 
     icon: ImageIcon, 
     description: "Comparte tus pensamientos e ideas" 
   },
   { 
-    value: PostType.IMAGE, 
+    value: "IMAGE", 
     label: "Imagen", 
     icon: ImageIcon, 
     description: "Comparte una imagen o foto" 
   },
   { 
-    value: PostType.VIDEO, 
+    value: "VIDEO", 
     label: "Video", 
     icon: Video, 
     description: "Comparte un video" 
   },
   { 
-    value: PostType.LINK, 
+    value: "LINK", 
     label: "Enlace", 
     icon: LinkIcon, 
     description: "Comparte un enlace interesante" 
   },
   { 
-    value: PostType.QUESTION, 
-    label: "Pregunta", 
+    value: "POLL", 
+    label: "Encuesta", 
     icon: HelpCircle, 
-    description: "Haz una pregunta a la comunidad" 
+    description: "Crea una encuesta para la comunidad" 
   },
   { 
-    value: PostType.ACHIEVEMENT, 
-    label: "Logro", 
+    value: "EVENT", 
+    label: "Evento", 
     icon: Award, 
-    description: "Celebra un logro o hito" 
-  },
-  { 
-    value: PostType.ANNOUNCEMENT, 
-    label: "Anuncio", 
-    icon: Megaphone, 
-    description: "Haz un anuncio importante" 
+    description: "Anuncia un evento o actividad" 
   },
 ];
 
 export function CreatePostForm({ currentUser, onSuccess, onCancel }: CreatePostFormProps) {
   const [content, setContent] = useState("");
-  const [type, setType] = useState<PostType>(PostType.TEXT);
+  const [type, setType] = useState<PostType>("TEXT");
   const [images, setImages] = useState<string[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");

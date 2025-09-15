@@ -117,14 +117,14 @@ export function PostCard({
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
             <Avatar className="h-10 w-10">
-              <AvatarImage src={post.author.image} />
+              <AvatarImage src={post.author.avatarUrl} />
               <AvatarFallback>
-                {post.author.name.charAt(0).toUpperCase()}
+                {post.author.firstName.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <h4 className="font-semibold text-sm">{post.author.name}</h4>
+                <h4 className="font-semibold text-sm">{post.author.firstName} {post.author.lastName}</h4>
                 {post.isPinned && (
                   <Pin className="h-3 w-3 text-amber-500" />
                 )}

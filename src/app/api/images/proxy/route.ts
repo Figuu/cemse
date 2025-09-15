@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     const fileInfo = await minioService.getFileInfo(bucket, key);
     
     // Return the file with proper headers
-    return new NextResponse(fileBuffer, {
+    return new NextResponse(fileBuffer as any, {
       status: 200,
       headers: {
         'Content-Type': fileInfo.metaData?.['content-type'] || 'application/octet-stream',

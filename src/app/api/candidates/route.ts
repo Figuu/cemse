@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
     // Location filter
     if (validatedParams.location) {
       where.profile = {
-        ...(where.profile || {}),
+        ...(where.profile as object || {}),
         address: { contains: validatedParams.location, mode: "insensitive" },
       };
     }
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
     // Education filter
     if (validatedParams.education) {
       where.profile = {
-        ...(where.profile || {}),
+        ...(where.profile as object || {}),
         // This would need to be added to the Profile model in a real implementation
         // education: { contains: validatedParams.education, mode: "insensitive" },
       };

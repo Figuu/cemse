@@ -3,20 +3,30 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
 const updateCourseSchema = z.object({
-  name: z.string().min(1).optional(),
+  title: z.string().min(1).optional(),
   description: z.string().optional(),
-  code: z.string().min(1).optional(),
-  credits: z.number().int().positive().optional(),
-  level: z.enum(["BEGINNER", "INTERMEDIATE", "ADVANCED", "EXPERT"]).optional(),
-  status: z.enum(["ACTIVE", "INACTIVE", "COMPLETED", "CANCELLED"]).optional(),
-  programId: z.string().optional(),
-  instructorId: z.string().optional(),
-  startDate: z.string().datetime().optional(),
-  endDate: z.string().datetime().optional(),
-  maxStudents: z.number().int().positive().optional(),
-  schedule: z.string().optional(),
-  location: z.string().optional(),
+  shortDescription: z.string().optional(),
+  thumbnail: z.string().optional(),
+  videoPreview: z.string().optional(),
+  objectives: z.array(z.string()).optional(),
   prerequisites: z.array(z.string()).optional(),
+  duration: z.number().int().positive().optional(),
+  level: z.enum(["BEGINNER", "INTERMEDIATE", "ADVANCED"]).optional(),
+  category: z.enum(["SOFT_SKILLS", "BASIC_COMPETENCIES", "JOB_PLACEMENT", "ENTREPRENEURSHIP", "TECHNICAL_SKILLS", "DIGITAL_LITERACY", "COMMUNICATION", "LEADERSHIP"]).optional(),
+  isMandatory: z.boolean().optional(),
+  isActive: z.boolean().optional(),
+  rating: z.number().optional(),
+  studentsCount: z.number().int().optional(),
+  completionRate: z.number().optional(),
+  totalLessons: z.number().int().optional(),
+  totalQuizzes: z.number().int().optional(),
+  totalResources: z.number().int().optional(),
+  tags: z.array(z.string()).optional(),
+  certification: z.boolean().optional(),
+  includedMaterials: z.array(z.string()).optional(),
+  instructorId: z.string().optional(),
+  institutionName: z.string().optional(),
+  publishedAt: z.string().datetime().optional(),
 });
 
 export async function GET(
@@ -28,6 +38,7 @@ export async function GET(
     const course = await prisma.course.findFirst({
       where: {
         id: courseId,
+        institutionId: institutionId,
       },
       include: {
         instructor: {
@@ -108,25 +119,52 @@ export async function PUT(
       );
     }
 
-    // Check if course code is already taken (if being updated)
-    if (validatedData.code) {
+    // Generate slug from title if title is being updated
+    let updateData: any = { ...validatedData };
+    if (validatedData.title) {
+      const slug = validatedData.title
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .trim();
+
+      // Check if slug already exists (excluding current course)
       const existingCourse = await prisma.course.findFirst({
         where: {
+          slug: slug,
           id: { not: courseId },
         },
       });
 
       if (existingCourse) {
         return NextResponse.json(
-          { error: "Course code already exists in this institution" },
+          { error: "A course with this title already exists" },
           { status: 400 }
         );
       }
+
+      updateData.slug = slug;
+    }
+
+    // Verify course belongs to institution
+    const existingCourse = await prisma.course.findFirst({
+      where: {
+        id: courseId,
+        institutionId: institutionId,
+      },
+    });
+
+    if (!existingCourse) {
+      return NextResponse.json(
+        { error: "Course not found in this institution" },
+        { status: 404 }
+      );
     }
 
     const updatedCourse = await prisma.course.update({
       where: { id: courseId },
-      data: validatedData,
+      data: updateData,
       include: {
         instructor: {
           select: {
@@ -188,11 +226,26 @@ export async function DELETE(
       );
     }
 
+    // Verify course belongs to institution
+    const existingCourse = await prisma.course.findFirst({
+      where: {
+        id: courseId,
+        institutionId: institutionId,
+      },
+    });
+
+    if (!existingCourse) {
+      return NextResponse.json(
+        { error: "Course not found in this institution" },
+        { status: 404 }
+      );
+    }
+
     // Check if course has active enrollments
     const activeEnrollments = await prisma.courseEnrollment.count({
       where: {
         courseId: courseId,
-        status: "ACTIVE",
+        status: "active",
       },
     });
 

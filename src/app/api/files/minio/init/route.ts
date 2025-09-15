@@ -11,9 +11,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Only allow admins to initialize MinIO
-    if (session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+    // Only allow super admins to initialize MinIO
+    if (session.user.role !== "SUPERADMIN") {
+      return NextResponse.json({ error: "Super admin access required" }, { status: 403 });
     }
 
     console.log("Initializing MinIO buckets...");

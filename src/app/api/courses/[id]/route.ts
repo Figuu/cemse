@@ -166,7 +166,7 @@ export async function PUT(
       if (!userInstitution || !course || course.institutionId !== userInstitution.id) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
-    } else if (session.user.role !== "ADMIN" && session.user.role !== "SUPERADMIN") {
+    } else if (session.user.role !== "SUPERADMIN") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -296,7 +296,7 @@ export async function DELETE(
       if (!userInstitution || !course || course.institutionId !== userInstitution.id) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
-    } else if (session.user.role !== "ADMIN" && session.user.role !== "SUPERADMIN") {
+    } else if (session.user.role !== "SUPERADMIN") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

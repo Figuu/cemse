@@ -3,20 +3,30 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
 const createCourseSchema = z.object({
-  name: z.string().min(1, "Course name is required"),
-  description: z.string().optional(),
-  code: z.string().min(1, "Course code is required"),
-  credits: z.number().int().positive("Credits must be positive"),
-  level: z.enum(["BEGINNER", "INTERMEDIATE", "ADVANCED", "EXPERT"]),
-  status: z.enum(["ACTIVE", "INACTIVE", "COMPLETED", "CANCELLED"]).default("ACTIVE"),
-  programId: z.string().optional(),
-  instructorId: z.string().optional(),
-  startDate: z.string().datetime().optional(),
-  endDate: z.string().datetime().optional(),
-  maxStudents: z.number().int().positive().optional(),
-  schedule: z.string().optional(),
-  location: z.string().optional(),
+  title: z.string().min(1, "Course title is required"),
+  description: z.string().min(1, "Course description is required"),
+  shortDescription: z.string().optional(),
+  thumbnail: z.string().optional(),
+  videoPreview: z.string().optional(),
+  objectives: z.array(z.string()).default([]),
   prerequisites: z.array(z.string()).default([]),
+  duration: z.number().int().positive("Duration must be positive"),
+  level: z.enum(["BEGINNER", "INTERMEDIATE", "ADVANCED"]),
+  category: z.enum(["SOFT_SKILLS", "BASIC_COMPETENCIES", "JOB_PLACEMENT", "ENTREPRENEURSHIP", "TECHNICAL_SKILLS", "DIGITAL_LITERACY", "COMMUNICATION", "LEADERSHIP"]),
+  isMandatory: z.boolean().default(false),
+  isActive: z.boolean().default(true),
+  rating: z.number().default(0),
+  studentsCount: z.number().int().default(0),
+  completionRate: z.number().default(0),
+  totalLessons: z.number().int().default(0),
+  totalQuizzes: z.number().int().default(0),
+  totalResources: z.number().int().default(0),
+  tags: z.array(z.string()).default([]),
+  certification: z.boolean().default(true),
+  includedMaterials: z.array(z.string()).default([]),
+  instructorId: z.string().optional(),
+  institutionName: z.string().optional(),
+  publishedAt: z.string().datetime().optional(),
 });
 
 
@@ -29,9 +39,8 @@ export async function GET(
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "20");
     const search = searchParams.get("search") || "";
-    const status = searchParams.get("status") || "";
     const level = searchParams.get("level") || "";
-    const programId = searchParams.get("programId") || "";
+    const category = searchParams.get("category") || "";
     const instructorId = searchParams.get("instructorId") || "";
     const sortBy = searchParams.get("sortBy") || "createdAt";
     const sortOrder = searchParams.get("sortOrder") || "desc";
@@ -45,22 +54,18 @@ export async function GET(
 
     if (search) {
       where.OR = [
-        { name: { contains: search, mode: "insensitive" } },
+        { title: { contains: search, mode: "insensitive" } },
         { description: { contains: search, mode: "insensitive" } },
-        { code: { contains: search, mode: "insensitive" } },
+        { shortDescription: { contains: search, mode: "insensitive" } },
       ];
-    }
-
-    if (status) {
-      where.status = status;
     }
 
     if (level) {
       where.level = level;
     }
 
-    if (programId) {
-      where.programId = programId;
+    if (category) {
+      where.category = category;
     }
 
     if (instructorId) {
@@ -147,15 +152,24 @@ export async function POST(
       );
     }
 
-    // Check if course code is already taken in this institution
+    // Generate slug from title
+    const slug = validatedData.title
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .trim();
+
+    // Check if slug already exists
     const existingCourse = await prisma.course.findFirst({
       where: {
+        slug: slug,
       },
     });
 
     if (existingCourse) {
       return NextResponse.json(
-        { error: "Course code already exists in this institution" },
+        { error: "A course with this title already exists" },
         { status: 400 }
       );
     }
@@ -163,13 +177,19 @@ export async function POST(
     const course = await prisma.course.create({
       data: {
         ...validatedData,
+        slug: slug,
+        institutionId: institutionId,
       },
       include: {
         instructor: {
           select: {
             firstName: true,
             lastName: true,
-            email: true,
+            user: {
+              select: {
+                email: true,
+              },
+            },
           },
         },
         _count: {

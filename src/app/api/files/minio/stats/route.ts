@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     if (bucket) {
       // Get stats for specific bucket
       const validBuckets = Object.values(BUCKETS);
-      if (!validBuckets.includes(bucket)) {
+      if (!validBuckets.includes(bucket as any)) {
         return NextResponse.json({ error: "Invalid bucket" }, { status: 400 });
       }
 

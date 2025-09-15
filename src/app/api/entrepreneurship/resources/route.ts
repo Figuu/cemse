@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
               id: true,
               firstName: true,
               lastName: true,
-              image: true,
+              avatarUrl: true,
             },
           },
         },
@@ -123,9 +123,9 @@ export async function POST(request: NextRequest) {
         author: {
           select: {
             id: true,
-            name: true,
-            email: true,
-            image: true,
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
           },
         },
       },

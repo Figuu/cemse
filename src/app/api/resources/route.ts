@@ -57,14 +57,6 @@ export async function GET(request: NextRequest) {
           select: {
             firstName: true,
             lastName: true,
-            avatarUrl: true,
-          }
-        },
-        _count: {
-          select: {
-            downloads: true,
-            likes: true,
-            comments: true
           }
         }
       },
@@ -126,11 +118,13 @@ export async function POST(request: NextRequest) {
         description,
         category,
         type,
+        format: type, // Use type as format since format is required
         downloadUrl: fileUrl,
-        // fileSize, // This field doesn't exist in Resource model
+        thumbnail: "", // Required field, set empty for now
+        author: "System", // Required field, will be updated with actual author name
+        publishedDate: status === "PUBLISHED" ? new Date() : new Date(), // Required field
         tags: tags || [],
         status,
-        publishedAt: status === "PUBLISHED" ? new Date() : null,
         createdByUserId: session.user.id
       },
       include: {
@@ -138,14 +132,6 @@ export async function POST(request: NextRequest) {
           select: {
             firstName: true,
             lastName: true,
-            avatarUrl: true,
-          }
-        },
-        _count: {
-          select: {
-            downloads: true,
-            likes: true,
-            comments: true
           }
         }
       }

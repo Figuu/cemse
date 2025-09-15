@@ -66,34 +66,16 @@ export async function GET(
             id: true,
             title: true,
             location: true,
-            employmentType: true,
+            contractType: true,
             experienceLevel: true,
             salaryMin: true,
             salaryMax: true,
-            currency: true,
-            isUrgent: true,
+            salaryCurrency: true,
+            featured: true,
             createdAt: true,
             _count: {
               select: {
                 applications: true,
-              },
-            },
-          },
-        },
-        reviews: {
-          orderBy: { createdAt: "desc" },
-          take: 5,
-          include: {
-            author: {
-              select: {
-                id: true,
-                profile: {
-                  select: {
-                    firstName: true,
-                    lastName: true,
-                    avatarUrl: true,
-                  },
-                },
               },
             },
           },

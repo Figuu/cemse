@@ -603,8 +603,12 @@ export function LessonViewer({
                     preload="auto"
                     crossOrigin="anonymous"
                     onLoadedMetadata={() => {
+                      console.log("Video metadata loaded:", lesson.videoUrl);
                       if (videoRef.current) {
                         setDuration(videoRef.current.duration);
+                        console.log("Video duration:", videoRef.current.duration);
+                        console.log("Video videoWidth:", videoRef.current.videoWidth);
+                        console.log("Video videoHeight:", videoRef.current.videoHeight);
                       }
                     }}
                     onTimeUpdate={() => {
@@ -738,14 +742,6 @@ export function LessonViewer({
                     }}
                     onLoadedData={() => {
                       console.log("Video data loaded:", lesson.videoUrl);
-                    }}
-                    onLoadedMetadata={() => {
-                      console.log("Video metadata loaded:", lesson.videoUrl);
-                      if (videoRef.current) {
-                        console.log("Video duration:", videoRef.current.duration);
-                        console.log("Video videoWidth:", videoRef.current.videoWidth);
-                        console.log("Video videoHeight:", videoRef.current.videoHeight);
-                      }
                     }}
                   />
                   
