@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "20");
-    const status = searchParams.get("status") as ConnectionStatus;
+    const status = searchParams.get("status") as EntrepreneurshipConnectionStatus;
     const type = searchParams.get("type"); // "sent", "received", "all"
 
     const skip = (page - 1) * limit;
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
               id: true,
               firstName: true,
               lastName: true,
-              image: true,
+              avatarUrl: true,
             },
           },
           addressee: {
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
               id: true,
               firstName: true,
               lastName: true,
-              image: true,
+              avatarUrl: true,
             },
           },
         },
@@ -136,17 +136,27 @@ export async function POST(request: NextRequest) {
         requester: {
           select: {
             id: true,
-            name: true,
-            email: true,
-            image: true,
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
+            user: {
+              select: {
+                email: true,
+              },
+            },
           },
         },
         addressee: {
           select: {
             id: true,
-            name: true,
-            email: true,
-            image: true,
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
+            user: {
+              select: {
+                email: true,
+              },
+            },
           },
         },
       },

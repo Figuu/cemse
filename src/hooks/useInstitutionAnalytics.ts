@@ -113,6 +113,8 @@ export interface ReportFilters {
   type?: ReportType;
   status?: ReportStatus;
   search?: string;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
 }
 
 export function useInstitutionAnalytics(institutionId: string, filters: AnalyticsFilters = {}) {
@@ -146,6 +148,8 @@ export function useInstitutionReports(institutionId: string, filters: ReportFilt
       if (filters.type) params.append("type", filters.type);
       if (filters.status) params.append("status", filters.status);
       if (filters.search) params.append("search", filters.search);
+      if (filters.sortBy) params.append("sortBy", filters.sortBy);
+      if (filters.sortOrder) params.append("sortOrder", filters.sortOrder);
 
       const response = await fetch(`/api/institutions/${institutionId}/reports?${params.toString()}`);
       if (!response.ok) {

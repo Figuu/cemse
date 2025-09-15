@@ -11,13 +11,14 @@ export interface EntrepreneurshipPost {
   likes: number;
   comments: number;
   shares: number;
+  views?: number;
   isPinned: boolean;
   authorId: string;
   author: {
     id: string;
-    name: string;
-    email: string;
-    image?: string;
+    firstName: string;
+    lastName: string;
+    avatarUrl?: string;
   };
   postLikes: {
     id: string;
@@ -46,9 +47,9 @@ export interface PostComment {
   likes: number;
   author: {
     id: string;
-    name: string;
-    email: string;
-    image?: string;
+    firstName: string;
+    lastName: string;
+    avatarUrl?: string;
   };
   replies: PostComment[];
   createdAt: string;

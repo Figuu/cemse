@@ -21,8 +21,8 @@ export function FinancialCharts({ projections, breakEven, investment, currency }
   };
 
   const maxRevenue = Math.max(...projections.map(p => p.revenue));
-  const maxCosts = Math.max(...projections.map(p => p.costs));
-  const maxValue = Math.max(maxRevenue, maxCosts);
+  const maxExpenses = Math.max(...projections.map(p => p.expenses));
+  const maxValue = Math.max(maxRevenue, maxExpenses);
 
   return (
     <div className="space-y-6">
@@ -48,7 +48,7 @@ export function FinancialCharts({ projections, breakEven, investment, currency }
                         <span className="font-medium">Mes {projection.month}</span>
                         <div className="flex gap-4 text-xs text-muted-foreground">
                           <span>Ingresos: {formatCurrencyValue(projection.revenue)}</span>
-                          <span>Costos: {formatCurrencyValue(projection.costs)}</span>
+                          <span>Gastos: {formatCurrencyValue(projection.expenses)}</span>
                         </div>
                       </div>
                       <div className="flex gap-2 h-4">
@@ -62,8 +62,8 @@ export function FinancialCharts({ projections, breakEven, investment, currency }
                         <div 
                           className="bg-red-500 rounded-r"
                           style={{ 
-                            width: `${(projection.costs / maxValue) * 100}%`,
-                            minWidth: projection.costs > 0 ? '4px' : '0px'
+                            width: `${(projection.expenses / maxValue) * 100}%`,
+                            minWidth: projection.expenses > 0 ? '4px' : '0px'
                           }}
                         />
                       </div>
@@ -78,7 +78,7 @@ export function FinancialCharts({ projections, breakEven, investment, currency }
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 bg-red-500 rounded"></div>
-                    <span>Costos</span>
+                    <span>Gastos</span>
                   </div>
                 </div>
               </div>
@@ -181,9 +181,9 @@ export function FinancialCharts({ projections, breakEven, investment, currency }
             </div>
             <div className="text-center p-4 bg-purple-50 rounded-lg">
               <div className="text-2xl font-bold text-purple-600">
-                {breakEven.isProfitable ? "Sí" : "No"}
+                {breakEven.isAchievable ? "Sí" : "No"}
               </div>
-              <div className="text-sm text-purple-800">¿Es Rentable?</div>
+              <div className="text-sm text-purple-800">¿Es Alcanzable?</div>
             </div>
           </div>
         </CardContent>

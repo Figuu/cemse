@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(bytes);
 
     // Determine bucket based on category
-    let bucket = BUCKETS.UPLOADS;
+    let bucket: string = BUCKETS.UPLOADS;
     if (category === "course-thumbnail" || category === "profile-picture" || category === "certificate") {
       bucket = BUCKETS.IMAGES;
     } else if (category === "course-video") {

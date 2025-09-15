@@ -6,7 +6,7 @@ import next from 'next';
 async function initializeMinIO() {
   try {
     console.log('🔧 Initializing MinIO...');
-    const { initializeMinIO } = await import('./src/lib/initMinIO.ts');
+    const { initializeMinIO } = await import('./src/lib/initMinIO');
     await initializeMinIO();
     console.log('✅ MinIO initialized successfully');
   } catch (error) {
@@ -16,7 +16,7 @@ async function initializeMinIO() {
 
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = process.env.HOSTNAME || 'localhost';
-const port = process.env.PORT || 3000;
+const port = parseInt(process.env.PORT || '3000', 10);
 
 // when using middleware `hostname` and `port` must be provided below
 const app = next({ dev, hostname, port });

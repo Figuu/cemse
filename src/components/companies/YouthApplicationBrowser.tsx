@@ -441,6 +441,7 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
           onClose={() => setSelectedApplication(null)}
           onExpressInterest={expressInterest}
           onUpdateInterest={updateInterest}
+          onOpenChat={() => setShowChat(true)}
         />
       )}
 
@@ -463,7 +464,7 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
             <CardContent>
               <YouthApplicationChat
                 applicationId={selectedApplication.id}
-                applicationTitle={selectedApplication.title}
+                companyName="Empresa" // TODO: Get actual company name
                 companyId={companyId}
                 youthId={selectedApplication.youth.id}
                 youthName={`${selectedApplication.youth.profile.firstName} ${selectedApplication.youth.profile.lastName}`}
@@ -481,12 +482,14 @@ function YouthApplicationDetailModal({
   application, 
   onClose, 
   onExpressInterest,
-  onUpdateInterest
+  onUpdateInterest,
+  onOpenChat
 }: { 
   application: YouthApplication;
   onClose: () => void;
   onExpressInterest: (id: string, notes?: string) => void;
   onUpdateInterest: (id: string, status: string, notes?: string) => void;
+  onOpenChat: () => void;
 }) {
   const [notes, setNotes] = useState("");
 
@@ -605,10 +608,7 @@ function YouthApplicationDetailModal({
             )}
             <Button 
               variant="outline"
-              onClick={() => {
-                setSelectedApplication(application);
-                setShowChat(true);
-              }}
+              onClick={onOpenChat}
             >
               <MessageSquare className="h-4 w-4 mr-2" />
               Enviar Mensaje

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { ConnectionStatus } from "@prisma/client";
+import { EntrepreneurshipConnectionStatus } from "@prisma/client";
 
 export async function GET(
   request: NextRequest,
@@ -23,7 +23,7 @@ export async function GET(
             id: true,
             firstName: true,
             lastName: true,
-            image: true,
+            avatarUrl: true,
           },
         },
         addressee: {
@@ -31,7 +31,7 @@ export async function GET(
             id: true,
             firstName: true,
             lastName: true,
-            image: true,
+            avatarUrl: true,
           },
         },
       },
@@ -70,7 +70,7 @@ export async function PUT(
     const body = await request.json();
     const { status } = body;
 
-    if (!status || !Object.values(ConnectionStatus).includes(status)) {
+    if (!status || !Object.values(EntrepreneurshipConnectionStatus).includes(status)) {
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });
     }
 
@@ -92,7 +92,7 @@ export async function PUT(
       return NextResponse.json({ error: "Only the addressee can respond to connection requests" }, { status: 403 });
     }
 
-    if (existingConnection.status !== ConnectionStatus.PENDING) {
+    if (existingConnection.status !== EntrepreneurshipConnectionStatus.PENDING) {
       return NextResponse.json({ error: "Connection request has already been responded to" }, { status: 400 });
     }
 
@@ -100,7 +100,7 @@ export async function PUT(
       where: { id: connectionId },
       data: {
         status,
-        acceptedAt: status === ConnectionStatus.ACCEPTED ? new Date() : null,
+        acceptedAt: status === EntrepreneurshipConnectionStatus.ACCEPTED ? new Date() : null,
       },
       include: {
         requester: {
@@ -108,7 +108,7 @@ export async function PUT(
             id: true,
             firstName: true,
             lastName: true,
-            image: true,
+            avatarUrl: true,
           },
         },
         addressee: {
@@ -116,7 +116,7 @@ export async function PUT(
             id: true,
             firstName: true,
             lastName: true,
-            image: true,
+            avatarUrl: true,
           },
         },
       },

@@ -33,7 +33,9 @@ import {
   useInstitutionPrograms, 
   useInstitutionCourses,
   STUDENT_STATUS_LABELS,
+  PROGRAM_STATUS_LABELS,
   PROGRAM_LEVEL_LABELS,
+  COURSE_STATUS_LABELS,
   COURSE_LEVEL_LABELS,
   StudentFilters,
   ProgramFilters,
@@ -412,7 +414,7 @@ export function StudentManagementDashboard({ institutionId }: StudentManagementD
                     <option value="">Todos los estados</option>
                     {Object.entries(PROGRAM_STATUS_LABELS).map(([value, label]) => (
                       <option key={value} value={value}>
-                        {label}
+                        {String(label)}
                       </option>
                     ))}
                   </select>
@@ -567,7 +569,7 @@ export function StudentManagementDashboard({ institutionId }: StudentManagementD
                     <option value="">Todos los estados</option>
                     {Object.entries(COURSE_STATUS_LABELS).map(([value, label]) => (
                       <option key={value} value={value}>
-                        {label}
+                        {String(label)}
                       </option>
                     ))}
                   </select>

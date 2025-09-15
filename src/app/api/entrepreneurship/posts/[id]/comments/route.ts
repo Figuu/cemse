@@ -26,7 +26,7 @@ export async function GET(
               id: true,
               firstName: true,
               lastName: true,
-              image: true,
+              avatarUrl: true,
             },
           },
           replies: {
@@ -35,8 +35,8 @@ export async function GET(
                 select: {
                   id: true,
                   firstName: true,
-              lastName: true,
-                  image: true,
+                  lastName: true,
+                  avatarUrl: true,
                 },
               },
             },
@@ -124,9 +124,14 @@ export async function POST(
         author: {
           select: {
             id: true,
-            name: true,
-            email: true,
-            image: true,
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
+            user: {
+              select: {
+                email: true,
+              },
+            },
           },
         },
         replies: {
@@ -135,8 +140,8 @@ export async function POST(
               select: {
                 id: true,
                 firstName: true,
-              lastName: true,
-                image: true,
+                lastName: true,
+                avatarUrl: true,
               },
             },
           },

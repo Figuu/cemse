@@ -120,14 +120,14 @@ export function EnhancedPostCard({
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
             <Avatar className="h-8 w-8">
-              <AvatarImage src={post.author.image} />
+              <AvatarImage src={post.author.avatarUrl} />
               <AvatarFallback className="text-xs">
-                {post.author.name.charAt(0).toUpperCase()}
+                {post.author.firstName.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-sm font-medium">{post.author.name}</span>
+                <span className="text-sm font-medium">{post.author.firstName} {post.author.lastName}</span>
                 {post.isPinned && <Pin className="h-3 w-3 text-amber-500" />}
                 <Badge variant="secondary" className="text-xs">
                   {typeLabel}
@@ -163,14 +163,14 @@ export function EnhancedPostCard({
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
               <Avatar className="h-12 w-12">
-                <AvatarImage src={post.author.image} />
+                <AvatarImage src={post.author.avatarUrl} />
                 <AvatarFallback>
-                  {post.author.name.charAt(0).toUpperCase()}
+                  {post.author.firstName.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <h4 className="font-semibold">{post.author.name}</h4>
+                  <h4 className="font-semibold">{post.author.firstName} {post.author.lastName}</h4>
                   <Pin className="h-4 w-4 text-amber-500" />
                   <Badge variant="default" className="text-xs">
                     Destacado
@@ -271,14 +271,14 @@ export function EnhancedPostCard({
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
             <Avatar className="h-10 w-10">
-              <AvatarImage src={post.author.image} />
+              <AvatarImage src={post.author.avatarUrl} />
               <AvatarFallback>
-                {post.author.name.charAt(0).toUpperCase()}
+                {post.author.firstName.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
-                <h4 className="font-semibold text-sm">{post.author.name}</h4>
+                <h4 className="font-semibold text-sm">{post.author.firstName} {post.author.lastName}</h4>
                 {post.isPinned && <Pin className="h-3 w-3 text-amber-500" />}
                 <Badge variant="secondary" className="text-xs">
                   {typeLabel}

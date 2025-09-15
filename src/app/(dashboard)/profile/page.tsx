@@ -246,8 +246,8 @@ export default function ProfilePage() {
               Insights y métricas sobre tu perfil profesional
             </p>
             <div className="mt-6">
-              <Button asChild>
-                <a href="/profile/analytics">Ver Analíticas</a>
+              <Button disabled>
+                Ver Analíticas (No disponible)
               </Button>
             </div>
           </div>

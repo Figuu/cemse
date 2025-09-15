@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
               id: true,
               firstName: true,
               lastName: true,
-              image: true,
+              avatarUrl: true,
             },
           },
           postLikes: {
@@ -58,8 +58,8 @@ export async function GET(request: NextRequest) {
                 select: {
                   id: true,
                   firstName: true,
-              lastName: true,
-                  image: true,
+                  lastName: true,
+                  avatarUrl: true,
                 },
               },
               createdAt: true,
@@ -125,9 +125,14 @@ export async function POST(request: NextRequest) {
         author: {
           select: {
             id: true,
-            name: true,
-            email: true,
-            image: true,
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
+            user: {
+              select: {
+                email: true,
+              },
+            },
           },
         },
         postLikes: {
@@ -144,8 +149,8 @@ export async function POST(request: NextRequest) {
               select: {
                 id: true,
                 firstName: true,
-              lastName: true,
-                image: true,
+                lastName: true,
+                avatarUrl: true,
               },
             },
             createdAt: true,

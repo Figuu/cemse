@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     const where: any = {};
 
     if (published) {
-      where.isPublished = true;
+      where.status = 'PUBLISHED';
     }
 
     if (category) {
@@ -40,9 +40,9 @@ export async function GET(request: NextRequest) {
           author: {
             select: {
               id: true,
-              name: true,
+              firstName: true,
+              lastName: true,
               email: true,
-              image: true,
             },
           },
         },
@@ -87,8 +87,7 @@ export async function POST(request: NextRequest) {
       summary,
       content,
       imageUrl,
-      sourceUrl,
-      sourceName,
+      videoUrl,
       category,
       tags,
       isPublished = false,
@@ -100,21 +99,24 @@ export async function POST(request: NextRequest) {
         summary,
         content,
         imageUrl,
-        sourceUrl,
-        sourceName,
+        videoUrl,
         category,
         tags: tags || [],
-        isPublished,
+        status: isPublished ? 'PUBLISHED' : 'DRAFT',
         publishedAt: isPublished ? new Date() : null,
         authorId: session.user.id,
+        authorName: session.user.profile ? 
+          `${session.user.profile.firstName || ''} ${session.user.profile.lastName || ''}`.trim() || session.user.email :
+          session.user.email,
+        authorType: 'ADMIN',
       },
       include: {
         author: {
           select: {
             id: true,
-            name: true,
+            firstName: true,
+            lastName: true,
             email: true,
-            image: true,
           },
         },
       },

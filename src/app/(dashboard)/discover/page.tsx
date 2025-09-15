@@ -20,12 +20,12 @@ import {
   List,
   BarChart3
 } from "lucide-react";
-import { StartupFilters, StartupFilters as FilterType } from "@/components/startups/StartupFilters";
+// Startup functionality removed
 
 export default function DiscoverPage() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
-  const [filters, setFilters] = useState<FilterType>({});
+  const [filters, setFilters] = useState<any>({});
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [activeTab, setActiveTab] = useState("trending");
   const [showFilters, setShowFilters] = useState(false);
@@ -39,7 +39,7 @@ export default function DiscoverPage() {
     console.log("Searching for:", searchTerm);
   };
 
-  const handleFiltersChange = (newFilters: FilterType) => {
+  const handleFiltersChange = (newFilters: any) => {
     setFilters(newFilters);
   };
 
@@ -54,7 +54,8 @@ export default function DiscoverPage() {
   };
 
   const handleViewStartup = (startupId: string) => {
-    router.push(`/startups/${startupId}`);
+    // Startup functionality removed
+    console.log("Startup functionality removed");
   };
 
   const handleFollow = (startupId: string) => {
@@ -214,13 +215,17 @@ export default function DiscoverPage() {
 
       {/* Filters */}
       {showFilters && (
-        <StartupFilters
-          filters={filters}
-          onFiltersChange={handleFiltersChange}
-          onReset={handleResetFilters}
-          onApply={handleApplyFilters}
-          isLoading={isLoading}
-        />
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-center py-8">
+              <Filter className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Filtros no disponibles</h3>
+              <p className="text-muted-foreground">
+                La funcionalidad de filtros para startups ha sido removida
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Main Content */}

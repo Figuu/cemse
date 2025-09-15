@@ -26,8 +26,9 @@ interface PostShareModalProps {
   post: EntrepreneurshipPost;
   currentUser?: {
     id: string;
-    name: string;
-    image?: string;
+    firstName: string;
+    lastName: string;
+    avatarUrl?: string;
   };
   onShare?: (postId: string) => void;
   children?: React.ReactNode;
@@ -47,7 +48,7 @@ export function PostShareModal({
   const { sharePost } = usePostShare(post.id);
 
   const postUrl = `${window.location.origin}/entrepreneurship/network/post/${post.id}`;
-  const shareText = `Mira esta publicación de ${post.author.name}: ${post.content.substring(0, 100)}...`;
+  const shareText = `Mira esta publicación de ${post.author.firstName} ${post.author.lastName}: ${post.content.substring(0, 100)}...`;
 
   const handleShare = async () => {
     setIsSharing(true);
@@ -92,7 +93,7 @@ export function PostShareModal({
         shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`;
         break;
       case "mail":
-        shareUrl = `mailto:?subject=${encodeURIComponent(`Publicación de ${post.author.name}`)}&body=${encodedText}%0A%0A${encodedUrl}`;
+        shareUrl = `mailto:?subject=${encodeURIComponent(`Publicación de ${post.author.firstName} ${post.author.lastName}`)}&body=${encodedText}%0A%0A${encodedUrl}`;
         break;
     }
     
@@ -129,12 +130,12 @@ export function PostShareModal({
           <div className="border rounded-lg p-3 bg-muted/50">
             <div className="flex items-center gap-2 mb-2">
               <Avatar className="h-6 w-6">
-                <AvatarImage src={post.author.image} />
+                <AvatarImage src={post.author.avatarUrl} />
                 <AvatarFallback className="text-xs">
-                  {post.author.name.charAt(0).toUpperCase()}
+                  {post.author.firstName.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <span className="text-sm font-medium">{post.author.name}</span>
+              <span className="text-sm font-medium">{post.author.firstName} {post.author.lastName}</span>
             </div>
             <p className="text-sm text-muted-foreground line-clamp-3">
               {post.content}
