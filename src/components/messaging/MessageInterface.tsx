@@ -74,7 +74,7 @@ export function MessageInterface({
       );
       
       unreadMessages.forEach(msg => {
-        markAsRead(msg.id);
+        markAsRead.mutateAsync(msg.id);
       });
     }
   }, [selectedConversation, messages, markAsRead]);
@@ -227,7 +227,7 @@ export function MessageInterface({
                         <Avatar className="h-8 w-8">
                           <AvatarImage src={msg.sender.avatarUrl} />
                           <AvatarFallback>
-                            {getInitials(msg.sender.firstName + " " + msg.sender.lastName)}
+                            {getInitials((msg.sender.firstName || "") + " " + (msg.sender.lastName || ""))}
                           </AvatarFallback>
                         </Avatar>
                         <div className={cn(
@@ -340,16 +340,16 @@ export function MessageInterface({
                   <CardContent className="p-3">
                     <div className="flex items-start space-x-3">
                       <Avatar className="h-10 w-10">
-                        <AvatarImage src={conversation.otherUser.avatar} />
+                        <AvatarImage src={conversation.otherUser.avatarUrl} />
                         <AvatarFallback>
-                          {getInitials(conversation.otherUser.name)}
+                          {getInitials((conversation.otherUser.firstName || "") + " " + (conversation.otherUser.lastName || ""))}
                         </AvatarFallback>
                       </Avatar>
                       
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
                           <h4 className="font-medium text-sm truncate">
-                            {conversation.otherUser.name}
+                            {(conversation.otherUser.firstName || "") + " " + (conversation.otherUser.lastName || "")}
                           </h4>
                           {conversation.unreadCount > 0 && (
                             <Badge variant="destructive" className="text-xs">
@@ -359,8 +359,8 @@ export function MessageInterface({
                         </div>
                         
                         <div className="flex items-center space-x-1 text-xs text-muted-foreground">
-                          {getRoleIcon(conversation.otherUser.role)}
-                          <span>{getRoleLabel(conversation.otherUser.role)}</span>
+                          {getRoleIcon(conversation.otherUser.role || "")}
+                          <span>{getRoleLabel(conversation.otherUser.role || "")}</span>
                         </div>
                         
                         <p className="text-xs text-muted-foreground mt-1 truncate">
@@ -397,17 +397,17 @@ export function MessageInterface({
             <div className="p-4 border-b bg-white">
               <div className="flex items-center space-x-3">
                 <Avatar className="h-10 w-10">
-                  <AvatarImage src={selectedConversation.otherUser.avatar} />
+                  <AvatarImage src={selectedConversation.otherUser.avatarUrl} />
                   <AvatarFallback>
-                    {getInitials(selectedConversation.otherUser.name)}
+                    {getInitials((selectedConversation.otherUser.firstName || "") + " " + (selectedConversation.otherUser.lastName || ""))}
                   </AvatarFallback>
                 </Avatar>
                 
                 <div>
-                  <h3 className="font-semibold">{selectedConversation.otherUser.name}</h3>
+                  <h3 className="font-semibold">{(selectedConversation.otherUser.firstName || "") + " " + (selectedConversation.otherUser.lastName || "")}</h3>
                   <div className="flex items-center space-x-1 text-sm text-muted-foreground">
-                    {getRoleIcon(selectedConversation.otherUser.role)}
-                    <span>{getRoleLabel(selectedConversation.otherUser.role)}</span>
+                    {getRoleIcon(selectedConversation.otherUser.role || "")}
+                    <span>{getRoleLabel(selectedConversation.otherUser.role || "")}</span>
                   </div>
                 </div>
               </div>
@@ -439,9 +439,9 @@ export function MessageInterface({
                     >
                       {msg.senderId === selectedConversation.otherUser.id && (
                         <Avatar className="h-8 w-8">
-                          <AvatarImage src={msg.sender.avatar} />
+                          <AvatarImage src={msg.sender.avatarUrl} />
                           <AvatarFallback>
-                            {getInitials(msg.sender.name)}
+                            {getInitials((msg.sender.firstName || "") + " " + (msg.sender.lastName || ""))}
                           </AvatarFallback>
                         </Avatar>
                       )}
@@ -456,11 +456,11 @@ export function MessageInterface({
                       >
                         <div className="flex items-center space-x-2 mb-1">
                           <span className="text-xs font-medium">
-                            {msg.sender.name}
+                            {(msg.sender.firstName || "") + " " + (msg.sender.lastName || "")}
                           </span>
                           <div className="flex items-center space-x-1 text-xs opacity-75">
-                            {getRoleIcon(msg.sender.role)}
-                            <span>{getRoleLabel(msg.sender.role)}</span>
+                            {getRoleIcon(msg.sender.role || "")}
+                            <span>{getRoleLabel(msg.sender.role || "")}</span>
                           </div>
                         </div>
                         <p className="text-sm">{msg.content}</p>
@@ -480,9 +480,9 @@ export function MessageInterface({
 
                       {msg.senderId !== selectedConversation.otherUser.id && (
                         <Avatar className="h-8 w-8">
-                          <AvatarImage src={msg.sender.avatar} />
+                          <AvatarImage src={msg.sender.avatarUrl} />
                           <AvatarFallback>
-                            {getInitials(msg.sender.name)}
+                            {getInitials((msg.sender.firstName || "") + " " + (msg.sender.lastName || ""))}
                           </AvatarFallback>
                         </Avatar>
                       )}

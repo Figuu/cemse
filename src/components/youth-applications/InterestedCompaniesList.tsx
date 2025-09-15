@@ -27,7 +27,7 @@ interface CompanyInterest {
 interface InterestedCompaniesListProps {
   companyInterests: CompanyInterest[];
   applicationId: string;
-  onOpenChat: (companyId: string) => void;
+  onOpenChat?: (companyId: string) => void;
 }
 
 interface CompanyWithChatStatus extends CompanyInterest {
@@ -76,10 +76,11 @@ export function InterestedCompaniesList({
 
       setCompaniesWithChatStatus(companies);
     } else {
-      // If no conversations data, just show companies without chat status
+      // If no conversations data, show companies with hasMessages as true
+      // so they can still access the chat (messages might exist but not loaded yet)
       setCompaniesWithChatStatus(companyInterests.map(interest => ({
         ...interest,
-        hasMessages: false,
+        hasMessages: true, // Always allow access to chat for interested companies
         unreadCount: 0,
       })));
     }
@@ -145,7 +146,7 @@ export function InterestedCompaniesList({
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <p className="font-medium">{interest.company.name}</p>
-                      {interest.hasMessages && (
+                      {interest.hasMessages && interest.lastMessage && (
                         <Badge variant="secondary" className="text-xs">
                           <MessageCircle className="h-3 w-3 mr-1" />
                           Ha contactado
@@ -166,35 +167,30 @@ export function InterestedCompaniesList({
                   <Badge variant="outline">
                     {interest.status}
                   </Badge>
-                  {interest.hasMessages ? (
-                    <Button 
-                      variant="default" 
-                      size="sm"
-                      onClick={() => onOpenChat(interest.company.id)}
-                      className="relative"
-                    >
-                      <MessageCircle className="h-4 w-4 mr-2" />
-                      Chat
-                      {interest.unreadCount > 0 && (
-                        <Badge 
-                          variant="destructive" 
-                          className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
-                        >
-                          {interest.unreadCount}
-                        </Badge>
-                      )}
-                    </Button>
-                  ) : (
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      disabled
-                      className="opacity-50"
-                    >
-                      <MessageCircle className="h-4 w-4 mr-2" />
-                      Sin mensajes
-                    </Button>
-                  )}
+                  <Button 
+                    variant={interest.hasMessages ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => {
+                      console.log('Button clicked for company:', interest.company.id);
+                      console.log('Dispatching custom event to open chat directly');
+                      // Always use custom event for direct chat opening
+                      window.dispatchEvent(new CustomEvent('openChat', { 
+                        detail: { companyId: interest.company.id } 
+                      }));
+                    }}
+                    className="relative"
+                  >
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    Ir a mensajes
+                    {interest.unreadCount > 0 && (
+                      <Badge 
+                        variant="destructive" 
+                        className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                      >
+                        {interest.unreadCount}
+                      </Badge>
+                    )}
+                  </Button>
                 </div>
               </div>
             ))

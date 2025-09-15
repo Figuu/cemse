@@ -27,7 +27,7 @@ const youthApplicationFormSchema = z.object({
   coverLetterFile: z.string().optional(),
   cvUrl: z.string().url("URL inválida").optional().or(z.literal("")),
   coverLetterUrl: z.string().url("URL inválida").optional().or(z.literal("")),
-  isPublic: z.boolean().default(true),
+  isPublic: z.boolean(),
 });
 
 type YouthApplicationFormData = z.infer<typeof youthApplicationFormSchema>;
@@ -93,7 +93,7 @@ export function YouthApplicationForm({
 
   const handleFormSubmit = (data: YouthApplicationFormData) => {
     console.log("YouthApplicationForm: Form submitted with data:", data);
-    onSubmit(data);
+    onSubmit(data as CreateYouthApplicationData);
   };
 
   return (

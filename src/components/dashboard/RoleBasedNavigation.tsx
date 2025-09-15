@@ -65,9 +65,8 @@ export function RoleBasedNavigation({ role, className }: RoleBasedNavigationProp
         return [
           { name: "Inicio", href: "/dashboard", icon: BookOpen },
           { name: "Ofertas de Trabajo", href: "/jobs", icon: Briefcase },
-          { name: "Descubrir Talento", href: "/talent", icon: UserPlus },
+          { name: "Descubre Talento", href: "/talent", icon: UserPlus },
           { name: "Candidatos", href: "/candidates", icon: UserCheck },
-          { name: "Candidatos Jóvenes", href: "/candidates/youth", icon: UserPlus },
           { name: "Mi Empresa", href: "/company", icon: Building2 },
           { name: "Mensajes", href: "/messages", icon: MessageSquare },
           { name: "Estadísticas", href: "/analytics", icon: BarChart3 },

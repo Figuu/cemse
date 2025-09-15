@@ -10,17 +10,20 @@ export interface Message {
   contextId?: string;
   createdAt: string;
   readAt?: string;
+  isRead: boolean;
   sender: {
     userId: string;
     firstName?: string;
     lastName?: string;
     avatarUrl?: string;
+    role?: string;
   };
   recipient: {
     userId: string;
     firstName?: string;
     lastName?: string;
     avatarUrl?: string;
+    role?: string;
   };
 }
 
@@ -38,11 +41,15 @@ export interface Conversation {
     firstName?: string;
     lastName?: string;
     avatarUrl?: string;
+    name: string;
+    role: string;
+    avatar: string;
   };
   lastMessage?: {
     content: string;
     createdAt: string;
     readAt?: string;
+    isRead: boolean;
   };
   unreadCount: number;
 }

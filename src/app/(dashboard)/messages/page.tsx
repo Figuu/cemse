@@ -33,7 +33,7 @@ export default function MessagesPage() {
 
   // Get messages for selected conversation
   const { data: messagesData } = useMessages({
-    recipientId: selectedConversation?.senderId || selectedConversation?.recipientId,
+    recipientId: selectedConversation?.otherUser?.id,
     contextType: selectedConversation?.contextType,
     contextId: selectedConversation?.contextId,
     enabled: !!selectedConversation,
@@ -44,12 +44,8 @@ export default function MessagesPage() {
   const handleSendMessage = () => {
     if (!messageText.trim() || !selectedConversation) return;
     
-    const recipientId = selectedConversation.senderId === session?.user?.id 
-      ? selectedConversation.recipientId 
-      : selectedConversation.senderId;
-    
     sendMessageMutation.mutate({
-      recipientId,
+      recipientId: selectedConversation.otherUser.id,
       content: messageText,
       contextType: selectedConversation.contextType,
       contextId: selectedConversation.contextId,
@@ -63,40 +59,10 @@ export default function MessagesPage() {
     setIsChatModalOpen(true);
   };
 
-  // Group conversations by recipient and context
-  const groupedConversations = conversations?.reduce((acc: any, message: any) => {
-    const recipientId = message.senderId === session?.user?.id 
-      ? message.recipientId 
-      : message.senderId;
-    
-    const recipient = message.senderId === session?.user?.id 
-      ? message.recipient 
-      : message.sender;
-    
-    const key = `${recipientId}-${message.contextType}-${message.contextId || 'general'}`;
-    
-    if (!acc[key]) {
-      acc[key] = {
-        recipientId,
-        recipient,
-        contextType: message.contextType,
-        contextId: message.contextId,
-        lastMessage: message,
-        messageCount: 0,
-      };
-    }
-    
-    acc[key].messageCount++;
-    if (new Date(message.createdAt) > new Date(acc[key].lastMessage.createdAt)) {
-      acc[key].lastMessage = message;
-    }
-    
-    return acc;
-  }, {}) || {};
-
-  const conversationList = Object.values(groupedConversations).sort((a: any, b: any) => 
-    new Date(b.lastMessage.createdAt).getTime() - new Date(a.lastMessage.createdAt).getTime()
-  );
+  // Use conversations directly since they're already grouped
+  const conversationList = conversations?.conversations?.sort((a: any, b: any) => 
+    new Date(b.lastMessage?.createdAt || 0).getTime() - new Date(a.lastMessage?.createdAt || 0).getTime()
+  ) || [];
 
   if (conversationsLoading) {
     return (
@@ -160,19 +126,19 @@ export default function MessagesPage() {
                 <div className="space-y-1">
                   {conversationList
                     .filter((conv: any) => 
-                      conv.recipient.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                      conv.recipient.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                      conv.lastMessage.content.toLowerCase().includes(searchTerm.toLowerCase())
+                      conv.otherUser.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      conv.otherUser.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      conv.lastMessage?.content?.toLowerCase().includes(searchTerm.toLowerCase())
                     )
                     .map((conversation: any) => (
                       <div
-                        key={`${conversation.recipientId}-${conversation.contextType}-${conversation.contextId}`}
+                        key={conversation.id}
                         className="p-4 hover:bg-muted/50 cursor-pointer border-b last:border-b-0"
                         onClick={() => handleOpenChat(conversation)}
                       >
                         <div className="flex items-start gap-3">
                           <Avatar className="h-10 w-10">
-                            <AvatarImage src={conversation.recipient.avatarUrl} />
+                            <AvatarImage src={conversation.otherUser.avatarUrl} />
                             <AvatarFallback>
                               <User className="h-5 w-5" />
                             </AvatarFallback>
@@ -180,23 +146,23 @@ export default function MessagesPage() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
                               <h3 className="font-medium truncate">
-                                {conversation.recipient.firstName} {conversation.recipient.lastName}
+                                {conversation.otherUser.firstName} {conversation.otherUser.lastName}
                               </h3>
                               <Badge variant="outline" className="text-xs">
                                 {conversation.contextType === 'JOB_APPLICATION' ? 'Trabajo' : 'General'}
                               </Badge>
                             </div>
                             <p className="text-sm text-muted-foreground truncate">
-                              {conversation.lastMessage.content}
+                              {conversation.lastMessage?.content || 'No hay mensajes'}
                             </p>
                             <div className="flex items-center gap-2 mt-1">
                               <Calendar className="h-3 w-3 text-muted-foreground" />
                               <span className="text-xs text-muted-foreground">
-                                {new Date(conversation.lastMessage.createdAt).toLocaleDateString()}
+                                {conversation.lastMessage?.createdAt ? new Date(conversation.lastMessage.createdAt).toLocaleDateString() : 'Sin fecha'}
                               </span>
-                              {conversation.messageCount > 1 && (
+                              {conversation.unreadCount > 0 && (
                                 <Badge variant="secondary" className="text-xs">
-                                  {conversation.messageCount}
+                                  {conversation.unreadCount}
                                 </Badge>
                               )}
                             </div>
@@ -230,7 +196,7 @@ export default function MessagesPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <MessageCircle className="h-5 w-5" />
-              Conversación con {selectedConversation?.recipient.firstName} {selectedConversation?.recipient.lastName}
+              Conversación con {selectedConversation?.otherUser.firstName} {selectedConversation?.otherUser.lastName}
             </DialogTitle>
           </DialogHeader>
           

@@ -172,7 +172,7 @@ export default function JobChatPage() {
                     <div className="flex items-center gap-2 mb-1">
                       <User className="h-4 w-4" />
                       <span className="text-sm font-medium">
-                        {msg.sender.name}
+                        {(msg.sender.firstName || "") + " " + (msg.sender.lastName || "")}
                       </span>
                     </div>
                     <p className="text-sm">{msg.content}</p>

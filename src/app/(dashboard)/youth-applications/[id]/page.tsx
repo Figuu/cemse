@@ -62,8 +62,22 @@ export default function YouthApplicationDetailPage() {
   };
 
   const handleOpenChat = (companyId: string) => {
-    setSelectedCompanyId(companyId);
-    setShowChat(true);
+    console.log('handleOpenChat called with companyId:', companyId);
+    
+    // Find the company data from the application's company interests
+    const companyInterest = application?.companyInterests?.find(interest => interest.company.id === companyId);
+    if (companyInterest) {
+      console.log('Found company data:', companyInterest.company);
+      // Pass the full company data instead of just the ID
+      setSelectedCompanyId(companyInterest.company.id);
+      setShowChat(true);
+    } else {
+      console.log('Company not found in interests, using ID only');
+      setSelectedCompanyId(companyId);
+      setShowChat(true);
+    }
+    
+    console.log('State set - selectedCompanyId:', companyId, 'showChat: true');
   };
 
   if (isLoading) {
@@ -96,11 +110,19 @@ export default function YouthApplicationDetailPage() {
   const isOwner = session?.user?.id === application.youthProfileId;
   const isCompany = session?.user?.role === "COMPANIES";
 
+  // Debug logging
+  console.log('Current state - selectedCompanyId:', selectedCompanyId, 'showChat:', showChat);
+  console.log('Application data:', application?.companyInterests?.length, 'interests');
+
   return (
     <YouthApplicationChatInterface 
+      key={`chat-${selectedCompanyId || 'none'}`}
       applicationId={applicationId}
       youthId={application.youthProfileId}
       className="h-screen"
+      selectedCompanyId={selectedCompanyId}
+      onOpenChat={handleOpenChat}
+      companyInterests={application.companyInterests || []}
     >
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
