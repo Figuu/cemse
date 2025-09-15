@@ -100,7 +100,7 @@ fi
 
 # Run database migrations (only if database is accessible)
 log "🗄️ Running database migrations..."
-if docker-compose -f docker-compose.prod.yml ps db | grep -q "Up"; then
+if docker-compose ps db | grep -q "Up"; then
     pnpm prisma migrate deploy
 else
     warn "Database container not running, skipping migrations"
