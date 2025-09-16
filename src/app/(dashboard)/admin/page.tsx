@@ -390,77 +390,81 @@ function AdminPageContent() {
         <div className="space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-semibold">Gestión de Usuarios</h3>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Nuevo Usuario
+            <Button asChild>
+              <a href="/admin/users">
+                <Plus className="h-4 w-4 mr-2" />
+                Gestionar Usuarios
+              </a>
             </Button>
           </div>
           
-          <div className="space-y-4">
-            {recentUsers.map((user) => (
-              <Card key={user.id}>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
-                        <Users className="h-5 w-5 text-muted-foreground" />
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-semibold">{user.name}</h4>
-                        <p className="text-sm text-muted-foreground">{user.email}</p>
-                        <div className="flex items-center space-x-2 mt-1">
-                          <Badge className={getRoleColor(user.role)}>
-                            {getRoleText(user.role)}
-                          </Badge>
-                          <Badge className={getStatusColor(user.status)}>
-                            {getStatusText(user.status)}
-                          </Badge>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right text-sm text-muted-foreground">
-                      <p>Última actividad: {formatDate(user.lastActivity)}</p>
-                      <p>Miembro desde: {formatDate(user.joinDate)}</p>
-                    </div>
-                    <div className="flex space-x-2">
-                      <Button variant="outline" size="sm">
-                        <Eye className="h-4 w-4 mr-2" />
-                        Ver
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <Settings className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <Card>
+            <CardContent className="p-6 text-center">
+              <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Gestión Completa de Usuarios</h3>
+              <p className="text-muted-foreground mb-4">
+                Accede a la página dedicada para crear, editar y eliminar usuarios jóvenes del sistema.
+              </p>
+              <Button asChild>
+                <a href="/admin/users">Ir a Gestión de Usuarios</a>
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       )}
 
       {activeTab === "companies" && (
-        <Card>
-          <CardContent className="text-center py-12">
-            <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Gestión de Empresas</h3>
-            <p className="text-muted-foreground">
-              Aquí podrás gestionar todas las empresas registradas en la plataforma.
-            </p>
-          </CardContent>
-        </Card>
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-semibold">Gestión de Empresas</h3>
+            <Button asChild>
+              <a href="/admin/companies">
+                <Plus className="h-4 w-4 mr-2" />
+                Gestionar Empresas
+              </a>
+            </Button>
+          </div>
+          
+          <Card>
+            <CardContent className="p-6 text-center">
+              <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Gestión Completa de Empresas</h3>
+              <p className="text-muted-foreground mb-4">
+                Accede a la página dedicada para crear, editar y eliminar empresas del sistema.
+              </p>
+              <Button asChild>
+                <a href="/admin/companies">Ir a Gestión de Empresas</a>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {activeTab === "institutions" && (
-        <Card>
-          <CardContent className="text-center py-12">
-            <GraduationCap className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Gestión de Instituciones</h3>
-            <p className="text-muted-foreground">
-              Aquí podrás gestionar todas las instituciones educativas registradas.
-            </p>
-          </CardContent>
-        </Card>
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-semibold">Gestión de Instituciones</h3>
+            <Button asChild>
+              <a href="/admin/institutions">
+                <Plus className="h-4 w-4 mr-2" />
+                Gestionar Instituciones
+              </a>
+            </Button>
+          </div>
+          
+          <Card>
+            <CardContent className="p-6 text-center">
+              <GraduationCap className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Gestión Completa de Instituciones</h3>
+              <p className="text-muted-foreground mb-4">
+                Accede a la página dedicada para crear, editar y eliminar instituciones del sistema.
+              </p>
+              <Button asChild>
+                <a href="/admin/institutions">Ir a Gestión de Instituciones</a>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {activeTab === "system" && (

@@ -290,7 +290,7 @@ export const municipalitySidebarData: SidebarData = {
       items: [
         {
           title: "Gestión de Cursos",
-          url: "/admin/courses",
+          url: "/courses",
           icon: GraduationCap,
         },
         {
@@ -357,7 +357,7 @@ export const otherInstitutionSidebarData: SidebarData = {
       items: [
         {
           title: "Gestión de Cursos",
-          url: "/admin/courses",
+          url: "/courses",
           icon: GraduationCap,
         },
         {

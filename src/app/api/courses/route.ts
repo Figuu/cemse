@@ -304,20 +304,23 @@ export async function POST(request: NextRequest) {
     // Get institution ID for institution users
     let institutionId = undefined;
     if (session.user.role === "INSTITUTION") {
-      // Find the institution associated with this user
-      const institution = await prisma.institution.findFirst({
-        where: { createdBy: session.user.id },
-        select: { id: true }
+      // Find the institution associated with this user through their profile
+      const profile = await prisma.profile.findFirst({
+        where: { 
+          userId: session.user.id,
+          institutionId: { not: null }
+        },
+        select: { institutionId: true }
       });
       
-      if (!institution) {
+      if (!profile || !profile.institutionId) {
         return NextResponse.json(
           { error: "Institution profile not found. Please create an institution profile first." },
           { status: 400 }
         );
       }
       
-      institutionId = institution.id;
+      institutionId = profile.institutionId;
     }
 
     // Create course

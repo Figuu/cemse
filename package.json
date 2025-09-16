@@ -67,6 +67,7 @@
     "minio": "^8.0.6",
     "next": "15.1.7",
     "next-auth": "^4.24.11",
+    "node-fetch": "^3.3.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-dropzone": "^14.3.8",
