@@ -19,8 +19,7 @@ import {
   Trash2, 
   MessageCircle,
   Calendar,
-  Users,
-  TrendingUp
+  Users
 } from "lucide-react";
 import { 
   useYouthApplications, 
@@ -101,7 +100,7 @@ export default function YouthApplicationsPage() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-foreground">
-            Mis Aplicaciones
+            Mis Postulaciones
           </h1>
           <p className="text-muted-foreground">
             Gestiona tus aplicaciones y conecta con empresas
@@ -109,12 +108,12 @@ export default function YouthApplicationsPage() {
         </div>
         <Button onClick={() => setShowCreateForm(true)}>
           <Plus className="h-4 w-4 mr-2" />
-          Nueva Aplicación
+          Nueva Postulación
         </Button>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
@@ -147,19 +146,6 @@ export default function YouthApplicationsPage() {
                 <p className="text-sm text-muted-foreground">Intereses</p>
                 <p className="text-2xl font-bold">
                   {applications.reduce((sum, app) => sum + (app._count?.companyInterests || 0), 0)}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-orange-600" />
-              <div>
-                <p className="text-sm text-muted-foreground">Vistas</p>
-                <p className="text-2xl font-bold">
-                  {applications.reduce((sum, app) => sum + app.viewsCount, 0)}
                 </p>
               </div>
             </div>
@@ -260,10 +246,6 @@ export default function YouthApplicationsPage() {
                       addSuffix: true, 
                       locale: es 
                     })}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Eye className="h-3 w-3" />
-                    {application.viewsCount} vistas
                   </div>
                   <div className="flex items-center gap-1">
                     <MessageCircle className="h-3 w-3" />

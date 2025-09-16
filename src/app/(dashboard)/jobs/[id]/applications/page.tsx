@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   ArrowLeft, 
   Briefcase, 
@@ -25,7 +26,8 @@ import {
   XCircle,
   User,
   Mail,
-  Phone
+  Phone,
+  X
 } from "lucide-react";
 import { useJob, useJobApplications } from "@/hooks/useJobs";
 import { useSession } from "next-auth/react";
@@ -45,7 +47,7 @@ export default function JobApplicationsPage() {
   const [selectedProfile, setSelectedProfile] = useState<JobApplication | null>(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [selectedChatUser, setSelectedChatUser] = useState<JobApplication | null>(null);
-  const [isChatModalOpen, setIsChatModalOpen] = useState(false);
+  const [showChat, setShowChat] = useState(false);
   const [messageText, setMessageText] = useState("");
 
   // Get the company for the current user
@@ -88,7 +90,12 @@ export default function JobApplicationsPage() {
 
   const handleContact = (application: JobApplication) => {
     setSelectedChatUser(application);
-    setIsChatModalOpen(true);
+    setShowChat(true);
+  };
+
+  const handleCloseChat = () => {
+    setShowChat(false);
+    setSelectedChatUser(null);
   };
 
   const handleViewProfile = (application: JobApplication) => {
@@ -96,9 +103,8 @@ export default function JobApplicationsPage() {
     setIsProfileModalOpen(true);
   };
 
-  // Get messages for the selected chat user
+  // Get messages for the selected chat user - only by contextId (jobOfferId)
   const { data: messagesData } = useMessages({
-    recipientId: selectedChatUser?.applicant.userId,
     contextType: "JOB_APPLICATION",
     contextId: jobId,
     enabled: !!selectedChatUser,
@@ -110,7 +116,7 @@ export default function JobApplicationsPage() {
     if (!messageText.trim() || !selectedChatUser) return;
     
     sendMessageMutation.mutate({
-      recipientId: selectedChatUser.applicant.userId,
+      recipientId: selectedChatUser.applicant.user.id,
       content: messageText,
       contextType: "JOB_APPLICATION",
       contextId: jobId,
@@ -198,7 +204,10 @@ export default function JobApplicationsPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="flex h-screen bg-gray-50">
+      {/* Main Content */}
+      <div className={`flex-1 ${showChat ? 'mr-96' : ''} transition-all duration-300`}>
+        <div className="container mx-auto px-4 py-8">
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
         <Link href={`/jobs/${jobId}`}>
@@ -623,109 +632,152 @@ export default function JobApplicationsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Chat Modal */}
-      <Dialog open={isChatModalOpen} onOpenChange={setIsChatModalOpen}>
-        <DialogContent className="max-w-2xl h-[600px] flex flex-col">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <MessageCircle className="h-5 w-5" />
-              Conversación con {selectedChatUser?.applicant.firstName} {selectedChatUser?.applicant.lastName}
-            </DialogTitle>
-          </DialogHeader>
-          
-          {selectedChatUser && (
-            <div className="flex-1 flex flex-col">
-              {/* Chat Messages */}
-              <div className="flex-1 overflow-y-auto space-y-4 p-4 border rounded-lg bg-muted/20">
-                {messagesData?.messages?.length === 0 ? (
-                  <div className="text-center text-muted-foreground py-8">
-                    <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                    <p>No hay mensajes aún. ¡Inicia la conversación!</p>
+        </div>
+      </div>
+
+      {/* Chat Sidebar */}
+      {showChat && selectedChatUser && (
+        <div className="fixed right-0 top-0 h-full w-96 bg-white border-l shadow-lg z-50">
+          <div className="flex flex-col h-full">
+            {/* Chat Header */}
+            <div className="p-4 border-b bg-gray-50">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <MessageCircle className="h-5 w-5 text-blue-600" />
+                  <div>
+                    <h3 className="font-semibold">Chat con Candidato</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedChatUser.applicant.firstName} {selectedChatUser.applicant.lastName}
+                    </p>
                   </div>
-                ) : (
-                  messagesData?.messages?.map((message) => {
-                    const isFromApplicant = message.senderId === selectedChatUser?.applicant.userId;
-                    return (
-                      <div
-                        key={message.id}
-                        className={`flex ${isFromApplicant ? 'justify-start' : 'justify-end'}`}
-                      >
-                        <div
-                          className={`max-w-[70%] p-3 rounded-lg ${
-                            isFromApplicant
-                              ? 'bg-background border'
-                              : 'bg-primary text-primary-foreground'
-                          }`}
-                        >
-                          <p className="text-sm">{message.content}</p>
-                          <p className={`text-xs mt-1 ${
-                            isFromApplicant ? 'text-muted-foreground' : 'text-primary-foreground/70'
-                          }`}>
-                            {new Date(message.createdAt).toLocaleTimeString('es-ES', {
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-
-              {/* Message Input */}
-              <div className="flex items-center gap-2 pt-4 border-t">
-                <Input
-                  value={messageText}
-                  onChange={(e) => setMessageText(e.target.value)}
-                  placeholder="Escribe tu mensaje..."
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      handleSendMessage();
-                    }
-                  }}
-                  className="flex-1"
-                />
-                <Button 
-                  onClick={handleSendMessage}
-                  disabled={!messageText.trim() || sendMessageMutation.isPending}
-                >
-                  {sendMessageMutation.isPending ? "Enviando..." : "Enviar"}
-                </Button>
-              </div>
-
-              {/* Quick Actions */}
-              <div className="flex items-center gap-2 pt-2">
-                <Button 
-                  variant="outline" 
+                </div>
+                <Button
+                  variant="ghost"
                   size="sm"
-                  onClick={() => {
-                    setMessageText("Hola! Gracias por tu interés en la posición. ¿Podrías contarme más sobre tu experiencia?");
-                  }}
+                  onClick={handleCloseChat}
                 >
-                  Mensaje de bienvenida
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => {
-                    setMessageText("Nos gustaría programar una entrevista contigo. ¿Qué horarios te funcionan mejor?");
-                  }}
-                >
-                  Programar entrevista
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => setIsChatModalOpen(false)}
-                >
-                  Cerrar
+                  <X className="h-4 w-4" />
                 </Button>
               </div>
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
+
+            {/* Chat Content */}
+            <div className="flex-1 overflow-hidden">
+              <div className="h-full flex flex-col">
+                {/* Applicant Header */}
+                <div className="p-4 border-b bg-gray-50">
+                  <div className="flex items-center space-x-3">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={selectedChatUser.applicant.avatarUrl || "/placeholder-user.png"} />
+                      <AvatarFallback>
+                        {selectedChatUser.applicant.firstName?.[0]}{selectedChatUser.applicant.lastName?.[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <h4 className="font-medium">
+                        {selectedChatUser.applicant.firstName} {selectedChatUser.applicant.lastName}
+                      </h4>
+                      <p className="text-sm text-muted-foreground">Candidato</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Messages */}
+                <ScrollArea className="flex-1 p-4">
+                  <div className="space-y-4">
+                    {messagesData?.messages?.length === 0 ? (
+                      <div className="text-center py-8">
+                        <MessageCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                        <h3 className="text-lg font-semibold mb-2">Inicia la conversación</h3>
+                        <p className="text-muted-foreground text-sm">
+                          Envía tu primer mensaje a {selectedChatUser.applicant.firstName}.
+                        </p>
+                      </div>
+                    ) : (
+                      messagesData?.messages?.map((message) => {
+                        const isFromApplicant = message.senderId === selectedChatUser.applicant.user.id;
+                        return (
+                          <div
+                            key={message.id}
+                            className={`flex gap-3 ${isFromApplicant ? 'justify-start' : 'justify-end'}`}
+                          >
+                            <div className={`flex gap-3 max-w-[80%] ${isFromApplicant ? 'flex-row' : 'flex-row-reverse'}`}>
+                              <Avatar className="h-8 w-8">
+                                <AvatarImage src={isFromApplicant ? selectedChatUser.applicant.avatarUrl : session?.user?.profile?.avatarUrl} />
+                                <AvatarFallback>
+                                  {isFromApplicant 
+                                    ? `${selectedChatUser.applicant.firstName?.[0]}${selectedChatUser.applicant.lastName?.[0]}`
+                                    : session?.user?.name?.[0]
+                                  }
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className={`rounded-lg px-3 py-2 ${isFromApplicant ? 'bg-gray-100' : 'bg-blue-600 text-white'}`}>
+                                <p className="text-sm">{message.content}</p>
+                                <div className={`flex items-center gap-1 mt-1 text-xs ${isFromApplicant ? 'text-muted-foreground' : 'text-blue-100'}`}>
+                                  <span>
+                                    {new Date(message.createdAt).toLocaleTimeString('es-ES', {
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    })}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </ScrollArea>
+
+                {/* Message Input */}
+                <div className="border-t p-4">
+                  <form onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSendMessage();
+                  }} className="flex gap-2">
+                    <Input
+                      value={messageText}
+                      onChange={(e) => setMessageText(e.target.value)}
+                      placeholder="Escribe tu mensaje..."
+                      className="flex-1"
+                    />
+                    <Button 
+                      type="submit"
+                      disabled={!messageText.trim() || sendMessageMutation.isPending}
+                      size="sm"
+                    >
+                      {sendMessageMutation.isPending ? "Enviando..." : "Enviar"}
+                    </Button>
+                  </form>
+                  
+                  {/* Quick Actions */}
+                  <div className="flex items-center gap-2 pt-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        setMessageText("Hola! Gracias por tu interés en la posición. ¿Podrías contarme más sobre tu experiencia?");
+                      }}
+                    >
+                      Bienvenida
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        setMessageText("Nos gustaría programar una entrevista contigo. ¿Qué horarios te funcionan mejor?");
+                      }}
+                    >
+                      Entrevista
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

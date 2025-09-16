@@ -8,7 +8,6 @@ export interface YouthApplication {
   coverLetterUrl?: string;
   status: YouthApplicationStatus;
   isPublic: boolean;
-  viewsCount: number;
   applicationsCount: number;
   createdAt: string;
   updatedAt: string;

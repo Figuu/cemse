@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { JobCard } from "@/components/jobs/JobCard";
 import { JobFilters } from "@/components/jobs/JobFilters";
 import { JobApplicationForm } from "@/components/jobs/JobApplicationForm";
+import { JobChatInterface } from "@/components/jobs/JobChatInterface";
+import { JobApplicationChat } from "@/components/jobs/JobApplicationChat";
 import { RoleGuard } from "@/components/auth/RoleGuard";
 import { useJobs } from "@/hooks/useJobs";
 import { useJobApplicationStatus } from "@/hooks/useJobApplicationStatus";
@@ -26,7 +28,8 @@ import {
   BarChart3,
   Users,
   Eye,
-  FileText
+  FileText,
+  MessageCircle
 } from "lucide-react";
 import Link from "next/link";
 import { safeSum } from "@/lib/utils";
@@ -51,6 +54,8 @@ function JobsPageContent() {
   const [showFilters, setShowFilters] = useState(false);
   const [selectedJob, setSelectedJob] = useState<JobPosting | null>(null);
   const [showApplicationForm, setShowApplicationForm] = useState(false);
+  const [showChat, setShowChat] = useState(false);
+  const [selectedApplicationId, setSelectedApplicationId] = useState<string | null>(null);
 
   const { 
     data: jobsData, 
@@ -128,6 +133,16 @@ function JobsPageContent() {
     setSelectedJob(null);
   };
 
+  const handleOpenChat = (applicationId: string) => {
+    setSelectedApplicationId(applicationId);
+    setShowChat(true);
+  };
+
+  const handleCloseChat = () => {
+    setShowChat(false);
+    setSelectedApplicationId(null);
+  };
+
   const clearFilters = () => {
     setSelectedFilters({
       location: "",
@@ -188,7 +203,14 @@ function JobsPageContent() {
   }
 
   return (
-    <div className="space-y-6">
+    <JobChatInterface 
+      jobId={selectedJob?.id || ""}
+      className="h-screen"
+      selectedApplicationId={selectedApplicationId}
+      onOpenChat={handleOpenChat}
+      applications={[]} // This would be populated with actual applications data
+    >
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -403,6 +425,17 @@ function JobsPageContent() {
                           <Settings className="h-4 w-4" />
                         </Button>
                       </Link>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="h-8 w-8 p-0"
+                        onClick={() => {
+                          setSelectedJob(job);
+                          setShowChat(true);
+                        }}
+                      >
+                        <MessageCircle className="h-4 w-4" />
+                      </Button>
                       <Link href={`/jobs/${job.id}/applications`}>
                         <Button variant="outline" size="sm" className="h-8 w-8 p-0">
                           <Users className="h-4 w-4" />
@@ -424,13 +457,18 @@ function JobsPageContent() {
 
       {/* Application Form Modal */}
       {showApplicationForm && selectedJob && (
-        <JobApplicationForm
-          job={selectedJob}
-          onClose={handleCloseApplicationForm}
-          onSubmit={handleApplicationSubmit}
-        />
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <JobApplicationForm
+              job={selectedJob}
+              onClose={handleCloseApplicationForm}
+              onSubmit={handleApplicationSubmit}
+            />
+          </div>
+        </div>
       )}
-    </div>
+      </div>
+    </JobChatInterface>
   );
 }
 

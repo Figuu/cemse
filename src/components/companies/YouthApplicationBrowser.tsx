@@ -39,7 +39,6 @@ interface YouthApplication {
   description: string;
   status: "ACTIVE" | "PAUSED" | "CLOSED" | "HIRED";
   isPublic: boolean;
-  viewsCount: number;
   applicationsCount: number;
   createdAt: string;
   updatedAt: string;
@@ -241,10 +240,6 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
               {getStatusLabel(application.status)}
             </Badge>
             <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-              <div className="flex items-center gap-1">
-                <Eye className="h-3 w-3" />
-                <span>{application.viewsCount}</span>
-              </div>
               <div className="flex items-center gap-1">
                 <Heart className="h-3 w-3" />
                 <span>{application.totalInterests}</span>
@@ -501,7 +496,6 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="createdAt">Más recientes</SelectItem>
-            <SelectItem value="viewsCount">Más vistos</SelectItem>
             <SelectItem value="applicationsCount">Más populares</SelectItem>
           </SelectContent>
         </Select>

@@ -17,6 +17,7 @@ import {
 import { useSession } from "next-auth/react";
 import { ApplicationStatusLabels, EmploymentTypeLabels, ExperienceLevelLabels } from "@/types/company";
 import { useApplications } from "@/hooks/useApplications";
+import { JobApplicationChat } from "@/components/jobs/JobApplicationChat";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
@@ -25,6 +26,8 @@ export default function ApplicationsPage() {
   const { data: session } = useSession();
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [showChat, setShowChat] = useState(false);
+  const [selectedApplication, setSelectedApplication] = useState<any>(null);
 
   const { 
     applications, 
@@ -62,8 +65,20 @@ export default function ApplicationsPage() {
     }
   };
 
+  const handleOpenChat = (application: any) => {
+    setSelectedApplication(application);
+    setShowChat(true);
+  };
+
+  const handleCloseChat = () => {
+    setShowChat(false);
+    setSelectedApplication(null);
+  };
+
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className={`flex h-screen bg-gray-50 ${showChat ? 'mr-96' : ''}`}>
+      <div className="flex-1 transition-all duration-300">
+        <div className="container mx-auto px-4 py-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
@@ -220,24 +235,28 @@ export default function ApplicationsPage() {
                       </Link>
                       
                       {application.communication && application.communication.some(msg => !msg.isRead) && (
-                        <Link href={`/jobs/${application.jobId}/chat`}>
-                          <Button size="sm" className="relative">
-                            <MessageCircle className="h-4 w-4 mr-1" />
-                            Chat
-                            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                              {application.communication.filter(msg => !msg.isRead).length}
-                            </span>
-                          </Button>
-                        </Link>
+                        <Button 
+                          size="sm" 
+                          className="relative"
+                          onClick={() => handleOpenChat(application)}
+                        >
+                          <MessageCircle className="h-4 w-4 mr-1" />
+                          Chat
+                          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                            {application.communication.filter(msg => !msg.isRead).length}
+                          </span>
+                        </Button>
                       )}
                       
                       {(!application.communication || application.communication.every(msg => msg.isRead)) && (
-                        <Link href={`/jobs/${application.jobId}/chat`}>
-                          <Button variant="outline" size="sm">
-                            <MessageCircle className="h-4 w-4 mr-1" />
-                            Chat
-                          </Button>
-                        </Link>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleOpenChat(application)}
+                        >
+                          <MessageCircle className="h-4 w-4 mr-1" />
+                          Chat
+                        </Button>
                       )}
                     </div>
                   </div>
@@ -246,7 +265,35 @@ export default function ApplicationsPage() {
             </Card>
           ))
         )}
+        </div>
+        </div>
       </div>
+
+      {/* Chat Sidebar */}
+      {showChat && selectedApplication && (
+        <JobApplicationChat
+          jobId={selectedApplication.jobId}
+          applicationId={selectedApplication.id}
+          applicant={{
+            id: selectedApplication.companyOwnerId || "company-1",
+            firstName: selectedApplication.company,
+            lastName: "",
+            avatarUrl: "/placeholder-company.png",
+            email: "company@example.com"
+          }}
+          application={{
+            id: selectedApplication.id,
+            status: selectedApplication.status,
+            appliedAt: selectedApplication.appliedDate,
+            coverLetter: selectedApplication.coverLetter,
+            cvFile: selectedApplication.cvFile,
+            cvUrl: selectedApplication.cvUrl,
+            coverLetterFile: selectedApplication.coverLetterFile,
+            coverLetterUrl: selectedApplication.coverLetterUrl
+          }}
+          onClose={handleCloseChat}
+        />
+      )}
     </div>
   );
 }

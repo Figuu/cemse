@@ -192,16 +192,16 @@ export const companySidebarData: SidebarData = {
         },
       ],
     },
-    {
-      title: "Comunicación",
-      items: [
-        {
-          title: "Mensajes",
-          url: "/messages",
-          icon: MessageSquare,
-        },
-      ],
-    },
+    //{
+      //title: "Comunicación",
+      //items: [
+        //{
+          //title: "Mensajes",
+          //url: "/messages",
+          //icon: MessageSquare,
+        //},
+      //],
+    //},
     {
       title: "Recursos",
       items: [
@@ -222,16 +222,17 @@ export const companySidebarData: SidebarData = {
         },
       ],
     },
-    {
-      title: "Análisis",
-      items: [
-        {
-          title: "Estadísticas",
-          url: "/analytics",
-          icon: BarChart3,
-        },
-      ],
-    },
+    //{
+      //title: "Análisis",
+      //items: [
+        //{
+          //title: "Estadísticas",
+          //url: "/analytics",
+          //icon: BarChart3,
+        //},
+      //],
+    //},
+    //},
     {
       title: "Personal",
       items: [

@@ -36,7 +36,14 @@ export async function GET(request: NextRequest) {
       include: {
         jobOffer: {
           include: {
-            company: true,
+            company: {
+              select: {
+                id: true,
+                name: true,
+                logoUrl: true,
+                ownerId: true,
+              },
+            },
           },
         },
         applicant: {
@@ -74,6 +81,7 @@ export async function GET(request: NextRequest) {
         jobTitle: jobOffer?.title || "Unknown Job",
         company: jobOffer?.company?.name || "Unknown Company",
         companyLogo: jobOffer?.company?.logoUrl,
+        companyOwnerId: jobOffer?.company?.ownerId,
         location: jobOffer?.location || "Unknown Location",
         appliedDate: app.appliedAt.toISOString(),
         status: statusMap[app.status as keyof typeof statusMap] || "applied",

@@ -325,10 +325,6 @@ export default function TalentDetailPage() {
             <CardContent>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Vistas</span>
-                  <span className="font-semibold">{application.viewsCount}</span>
-                </div>
-                <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Intereses</span>
                   <span className="font-semibold">{application._count?.companyInterests || 0}</span>
                 </div>

@@ -16,9 +16,12 @@ import {
   User, 
   Globe,
   Eye,
-  EyeOff
+  EyeOff,
+  CheckCircle,
+  AlertCircle
 } from "lucide-react";
 import { CreateYouthApplicationData } from "@/types/youth-application";
+import { useFileUpload } from "@/hooks/useFileUpload";
 
 const youthApplicationFormSchema = z.object({
   title: z.string().min(1, "El título es requerido").max(100, "El título es muy largo"),
@@ -49,6 +52,12 @@ export function YouthApplicationForm({
 }: YouthApplicationFormProps) {
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [coverLetterFile, setCoverLetterFile] = useState<File | null>(null);
+  const [cvUploadUrl, setCvUploadUrl] = useState<string | null>(null);
+  const [coverLetterUploadUrl, setCoverLetterUploadUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const { uploadFile: uploadCvFile, isUploading: isUploadingCv, error: cvUploadError } = useFileUpload();
+  const { uploadFile: uploadCoverLetterFile, isUploading: isUploadingCoverLetter, error: coverLetterUploadError } = useFileUpload();
 
   const {
     register,
@@ -75,9 +84,17 @@ export function YouthApplicationForm({
     const file = event.target.files?.[0];
     if (file) {
       setCvFile(file);
-      // For now, we'll simulate file upload by setting the file name
-      // In a real app, you would upload to a file service and get a URL
-      setValue("cvFile", file.name);
+      setCvUploadUrl(null);
+      
+      try {
+        const uploadUrl = await uploadCvFile(file);
+        setCvUploadUrl(uploadUrl);
+        setValue("cvUrl", uploadUrl);
+        setValue("cvFile", file.name);
+      } catch (error) {
+        console.error("Error uploading CV file:", error);
+        setCvUploadUrl(null);
+      }
     }
   };
 
@@ -85,14 +102,49 @@ export function YouthApplicationForm({
     const file = event.target.files?.[0];
     if (file) {
       setCoverLetterFile(file);
-      // For now, we'll simulate file upload by setting the file name
-      // In a real app, you would upload to a file service and get a URL
-      setValue("coverLetterFile", file.name);
+      setCoverLetterUploadUrl(null);
+      
+      try {
+        const uploadUrl = await uploadCoverLetterFile(file);
+        setCoverLetterUploadUrl(uploadUrl);
+        setValue("coverLetterUrl", uploadUrl);
+        setValue("coverLetterFile", file.name);
+      } catch (error) {
+        console.error("Error uploading cover letter file:", error);
+        setCoverLetterUploadUrl(null);
+      }
     }
   };
 
-  const handleFormSubmit = (data: YouthApplicationFormData) => {
+  const handleFormSubmit = async (data: YouthApplicationFormData) => {
     console.log("YouthApplicationForm: Form submitted with data:", data);
+    
+    // Ensure files are uploaded before submitting
+    if (cvFile && !cvUploadUrl) {
+      try {
+        setIsUploading(true);
+        const uploadUrl = await uploadCvFile(cvFile);
+        setCvUploadUrl(uploadUrl);
+        data.cvUrl = uploadUrl;
+      } catch (error) {
+        console.error("Error uploading CV file during submit:", error);
+        return;
+      }
+    }
+    
+    if (coverLetterFile && !coverLetterUploadUrl) {
+      try {
+        setIsUploading(true);
+        const uploadUrl = await uploadCoverLetterFile(coverLetterFile);
+        setCoverLetterUploadUrl(uploadUrl);
+        data.coverLetterUrl = uploadUrl;
+      } catch (error) {
+        console.error("Error uploading cover letter file during submit:", error);
+        return;
+      }
+    }
+    
+    setIsUploading(false);
     onSubmit(data as CreateYouthApplicationData);
   };
 
@@ -156,16 +208,40 @@ export function YouthApplicationForm({
                     accept=".pdf,.doc,.docx"
                     onChange={handleCvFileUpload}
                     className="flex-1"
+                    disabled={isUploadingCv}
                   />
-                  <Button type="button" variant="outline" size="sm">
-                    <Upload className="h-4 w-4 mr-2" />
-                    Subir
+                  <Button type="button" variant="outline" size="sm" disabled={isUploadingCv}>
+                    {isUploadingCv ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900 mr-2"></div>
+                        Subiendo...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-4 w-4 mr-2" />
+                        Subir
+                      </>
+                    )}
                   </Button>
                 </div>
                 {cvFile && (
-                  <p className="text-sm text-muted-foreground">
-                    Archivo seleccionado: {cvFile.name}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm text-muted-foreground">
+                      Archivo seleccionado: {cvFile.name}
+                    </p>
+                    {cvUploadUrl && (
+                      <div className="flex items-center gap-1 text-green-600">
+                        <CheckCircle className="h-4 w-4" />
+                        <span className="text-sm">Subido exitosamente</span>
+                      </div>
+                    )}
+                    {cvUploadError && (
+                      <div className="flex items-center gap-1 text-red-600">
+                        <AlertCircle className="h-4 w-4" />
+                        <span className="text-sm">Error al subir</span>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
 
@@ -178,16 +254,40 @@ export function YouthApplicationForm({
                     accept=".pdf,.doc,.docx"
                     onChange={handleCoverLetterFileUpload}
                     className="flex-1"
+                    disabled={isUploadingCoverLetter}
                   />
-                  <Button type="button" variant="outline" size="sm">
-                    <Upload className="h-4 w-4 mr-2" />
-                    Subir
+                  <Button type="button" variant="outline" size="sm" disabled={isUploadingCoverLetter}>
+                    {isUploadingCoverLetter ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900 mr-2"></div>
+                        Subiendo...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-4 w-4 mr-2" />
+                        Subir
+                      </>
+                    )}
                   </Button>
                 </div>
                 {coverLetterFile && (
-                  <p className="text-sm text-muted-foreground">
-                    Archivo seleccionado: {coverLetterFile.name}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm text-muted-foreground">
+                      Archivo seleccionado: {coverLetterFile.name}
+                    </p>
+                    {coverLetterUploadUrl && (
+                      <div className="flex items-center gap-1 text-green-600">
+                        <CheckCircle className="h-4 w-4" />
+                        <span className="text-sm">Subido exitosamente</span>
+                      </div>
+                    )}
+                    {coverLetterUploadError && (
+                      <div className="flex items-center gap-1 text-red-600">
+                        <AlertCircle className="h-4 w-4" />
+                        <span className="text-sm">Error al subir</span>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
@@ -266,10 +366,17 @@ export function YouthApplicationForm({
             <div className="flex items-center gap-2 pt-4 border-t">
               <Button 
                 type="submit" 
-                disabled={isLoading}
+                disabled={isLoading || isUploading || isUploadingCv || isUploadingCoverLetter}
                 className="flex-1"
               >
-                {isLoading ? "Guardando..." : mode === "create" ? "Publicar Aplicación" : "Actualizar Aplicación"}
+                {isLoading || isUploading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Guardando...
+                  </>
+                ) : (
+                  mode === "create" ? "Publicar Aplicación" : "Actualizar Aplicación"
+                )}
               </Button>
               {onClose && (
                 <Button type="button" variant="outline" onClick={onClose}>
