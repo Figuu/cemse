@@ -438,12 +438,6 @@ export default function JobDetailPage() {
                   </Button>
                 </Link>
                 
-                <Link href={`/jobs/${jobId}/analytics`}>
-                  <Button variant="outline" className="w-full">
-                    <Target className="h-4 w-4 mr-2" />
-                    Ver Analytics
-                  </Button>
-                </Link>
                 
                 <Link href={`/jobs/${jobId}/edit`}>
                   <Button variant="outline" className="w-full">

@@ -180,11 +180,11 @@ export const companySidebarData: SidebarData = {
           url: "/jobs",
           icon: Briefcase,
         },
-        {
+        /*{
           title: "Candidatos",
           url: "/candidates",
           icon: Users,
-        },
+        },*/
         {
           title: "Descubre Talento",
           url: "/talent",

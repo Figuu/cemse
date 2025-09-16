@@ -22,7 +22,7 @@ import {
   Send
 } from "lucide-react";
 import Link from "next/link";
-import { useJobById } from "@/hooks/useJobs";
+import { useJobById, useCreateJobApplication } from "@/hooks/useJobs";
 import { useMessages, useSendMessage } from "@/hooks/useMessages";
 import { JobApplicationForm } from "@/components/jobs/JobApplicationForm";
 import { JobPosting } from "@/types/company";
@@ -36,6 +36,8 @@ export default function JobApplicationPage() {
   const [showApplicationForm, setShowApplicationForm] = useState(false);
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
   const [messageText, setMessageText] = useState("");
+  const [applicationError, setApplicationError] = useState<string | null>(null);
+  const [applicationSuccess, setApplicationSuccess] = useState(false);
 
   // Get job details
   const { data: job, isLoading: jobLoading, error: jobError } = useJobById(jobId);
@@ -55,6 +57,12 @@ export default function JobApplicationPage() {
   console.log("Apply page - Messages error:", messagesError);
 
   const sendMessageMutation = useSendMessage();
+  
+  // Get the company ID for the application submission
+  const companyId = job?.company?.id;
+  
+  // Initialize the job application mutation
+  const createApplicationMutation = useCreateJobApplication(companyId || "", jobId);
 
   const handleSendMessage = () => {
     console.log("handleSendMessage - Called with:", { messageText, ownerId: job?.company?.ownerId, jobId });
@@ -79,9 +87,35 @@ export default function JobApplicationPage() {
   };
 
   const handleApplicationSubmit = async (applicationData: Record<string, unknown>) => {
-    // TODO: Implement job application submission
-    console.log("Submitting application:", applicationData);
-    setShowApplicationForm(false);
+    if (!companyId) {
+      setApplicationError("No se pudo obtener la información de la empresa");
+      return;
+    }
+
+    setApplicationError(null);
+    setApplicationSuccess(false);
+
+    try {
+      console.log("Submitting application:", applicationData);
+      
+      await createApplicationMutation.mutateAsync(applicationData);
+      
+      setApplicationSuccess(true);
+      setShowApplicationForm(false);
+      
+      // Show success message for a few seconds
+      setTimeout(() => {
+        setApplicationSuccess(false);
+      }, 5000);
+      
+    } catch (error) {
+      console.error("Error submitting application:", error);
+      setApplicationError(
+        error instanceof Error 
+          ? error.message 
+          : "Error al enviar la aplicación. Por favor, inténtalo de nuevo."
+      );
+    }
   };
 
   if (jobLoading) {
@@ -137,6 +171,29 @@ export default function JobApplicationPage() {
           <p className="text-muted-foreground">en {job.company.name}</p>
         </div>
       </div>
+
+      {/* Success/Error Messages */}
+      {applicationSuccess && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="flex items-center gap-2">
+            <div className="h-4 w-4 bg-green-500 rounded-full"></div>
+            <p className="text-green-800 font-medium">¡Aplicación enviada exitosamente!</p>
+          </div>
+          <p className="text-green-700 text-sm mt-1">
+            Tu aplicación ha sido enviada a {job.company.name}. Te contactaremos pronto.
+          </p>
+        </div>
+      )}
+
+      {applicationError && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-center gap-2">
+            <div className="h-4 w-4 bg-red-500 rounded-full"></div>
+            <p className="text-red-800 font-medium">Error al enviar aplicación</p>
+          </div>
+          <p className="text-red-700 text-sm mt-1">{applicationError}</p>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Job Details */}
@@ -264,8 +321,13 @@ export default function JobApplicationPage() {
       {showApplicationForm && (
         <JobApplicationForm
           job={job}
-          onClose={() => setShowApplicationForm(false)}
+          onClose={() => {
+            setShowApplicationForm(false);
+            setApplicationError(null);
+          }}
           onSubmit={handleApplicationSubmit}
+          isLoading={createApplicationMutation.isPending}
+          currentUser={session?.user}
         />
       )}
 

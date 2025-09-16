@@ -15,7 +15,7 @@ importers:
         specifier: ^5.2.1
         version: 5.2.1(react-hook-form@7.62.0(react@19.1.1))
       '@prisma/client':
-        specifier: ^6.16.1
+        specifier: 6.16.1
         version: 6.16.1(prisma@6.16.1(typescript@5.9.2))(typescript@5.9.2)
       '@radix-ui/react-accordion':
         specifier: ^1.2.12
@@ -119,9 +119,6 @@ importers:
       next-auth:
         specifier: ^4.24.11
         version: 4.24.11(next@15.1.7(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
-      prisma:
-        specifier: ^6.16.1
-        version: 6.16.1(typescript@5.9.2)
       react:
         specifier: ^19.0.0
         version: 19.1.1
@@ -204,6 +201,9 @@ importers:
       prettier:
         specifier: ^3.6.2
         version: 3.6.2
+      prisma:
+        specifier: 6.16.1
+        version: 6.16.1(typescript@5.9.2)
       tailwindcss:
         specifier: ^3.4.1
         version: 3.4.17
