@@ -23,7 +23,11 @@ export const authOptions: NextAuthOptions = {
             email: credentials.email,
           },
           include: {
-            profile: true,
+            profile: {
+              include: {
+                institution: true,
+              },
+            },
           },
         });
 
@@ -46,6 +50,7 @@ export const authOptions: NextAuthOptions = {
           name: user.profile?.firstName + ' ' + user.profile?.lastName,
           role: user.role,
           profile: user.profile,
+          institutionType: user.profile?.institution?.institutionType,
         };
       },
     }),
@@ -59,6 +64,7 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id as string;
         session.user.role = token.role as UserRole;
         session.user.profile = token.profile;
+        session.user.institutionType = token.institutionType;
       }
       return session;
     },
@@ -67,6 +73,7 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.role = user.role;
         token.profile = user.profile;
+        token.institutionType = user.institutionType;
       }
       return token;
     },

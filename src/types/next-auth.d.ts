@@ -1,4 +1,4 @@
-import { UserRole, Profile } from "@prisma/client";
+import { UserRole, Profile, InstitutionType } from "@prisma/client";
 
 declare module "next-auth" {
   interface Session {
@@ -8,6 +8,7 @@ declare module "next-auth" {
       name?: string | null;
       role: UserRole;
       profile?: Profile | null;
+      institutionType?: InstitutionType | null;
     };
   }
 
@@ -17,6 +18,7 @@ declare module "next-auth" {
     name?: string | null;
     role: UserRole;
     profile?: Profile | null;
+    institutionType?: InstitutionType | null;
   }
 }
 
@@ -25,5 +27,6 @@ declare module "next-auth/jwt" {
     id: string;
     role: UserRole;
     profile?: Profile | null;
+    institutionType?: InstitutionType | null;
   }
 }

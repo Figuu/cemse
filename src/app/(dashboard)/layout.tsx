@@ -57,7 +57,10 @@ export default function DashboardLayout({
                   <h1 className="text-xl font-bold text-foreground">CEMSE</h1>
                 </div>
                 <div className="mt-5 px-2">
-                  <RoleBasedNavigation role={session.user.role} />
+                  <RoleBasedNavigation 
+                    role={session.user.role} 
+                    institutionType={session.user.institutionType}
+                  />
                 </div>
               </div>
             </div>
@@ -73,7 +76,10 @@ export default function DashboardLayout({
                       <h1 className="text-xl font-bold text-foreground">CEMSE</h1>
                     </div>
                     <div className="mt-5 flex-1 px-2">
-                      <RoleBasedNavigation role={session.user.role} />
+                      <RoleBasedNavigation 
+                        role={session.user.role} 
+                        institutionType={session.user.institutionType}
+                      />
                     </div>
                   </div>
                 </div>
