@@ -35,7 +35,7 @@ import { ResourceForm } from "@/components/resources/ResourceForm";
 import { ResourceDetailsModal } from "@/components/resources/ResourceDetailsModal";
 
 export default function ResourcesPage() {
-  const { data: session } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedType, setSelectedType] = useState("all");
@@ -69,6 +69,15 @@ export default function ResourcesPage() {
     status: selectedStatus !== "all" ? selectedStatus : undefined,
     authorId: isYouth ? undefined : session?.user?.id, // Youth sees all, others see their own
   });
+
+  // Show loading while session is loading
+  if (sessionStatus === "loading") {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   const categories = [
     { id: "all", name: "Todos", count: resources.length },

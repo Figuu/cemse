@@ -78,7 +78,7 @@ export function useResources(options: UseResourcesOptions = {}) {
     } finally {
       setIsLoading(false);
     }
-  }, [session?.user?.id, options]);
+  }, [session?.user?.id, options.search, options.category, options.type, options.status, options.authorId, options.limit, options.offset]);
 
   useEffect(() => {
     fetchResources();

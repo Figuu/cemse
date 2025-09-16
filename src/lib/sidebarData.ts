@@ -129,9 +129,9 @@ export const youthSidebarData: SidebarData = {
           icon: Award,
         },
         {
-          title: "Descubrir",
-          url: "/discover",
-          icon: Compass,
+          title: "Recursos",
+          url: "/resources",
+          icon: FileText,
         },
       ],
     },

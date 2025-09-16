@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (authorId) {
-      whereClause.authorId = authorId;
+      whereClause.createdByUserId = authorId;
     }
 
     // Only show published resources to non-admin users

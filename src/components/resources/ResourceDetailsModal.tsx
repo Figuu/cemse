@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { X, Edit, Trash2, Eye, EyeOff, Calendar, User, Download, Star, Tag, ExternalLink, FileText, Video, Image, File, Globe } from "lucide-react";
+import { X, Edit, Trash2, Eye, EyeOff, Calendar, User, Tag, ExternalLink, FileText, Video, Image, File, Globe } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -165,16 +165,6 @@ export function ResourceDetailsModal({
                     {format(new Date(resource.publishedDate || resource.createdAt), "PPP", { locale: es })}
                   </span>
                 </div>
-                
-                <div className="flex items-center space-x-2">
-                  <Download className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{resource.downloads} descargas</span>
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                  <Star className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">Calificación: {resource.rating}/5</span>
-                </div>
               </div>
             </div>
 
@@ -226,7 +216,7 @@ export function ResourceDetailsModal({
             <div className="flex items-center space-x-2">
               {resource.downloadUrl ? (
                 <Button onClick={handleDownload}>
-                  <Download className="h-4 w-4 mr-2" />
+                  <ExternalLink className="h-4 w-4 mr-2" />
                   Descargar Archivo
                 </Button>
               ) : resource.externalUrl ? (
