@@ -16,96 +16,49 @@ import {
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { ApplicationStatusLabels, EmploymentTypeLabels, ExperienceLevelLabels } from "@/types/company";
+import { useApplications } from "@/hooks/useApplications";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
-
-// Mock data - in real app, this would come from an API
-const mockApplications = [
-  {
-    id: "app1",
-    job: {
-      id: "job1",
-      title: "Desarrollador Frontend",
-      company: {
-        name: "TechCorp",
-        logoUrl: "/placeholder-company.png"
-      },
-      location: "Cochabamba, Bolivia",
-      contractType: "FULL_TIME",
-      experienceLevel: "MID_LEVEL",
-      salaryMin: 8000,
-      salaryMax: 12000,
-      salaryCurrency: "BOB"
-    },
-    status: "UNDER_REVIEW",
-    appliedAt: "2024-01-15T10:30:00Z",
-    lastMessageAt: "2024-01-16T14:20:00Z",
-    unreadMessages: 2
-  },
-  {
-    id: "app2",
-    job: {
-      id: "job2",
-      title: "Diseñador UX/UI",
-      company: {
-        name: "DesignStudio",
-        logoUrl: "/placeholder-company.png"
-      },
-      location: "La Paz, Bolivia",
-      contractType: "PART_TIME",
-      experienceLevel: "ENTRY_LEVEL",
-      salaryMin: 5000,
-      salaryMax: 8000,
-      salaryCurrency: "BOB"
-    },
-    status: "PRE_SELECTED",
-    appliedAt: "2024-01-10T09:15:00Z",
-    lastMessageAt: "2024-01-17T11:45:00Z",
-    unreadMessages: 0
-  },
-  {
-    id: "app3",
-    job: {
-      id: "job3",
-      title: "Analista de Datos",
-      company: {
-        name: "DataCorp",
-        logoUrl: "/placeholder-company.png"
-      },
-      location: "Santa Cruz, Bolivia",
-      contractType: "FULL_TIME",
-      experienceLevel: "SENIOR_LEVEL",
-      salaryMin: 12000,
-      salaryMax: 18000,
-      salaryCurrency: "BOB"
-    },
-    status: "REJECTED",
-    appliedAt: "2024-01-05T16:20:00Z",
-    lastMessageAt: "2024-01-12T10:30:00Z",
-    unreadMessages: 0
-  }
-];
 
 export default function ApplicationsPage() {
   const { data: session } = useSession();
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredApplications = mockApplications.filter(app => {
-    const matchesStatus = statusFilter === "all" || app.status === statusFilter;
-    const matchesSearch = app.job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         app.job.company.name.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesStatus && matchesSearch;
+  const { 
+    applications, 
+    isLoading, 
+    error, 
+    refetch 
+  } = useApplications({
+    status: statusFilter === "all" ? undefined : statusFilter,
+    search: searchTerm || undefined
   });
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "HIRED": return "default";
-      case "PRE_SELECTED": return "secondary";
-      case "REJECTED": return "destructive";
-      case "UNDER_REVIEW": return "outline";
+      case "offered": return "default";
+      case "shortlisted": return "secondary";
+      case "rejected": return "destructive";
+      case "reviewing": return "outline";
+      case "interview": return "outline";
+      case "applied": return "outline";
+      case "withdrawn": return "outline";
       default: return "outline";
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "applied": return "Aplicado";
+      case "reviewing": return "En Revisión";
+      case "shortlisted": return "Pre-seleccionado";
+      case "interview": return "Entrevista";
+      case "offered": return "Oferta";
+      case "rejected": return "Rechazado";
+      case "withdrawn": return "Retirado";
+      default: return status;
     }
   };
 
@@ -149,23 +102,23 @@ export default function ApplicationsPage() {
                 Todas
               </Button>
               <Button
-                variant={statusFilter === "SENT" ? "default" : "outline"}
+                variant={statusFilter === "applied" ? "default" : "outline"}
                 size="sm"
-                onClick={() => setStatusFilter("SENT")}
+                onClick={() => setStatusFilter("applied")}
               >
-                Enviadas
+                Aplicadas
               </Button>
               <Button
-                variant={statusFilter === "UNDER_REVIEW" ? "default" : "outline"}
+                variant={statusFilter === "reviewing" ? "default" : "outline"}
                 size="sm"
-                onClick={() => setStatusFilter("UNDER_REVIEW")}
+                onClick={() => setStatusFilter("reviewing")}
               >
                 En Revisión
               </Button>
               <Button
-                variant={statusFilter === "PRE_SELECTED" ? "default" : "outline"}
+                variant={statusFilter === "shortlisted" ? "default" : "outline"}
                 size="sm"
-                onClick={() => setStatusFilter("PRE_SELECTED")}
+                onClick={() => setStatusFilter("shortlisted")}
               >
                 Pre-seleccionadas
               </Button>
@@ -176,7 +129,25 @@ export default function ApplicationsPage() {
 
       {/* Applications List */}
       <div className="space-y-4">
-        {filteredApplications.length === 0 ? (
+        {isLoading ? (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Cargando aplicaciones...</p>
+            </CardContent>
+          </Card>
+        ) : error ? (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <Briefcase className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Error al cargar aplicaciones</h3>
+              <p className="text-muted-foreground mb-4">{error}</p>
+              <Button onClick={() => refetch()}>
+                Reintentar
+              </Button>
+            </CardContent>
+          </Card>
+        ) : applications.length === 0 ? (
           <Card>
             <CardContent className="p-8 text-center">
               <Briefcase className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -195,7 +166,7 @@ export default function ApplicationsPage() {
             </CardContent>
           </Card>
         ) : (
-          filteredApplications.map((application) => (
+          applications.map((application) => (
             <Card key={application.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
@@ -205,31 +176,31 @@ export default function ApplicationsPage() {
                         <Briefcase className="h-6 w-6 text-muted-foreground" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-lg">{application.job.title}</h3>
-                        <p className="text-muted-foreground">{application.job.company.name}</p>
+                        <h3 className="font-semibold text-lg">{application.jobTitle}</h3>
+                        <p className="text-muted-foreground">{application.company}</p>
                       </div>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <MapPin className="h-4 w-4" />
-                        <span>{application.job.location}</span>
+                        <span>{application.location}</span>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Clock className="h-4 w-4" />
-                        <span>{EmploymentTypeLabels[application.job.contractType]}</span>
+                        <span>{application.jobType}</span>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Calendar className="h-4 w-4" />
-                        <span>Aplicaste hace {formatDistanceToNow(new Date(application.appliedAt), { addSuffix: true, locale: es })}</span>
+                        <span>Aplicaste hace {formatDistanceToNow(new Date(application.appliedDate), { addSuffix: true, locale: es })}</span>
                       </div>
                     </div>
 
-                    {application.job.salaryMin && application.job.salaryMax && (
+                    {application.salary && (
                       <div className="mt-2 text-sm">
                         <span className="font-medium">Salario: </span>
                         <span className="text-muted-foreground">
-                          {application.job.salaryMin.toLocaleString()} - {application.job.salaryMax.toLocaleString()} {application.job.salaryCurrency}
+                          {application.salary.min.toLocaleString()} - {application.salary.max.toLocaleString()} {application.salary.currency}
                         </span>
                       </div>
                     )}
@@ -237,31 +208,31 @@ export default function ApplicationsPage() {
 
                   <div className="flex flex-col items-end gap-3">
                     <Badge variant={getStatusColor(application.status)}>
-                      {ApplicationStatusLabels[application.status as keyof typeof ApplicationStatusLabels] || application.status}
+                      {getStatusLabel(application.status)}
                     </Badge>
                     
                     <div className="flex gap-2">
-                      <Link href={`/jobs/${application.job.id}`}>
+                      <Link href={`/jobs/${application.jobId}`}>
                         <Button variant="outline" size="sm">
                           <Eye className="h-4 w-4 mr-1" />
                           Ver Trabajo
                         </Button>
                       </Link>
                       
-                      {application.unreadMessages > 0 && (
-                        <Link href={`/jobs/${application.job.id}/chat`}>
+                      {application.communication && application.communication.some(msg => !msg.isRead) && (
+                        <Link href={`/jobs/${application.jobId}/chat`}>
                           <Button size="sm" className="relative">
                             <MessageCircle className="h-4 w-4 mr-1" />
                             Chat
                             <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                              {application.unreadMessages}
+                              {application.communication.filter(msg => !msg.isRead).length}
                             </span>
                           </Button>
                         </Link>
                       )}
                       
-                      {application.unreadMessages === 0 && (
-                        <Link href={`/jobs/${application.job.id}/chat`}>
+                      {(!application.communication || application.communication.every(msg => msg.isRead)) && (
+                        <Link href={`/jobs/${application.jobId}/chat`}>
                           <Button variant="outline" size="sm">
                             <MessageCircle className="h-4 w-4 mr-1" />
                             Chat

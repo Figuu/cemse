@@ -31,6 +31,8 @@ interface JobCardProps {
   onBookmark?: (jobId: string) => void;
   variant?: "default" | "featured" | "compact";
   showActions?: boolean;
+  hasApplied?: boolean;
+  applicationId?: string;
 }
 
 export function JobCard({ 
@@ -41,10 +43,11 @@ export function JobCard({
   onApply,
   onBookmark,
   variant = "default",
-  showActions = true
+  showActions = true,
+  hasApplied = false,
+  applicationId
 }: JobCardProps) {
   const isLiked = false; // This would come from a hook in real app
-  const hasApplied = false; // This would come from a hook in real app
   
   // Use currentUserId to determine if user can interact with the job
   const canInteract = Boolean(currentUserId);
@@ -252,9 +255,11 @@ export function JobCard({
                   Aplicar Ahora
                 </Button>
               ) : (
-                <Button variant="outline" disabled>
-                  Ya Aplicaste
-                </Button>
+                <Link href={`/applications/${applicationId}`}>
+                  <Button variant="outline">
+                    Ver Aplicación
+                  </Button>
+                </Link>
               )}
               <Link href={`/jobs/${job.id}`}>
                 <Button variant="outline">
@@ -388,9 +393,11 @@ export function JobCard({
                   Aplicar
                 </Button>
               ) : (
-                <Button variant="outline" size="sm" disabled>
-                  Ya Aplicaste
-                </Button>
+                <Link href={`/applications/${applicationId}`}>
+                  <Button variant="outline" size="sm">
+                    Ver Aplicación
+                  </Button>
+                </Link>
               )}
               <Link href={`/jobs/${job.id}`}>
                 <Button variant="outline" size="sm">

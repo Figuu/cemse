@@ -86,8 +86,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Only allow SUPERADMIN and INSTITUTION users to create resources
-    if (session.user.role !== "SUPERADMIN" && session.user.role !== "INSTITUTION") {
+    // Only allow SUPERADMIN, INSTITUTION, and COMPANIES users to create resources
+    if (session.user.role !== "SUPERADMIN" && session.user.role !== "INSTITUTION" && session.user.role !== "COMPANIES") {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
@@ -97,11 +97,14 @@ export async function POST(request: NextRequest) {
       description,
       category,
       type,
-      fileUrl,
-      fileSize,
+      format,
+      downloadUrl,
+      externalUrl,
+      thumbnail,
       tags,
       status = "DRAFT",
-      scheduledAt
+      isPublic = true,
+      isEntrepreneurshipRelated = false
     } = body;
 
     // Validate required fields
@@ -112,19 +115,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get author info from user profile
+    const authorProfile = await prisma.profile.findUnique({
+      where: { userId: session.user.id },
+      select: { firstName: true, lastName: true }
+    });
+
+    const authorName = authorProfile 
+      ? `${authorProfile.firstName || ''} ${authorProfile.lastName || ''}`.trim() || session.user.email
+      : session.user.email;
+
     const resource = await prisma.resource.create({
       data: {
         title,
         description,
         category,
         type,
-        format: type, // Use type as format since format is required
-        downloadUrl: fileUrl,
-        thumbnail: "", // Required field, set empty for now
-        author: "System", // Required field, will be updated with actual author name
-        publishedDate: status === "PUBLISHED" ? new Date() : new Date(), // Required field
+        format: format || type,
+        downloadUrl,
+        externalUrl,
+        thumbnail: thumbnail || "",
+        author: authorName,
+        publishedDate: status === "PUBLISHED" ? new Date() : new Date(),
         tags: tags || [],
         status,
+        isPublic,
+        isEntrepreneurshipRelated,
         createdByUserId: session.user.id
       },
       include: {

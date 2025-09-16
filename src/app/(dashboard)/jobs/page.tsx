@@ -12,6 +12,7 @@ import { JobFilters } from "@/components/jobs/JobFilters";
 import { JobApplicationForm } from "@/components/jobs/JobApplicationForm";
 import { RoleGuard } from "@/components/auth/RoleGuard";
 import { useJobs } from "@/hooks/useJobs";
+import { useJobApplicationStatus } from "@/hooks/useJobApplicationStatus";
 import { JobPosting } from "@/types/company";
 import { 
   Search, 
@@ -24,7 +25,8 @@ import {
   Settings,
   BarChart3,
   Users,
-  Eye
+  Eye,
+  FileText
 } from "lucide-react";
 import Link from "next/link";
 import { safeSum } from "@/lib/utils";
@@ -66,6 +68,10 @@ function JobsPageContent() {
   });
 
   const jobs = jobsData?.jobs || [];
+
+  // Get application statuses for all jobs
+  const jobIds = jobs.map(job => job.id);
+  const { getApplicationStatus } = useJobApplicationStatus(jobIds);
 
   // Placeholder functions for bookmarking and applying
   const bookmarkJob = async (jobId: string) => {
@@ -215,10 +221,10 @@ function JobsPageContent() {
           )}
           {isYouth && (
             <>
-              <Link href="/jobs/bookmarked">
+              <Link href="/applications">
                 <Button variant="outline">
-                  <Briefcase className="h-4 w-4 mr-2" />
-                  Guardados
+                  <FileText className="h-4 w-4 mr-2" />
+                  Mis Aplicaciones
                 </Button>
               </Link>
             </>
@@ -377,37 +383,42 @@ function JobsPageContent() {
             ? "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
             : "space-y-4"
         }>
-          {filteredJobs.map(job => (
-            <div key={job.id} className="relative group">
-              <JobCard
-                job={job}
-                onBookmark={handleBookmark}
-                onApply={handleApply}
-                showActions={!isCompany}
-              />
-              {isCompany && (
-                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <div className="flex items-center gap-1">
-                    <Link href={`/jobs/${job.id}/edit`}>
-                      <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-                        <Settings className="h-4 w-4" />
-                      </Button>
-                    </Link>
-                    <Link href={`/jobs/${job.id}/applications`}>
-                      <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-                        <Users className="h-4 w-4" />
-                      </Button>
-                    </Link>
-                    <Link href={`/jobs/${job.id}/analytics`}>
-                      <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-                        <BarChart3 className="h-4 w-4" />
-                      </Button>
-                    </Link>
+          {filteredJobs.map(job => {
+            const applicationStatus = getApplicationStatus(job.id);
+            return (
+              <div key={job.id} className="relative group">
+                <JobCard
+                  job={job}
+                  onBookmark={handleBookmark}
+                  onApply={handleApply}
+                  showActions={!isCompany}
+                  hasApplied={applicationStatus.hasApplied}
+                  applicationId={applicationStatus.applicationId}
+                />
+                {isCompany && (
+                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center gap-1">
+                      <Link href={`/jobs/${job.id}/edit`}>
+                        <Button variant="outline" size="sm" className="h-8 w-8 p-0">
+                          <Settings className="h-4 w-4" />
+                        </Button>
+                      </Link>
+                      <Link href={`/jobs/${job.id}/applications`}>
+                        <Button variant="outline" size="sm" className="h-8 w-8 p-0">
+                          <Users className="h-4 w-4" />
+                        </Button>
+                      </Link>
+                      <Link href={`/jobs/${job.id}/analytics`}>
+                        <Button variant="outline" size="sm" className="h-8 w-8 p-0">
+                          <BarChart3 className="h-4 w-4" />
+                        </Button>
+                      </Link>
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          ))}
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 

@@ -85,11 +85,14 @@ export async function PUT(
       description,
       category,
       type,
-      fileUrl,
-      fileSize,
+      format,
+      downloadUrl,
+      externalUrl,
+      thumbnail,
       tags,
       status,
-      scheduledAt
+      isPublic,
+      isEntrepreneurshipRelated
     } = body;
 
     const updateData: any = {
@@ -97,16 +100,17 @@ export async function PUT(
       description,
       category,
       type,
-      fileUrl,
-      fileSize,
+      format,
+      downloadUrl,
+      externalUrl,
+      thumbnail,
       tags,
       status,
+      isPublic,
+      isEntrepreneurshipRelated,
       updatedAt: new Date()
     };
 
-    if (scheduledAt) {
-      updateData.scheduledAt = new Date(scheduledAt);
-    }
 
     if (status === "PUBLISHED") {
       updateData.publishedDate = new Date();

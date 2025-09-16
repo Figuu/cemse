@@ -90,28 +90,39 @@ export async function PUT(
     const {
       title,
       content,
-      excerpt,
+      summary,
       category,
       tags,
-      featuredImage,
+      imageUrl,
+      videoUrl,
       status,
-      scheduledAt
+      priority,
+      featured,
+      targetAudience,
+      region,
+      relatedLinks,
+      isEntrepreneurshipRelated
     } = body;
 
     const updateData: any = {
       title,
       content,
-      excerpt,
+      summary,
       category,
       tags,
-      featuredImage,
+      imageUrl,
+      videoUrl,
       status,
+      priority,
+      featured,
+      targetAudience,
+      region,
+      relatedLinks,
+      isEntrepreneurshipRelated,
       updatedAt: new Date()
     };
 
-    if (scheduledAt) {
-      updateData.scheduledAt = new Date(scheduledAt);
-    }
+    // Remove scheduledAt since it's not in the schema
 
     if (status === "PUBLISHED" && !news.publishedAt) {
       updateData.publishedAt = new Date();

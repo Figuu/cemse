@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
       whereClause.OR = [
         { title: { contains: search, mode: "insensitive" } },
         { content: { contains: search, mode: "insensitive" } },
-        { excerpt: { contains: search, mode: "insensitive" } }
+        { summary: { contains: search, mode: "insensitive" } }
       ];
     }
 
@@ -40,8 +40,11 @@ export async function GET(request: NextRequest) {
       whereClause.authorId = authorId;
     }
 
-    // Only show published news to non-admin users
-    if (session.user.role !== "SUPERADMIN" && session.user.role !== "INSTITUTION") {
+    // Only show published news to non-admin users, but allow users to see their own news
+    if (session.user.role !== "SUPERADMIN" && session.user.role !== "INSTITUTION" && session.user.role !== "COMPANIES") {
+      whereClause.status = "PUBLISHED";
+    } else if (session.user.role === "COMPANIES" && !authorId) {
+      // COMPANY users see only published news when not filtering by authorId
       whereClause.status = "PUBLISHED";
     }
 
@@ -80,8 +83,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Only allow SUPERADMIN and INSTITUTION users to create news
-    if (session.user.role !== "SUPERADMIN" && session.user.role !== "INSTITUTION") {
+    // Only allow SUPERADMIN, INSTITUTION, and COMPANIES users to create news
+    if (session.user.role !== "SUPERADMIN" && session.user.role !== "INSTITUTION" && session.user.role !== "COMPANIES") {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
@@ -89,12 +92,18 @@ export async function POST(request: NextRequest) {
     const {
       title,
       content,
-      excerpt,
+      summary,
       category,
       tags,
-      featuredImage,
+      imageUrl,
+      videoUrl,
       status = "DRAFT",
-      scheduledAt
+      priority = "MEDIUM",
+      featured = false,
+      targetAudience = [],
+      region,
+      relatedLinks,
+      isEntrepreneurshipRelated = false
     } = body;
 
     // Validate required fields
@@ -105,18 +114,39 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get author info from user profile
+    const authorProfile = await prisma.profile.findUnique({
+      where: { userId: session.user.id },
+      select: { firstName: true, lastName: true }
+    });
+
+    const authorName = authorProfile 
+      ? `${authorProfile.firstName || ''} ${authorProfile.lastName || ''}`.trim() || session.user.email
+      : session.user.email;
+
+    const authorType = session.user.role === "SUPERADMIN" ? "ADMIN" : 
+                      session.user.role === "INSTITUTION" ? "INSTITUTION" : "COMPANY";
+
     const news = await prisma.newsArticle.create({
       data: {
         title,
         content,
-        summary: content.substring(0, 200) + "...", // Generate summary from content
+        summary: summary || content.substring(0, 200) + "...",
         category,
         tags: tags || [],
+        imageUrl,
+        videoUrl,
         status,
+        priority,
+        featured,
+        targetAudience,
+        region,
+        relatedLinks,
+        isEntrepreneurshipRelated,
         publishedAt: status === "PUBLISHED" ? new Date() : null,
         authorId: session.user.id,
-        authorName: "Mock Author", // Note: should get from user profile
-        authorType: "INSTITUTION" as any, // Note: should get from user type
+        authorName,
+        authorType: authorType as any,
       },
       include: {
         author: {

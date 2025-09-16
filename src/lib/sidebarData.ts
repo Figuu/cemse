@@ -99,7 +99,7 @@ export const youthSidebarData: SidebarData = {
           icon: Search,
         },
         {
-          title: "Mis Aplicaciones",
+          title: "Mis Postulaciones",
           url: "/youth-applications",
           icon: FileText,
         },
