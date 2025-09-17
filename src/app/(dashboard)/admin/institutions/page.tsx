@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,13 +15,16 @@ import {
   Edit, 
   Trash2, 
   Eye,
+  EyeOff,
   Building2,
   Mail,
   Phone,
   MapPin,
   Calendar,
   Users,
-  Globe
+  Globe,
+  AlertCircle,
+  CheckCircle
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -48,6 +51,95 @@ interface Institution {
   updatedAt: string;
 }
 
+interface FormErrors {
+  name?: string;
+  email?: string;
+  password?: string;
+  phone?: string;
+  website?: string;
+  department?: string;
+  population?: string;
+  mayorEmail?: string;
+  mayorPhone?: string;
+  customType?: string;
+  general?: string;
+}
+
+interface InstitutionFormData {
+  name: string;
+  email: string;
+  password: string;
+  phone: string;
+  address: string;
+  website: string;
+  department: string;
+  region: string;
+  population: string;
+  mayorName: string;
+  mayorEmail: string;
+  mayorPhone: string;
+  institutionType: string;
+  customType: string;
+  primaryColor: string;
+  secondaryColor: string;
+  isActive: string;
+}
+
+// Validation utility functions
+const validateEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+const validateURL = (url: string): boolean => {
+  if (!url) return true; // Optional field
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const validatePhone = (phone: string): boolean => {
+  if (!phone) return true; // Optional field
+  const phoneRegex = /^[\+]?[0-9\s\-\(\)]{7,15}$/;
+  return phoneRegex.test(phone);
+};
+
+const validatePassword = (password: string): { isValid: boolean; message: string } => {
+  if (password.length < 8) {
+    return { isValid: false, message: "La contraseña debe tener al menos 8 caracteres" };
+  }
+  if (!/(?=.*[a-z])/.test(password)) {
+    return { isValid: false, message: "La contraseña debe contener al menos una letra minúscula" };
+  }
+  if (!/(?=.*[A-Z])/.test(password)) {
+    return { isValid: false, message: "La contraseña debe contener al menos una letra mayúscula" };
+  }
+  if (!/(?=.*\d)/.test(password)) {
+    return { isValid: false, message: "La contraseña debe contener al menos un número" };
+  }
+  return { isValid: true, message: "" };
+};
+
+const validatePopulation = (population: string): boolean => {
+  if (!population) return true; // Optional field
+  const num = parseInt(population);
+  return !isNaN(num) && num > 0;
+};
+
+// Error display component
+const ErrorMessage = ({ error }: { error?: string }) => {
+  if (!error) return null;
+  return (
+    <div className="flex items-center space-x-1 text-sm text-red-600 mt-1">
+      <AlertCircle className="h-3 w-3" />
+      <span>{error}</span>
+    </div>
+  );
+};
+
 function InstitutionsManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -55,6 +147,10 @@ function InstitutionsManagement() {
   const [selectedInstitution, setSelectedInstitution] = useState<Institution | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [institutionToDelete, setInstitutionToDelete] = useState<Institution | null>(null);
+  const [createErrors, setCreateErrors] = useState<FormErrors>({});
+  const [editErrors, setEditErrors] = useState<FormErrors>({});
+  const [isValidating, setIsValidating] = useState(false);
+  const [showCreatePassword, setShowCreatePassword] = useState(false);
   const queryClient = useQueryClient();
 
   // Fetch institutions
@@ -75,16 +171,29 @@ function InstitutionsManagement() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(institutionData)
       });
-      if (!response.ok) throw new Error('Failed to create institution');
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create institution');
+      }
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-institutions'] });
       setIsCreateDialogOpen(false);
+      setCreateErrors({});
       toast.success('Institución creada exitosamente');
     },
     onError: (error) => {
-      toast.error('Error al crear institución: ' + error.message);
+      const errorMessage = error.message || 'Error al crear institución';
+      toast.error(errorMessage);
+      
+      // Handle specific validation errors
+      if (error.message.includes('email already exists')) {
+        setCreateErrors({ email: 'Este email ya está registrado' });
+      } else if (error.message.includes('required')) {
+        setCreateErrors({ general: 'Faltan campos requeridos' });
+      }
     }
   });
 
@@ -96,17 +205,30 @@ function InstitutionsManagement() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(institutionData)
       });
-      if (!response.ok) throw new Error('Failed to update institution');
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update institution');
+      }
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-institutions'] });
       setIsEditDialogOpen(false);
       setSelectedInstitution(null);
+      setEditErrors({});
       toast.success('Institución actualizada exitosamente');
     },
     onError: (error) => {
-      toast.error('Error al actualizar institución: ' + error.message);
+      const errorMessage = error.message || 'Error al actualizar institución';
+      toast.error(errorMessage);
+      
+      // Handle specific validation errors
+      if (error.message.includes('email already exists')) {
+        setEditErrors({ email: 'Este email ya está registrado' });
+      } else if (error.message.includes('required')) {
+        setEditErrors({ general: 'Faltan campos requeridos' });
+      }
     }
   });
 
@@ -136,49 +258,236 @@ function InstitutionsManagement() {
     institution.department.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleCreateInstitution = (formData: FormData) => {
-    const institutionData = {
-      name: formData.get('name') as string,
-      email: formData.get('email') as string,
-      password: formData.get('password') as string,
-      phone: formData.get('phone') as string,
-      address: formData.get('address') as string,
-      website: formData.get('website') as string,
-      department: formData.get('department') as string,
-      region: formData.get('region') as string,
-      population: formData.get('population') ? parseInt(formData.get('population') as string) : undefined,
-      mayorName: formData.get('mayorName') as string,
-      mayorEmail: formData.get('mayorEmail') as string,
-      mayorPhone: formData.get('mayorPhone') as string,
-      institutionType: formData.get('institutionType') as string,
-      customType: formData.get('customType') as string,
-      primaryColor: formData.get('primaryColor') as string,
-      secondaryColor: formData.get('secondaryColor') as string
-    };
-    createInstitutionMutation.mutate(institutionData);
+  // Validation functions
+  const validateCreateForm = (formData: InstitutionFormData): FormErrors => {
+    const errors: FormErrors = {};
+
+    // Required fields
+    if (!formData.name?.trim()) {
+      errors.name = "El nombre de la institución es requerido";
+    } else if (formData.name.length > 100) {
+      errors.name = "El nombre no puede exceder 100 caracteres";
+    }
+
+    if (!formData.email?.trim()) {
+      errors.email = "El email es requerido";
+    } else if (!validateEmail(formData.email)) {
+      errors.email = "El formato del email no es válido";
+    }
+
+    if (!formData.password?.trim()) {
+      errors.password = "La contraseña es requerida";
+    } else {
+      const passwordValidation = validatePassword(formData.password);
+      if (!passwordValidation.isValid) {
+        errors.password = passwordValidation.message;
+      }
+    }
+
+    if (!formData.department?.trim()) {
+      errors.department = "El departamento es requerido";
+    } else if (formData.department.length > 50) {
+      errors.department = "El departamento no puede exceder 50 caracteres";
+    }
+
+    if (!formData.institutionType) {
+      errors.general = "El tipo de institución es requerido";
+    }
+
+    // Optional field validations
+    if (formData.phone && !validatePhone(formData.phone)) {
+      errors.phone = "El formato del teléfono no es válido";
+    }
+
+    if (formData.website && !validateURL(formData.website)) {
+      errors.website = "El formato de la URL no es válido";
+    }
+
+    if (formData.mayorEmail && !validateEmail(formData.mayorEmail)) {
+      errors.mayorEmail = "El formato del email del alcalde no es válido";
+    }
+
+    if (formData.mayorPhone && !validatePhone(formData.mayorPhone)) {
+      errors.mayorPhone = "El formato del teléfono del alcalde no es válido";
+    }
+
+    if (formData.population && !validatePopulation(formData.population)) {
+      errors.population = "La población debe ser un número positivo";
+    }
+
+    // Conditional validation
+    if (formData.institutionType === "OTHER" && !formData.customType?.trim()) {
+      errors.customType = "El tipo personalizado es requerido cuando se selecciona 'Otro'";
+    }
+
+    return errors;
   };
 
-  const handleUpdateInstitution = (formData: FormData) => {
-    if (!selectedInstitution) return;
-    const institutionData = {
-      name: formData.get('name') as string,
-      email: formData.get('email') as string,
-      phone: formData.get('phone') as string,
-      address: formData.get('address') as string,
-      website: formData.get('website') as string,
-      department: formData.get('department') as string,
-      region: formData.get('region') as string,
-      population: formData.get('population') ? parseInt(formData.get('population') as string) : undefined,
-      mayorName: formData.get('mayorName') as string,
-      mayorEmail: formData.get('mayorEmail') as string,
-      mayorPhone: formData.get('mayorPhone') as string,
-      institutionType: formData.get('institutionType') as string,
-      customType: formData.get('customType') as string,
-      primaryColor: formData.get('primaryColor') as string,
-      secondaryColor: formData.get('secondaryColor') as string,
-      isActive: formData.get('isActive') === 'true'
+  const validateEditForm = (formData: InstitutionFormData): FormErrors => {
+    const errors: FormErrors = {};
+
+    // Required fields
+    if (!formData.name?.trim()) {
+      errors.name = "El nombre de la institución es requerido";
+    } else if (formData.name.length > 100) {
+      errors.name = "El nombre no puede exceder 100 caracteres";
+    }
+
+    if (!formData.email?.trim()) {
+      errors.email = "El email es requerido";
+    } else if (!validateEmail(formData.email)) {
+      errors.email = "El formato del email no es válido";
+    }
+
+    if (!formData.department?.trim()) {
+      errors.department = "El departamento es requerido";
+    } else if (formData.department.length > 50) {
+      errors.department = "El departamento no puede exceder 50 caracteres";
+    }
+
+    if (!formData.institutionType) {
+      errors.general = "El tipo de institución es requerido";
+    }
+
+    // Optional field validations
+    if (formData.phone && !validatePhone(formData.phone)) {
+      errors.phone = "El formato del teléfono no es válido";
+    }
+
+    if (formData.website && !validateURL(formData.website)) {
+      errors.website = "El formato de la URL no es válido";
+    }
+
+    if (formData.mayorEmail && !validateEmail(formData.mayorEmail)) {
+      errors.mayorEmail = "El formato del email del alcalde no es válido";
+    }
+
+    if (formData.mayorPhone && !validatePhone(formData.mayorPhone)) {
+      errors.mayorPhone = "El formato del teléfono del alcalde no es válido";
+    }
+
+    if (formData.population && !validatePopulation(formData.population)) {
+      errors.population = "La población debe ser un número positivo";
+    }
+
+    // Conditional validation
+    if (formData.institutionType === "OTHER" && !formData.customType?.trim()) {
+      errors.customType = "El tipo personalizado es requerido cuando se selecciona 'Otro'";
+    }
+
+    return errors;
+  };
+
+  const handleCreateInstitution = async (formData: FormData) => {
+    setIsValidating(true);
+    setCreateErrors({});
+
+    const formDataObj: InstitutionFormData = {
+      name: formData.get('name') as string || '',
+      email: formData.get('email') as string || '',
+      password: formData.get('password') as string || '',
+      phone: formData.get('phone') as string || '',
+      address: formData.get('address') as string || '',
+      website: formData.get('website') as string || '',
+      department: formData.get('department') as string || '',
+      region: formData.get('region') as string || '',
+      population: formData.get('population') as string || '',
+      mayorName: formData.get('mayorName') as string || '',
+      mayorEmail: formData.get('mayorEmail') as string || '',
+      mayorPhone: formData.get('mayorPhone') as string || '',
+      institutionType: formData.get('institutionType') as string || '',
+      customType: formData.get('customType') as string || '',
+      primaryColor: formData.get('primaryColor') as string || '',
+      secondaryColor: formData.get('secondaryColor') as string || '',
+      isActive: 'true'
     };
+
+    const errors = validateCreateForm(formDataObj);
+    
+    if (Object.keys(errors).length > 0) {
+      setCreateErrors(errors);
+      setIsValidating(false);
+      return;
+    }
+
+    const institutionData = {
+      name: formDataObj.name,
+      email: formDataObj.email,
+      password: formDataObj.password,
+      phone: formDataObj.phone || undefined,
+      address: formDataObj.address || undefined,
+      website: formDataObj.website || undefined,
+      department: formDataObj.department,
+      region: formDataObj.region || undefined,
+      population: formDataObj.population ? parseInt(formDataObj.population) : undefined,
+      mayorName: formDataObj.mayorName || undefined,
+      mayorEmail: formDataObj.mayorEmail || undefined,
+      mayorPhone: formDataObj.mayorPhone || undefined,
+      institutionType: formDataObj.institutionType,
+      customType: formDataObj.customType || undefined,
+      primaryColor: formDataObj.primaryColor || undefined,
+      secondaryColor: formDataObj.secondaryColor || undefined
+    };
+
+    createInstitutionMutation.mutate(institutionData);
+    setIsValidating(false);
+  };
+
+  const handleUpdateInstitution = async (formData: FormData) => {
+    if (!selectedInstitution) return;
+    
+    setIsValidating(true);
+    setEditErrors({});
+
+    const formDataObj: InstitutionFormData = {
+      name: formData.get('name') as string || '',
+      email: formData.get('email') as string || '',
+      password: '', // Not needed for edit
+      phone: formData.get('phone') as string || '',
+      address: formData.get('address') as string || '',
+      website: formData.get('website') as string || '',
+      department: formData.get('department') as string || '',
+      region: formData.get('region') as string || '',
+      population: formData.get('population') as string || '',
+      mayorName: formData.get('mayorName') as string || '',
+      mayorEmail: formData.get('mayorEmail') as string || '',
+      mayorPhone: formData.get('mayorPhone') as string || '',
+      institutionType: formData.get('institutionType') as string || '',
+      customType: formData.get('customType') as string || '',
+      primaryColor: formData.get('primaryColor') as string || '',
+      secondaryColor: formData.get('secondaryColor') as string || '',
+      isActive: formData.get('isActive') as string || 'true'
+    };
+
+    const errors = validateEditForm(formDataObj);
+    
+    if (Object.keys(errors).length > 0) {
+      setEditErrors(errors);
+      setIsValidating(false);
+      return;
+    }
+
+    const institutionData = {
+      name: formDataObj.name,
+      email: formDataObj.email,
+      phone: formDataObj.phone || undefined,
+      address: formDataObj.address || undefined,
+      website: formDataObj.website || undefined,
+      department: formDataObj.department,
+      region: formDataObj.region || undefined,
+      population: formDataObj.population ? parseInt(formDataObj.population) : undefined,
+      mayorName: formDataObj.mayorName || undefined,
+      mayorEmail: formDataObj.mayorEmail || undefined,
+      mayorPhone: formDataObj.mayorPhone || undefined,
+      institutionType: formDataObj.institutionType,
+      customType: formDataObj.customType || undefined,
+      primaryColor: formDataObj.primaryColor || undefined,
+      secondaryColor: formDataObj.secondaryColor || undefined,
+      isActive: formDataObj.isActive === 'true'
+    };
+
     updateInstitutionMutation.mutate({ id: selectedInstitution.id, institutionData });
+    setIsValidating(false);
   };
 
   const handleDeleteInstitution = (institution: Institution) => {
@@ -194,7 +503,13 @@ function InstitutionsManagement() {
 
   const openEditDialog = (institution: Institution) => {
     setSelectedInstitution(institution);
+    setEditErrors({});
     setIsEditDialogOpen(true);
+  };
+
+  const openCreateDialog = () => {
+    setCreateErrors({});
+    setIsCreateDialogOpen(true);
   };
 
   const formatDate = (dateString: string) => {
@@ -290,9 +605,12 @@ function InstitutionsManagement() {
           <h1 className="text-2xl font-bold">Gestión de Instituciones</h1>
           <p className="text-muted-foreground">Administra las instituciones del sistema</p>
         </div>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <Dialog open={isCreateDialogOpen} onOpenChange={(open) => {
+          setIsCreateDialogOpen(open);
+          if (!open) setCreateErrors({});
+        }}>
           <DialogTrigger asChild>
-            <Button>
+            <Button onClick={openCreateDialog}>
               <Plus className="h-4 w-4 mr-2" />
               Nueva Institución
             </Button>
@@ -305,55 +623,156 @@ function InstitutionsManagement() {
               </DialogDescription>
             </DialogHeader>
             <form action={handleCreateInstitution} className="space-y-4">
+              {createErrors.general && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                  <div className="flex items-center space-x-2 text-red-800">
+                    <AlertCircle className="h-4 w-4" />
+                    <span className="text-sm font-medium">{createErrors.general}</span>
+                  </div>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Nombre de la Institución *</Label>
-                  <Input id="name" name="name" required />
+                  <Input 
+                    id="name" 
+                    name="name" 
+                    required 
+                    maxLength={100}
+                    className={createErrors.name ? "border-red-500" : ""}
+                  />
+                  <ErrorMessage error={createErrors.name} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email">Email *</Label>
-                  <Input id="email" name="email" type="email" required />
+                  <Input 
+                    id="email" 
+                    name="email" 
+                    type="email" 
+                    required 
+                    maxLength={100}
+                    className={createErrors.email ? "border-red-500" : ""}
+                  />
+                  <ErrorMessage error={createErrors.email} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="password">Contraseña *</Label>
-                  <Input id="password" name="password" type="password" required />
+                  <div className="relative">
+                    <Input 
+                      id="password" 
+                      name="password" 
+                      type={showCreatePassword ? "text" : "password"}
+                      required 
+                      minLength={8}
+                      maxLength={100}
+                      pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$"
+                      className={createErrors.password ? "border-red-500 pr-10" : "pr-10"}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowCreatePassword(!showCreatePassword)}
+                    >
+                      {showCreatePassword ? (
+                        <EyeOff className="h-4 w-4 text-gray-400" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-gray-400" />
+                      )}
+                    </Button>
+                  </div>
+                  <ErrorMessage error={createErrors.password} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="phone">Teléfono</Label>
-                  <Input id="phone" name="phone" />
+                  <Input 
+                    id="phone" 
+                    name="phone" 
+                    type="tel"
+                    maxLength={20}
+                    pattern="^[\+]?[0-9\s\-\(\)]{7,15}$"
+                    placeholder="+1234567890"
+                    onKeyPress={(e) => {
+                      if (!/[0-9\s\-\(\)\+]/.test(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
+                    className={createErrors.phone ? "border-red-500" : ""}
+                  />
+                  <ErrorMessage error={createErrors.phone} />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="address">Dirección</Label>
-                <Input id="address" name="address" />
+                <Input 
+                  id="address" 
+                  name="address" 
+                  maxLength={200}
+                />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="website">Sitio Web</Label>
-                  <Input id="website" name="website" type="url" />
+                  <Input 
+                    id="website" 
+                    name="website" 
+                    type="url" 
+                    maxLength={200}
+                    pattern="^https?://.+"
+                    placeholder="https://example.com"
+                    className={createErrors.website ? "border-red-500" : ""}
+                  />
+                  <ErrorMessage error={createErrors.website} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="department">Departamento *</Label>
-                  <Input id="department" name="department" required />
+                  <Input 
+                    id="department" 
+                    name="department" 
+                    required 
+                    maxLength={50}
+                    className={createErrors.department ? "border-red-500" : ""}
+                  />
+                  <ErrorMessage error={createErrors.department} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="region">Región</Label>
-                  <Input id="region" name="region" />
+                  <Input 
+                    id="region" 
+                    name="region" 
+                    maxLength={50}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="population">Población</Label>
-                  <Input id="population" name="population" type="number" />
+                  <Input 
+                    id="population" 
+                    name="population" 
+                    type="number" 
+                    min="0"
+                    max="999999999"
+                    step="1"
+                    placeholder="0"
+                    onKeyPress={(e) => {
+                      if (!/[0-9]/.test(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
+                    className={createErrors.population ? "border-red-500" : ""}
+                  />
+                  <ErrorMessage error={createErrors.population} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="institutionType">Tipo de Institución *</Label>
                   <Select name="institutionType" required>
-                    <SelectTrigger>
+                    <SelectTrigger className={createErrors.general ? "border-red-500" : ""}>
                       <SelectValue placeholder="Seleccionar tipo" />
                     </SelectTrigger>
                     <SelectContent>
@@ -367,39 +786,89 @@ function InstitutionsManagement() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="customType">Tipo Personalizado</Label>
-                  <Input id="customType" name="customType" placeholder="Si seleccionaste 'Otro'" />
+                  <Input 
+                    id="customType" 
+                    name="customType" 
+                    placeholder="Si seleccionaste 'Otro'" 
+                    maxLength={50}
+                    className={createErrors.customType ? "border-red-500" : ""}
+                  />
+                  <ErrorMessage error={createErrors.customType} />
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="mayorName">Nombre del Alcalde/Director</Label>
-                  <Input id="mayorName" name="mayorName" />
+                  <Input 
+                    id="mayorName" 
+                    name="mayorName" 
+                    maxLength={100}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="mayorEmail">Email del Alcalde/Director</Label>
-                  <Input id="mayorEmail" name="mayorEmail" type="email" />
+                  <Input 
+                    id="mayorEmail" 
+                    name="mayorEmail" 
+                    type="email" 
+                    maxLength={100}
+                    className={createErrors.mayorEmail ? "border-red-500" : ""}
+                  />
+                  <ErrorMessage error={createErrors.mayorEmail} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="mayorPhone">Teléfono del Alcalde/Director</Label>
-                  <Input id="mayorPhone" name="mayorPhone" />
+                  <Input 
+                    id="mayorPhone" 
+                    name="mayorPhone" 
+                    type="tel"
+                    maxLength={20}
+                    pattern="^[\+]?[0-9\s\-\(\)]{7,15}$"
+                    placeholder="+1234567890"
+                    onKeyPress={(e) => {
+                      if (!/[0-9\s\-\(\)\+]/.test(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
+                    className={createErrors.mayorPhone ? "border-red-500" : ""}
+                  />
+                  <ErrorMessage error={createErrors.mayorPhone} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="primaryColor">Color Primario</Label>
-                  <Input id="primaryColor" name="primaryColor" type="color" />
+                  <Input 
+                    id="primaryColor" 
+                    name="primaryColor" 
+                    type="color" 
+                    defaultValue="#3B82F6"
+                    className="h-10 w-full"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="secondaryColor">Color Secundario</Label>
-                  <Input id="secondaryColor" name="secondaryColor" type="color" />
+                  <Input 
+                    id="secondaryColor" 
+                    name="secondaryColor" 
+                    type="color" 
+                    defaultValue="#10B981"
+                    className="h-10 w-full"
+                  />
                 </div>
               </div>
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                <Button type="button" variant="outline" onClick={() => {
+                  setIsCreateDialogOpen(false);
+                  setCreateErrors({});
+                }}>
                   Cancelar
                 </Button>
-                <Button type="submit" disabled={createInstitutionMutation.isPending}>
-                  {createInstitutionMutation.isPending ? 'Creando...' : 'Crear Institución'}
+                <Button 
+                  type="submit" 
+                  disabled={createInstitutionMutation.isPending || isValidating}
+                >
+                  {createInstitutionMutation.isPending || isValidating ? 'Creando...' : 'Crear Institución'}
                 </Button>
               </DialogFooter>
             </form>
@@ -506,7 +975,13 @@ function InstitutionsManagement() {
       )}
 
       {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+      <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
+        setIsEditDialogOpen(open);
+        if (!open) {
+          setEditErrors({});
+          setSelectedInstitution(null);
+        }
+      }}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Editar Institución</DialogTitle>
@@ -516,6 +991,14 @@ function InstitutionsManagement() {
           </DialogHeader>
           {selectedInstitution && (
             <form action={handleUpdateInstitution} className="space-y-4">
+              {editErrors.general && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                  <div className="flex items-center space-x-2 text-red-800">
+                    <AlertCircle className="h-4 w-4" />
+                    <span className="text-sm font-medium">{editErrors.general}</span>
+                  </div>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="edit-name">Nombre de la Institución *</Label>
@@ -524,7 +1007,10 @@ function InstitutionsManagement() {
                     name="name" 
                     defaultValue={selectedInstitution.name}
                     required 
+                    maxLength={100}
+                    className={editErrors.name ? "border-red-500" : ""}
                   />
+                  <ErrorMessage error={editErrors.name} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit-email">Email *</Label>
@@ -534,7 +1020,10 @@ function InstitutionsManagement() {
                     type="email" 
                     defaultValue={selectedInstitution.email}
                     required 
+                    maxLength={100}
+                    className={editErrors.email ? "border-red-500" : ""}
                   />
+                  <ErrorMessage error={editErrors.email} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -544,7 +1033,10 @@ function InstitutionsManagement() {
                     id="edit-phone" 
                     name="phone" 
                     defaultValue={selectedInstitution.phone}
+                    maxLength={20}
+                    className={editErrors.phone ? "border-red-500" : ""}
                   />
+                  <ErrorMessage error={editErrors.phone} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit-isActive">Estado</Label>
@@ -565,6 +1057,7 @@ function InstitutionsManagement() {
                   id="edit-address" 
                   name="address" 
                   defaultValue={selectedInstitution.address}
+                  maxLength={200}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -575,7 +1068,10 @@ function InstitutionsManagement() {
                     name="website" 
                     type="url" 
                     defaultValue={selectedInstitution.website}
+                    maxLength={200}
+                    className={editErrors.website ? "border-red-500" : ""}
                   />
+                  <ErrorMessage error={editErrors.website} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit-department">Departamento *</Label>
@@ -584,7 +1080,10 @@ function InstitutionsManagement() {
                     name="department" 
                     defaultValue={selectedInstitution.department}
                     required 
+                    maxLength={50}
+                    className={editErrors.department ? "border-red-500" : ""}
                   />
+                  <ErrorMessage error={editErrors.department} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -594,6 +1093,7 @@ function InstitutionsManagement() {
                     id="edit-region" 
                     name="region" 
                     defaultValue={selectedInstitution.region}
+                    maxLength={50}
                   />
                 </div>
                 <div className="space-y-2">
@@ -603,14 +1103,17 @@ function InstitutionsManagement() {
                     name="population" 
                     type="number" 
                     defaultValue={selectedInstitution.population}
+                    min="1"
+                    className={editErrors.population ? "border-red-500" : ""}
                   />
+                  <ErrorMessage error={editErrors.population} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="edit-institutionType">Tipo de Institución *</Label>
                   <Select name="institutionType" defaultValue={selectedInstitution.institutionType} required>
-                    <SelectTrigger>
+                    <SelectTrigger className={editErrors.general ? "border-red-500" : ""}>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -629,7 +1132,10 @@ function InstitutionsManagement() {
                     name="customType" 
                     defaultValue={selectedInstitution.customType}
                     placeholder="Si seleccionaste 'Otro'" 
+                    maxLength={50}
+                    className={editErrors.customType ? "border-red-500" : ""}
                   />
+                  <ErrorMessage error={editErrors.customType} />
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-4">
@@ -639,6 +1145,7 @@ function InstitutionsManagement() {
                     id="edit-mayorName" 
                     name="mayorName" 
                     defaultValue={selectedInstitution.mayorName}
+                    maxLength={100}
                   />
                 </div>
                 <div className="space-y-2">
@@ -648,7 +1155,10 @@ function InstitutionsManagement() {
                     name="mayorEmail" 
                     type="email" 
                     defaultValue={selectedInstitution.mayorEmail}
+                    maxLength={100}
+                    className={editErrors.mayorEmail ? "border-red-500" : ""}
                   />
+                  <ErrorMessage error={editErrors.mayorEmail} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit-mayorPhone">Teléfono del Alcalde/Director</Label>
@@ -656,7 +1166,10 @@ function InstitutionsManagement() {
                     id="edit-mayorPhone" 
                     name="mayorPhone" 
                     defaultValue={selectedInstitution.mayorPhone}
+                    maxLength={20}
+                    className={editErrors.mayorPhone ? "border-red-500" : ""}
                   />
+                  <ErrorMessage error={editErrors.mayorPhone} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -666,7 +1179,7 @@ function InstitutionsManagement() {
                     id="edit-primaryColor" 
                     name="primaryColor" 
                     type="color" 
-                    defaultValue={selectedInstitution.primaryColor}
+                    defaultValue={selectedInstitution.primaryColor || "#3B82F6"}
                   />
                 </div>
                 <div className="space-y-2">
@@ -675,16 +1188,22 @@ function InstitutionsManagement() {
                     id="edit-secondaryColor" 
                     name="secondaryColor" 
                     type="color" 
-                    defaultValue={selectedInstitution.secondaryColor}
+                    defaultValue={selectedInstitution.secondaryColor || "#10B981"}
                   />
                 </div>
               </div>
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                <Button type="button" variant="outline" onClick={() => {
+                  setIsEditDialogOpen(false);
+                  setEditErrors({});
+                }}>
                   Cancelar
                 </Button>
-                <Button type="submit" disabled={updateInstitutionMutation.isPending}>
-                  {updateInstitutionMutation.isPending ? 'Actualizando...' : 'Actualizar Institución'}
+                <Button 
+                  type="submit" 
+                  disabled={updateInstitutionMutation.isPending || isValidating}
+                >
+                  {updateInstitutionMutation.isPending || isValidating ? 'Actualizando...' : 'Actualizar Institución'}
                 </Button>
               </DialogFooter>
             </form>

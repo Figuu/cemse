@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,12 +15,15 @@ import {
   Edit, 
   Trash2, 
   Eye,
+  EyeOff,
   UserCog,
   Mail,
   Phone,
   MapPin,
   Calendar,
-  Shield
+  Shield,
+  AlertCircle,
+  CheckCircle
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -47,6 +50,117 @@ interface YouthUser {
   };
 }
 
+interface FormErrors {
+  email?: string;
+  password?: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  birthDate?: string;
+  general?: string;
+}
+
+interface UserFormData {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
+  birthDate: string;
+  gender: string;
+  educationLevel: string;
+  isActive: string;
+}
+
+// Validation utility functions
+const validateEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+const validatePhone = (phone: string): boolean => {
+  if (!phone) return true; // Optional field
+  const phoneRegex = /^[\+]?[0-9\s\-\(\)]{7,15}$/;
+  return phoneRegex.test(phone);
+};
+
+const validatePassword = (password: string): { isValid: boolean; message: string } => {
+  if (password.length < 8) {
+    return { isValid: false, message: "La contraseña debe tener al menos 8 caracteres" };
+  }
+  if (!/(?=.*[a-z])/.test(password)) {
+    return { isValid: false, message: "La contraseña debe contener al menos una letra minúscula" };
+  }
+  if (!/(?=.*[A-Z])/.test(password)) {
+    return { isValid: false, message: "La contraseña debe contener al menos una letra mayúscula" };
+  }
+  if (!/(?=.*\d)/.test(password)) {
+    return { isValid: false, message: "La contraseña debe contener al menos un número" };
+  }
+  return { isValid: true, message: "" };
+};
+
+const validateBirthDate = (birthDate: string): { isValid: boolean; message: string } => {
+  if (!birthDate) return { isValid: true, message: "" }; // Optional field
+  
+  const date = new Date(birthDate);
+  const today = new Date();
+  const age = today.getFullYear() - date.getFullYear();
+  const monthDiff = today.getMonth() - date.getMonth();
+  
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < date.getDate())) {
+    // Adjust age if birthday hasn't occurred this year
+    const adjustedAge = age - 1;
+    if (adjustedAge < 13) {
+      return { isValid: false, message: "La edad debe ser al menos 13 años" };
+    }
+    if (adjustedAge > 100) {
+      return { isValid: false, message: "La edad no puede ser mayor a 100 años" };
+    }
+  } else {
+    if (age < 13) {
+      return { isValid: false, message: "La edad debe ser al menos 13 años" };
+    }
+    if (age > 100) {
+      return { isValid: false, message: "La edad no puede ser mayor a 100 años" };
+    }
+  }
+  
+  return { isValid: true, message: "" };
+};
+
+const validateName = (name: string, fieldName: string): { isValid: boolean; message: string } => {
+  if (!name) return { isValid: true, message: "" }; // Optional field
+  
+  if (name.length < 2) {
+    return { isValid: false, message: `${fieldName} debe tener al menos 2 caracteres` };
+  }
+  
+  if (name.length > 50) {
+    return { isValid: false, message: `${fieldName} no puede exceder 50 caracteres` };
+  }
+  
+  if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(name)) {
+    return { isValid: false, message: `${fieldName} solo puede contener letras` };
+  }
+  
+  return { isValid: true, message: "" };
+};
+
+// Error display component
+const ErrorMessage = ({ error }: { error?: string }) => {
+  if (!error) return null;
+  return (
+    <div className="flex items-center space-x-1 text-sm text-red-600 mt-1">
+      <AlertCircle className="h-3 w-3" />
+      <span>{error}</span>
+    </div>
+  );
+};
+
 function YouthUsersManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -54,6 +168,10 @@ function YouthUsersManagement() {
   const [selectedUser, setSelectedUser] = useState<YouthUser | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<YouthUser | null>(null);
+  const [createErrors, setCreateErrors] = useState<FormErrors>({});
+  const [editErrors, setEditErrors] = useState<FormErrors>({});
+  const [isValidating, setIsValidating] = useState(false);
+  const [showCreatePassword, setShowCreatePassword] = useState(false);
   const queryClient = useQueryClient();
 
   // Fetch youth users
@@ -74,16 +192,29 @@ function YouthUsersManagement() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(userData)
       });
-      if (!response.ok) throw new Error('Failed to create user');
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create user');
+      }
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-youth-users'] });
       setIsCreateDialogOpen(false);
+      setCreateErrors({});
       toast.success('Usuario creado exitosamente');
     },
     onError: (error) => {
-      toast.error('Error al crear usuario: ' + error.message);
+      const errorMessage = error.message || 'Error al crear usuario';
+      toast.error(errorMessage);
+      
+      // Handle specific validation errors
+      if (error.message.includes('email already exists')) {
+        setCreateErrors({ email: 'Este email ya está registrado' });
+      } else if (error.message.includes('required')) {
+        setCreateErrors({ general: 'Faltan campos requeridos' });
+      }
     }
   });
 
@@ -95,17 +226,30 @@ function YouthUsersManagement() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(userData)
       });
-      if (!response.ok) throw new Error('Failed to update user');
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update user');
+      }
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-youth-users'] });
       setIsEditDialogOpen(false);
       setSelectedUser(null);
+      setEditErrors({});
       toast.success('Usuario actualizado exitosamente');
     },
     onError: (error) => {
-      toast.error('Error al actualizar usuario: ' + error.message);
+      const errorMessage = error.message || 'Error al actualizar usuario';
+      toast.error(errorMessage);
+      
+      // Handle specific validation errors
+      if (error.message.includes('email already exists')) {
+        setEditErrors({ email: 'Este email ya está registrado' });
+      } else if (error.message.includes('required')) {
+        setEditErrors({ general: 'Faltan campos requeridos' });
+      }
     }
   });
 
@@ -135,40 +279,185 @@ function YouthUsersManagement() {
     user.lastName?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleCreateUser = (formData: FormData) => {
-    const userData = {
-      email: formData.get('email') as string,
-      password: formData.get('password') as string,
-      firstName: formData.get('firstName') as string,
-      lastName: formData.get('lastName') as string,
-      phone: formData.get('phone') as string,
-      address: formData.get('address') as string,
-      city: formData.get('city') as string,
-      state: formData.get('state') as string,
-      birthDate: formData.get('birthDate') as string,
-      gender: formData.get('gender') as string,
-      educationLevel: formData.get('educationLevel') as string,
-      role: 'YOUTH'
-    };
-    createUserMutation.mutate(userData);
+  // Validation functions
+  const validateCreateForm = (formData: UserFormData): FormErrors => {
+    const errors: FormErrors = {};
+
+    // Required fields
+    if (!formData.email?.trim()) {
+      errors.email = "El email es requerido";
+    } else if (!validateEmail(formData.email)) {
+      errors.email = "El formato del email no es válido";
+    }
+
+    if (!formData.password?.trim()) {
+      errors.password = "La contraseña es requerida";
+    } else {
+      const passwordValidation = validatePassword(formData.password);
+      if (!passwordValidation.isValid) {
+        errors.password = passwordValidation.message;
+      }
+    }
+
+    // Optional field validations
+    if (formData.firstName) {
+      const firstNameValidation = validateName(formData.firstName, "El nombre");
+      if (!firstNameValidation.isValid) {
+        errors.firstName = firstNameValidation.message;
+      }
+    }
+
+    if (formData.lastName) {
+      const lastNameValidation = validateName(formData.lastName, "El apellido");
+      if (!lastNameValidation.isValid) {
+        errors.lastName = lastNameValidation.message;
+      }
+    }
+
+    if (formData.phone && !validatePhone(formData.phone)) {
+      errors.phone = "El formato del teléfono no es válido";
+    }
+
+    if (formData.birthDate) {
+      const birthDateValidation = validateBirthDate(formData.birthDate);
+      if (!birthDateValidation.isValid) {
+        errors.birthDate = birthDateValidation.message;
+      }
+    }
+
+    return errors;
   };
 
-  const handleUpdateUser = (formData: FormData) => {
-    if (!selectedUser) return;
-    const userData = {
-      email: formData.get('email') as string,
-      firstName: formData.get('firstName') as string,
-      lastName: formData.get('lastName') as string,
-      phone: formData.get('phone') as string,
-      address: formData.get('address') as string,
-      city: formData.get('city') as string,
-      state: formData.get('state') as string,
-      birthDate: formData.get('birthDate') as string,
-      gender: formData.get('gender') as string,
-      educationLevel: formData.get('educationLevel') as string,
-      isActive: formData.get('isActive') === 'true'
+  const validateEditForm = (formData: UserFormData): FormErrors => {
+    const errors: FormErrors = {};
+
+    // Required fields
+    if (!formData.email?.trim()) {
+      errors.email = "El email es requerido";
+    } else if (!validateEmail(formData.email)) {
+      errors.email = "El formato del email no es válido";
+    }
+
+    // Optional field validations
+    if (formData.firstName) {
+      const firstNameValidation = validateName(formData.firstName, "El nombre");
+      if (!firstNameValidation.isValid) {
+        errors.firstName = firstNameValidation.message;
+      }
+    }
+
+    if (formData.lastName) {
+      const lastNameValidation = validateName(formData.lastName, "El apellido");
+      if (!lastNameValidation.isValid) {
+        errors.lastName = lastNameValidation.message;
+      }
+    }
+
+    if (formData.phone && !validatePhone(formData.phone)) {
+      errors.phone = "El formato del teléfono no es válido";
+    }
+
+    if (formData.birthDate) {
+      const birthDateValidation = validateBirthDate(formData.birthDate);
+      if (!birthDateValidation.isValid) {
+        errors.birthDate = birthDateValidation.message;
+      }
+    }
+
+    return errors;
+  };
+
+  const handleCreateUser = async (formData: FormData) => {
+    setIsValidating(true);
+    setCreateErrors({});
+
+    const formDataObj: UserFormData = {
+      email: formData.get('email') as string || '',
+      password: formData.get('password') as string || '',
+      firstName: formData.get('firstName') as string || '',
+      lastName: formData.get('lastName') as string || '',
+      phone: formData.get('phone') as string || '',
+      address: formData.get('address') as string || '',
+      city: formData.get('city') as string || '',
+      state: formData.get('state') as string || '',
+      birthDate: formData.get('birthDate') as string || '',
+      gender: formData.get('gender') as string || '',
+      educationLevel: formData.get('educationLevel') as string || '',
+      isActive: 'true'
     };
+
+    const errors = validateCreateForm(formDataObj);
+    
+    if (Object.keys(errors).length > 0) {
+      setCreateErrors(errors);
+      setIsValidating(false);
+      return;
+    }
+
+    const userData = {
+      email: formDataObj.email,
+      password: formDataObj.password,
+      firstName: formDataObj.firstName || undefined,
+      lastName: formDataObj.lastName || undefined,
+      phone: formDataObj.phone || undefined,
+      address: formDataObj.address || undefined,
+      city: formDataObj.city || undefined,
+      state: formDataObj.state || undefined,
+      birthDate: formDataObj.birthDate || undefined,
+      gender: formDataObj.gender || undefined,
+      educationLevel: formDataObj.educationLevel || undefined,
+      role: 'YOUTH'
+    };
+
+    createUserMutation.mutate(userData);
+    setIsValidating(false);
+  };
+
+  const handleUpdateUser = async (formData: FormData) => {
+    if (!selectedUser) return;
+    
+    setIsValidating(true);
+    setEditErrors({});
+
+    const formDataObj: UserFormData = {
+      email: formData.get('email') as string || '',
+      password: '', // Not needed for edit
+      firstName: formData.get('firstName') as string || '',
+      lastName: formData.get('lastName') as string || '',
+      phone: formData.get('phone') as string || '',
+      address: formData.get('address') as string || '',
+      city: formData.get('city') as string || '',
+      state: formData.get('state') as string || '',
+      birthDate: formData.get('birthDate') as string || '',
+      gender: formData.get('gender') as string || '',
+      educationLevel: formData.get('educationLevel') as string || '',
+      isActive: formData.get('isActive') as string || 'true'
+    };
+
+    const errors = validateEditForm(formDataObj);
+    
+    if (Object.keys(errors).length > 0) {
+      setEditErrors(errors);
+      setIsValidating(false);
+      return;
+    }
+
+    const userData = {
+      email: formDataObj.email,
+      firstName: formDataObj.firstName || undefined,
+      lastName: formDataObj.lastName || undefined,
+      phone: formDataObj.phone || undefined,
+      address: formDataObj.address || undefined,
+      city: formDataObj.city || undefined,
+      state: formDataObj.state || undefined,
+      birthDate: formDataObj.birthDate || undefined,
+      gender: formDataObj.gender || undefined,
+      educationLevel: formDataObj.educationLevel || undefined,
+      isActive: formDataObj.isActive === 'true'
+    };
+
     updateUserMutation.mutate({ id: selectedUser.id, userData });
+    setIsValidating(false);
   };
 
   const handleDeleteUser = (user: YouthUser) => {
@@ -184,7 +473,13 @@ function YouthUsersManagement() {
 
   const openEditDialog = (user: YouthUser) => {
     setSelectedUser(user);
+    setEditErrors({});
     setIsEditDialogOpen(true);
+  };
+
+  const openCreateDialog = () => {
+    setCreateErrors({});
+    setIsCreateDialogOpen(true);
   };
 
   const formatDate = (dateString: string) => {
@@ -246,9 +541,12 @@ function YouthUsersManagement() {
           <h1 className="text-2xl font-bold">Gestión de Jóvenes</h1>
           <p className="text-muted-foreground">Administra los usuarios jóvenes del sistema</p>
         </div>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <Dialog open={isCreateDialogOpen} onOpenChange={(open) => {
+          setIsCreateDialogOpen(open);
+          if (!open) setCreateErrors({});
+        }}>
           <DialogTrigger asChild>
-            <Button>
+            <Button onClick={openCreateDialog}>
               <Plus className="h-4 w-4 mr-2" />
               Nuevo Usuario
             </Button>
@@ -261,30 +559,97 @@ function YouthUsersManagement() {
               </DialogDescription>
             </DialogHeader>
             <form action={handleCreateUser} className="space-y-4">
+              {createErrors.general && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                  <div className="flex items-center space-x-2 text-red-800">
+                    <AlertCircle className="h-4 w-4" />
+                    <span className="text-sm font-medium">{createErrors.general}</span>
+                  </div>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="email">Email *</Label>
-                  <Input id="email" name="email" type="email" required />
+                  <Input 
+                    id="email" 
+                    name="email" 
+                    type="email" 
+                    required 
+                    maxLength={100}
+                    className={createErrors.email ? "border-red-500" : ""}
+                  />
+                  <ErrorMessage error={createErrors.email} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password">Contraseña *</Label>
-                  <Input id="password" name="password" type="password" required />
+                  <div className="relative">
+                    <Input 
+                      id="password" 
+                      name="password" 
+                      type={showCreatePassword ? "text" : "password"}
+                      required 
+                      minLength={8}
+                      maxLength={100}
+                      pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$"
+                      className={createErrors.password ? "border-red-500 pr-10" : "pr-10"}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowCreatePassword(!showCreatePassword)}
+                    >
+                      {showCreatePassword ? (
+                        <EyeOff className="h-4 w-4 text-gray-400" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-gray-400" />
+                      )}
+                    </Button>
+                  </div>
+                  <ErrorMessage error={createErrors.password} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="firstName">Nombre</Label>
-                  <Input id="firstName" name="firstName" />
+                  <Input 
+                    id="firstName" 
+                    name="firstName" 
+                    maxLength={50}
+                    className={createErrors.firstName ? "border-red-500" : ""}
+                  />
+                  <ErrorMessage error={createErrors.firstName} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="lastName">Apellido</Label>
-                  <Input id="lastName" name="lastName" />
+                  <Input 
+                    id="lastName" 
+                    name="lastName" 
+                    maxLength={50}
+                    className={createErrors.lastName ? "border-red-500" : ""}
+                  />
+                  <ErrorMessage error={createErrors.lastName} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="phone">Teléfono</Label>
-                  <Input id="phone" name="phone" />
+                  <Input 
+                    id="phone" 
+                    name="phone" 
+                    type="tel"
+                    maxLength={20}
+                    pattern="^[\+]?[0-9\s\-\(\)]{7,15}$"
+                    placeholder="+1234567890"
+                    onKeyPress={(e) => {
+                      if (!/[0-9\s\-\(\)\+]/.test(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
+                    className={createErrors.phone ? "border-red-500" : ""}
+                  />
+                  <ErrorMessage error={createErrors.phone} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="gender">Género</Label>
@@ -302,22 +667,42 @@ function YouthUsersManagement() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="address">Dirección</Label>
-                <Input id="address" name="address" />
+                <Input 
+                  id="address" 
+                  name="address" 
+                  maxLength={200}
+                />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="city">Ciudad</Label>
-                  <Input id="city" name="city" />
+                  <Input 
+                    id="city" 
+                    name="city" 
+                    maxLength={50}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="state">Estado/Departamento</Label>
-                  <Input id="state" name="state" />
+                  <Input 
+                    id="state" 
+                    name="state" 
+                    maxLength={50}
+                  />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="birthDate">Fecha de Nacimiento</Label>
-                  <Input id="birthDate" name="birthDate" type="date" />
+                  <Input 
+                    id="birthDate" 
+                    name="birthDate" 
+                    type="date" 
+                    max={new Date().toISOString().split('T')[0]}
+                    min="1900-01-01"
+                    className={createErrors.birthDate ? "border-red-500" : ""}
+                  />
+                  <ErrorMessage error={createErrors.birthDate} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="educationLevel">Nivel Educativo</Label>
@@ -337,11 +722,17 @@ function YouthUsersManagement() {
                 </div>
               </div>
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                <Button type="button" variant="outline" onClick={() => {
+                  setIsCreateDialogOpen(false);
+                  setCreateErrors({});
+                }}>
                   Cancelar
                 </Button>
-                <Button type="submit" disabled={createUserMutation.isPending}>
-                  {createUserMutation.isPending ? 'Creando...' : 'Crear Usuario'}
+                <Button 
+                  type="submit" 
+                  disabled={createUserMutation.isPending || isValidating}
+                >
+                  {createUserMutation.isPending || isValidating ? 'Creando...' : 'Crear Usuario'}
                 </Button>
               </DialogFooter>
             </form>
@@ -437,7 +828,13 @@ function YouthUsersManagement() {
       )}
 
       {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+      <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
+        setIsEditDialogOpen(open);
+        if (!open) {
+          setEditErrors({});
+          setSelectedUser(null);
+        }
+      }}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Editar Usuario</DialogTitle>
@@ -447,6 +844,14 @@ function YouthUsersManagement() {
           </DialogHeader>
           {selectedUser && (
             <form action={handleUpdateUser} className="space-y-4">
+              {editErrors.general && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                  <div className="flex items-center space-x-2 text-red-800">
+                    <AlertCircle className="h-4 w-4" />
+                    <span className="text-sm font-medium">{editErrors.general}</span>
+                  </div>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="edit-email">Email *</Label>
@@ -456,7 +861,10 @@ function YouthUsersManagement() {
                     type="email" 
                     defaultValue={selectedUser.email}
                     required 
+                    maxLength={100}
+                    className={editErrors.email ? "border-red-500" : ""}
                   />
+                  <ErrorMessage error={editErrors.email} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit-isActive">Estado</Label>
@@ -478,7 +886,10 @@ function YouthUsersManagement() {
                     id="edit-firstName" 
                     name="firstName" 
                     defaultValue={selectedUser.profile?.firstName || selectedUser.firstName}
+                    maxLength={50}
+                    className={editErrors.firstName ? "border-red-500" : ""}
                   />
+                  <ErrorMessage error={editErrors.firstName} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit-lastName">Apellido</Label>
@@ -486,7 +897,10 @@ function YouthUsersManagement() {
                     id="edit-lastName" 
                     name="lastName" 
                     defaultValue={selectedUser.profile?.lastName || selectedUser.lastName}
+                    maxLength={50}
+                    className={editErrors.lastName ? "border-red-500" : ""}
                   />
+                  <ErrorMessage error={editErrors.lastName} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -496,7 +910,10 @@ function YouthUsersManagement() {
                     id="edit-phone" 
                     name="phone" 
                     defaultValue={selectedUser.profile?.phone || selectedUser.phone}
+                    maxLength={20}
+                    className={editErrors.phone ? "border-red-500" : ""}
                   />
+                  <ErrorMessage error={editErrors.phone} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit-gender">Género</Label>
@@ -518,6 +935,7 @@ function YouthUsersManagement() {
                   id="edit-address" 
                   name="address" 
                   defaultValue={selectedUser.profile?.address || selectedUser.address}
+                  maxLength={200}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -527,6 +945,7 @@ function YouthUsersManagement() {
                     id="edit-city" 
                     name="city" 
                     defaultValue={selectedUser.profile?.city}
+                    maxLength={50}
                   />
                 </div>
                 <div className="space-y-2">
@@ -535,6 +954,7 @@ function YouthUsersManagement() {
                     id="edit-state" 
                     name="state" 
                     defaultValue={selectedUser.profile?.state}
+                    maxLength={50}
                   />
                 </div>
               </div>
@@ -546,7 +966,10 @@ function YouthUsersManagement() {
                     name="birthDate" 
                     type="date" 
                     defaultValue={selectedUser.profile?.birthDate ? selectedUser.profile.birthDate.split('T')[0] : ''}
+                    max={new Date().toISOString().split('T')[0]}
+                    className={editErrors.birthDate ? "border-red-500" : ""}
                   />
+                  <ErrorMessage error={editErrors.birthDate} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit-educationLevel">Nivel Educativo</Label>
@@ -566,11 +989,17 @@ function YouthUsersManagement() {
                 </div>
               </div>
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                <Button type="button" variant="outline" onClick={() => {
+                  setIsEditDialogOpen(false);
+                  setEditErrors({});
+                }}>
                   Cancelar
                 </Button>
-                <Button type="submit" disabled={updateUserMutation.isPending}>
-                  {updateUserMutation.isPending ? 'Actualizando...' : 'Actualizar Usuario'}
+                <Button 
+                  type="submit" 
+                  disabled={updateUserMutation.isPending || isValidating}
+                >
+                  {updateUserMutation.isPending || isValidating ? 'Actualizando...' : 'Actualizar Usuario'}
                 </Button>
               </DialogFooter>
             </form>
