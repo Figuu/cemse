@@ -494,16 +494,22 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { avatarUrl } = body;
+    const { avatarUrl, cvUrl } = body;
 
-    if (!avatarUrl) {
-      return NextResponse.json({ error: "Avatar URL is required" }, { status: 400 });
+    // Validate that at least one field is provided
+    if (!avatarUrl && !cvUrl) {
+      return NextResponse.json({ error: "At least one field (avatarUrl or cvUrl) is required" }, { status: 400 });
     }
 
-    // Update user's avatar in profile
+    // Build update data object
+    const updateData: any = {};
+    if (avatarUrl) updateData.avatarUrl = avatarUrl;
+    if (cvUrl) updateData.cvUrl = cvUrl;
+
+    // Update user's profile
     const updatedProfile = await prisma.profile.update({
       where: { userId: session.user.id },
-      data: { avatarUrl: avatarUrl },
+      data: updateData,
       include: {
         user: {
           select: {
@@ -523,6 +529,7 @@ export async function PATCH(request: NextRequest) {
         lastName: updatedProfile.lastName,
         email: updatedProfile.user.email,
         avatar: updatedProfile.avatarUrl,
+        cvUrl: updatedProfile.cvUrl,
         role: updatedProfile.user.role,
       },
     });

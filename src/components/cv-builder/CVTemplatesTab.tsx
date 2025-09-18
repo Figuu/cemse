@@ -212,134 +212,93 @@ export function CVTemplatesTab() {
 
     setIsGenerating(true);
     
-    // Create the most basic profile data possible (outside try block for fallback access)
-    const basicProfile = {
-      firstName: profile.firstName || 'Usuario',
-      lastName: profile.lastName || 'CEMSE',
-      email: profile.email || 'email@ejemplo.com',
-      phone: profile.phone || 'Teléfono',
-      jobTitle: profile.jobTitle || 'Profesional',
-      summary: profile.professionalSummary || 'Profesional dedicado con experiencia.',
-      institution: profile.currentInstitution || 'Institución Educativa',
-      degree: profile.currentDegree || profile.educationLevel || 'Título',
-      skills: 'Habilidades técnicas, Trabajo en equipo, Comunicación',
-      languages: 'Español: Nativo, Inglés: Intermedio'
-    };
+    // Get the selected template
+    const selectedTemplate = cvTemplates.find(t => t.id === templateId);
+    if (!selectedTemplate) {
+      toast.error("Error", {
+        description: "Plantilla no encontrada",
+      });
+      setIsGenerating(false);
+      return;
+    }
+
+    // Sanitize profile data for PDF generation
+    const sanitizedProfile = sanitizeProfileData(profile);
     
     try {
-
-      // Import react-pdf dynamically
-      const { pdf, Document, Page, Text, View, StyleSheet } = await import('@react-pdf/renderer');
+      // Use the actual template component
+      const TemplateComponent = selectedTemplate.component;
+      const result = await generatePDFSafely(TemplateComponent, sanitizedProfile, selectedTemplate.name);
       
-      // Create styles inline to avoid any issues
-      const styles = StyleSheet.create({
-        page: {
-          flexDirection: 'column',
-          backgroundColor: '#FFFFFF',
-          padding: 40,
-          fontFamily: 'Helvetica',
-          fontSize: 12,
-          lineHeight: 1.6,
-        },
-        header: {
-          textAlign: 'center',
-          marginBottom: 30,
-        },
-        name: {
-          fontSize: 24,
-          fontWeight: 'bold',
-          color: '#000000',
-          marginBottom: 5,
-        },
-        title: {
-          fontSize: 14,
-          color: '#333333',
-          marginBottom: 10,
-        },
-        contact: {
-          fontSize: 10,
-          color: '#666666',
-        },
-        section: {
-          marginBottom: 20,
-        },
-        sectionTitle: {
-          fontSize: 14,
-          fontWeight: 'bold',
-          color: '#000000',
-          marginBottom: 8,
-        },
-        text: {
-          fontSize: 11,
-          color: '#333333',
-          marginBottom: 5,
-        },
-      });
+      if (result.success && result.blob) {
+        // Create download link
+        const url = URL.createObjectURL(result.blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `CV_${sanitizedProfile.firstName}_${sanitizedProfile.lastName}_${selectedTemplate.name}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
 
-      // Create the PDF document inline
-      const MyDocument = () => (
-        <Document>
-          <Page size="A4" style={styles.page}>
-            <View style={styles.header}>
-              <Text style={styles.name}>{basicProfile.firstName} {basicProfile.lastName}</Text>
-              <Text style={styles.title}>{basicProfile.jobTitle}</Text>
-              <Text style={styles.contact}>{basicProfile.email} | {basicProfile.phone}</Text>
-            </View>
+        // Upload to MinIO and update profile
+        if (session?.user?.id) {
+          try {
+            // Create FormData for the API call
+            const formData = new FormData();
+            formData.append('file', result.blob, `CV_${sanitizedProfile.firstName}_${sanitizedProfile.lastName}_${selectedTemplate.name}.pdf`);
+            formData.append('templateName', selectedTemplate.name);
+            formData.append('fileName', `CV_${sanitizedProfile.firstName}_${sanitizedProfile.lastName}_${selectedTemplate.name}.pdf`);
 
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Resumen Profesional</Text>
-              <Text style={styles.text}>{basicProfile.summary}</Text>
-            </View>
+            // Upload to MinIO via API
+            const uploadResponse = await fetch('/api/cv/upload', {
+              method: 'POST',
+              body: formData
+            });
 
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Educación</Text>
-              <Text style={styles.text}>{basicProfile.institution}</Text>
-              <Text style={styles.text}>{basicProfile.degree}</Text>
-            </View>
-
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Habilidades</Text>
-              <Text style={styles.text}>{basicProfile.skills}</Text>
-            </View>
-
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Idiomas</Text>
-              <Text style={styles.text}>{basicProfile.languages}</Text>
-            </View>
-          </Page>
-        </Document>
-      );
-
-      // Generate PDF
-      const pdfDoc = pdf(<MyDocument />);
-      const blob = await pdfDoc.toBlob();
-      
-      // Create download link
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `CV_${basicProfile.firstName}_${basicProfile.lastName}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-
-      toast.success("CV generado", {
-        description: "Tu CV se ha descargado correctamente",
-      });
+            if (uploadResponse.ok) {
+              const uploadResult = await uploadResponse.json();
+              if (uploadResult.success) {
+                toast.success("CV generado y guardado", {
+                  description: `Tu CV se ha descargado y guardado en tu perfil con la plantilla ${selectedTemplate.name}`,
+                });
+              } else {
+                toast.success("CV generado", {
+                  description: `Tu CV se ha descargado con la plantilla ${selectedTemplate.name}. Error al guardar en perfil.`,
+                });
+              }
+            } else {
+              toast.success("CV generado", {
+                description: `Tu CV se ha descargado con la plantilla ${selectedTemplate.name}. Error al subir a la nube.`,
+              });
+            }
+          } catch (uploadError) {
+            console.error('Upload error:', uploadError);
+            toast.success("CV generado", {
+              description: `Tu CV se ha descargado con la plantilla ${selectedTemplate.name}. Error al subir a la nube.`,
+            });
+          }
+        } else {
+          toast.success("CV generado", {
+            description: `Tu CV se ha descargado con la plantilla ${selectedTemplate.name}`,
+          });
+        }
+      } else {
+        throw new Error('PDF generation failed');
+      }
       
     } catch (error) {
       console.error('Main PDF generation failed, trying fallback:', error);
       
       try {
         // Try the simple PDF generator as fallback
-        const blob = await generateSimpleCV(basicProfile);
+        const blob = await generateSimpleCV(sanitizedProfile);
         
         // Create download link
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `CV_${basicProfile.firstName}_${basicProfile.lastName}.pdf`;
+        link.download = `CV_${sanitizedProfile.firstName}_${sanitizedProfile.lastName}_Simple.pdf`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -350,17 +309,17 @@ export function CVTemplatesTab() {
         });
         
       } catch (fallbackError) {
-        console.error('Fallback PDF generation also failed, trying canvas:', fallbackError);
+        console.error('Fallback PDF generation also failed, trying HTML:', fallbackError);
         
         try {
           // Try HTML-based generation as last resort
-          const blob = await generateHTMLCV(basicProfile);
+          const blob = await generateHTMLCV(sanitizedProfile);
           
           // Create download link
           const url = URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `CV_${basicProfile.firstName}_${basicProfile.lastName}.html`;
+          link.download = `CV_${sanitizedProfile.firstName}_${sanitizedProfile.lastName}.html`;
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
@@ -370,8 +329,8 @@ export function CVTemplatesTab() {
             description: "Tu CV se ha descargado como archivo HTML. Puedes abrirlo en tu navegador e imprimirlo como PDF.",
           });
           
-        } catch (canvasError) {
-          console.error('All PDF generation methods failed:', canvasError);
+        } catch (htmlError) {
+          console.error('All PDF generation methods failed:', htmlError);
           
           toast.error("Error al generar PDF", {
             description: "No se pudo generar el PDF con ningún método. Por favor, intenta de nuevo más tarde.",
