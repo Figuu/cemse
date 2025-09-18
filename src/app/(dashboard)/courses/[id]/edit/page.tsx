@@ -56,7 +56,7 @@ interface CourseLesson {
   title: string;
   description: string | null;
   content: string;
-  contentType: string;
+  contentType: "TEXT" | "VIDEO" | "AUDIO" | "DOCUMENT";
   videoUrl: string | null;
   audioUrl: string | null;
   duration: number | null;

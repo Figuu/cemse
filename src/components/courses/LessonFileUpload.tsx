@@ -20,7 +20,7 @@ import {
 import { cn } from "@/lib/utils";
 
 interface LessonFileUploadProps {
-  contentType: "VIDEO" | "AUDIO" | "IMAGE" | "TEXT";
+  contentType: "VIDEO" | "AUDIO" | "IMAGE" | "TEXT" | "DOCUMENT";
   onUpload: (file: File) => Promise<string>;
   onRemove?: () => void;
   currentUrl?: string;
@@ -58,6 +58,17 @@ export function LessonFileUpload({
         return {
           "audio/*": [".mp3", ".wav", ".ogg", ".m4a", ".aac", ".flac"]
         };
+      case "DOCUMENT":
+        return {
+          "application/pdf": [".pdf"],
+          "application/msword": [".doc"],
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
+          "application/vnd.ms-excel": [".xls"],
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
+          "application/vnd.ms-powerpoint": [".ppt"],
+          "application/vnd.openxmlformats-officedocument.presentationml.presentation": [".pptx"],
+          "text/*": [".txt", ".md", ".html"]
+        };
       case "IMAGE":
         return {
           "image/*": [".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"]
@@ -76,6 +87,8 @@ export function LessonFileUpload({
         return 500 * 1024 * 1024; // 500MB
       case "AUDIO":
         return 100 * 1024 * 1024; // 100MB
+      case "DOCUMENT":
+        return 50 * 1024 * 1024; // 50MB
       case "IMAGE":
         return 10 * 1024 * 1024; // 10MB
       default:
@@ -89,6 +102,8 @@ export function LessonFileUpload({
         return "Video";
       case "AUDIO":
         return "Audio";
+      case "DOCUMENT":
+        return "Documento";
       case "IMAGE":
         return "Imagen";
       default:
@@ -102,6 +117,8 @@ export function LessonFileUpload({
         return <Video className="h-8 w-8 text-muted-foreground" />;
       case "AUDIO":
         return <Headphones className="h-8 w-8 text-muted-foreground" />;
+      case "DOCUMENT":
+        return <FileText className="h-8 w-8 text-muted-foreground" />;
       case "IMAGE":
         return <Image className="h-8 w-8 text-muted-foreground" />;
       default:

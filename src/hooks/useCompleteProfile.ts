@@ -55,6 +55,19 @@ export interface CompleteProfile {
   websites: any;
   socialLinks: any;
   
+  // Cover letter / Presentation letter fields
+  coverLetterContent: string;
+  coverLetterRecipient: any;
+  coverLetterSubject: string;
+  coverLetterTemplate: string;
+  coverLetterRecipientName: string;
+  coverLetterRecipientTitle: string;
+  coverLetterCompanyName: string;
+  coverLetterPosition: string;
+  coverLetterClosing: string;
+  coverLetterSignature: string;
+  coverLetterDate: string;
+  
   // Related data
   institution: any;
   entrepreneurships: any[];

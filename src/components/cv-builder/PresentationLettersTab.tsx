@@ -98,7 +98,11 @@ export function PresentationLettersTab() {
     content: "",
     closing: "Atentamente,",
     signature: "",
-    date: new Date().toLocaleDateString('es-ES'),
+    date: new Date().toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }),
     template: "professional",
   });
 
@@ -107,10 +111,19 @@ export function PresentationLettersTab() {
     if (profile) {
       setFormData(prev => ({
         ...prev,
-        signature: `${profile.firstName} ${profile.lastName}`,
-        position: profile.targetPosition || profile.jobTitle || "",
-        content: profile.coverLetterContent || "",
+        recipientName: profile.coverLetterRecipientName || "",
+        recipientTitle: profile.coverLetterRecipientTitle || "",
+        companyName: profile.coverLetterCompanyName || "",
+        position: profile.coverLetterPosition || profile.targetPosition || profile.jobTitle || "",
         subject: profile.coverLetterSubject || "",
+        content: profile.coverLetterContent || "",
+        closing: profile.coverLetterClosing || "Atentamente,",
+        signature: profile.coverLetterSignature || `${profile.firstName} ${profile.lastName}`,
+        date: profile.coverLetterDate || new Date().toLocaleDateString('es-ES', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        }),
         template: profile.coverLetterTemplate || "professional",
       }));
     }
@@ -137,6 +150,13 @@ export function PresentationLettersTab() {
           coverLetterContent: formData.content,
           coverLetterSubject: formData.subject,
           coverLetterTemplate: formData.template,
+          coverLetterRecipientName: formData.recipientName,
+          coverLetterRecipientTitle: formData.recipientTitle,
+          coverLetterCompanyName: formData.companyName,
+          coverLetterPosition: formData.position,
+          coverLetterClosing: formData.closing,
+          coverLetterSignature: formData.signature,
+          coverLetterDate: formData.date,
         }),
       });
 
@@ -170,7 +190,7 @@ export function PresentationLettersTab() {
   };
 
   const handleGeneratePDF = async (templateId: string) => {
-    if (!session?.user?.profile) {
+    if (!profile) {
       toast.error("Error", {
         description: "No se encontró información del perfil",
       });
@@ -187,16 +207,36 @@ export function PresentationLettersTab() {
       // Generate PDF using react-pdf
       const { pdf } = await import('@react-pdf/renderer');
       const TemplateComponent = template.component;
+      
+      // Ensure all data is properly formatted
+      const safeFormData = {
+        ...formData,
+        content: formData.content || '',
+        recipientName: formData.recipientName || '',
+        recipientTitle: formData.recipientTitle || '',
+        companyName: formData.companyName || '',
+        position: formData.position || '',
+        subject: formData.subject || '',
+        closing: formData.closing || 'Atentamente,',
+        signature: formData.signature || `${profile.firstName} ${profile.lastName}`,
+        date: formData.date || new Date().toLocaleDateString('es-ES', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        }),
+        template: formData.template || 'professional',
+      };
+
       const blob = await pdf(<TemplateComponent 
-        profile={session.user.profile}
-        letterData={formData} 
+        profile={profile}
+        letterData={safeFormData} 
       />).toBlob();
       
       // Create download link
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `Carta_Presentacion_${session.user.profile.firstName}_${session.user.profile.lastName}_${template.name}.pdf`;
+      link.download = `Carta_Presentacion_${profile.firstName}_${profile.lastName}_${template.name}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

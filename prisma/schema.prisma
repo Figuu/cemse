@@ -80,6 +80,13 @@ model Profile {
   coverLetterRecipient      Json?
   coverLetterSubject        String?
   coverLetterTemplate       String?             @default("professional")
+  coverLetterRecipientName  String?
+  coverLetterRecipientTitle String?
+  coverLetterCompanyName    String?
+  coverLetterPosition       String?
+  coverLetterClosing        String?             @default("Atentamente,")
+  coverLetterSignature      String?
+  coverLetterDate           String?
   academicAchievements      Json?
   currentDegree             String?
   educationHistory          Json?

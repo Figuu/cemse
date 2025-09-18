@@ -18,9 +18,6 @@ import {
 import { CVTemplate1 } from "./templates/CVTemplate1";
 import { CVTemplate2 } from "./templates/CVTemplate2";
 import { CVTemplate3 } from "./templates/CVTemplate3";
-import { SimpleCVTemplate } from "./templates/SimpleCVTemplate";
-import { MinimalCVTemplate } from "./templates/MinimalCVTemplate";
-import { UltraSimpleCVTemplate } from "./templates/UltraSimpleCVTemplate";
 import { generateSimpleCV, generateHTMLCV, generateCanvasCV } from "./utils/pdfGenerator";
 
 interface CVTemplate {
@@ -35,13 +32,13 @@ interface CVTemplate {
 
 const cvTemplates: CVTemplate[] = [
   {
-    id: "reliable",
-    name: "Profesional",
-    description: "Plantilla confiable y optimizada para máxima compatibilidad",
-    style: "Confiable",
-    color: "Azul",
-    preview: "Diseño limpio y profesional garantizado",
-    component: UltraSimpleCVTemplate,
+    id: "classic",
+    name: "Clásico",
+    description: "Estilo tradicional y elegante para sectores conservadores",
+    style: "Tradicional",
+    color: "Negro",
+    preview: "Formato clásico con tipografía serif",
+    component: CVTemplate2,
   },
   {
     id: "modern",
@@ -51,15 +48,6 @@ const cvTemplates: CVTemplate[] = [
     color: "Azul",
     preview: "Diseño limpio con secciones bien definidas",
     component: CVTemplate1,
-  },
-  {
-    id: "classic",
-    name: "Clásico",
-    description: "Estilo tradicional y elegante para sectores conservadores",
-    style: "Tradicional",
-    color: "Negro",
-    preview: "Formato clásico con tipografía serif",
-    component: CVTemplate2,
   },
   {
     id: "creative",
@@ -153,7 +141,7 @@ const sanitizeProfileData = (profile: any) => {
 export function CVTemplatesTab() {
   const { data: session } = useSession();
   const { profile, isLoading: profileLoading } = useCVBuilder();
-  const [selectedTemplate, setSelectedTemplate] = useState<string>("reliable");
+  const [selectedTemplate, setSelectedTemplate] = useState<string>("classic");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
 

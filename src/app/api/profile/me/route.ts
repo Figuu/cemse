@@ -117,6 +117,19 @@ export async function GET(request: NextRequest) {
         websites: profile.websites,
         socialLinks: profile.socialLinks,
         
+        // Cover letter / Presentation letter fields
+        coverLetterContent: profile.coverLetterContent,
+        coverLetterRecipient: profile.coverLetterRecipient,
+        coverLetterSubject: profile.coverLetterSubject,
+        coverLetterTemplate: profile.coverLetterTemplate,
+        coverLetterRecipientName: profile.coverLetterRecipientName,
+        coverLetterRecipientTitle: profile.coverLetterRecipientTitle,
+        coverLetterCompanyName: profile.coverLetterCompanyName,
+        coverLetterPosition: profile.coverLetterPosition,
+        coverLetterClosing: profile.coverLetterClosing,
+        coverLetterSignature: profile.coverLetterSignature,
+        coverLetterDate: profile.coverLetterDate,
+        
         // Related data
         institution: profile.institution,
         entrepreneurships: profile.entrepreneurships,

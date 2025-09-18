@@ -235,7 +235,11 @@ export async function PUT(request: NextRequest) {
       universityName, universityStartDate, universityEndDate, universityStatus, gpa,
       skills, skillsWithLevel, languages, relevantSkills, interests,
       workExperience, educationHistory, projects, achievements, academicAchievements,
-      extracurricularActivities, websites, socialLinks
+      extracurricularActivities, websites, socialLinks,
+      // Cover letter / Presentation letter fields
+      coverLetterContent, coverLetterRecipient, coverLetterSubject, coverLetterTemplate,
+      coverLetterRecipientName, coverLetterRecipientTitle, coverLetterCompanyName,
+      coverLetterPosition, coverLetterClosing, coverLetterSignature, coverLetterDate
     } = body;
 
     // First check if profile exists
@@ -289,6 +293,18 @@ export async function PUT(request: NextRequest) {
           extracurricularActivities: extracurricularActivities || null,
           websites: websites || null,
           socialLinks: socialLinks || null,
+          // Cover letter / Presentation letter fields
+          coverLetterContent: coverLetterContent || null,
+          coverLetterRecipient: coverLetterRecipient || null,
+          coverLetterSubject: coverLetterSubject || null,
+          coverLetterTemplate: coverLetterTemplate || "professional",
+          coverLetterRecipientName: coverLetterRecipientName || null,
+          coverLetterRecipientTitle: coverLetterRecipientTitle || null,
+          coverLetterCompanyName: coverLetterCompanyName || null,
+          coverLetterPosition: coverLetterPosition || null,
+          coverLetterClosing: coverLetterClosing || "Atentamente,",
+          coverLetterSignature: coverLetterSignature || null,
+          coverLetterDate: coverLetterDate || null,
         },
         include: {
           user: {
@@ -347,6 +363,18 @@ export async function PUT(request: NextRequest) {
           extracurricularActivities: newProfile.extracurricularActivities,
           websites: newProfile.websites,
           socialLinks: newProfile.socialLinks,
+          // Cover letter / Presentation letter fields
+          coverLetterContent: newProfile.coverLetterContent,
+          coverLetterRecipient: newProfile.coverLetterRecipient,
+          coverLetterSubject: newProfile.coverLetterSubject,
+          coverLetterTemplate: newProfile.coverLetterTemplate,
+          coverLetterRecipientName: newProfile.coverLetterRecipientName,
+          coverLetterRecipientTitle: newProfile.coverLetterRecipientTitle,
+          coverLetterCompanyName: newProfile.coverLetterCompanyName,
+          coverLetterPosition: newProfile.coverLetterPosition,
+          coverLetterClosing: newProfile.coverLetterClosing,
+          coverLetterSignature: newProfile.coverLetterSignature,
+          coverLetterDate: newProfile.coverLetterDate,
           role: newProfile.user.role,
         },
       };
@@ -399,6 +427,18 @@ export async function PUT(request: NextRequest) {
         extracurricularActivities: extracurricularActivities || null,
         websites: websites || null,
         socialLinks: socialLinks || null,
+        // Cover letter / Presentation letter fields
+        coverLetterContent: coverLetterContent || null,
+        coverLetterRecipient: coverLetterRecipient || null,
+        coverLetterSubject: coverLetterSubject || null,
+        coverLetterTemplate: coverLetterTemplate || "professional",
+        coverLetterRecipientName: coverLetterRecipientName || null,
+        coverLetterRecipientTitle: coverLetterRecipientTitle || null,
+        coverLetterCompanyName: coverLetterCompanyName || null,
+        coverLetterPosition: coverLetterPosition || null,
+        coverLetterClosing: coverLetterClosing || "Atentamente,",
+        coverLetterSignature: coverLetterSignature || null,
+        coverLetterDate: coverLetterDate || null,
       },
       include: {
         user: {
@@ -457,6 +497,18 @@ export async function PUT(request: NextRequest) {
         extracurricularActivities: updatedProfile.extracurricularActivities,
         websites: updatedProfile.websites,
         socialLinks: updatedProfile.socialLinks,
+        // Cover letter / Presentation letter fields
+        coverLetterContent: updatedProfile.coverLetterContent,
+        coverLetterRecipient: updatedProfile.coverLetterRecipient,
+        coverLetterSubject: updatedProfile.coverLetterSubject,
+        coverLetterTemplate: updatedProfile.coverLetterTemplate,
+        coverLetterRecipientName: updatedProfile.coverLetterRecipientName,
+        coverLetterRecipientTitle: updatedProfile.coverLetterRecipientTitle,
+        coverLetterCompanyName: updatedProfile.coverLetterCompanyName,
+        coverLetterPosition: updatedProfile.coverLetterPosition,
+        coverLetterClosing: updatedProfile.coverLetterClosing,
+        coverLetterSignature: updatedProfile.coverLetterSignature,
+        coverLetterDate: updatedProfile.coverLetterDate,
         role: updatedProfile.user.role,
       },
     };

@@ -199,11 +199,34 @@ interface CVTemplate2Props {
 export const CVTemplate2: React.FC<CVTemplate2Props> = ({ profile }) => {
   const formatDate = (dateString: string) => {
     if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('es-ES', { 
-      year: 'numeric', 
-      month: 'long' 
-    });
+    
+    try {
+      // Handle different date formats
+      let date: Date;
+      if (dateString.includes('/')) {
+        // Handle DD/MM/YYYY format
+        const parts = dateString.split('/');
+        if (parts.length === 3) {
+          date = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+        } else {
+          date = new Date(dateString);
+        }
+      } else {
+        date = new Date(dateString);
+      }
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return '';
+      }
+      
+      return date.toLocaleDateString('es-ES', { 
+        year: 'numeric', 
+        month: 'long' 
+      });
+    } catch (error) {
+      return '';
+    }
   };
 
   const getExperienceLevel = (level: string) => {
@@ -418,42 +441,6 @@ export const CVTemplate2: React.FC<CVTemplate2Props> = ({ profile }) => {
               </View>
             )}
 
-            {/* Work Experience */}
-            {profile?.workExperience && profile.workExperience.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Experiencia Laboral</Text>
-                {profile.workExperience.map((work: any, index: number) => (
-                  <View key={index} style={styles.experienceItem}>
-                    <Text style={styles.jobTitle}>{work.position}</Text>
-                    <Text style={styles.company}>{work.company}</Text>
-                    <Text style={styles.date}>
-                      {formatDate(work.startDate)} - {work.current ? 'Actual' : formatDate(work.endDate)}
-                    </Text>
-                    <Text style={styles.description}>{work.description}</Text>
-                    {work.location && <Text style={styles.date}>📍 {work.location}</Text>}
-                  </View>
-                ))}
-              </View>
-            )}
-
-            {/* Education History */}
-            {profile?.educationHistory && profile.educationHistory.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Historial Académico</Text>
-                {profile.educationHistory.map((edu: any, index: number) => (
-                  <View key={index} style={styles.experienceItem}>
-                    <Text style={styles.jobTitle}>{edu.degree} en {edu.field}</Text>
-                    <Text style={styles.company}>{edu.institution}</Text>
-                    <Text style={styles.date}>
-                      {formatDate(edu.startDate)} - {edu.current ? 'Actual' : formatDate(edu.endDate)}
-                    </Text>
-                    {edu.gpa && <Text style={styles.date}>GPA: {edu.gpa}</Text>}
-                    <Text style={styles.description}>{edu.description}</Text>
-                  </View>
-                ))}
-              </View>
-            )}
-
             {/* Projects */}
             {profile?.projects && profile.projects.length > 0 && (
               <View style={styles.section}>
@@ -486,77 +473,6 @@ export const CVTemplate2: React.FC<CVTemplate2Props> = ({ profile }) => {
                     <Text style={styles.description}>{business.description}</Text>
                     {business.website && <Text style={styles.date}>🌐 {business.website}</Text>}
                     {business.employees > 0 && <Text style={styles.date}>👥 {business.employees} empleados</Text>}
-                  </View>
-                ))}
-              </View>
-            )}
-
-            {/* Youth Applications (Portfolio) */}
-            {profile?.youthApplications && profile.youthApplications.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Portfolio y Aplicaciones</Text>
-                {profile.youthApplications.map((application: any, index: number) => (
-                  <View key={index} style={styles.experienceItem}>
-                    <Text style={styles.jobTitle}>{application.title}</Text>
-                    <Text style={styles.company}>Estado: {application.status}</Text>
-                    <Text style={styles.date}>{formatDate(application.createdAt)}</Text>
-                    <Text style={styles.description}>{application.description}</Text>
-                    <Text style={styles.date}>
-                      👁️ {application.viewsCount} vistas | 📝 {application.applicationsCount} aplicaciones
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            )}
-
-            {/* Company Employments */}
-            {profile?.companyEmployments && profile.companyEmployments.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Empleos Registrados</Text>
-                {profile.companyEmployments.map((employment: any, index: number) => (
-                  <View key={index} style={styles.experienceItem}>
-                    <Text style={styles.jobTitle}>{employment.position}</Text>
-                    <Text style={styles.company}>{employment.companyName}</Text>
-                    <Text style={styles.date}>
-                      {formatDate(employment.hiredAt)} - {employment.terminatedAt ? formatDate(employment.terminatedAt) : 'Actual'}
-                    </Text>
-                    {employment.notes && <Text style={styles.description}>{employment.notes}</Text>}
-                    {employment.salary > 0 && <Text style={styles.date}>💰 Salario: {employment.salary}</Text>}
-                  </View>
-                ))}
-              </View>
-            )}
-
-            {/* Entrepreneurship Posts (Content Creation) */}
-            {profile?.entrepreneurshipPosts && profile.entrepreneurshipPosts.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Contenido Creado</Text>
-                {profile.entrepreneurshipPosts.slice(0, 3).map((post: any, index: number) => (
-                  <View key={index} style={styles.experienceItem}>
-                    <Text style={styles.jobTitle}>{post.type}</Text>
-                    <Text style={styles.date}>{formatDate(post.createdAt)}</Text>
-                    <Text style={styles.description}>{post.content.substring(0, 100)}...</Text>
-                    <Text style={styles.date}>
-                      👍 {post.likes} | 💬 {post.comments} | 📤 {post.shares} | 👁️ {post.views}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            )}
-
-            {/* Entrepreneurship Resources (Publications) */}
-            {profile?.entrepreneurshipResources && profile.entrepreneurshipResources.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Publicaciones y Recursos</Text>
-                {profile.entrepreneurshipResources.slice(0, 3).map((resource: any, index: number) => (
-                  <View key={index} style={styles.experienceItem}>
-                    <Text style={styles.jobTitle}>{resource.title}</Text>
-                    <Text style={styles.company}>{resource.category} - {resource.type}</Text>
-                    <Text style={styles.date}>{formatDate(resource.createdAt)}</Text>
-                    <Text style={styles.description}>{resource.description}</Text>
-                    <Text style={styles.date}>
-                      👁️ {resource.views} vistas | 👍 {resource.likes} likes
-                    </Text>
                   </View>
                 ))}
               </View>

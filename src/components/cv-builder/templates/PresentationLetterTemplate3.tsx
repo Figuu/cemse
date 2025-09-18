@@ -1,26 +1,13 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
 
-// Register creative fonts
-Font.register({
-  family: 'Inter',
-  fonts: [
-    {
-      src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiJ-Ek-_EeA.woff2',
-      fontWeight: 'normal',
-    },
-    {
-      src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuI6fAZ9hiJ-Ek-_EeA.woff2',
-      fontWeight: 'bold',
-    },
-  ],
-});
+// Use system fonts instead of external fonts to avoid DataView errors
 
 const styles = StyleSheet.create({
   page: {
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
-    fontFamily: 'Inter',
+    fontFamily: 'Helvetica',
     fontSize: 10,
     lineHeight: 1.4,
   },
@@ -203,17 +190,51 @@ export const PresentationLetterTemplate3: React.FC<PresentationLetterTemplate3Pr
   letterData 
 }) => {
   const formatDate = (dateString: string) => {
-    if (!dateString) return new Date().toLocaleDateString('es-ES', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    });
-    const date = new Date(dateString);
-    return date.toLocaleDateString('es-ES', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    });
+    if (!dateString) {
+      return new Date().toLocaleDateString('es-ES', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+    }
+    
+    try {
+      // Handle different date formats
+      let date: Date;
+      if (dateString.includes('/')) {
+        // Handle DD/MM/YYYY format
+        const parts = dateString.split('/');
+        if (parts.length === 3) {
+          date = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+        } else {
+          date = new Date(dateString);
+        }
+      } else {
+        date = new Date(dateString);
+      }
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return new Date().toLocaleDateString('es-ES', { 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        });
+      }
+      
+      return date.toLocaleDateString('es-ES', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+    } catch (error) {
+      // Fallback to current date if parsing fails
+      return new Date().toLocaleDateString('es-ES', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+    }
   };
 
   const getDefaultContent = () => {
@@ -263,13 +284,13 @@ Estaría encantado/a de tener la oportunidad de discutir cómo mis habilidades y
           </View>
 
           {/* Skills */}
-          {profile?.skillsWithLevel && profile.skillsWithLevel.length > 0 && (
+          {profile?.skillsWithLevel && Array.isArray(profile.skillsWithLevel) && profile.skillsWithLevel.length > 0 && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Habilidades</Text>
               <View style={styles.skillsList}>
                 {profile.skillsWithLevel.slice(0, 5).map((skill: any, index: number) => (
                   <View key={index} style={styles.skillItem}>
-                    <Text style={styles.skillName}>{skill.skill}</Text>
+                    <Text style={styles.skillName}>{skill?.skill || skill || 'Habilidad'}</Text>
                   </View>
                 ))}
               </View>

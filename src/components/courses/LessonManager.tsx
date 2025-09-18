@@ -47,7 +47,7 @@ interface CourseLesson {
   title: string;
   description: string | null;
   content: string;
-  contentType: string;
+  contentType: "TEXT" | "VIDEO" | "AUDIO" | "DOCUMENT";
   videoUrl: string | null;
   audioUrl: string | null;
   duration: number | null;
@@ -83,7 +83,7 @@ export function LessonManager({ courseId, moduleId, lessons, onLessonsChange, se
     title: "",
     description: "",
     content: "",
-    contentType: "TEXT",
+    contentType: "TEXT" as "TEXT" | "VIDEO" | "AUDIO" | "DOCUMENT",
     videoUrl: "",
     audioUrl: "",
     duration: 0,
@@ -115,7 +115,7 @@ export function LessonManager({ courseId, moduleId, lessons, onLessonsChange, se
       title: "",
       description: "",
       content: "",
-      contentType: "TEXT",
+      contentType: "TEXT" as "TEXT" | "VIDEO" | "AUDIO" | "DOCUMENT",
       videoUrl: "",
       audioUrl: "",
       duration: 0,
@@ -356,8 +356,8 @@ export function LessonManager({ courseId, moduleId, lessons, onLessonsChange, se
         return "Video";
       case "AUDIO":
         return "Audio";
-      case "IMAGE":
-        return "Imagen";
+      case "DOCUMENT":
+        return "Documento";
       case "TEXT":
         return "Texto";
       default:
@@ -415,7 +415,7 @@ export function LessonManager({ courseId, moduleId, lessons, onLessonsChange, se
                   <Label htmlFor="contentType">Tipo de Contenido</Label>
                   <Select
                     value={formData.contentType}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, contentType: value }))}
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, contentType: value as "TEXT" | "VIDEO" | "AUDIO" | "DOCUMENT" }))}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -424,7 +424,7 @@ export function LessonManager({ courseId, moduleId, lessons, onLessonsChange, se
                       <SelectItem value="TEXT">Texto</SelectItem>
                       <SelectItem value="VIDEO">Video</SelectItem>
                       <SelectItem value="AUDIO">Audio</SelectItem>
-                      <SelectItem value="IMAGE">Imagen</SelectItem>
+                      <SelectItem value="DOCUMENT">Documento</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -440,11 +440,11 @@ export function LessonManager({ courseId, moduleId, lessons, onLessonsChange, se
                 </div>
               </div>
 
-              {(formData.contentType === "VIDEO" || formData.contentType === "AUDIO" || formData.contentType === "IMAGE") && (
+              {(formData.contentType === "VIDEO" || formData.contentType === "AUDIO" || formData.contentType === "DOCUMENT") && (
                 <div>
                   <Label>Subir Archivo {getContentTypeLabel(formData.contentType)}</Label>
                   <LessonFileUpload
-                    contentType={formData.contentType as "VIDEO" | "AUDIO" | "IMAGE" | "TEXT"}
+                    contentType={formData.contentType as "VIDEO" | "AUDIO" | "DOCUMENT" | "TEXT"}
                     onUpload={handleFileUpload}
                     onRemove={() => setUploadedFileUrl(null)}
                     currentUrl={uploadedFileUrl || undefined}
@@ -670,7 +670,7 @@ export function LessonManager({ courseId, moduleId, lessons, onLessonsChange, se
                 <Label htmlFor="edit-contentType">Tipo de Contenido</Label>
                 <Select
                   value={formData.contentType}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, contentType: value }))}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, contentType: value as "TEXT" | "VIDEO" | "AUDIO" | "DOCUMENT" }))}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -695,11 +695,11 @@ export function LessonManager({ courseId, moduleId, lessons, onLessonsChange, se
               </div>
             </div>
 
-            {(formData.contentType === "VIDEO" || formData.contentType === "AUDIO" || formData.contentType === "IMAGE") && (
+            {(formData.contentType === "VIDEO" || formData.contentType === "AUDIO" || formData.contentType === "DOCUMENT") && (
               <div>
                 <Label>Subir Archivo {getContentTypeLabel(formData.contentType)}</Label>
                 <LessonFileUpload
-                  contentType={formData.contentType as "VIDEO" | "AUDIO" | "IMAGE" | "TEXT"}
+                  contentType={formData.contentType as "VIDEO" | "AUDIO" | "DOCUMENT" | "TEXT"}
                   onUpload={handleFileUpload}
                   onRemove={() => setUploadedFileUrl(null)}
                   currentUrl={uploadedFileUrl || undefined}

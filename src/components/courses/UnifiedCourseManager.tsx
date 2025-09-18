@@ -27,6 +27,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { LessonFileUpload } from "./LessonFileUpload";
 import {
   Plus,
   Edit,
@@ -119,6 +120,7 @@ export function UnifiedCourseManager({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [editingQuizQuestions, setEditingQuizQuestions] = useState<string | null>(null);
+  const [uploadedFileUrl, setUploadedFileUrl] = useState<string | null>(null);
 
   // Auto-hide success messages
   useEffect(() => {
@@ -143,7 +145,7 @@ export function UnifiedCourseManager({
     title: "",
     description: "",
     content: "",
-    contentType: "TEXT",
+    contentType: "TEXT" as "TEXT" | "VIDEO" | "AUDIO" | "DOCUMENT",
     videoUrl: "",
     audioUrl: "",
     duration: 0,
@@ -173,6 +175,7 @@ export function UnifiedCourseManager({
 
   const openCreateModal = (type: 'module' | 'lesson' | 'quiz', moduleId?: string, lessonId?: string) => {
     setEditingItem({ type, id: null, moduleId, lessonId });
+    setUploadedFileUrl(null); // Reset uploaded file URL
     if (type === 'module') {
       setModuleForm({
         title: "",
@@ -186,7 +189,7 @@ export function UnifiedCourseManager({
         title: "",
         description: "",
         content: "",
-        contentType: "TEXT",
+        contentType: "TEXT" as "TEXT" | "VIDEO" | "AUDIO" | "DOCUMENT",
         videoUrl: "",
         audioUrl: "",
         duration: 0,
@@ -266,12 +269,24 @@ export function UnifiedCourseManager({
           setSuccess('Módulo creado exitosamente');
         }
       } else if (editingItem.type === 'lesson') {
+        // Determine the appropriate URL field based on content type
+        let videoUrl = null;
+        let audioUrl = null;
+
+        if (lessonForm.contentType === "VIDEO") {
+          videoUrl = uploadedFileUrl || lessonForm.videoUrl || null;
+        } else if (lessonForm.contentType === "AUDIO") {
+          audioUrl = uploadedFileUrl || lessonForm.audioUrl || null;
+        }
+
         const response = await fetch(`/api/courses/${courseId}/modules/${editingItem.moduleId}/lessons`, {
           method: editingItem.id ? 'PUT' : 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             ...lessonForm,
             id: editingItem.id,
+            videoUrl,
+            audioUrl,
           }),
         });
 
@@ -385,9 +400,41 @@ export function UnifiedCourseManager({
     switch (type) {
       case "VIDEO": return "Video";
       case "AUDIO": return "Audio";
+      case "DOCUMENT": return "Documento";
       case "TEXT": return "Texto";
       case "IMAGE": return "Imagen";
       default: return "Texto";
+    }
+  };
+
+  const handleFileUpload = async (file: File): Promise<string> => {
+    console.log("handleFileUpload called with file:", file.name, file.type);
+    
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("contentType", file.type);
+
+      console.log("Uploading file to /api/upload...");
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Upload failed:", errorData);
+        throw new Error(errorData.error || "Failed to upload file");
+      }
+
+      const data = await response.json();
+      console.log("Upload successful:", data);
+      
+      setUploadedFileUrl(data.url);
+      return data.url;
+    } catch (error) {
+      console.error("File upload error:", error);
+      throw error;
     }
   };
 
@@ -819,7 +866,7 @@ export function UnifiedCourseManager({
                     <Label htmlFor="lesson-type">Tipo de Contenido</Label>
                     <Select
                       value={lessonForm.contentType}
-                      onValueChange={(value) => setLessonForm(prev => ({ ...prev, contentType: value }))}
+                      onValueChange={(value) => setLessonForm(prev => ({ ...prev, contentType: value as "TEXT" | "VIDEO" | "AUDIO" | "DOCUMENT" }))}
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -828,7 +875,7 @@ export function UnifiedCourseManager({
                         <SelectItem value="TEXT">Texto</SelectItem>
                         <SelectItem value="VIDEO">Video</SelectItem>
                         <SelectItem value="AUDIO">Audio</SelectItem>
-                        <SelectItem value="IMAGE">Imagen</SelectItem>
+                        <SelectItem value="DOCUMENT">Documento</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -842,6 +889,20 @@ export function UnifiedCourseManager({
                     />
                   </div>
                 </div>
+
+                {/* File Upload Section */}
+                {(lessonForm.contentType === "VIDEO" || lessonForm.contentType === "AUDIO" || lessonForm.contentType === "DOCUMENT") && (
+                  <div>
+                    <Label>Subir Archivo {getContentTypeLabel(lessonForm.contentType)}</Label>
+                    <LessonFileUpload
+                      contentType={lessonForm.contentType as "VIDEO" | "AUDIO" | "DOCUMENT" | "TEXT"}
+                      onUpload={handleFileUpload}
+                      onRemove={() => setUploadedFileUrl(null)}
+                      currentUrl={uploadedFileUrl || undefined}
+                    />
+                  </div>
+                )}
+
                 <div>
                   <Label htmlFor="lesson-content">Contenido</Label>
                   <Textarea
