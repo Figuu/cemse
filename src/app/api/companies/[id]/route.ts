@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
@@ -118,13 +120,16 @@ export async function PUT(
     const body = await request.json();
     const validatedData = updateCompanySchema.parse(body);
 
-    // Get user ID from session (in real app, this would come from auth)
-    const userId = "user-1"; // Mock user ID
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const userId = session.user.id;
 
     // Check if user owns the company
     const company = await prisma.company.findUnique({
       where: { id: companyId },
-      select: { ownerId: true },
+      select: { ownerId: true, createdBy: true },
     });
 
     if (!company) {
@@ -134,7 +139,8 @@ export async function PUT(
       );
     }
 
-    if (company.ownerId !== userId) {
+    // Check if user owns the company or is admin
+    if (company.ownerId !== userId && company.createdBy !== userId && session.user.role !== "SUPERADMIN") {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 403 }
@@ -190,13 +196,16 @@ export async function DELETE(
 ) {
   try {
     const { id: companyId } = await params;
-    // Get user ID from session (in real app, this would come from auth)
-    const userId = "user-1"; // Mock user ID
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const userId = session.user.id;
 
     // Check if user owns the company
     const company = await prisma.company.findUnique({
       where: { id: companyId },
-      select: { ownerId: true },
+      select: { ownerId: true, createdBy: true },
     });
 
     if (!company) {
@@ -206,7 +215,8 @@ export async function DELETE(
       );
     }
 
-    if (company.ownerId !== userId) {
+    // Check if user owns the company or is admin
+    if (company.ownerId !== userId && company.createdBy !== userId && session.user.role !== "SUPERADMIN") {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 403 }

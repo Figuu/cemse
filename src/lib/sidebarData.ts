@@ -29,6 +29,7 @@ import {
   UserPlus,
   UserCheck,
   MessageSquare,
+  FileCheck,
 } from "lucide-react";
 import type { UserRole, InstitutionType } from "@/types";
 
@@ -112,6 +113,11 @@ export const youthSidebarData: SidebarData = {
           title: "Mi Perfil",
           url: "/profile",
           icon: User,
+        },
+        {
+          title: "Constructor de CV",
+          url: "/cv-builder",
+          icon: FileCheck,
         },
       ],
     },
@@ -493,7 +499,6 @@ export const superAdminSidebarData: SidebarData = {
 };
 
 export function getSidebarDataByRole(role: UserRole, institutionType?: InstitutionType): SidebarData {
-  console.log("🔍 getSidebarDataByRole - Role:", role, "InstitutionType:", institutionType);
 
   switch (role) {
     case "YOUTH":
