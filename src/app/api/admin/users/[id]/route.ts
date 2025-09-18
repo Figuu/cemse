@@ -6,7 +6,7 @@ import bcrypt from "bcryptjs";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -20,8 +20,9 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    const { id } = await params;
     const user = await prisma.user.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         profile: true
       }
@@ -53,7 +54,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -67,6 +68,7 @@ export async function PUT(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    const { id } = await params;
     const body = await request.json();
     const {
       email,
@@ -84,7 +86,7 @@ export async function PUT(
 
     // Check if user exists
     const existingUser = await prisma.user.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: { profile: true }
     });
 
@@ -110,7 +112,7 @@ export async function PUT(
     const result = await prisma.$transaction(async (tx) => {
       // Update user
       const user = await tx.user.update({
-        where: { id: params.id },
+        where: { id },
         data: {
           email: email || existingUser.email,
           firstName: firstName || existingUser.firstName,
@@ -123,7 +125,7 @@ export async function PUT(
       let profile;
       if (existingUser.profile) {
         profile = await tx.profile.update({
-          where: { userId: params.id },
+          where: { userId: id },
           data: {
             firstName: firstName || existingUser.profile.firstName,
             lastName: lastName || existingUser.profile.lastName,
@@ -139,7 +141,7 @@ export async function PUT(
       } else {
         profile = await tx.profile.create({
           data: {
-            userId: params.id,
+            userId: id,
             firstName: firstName || existingUser.firstName,
             lastName: lastName || existingUser.lastName,
             phone,
@@ -182,7 +184,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -196,9 +198,10 @@ export async function DELETE(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    const { id } = await params;
     // Check if user exists
     const existingUser = await prisma.user.findUnique({
-      where: { id: params.id }
+      where: { id }
     });
 
     if (!existingUser) {
@@ -215,7 +218,7 @@ export async function DELETE(
 
     // Delete user (profile will be deleted automatically due to cascade)
     await prisma.user.delete({
-      where: { id: params.id }
+      where: { id }
     });
 
     return NextResponse.json({

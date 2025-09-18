@@ -80,8 +80,8 @@ export default function DashboardPage() {
         return [
           { name: "Administración", href: "/admin", icon: Building2, color: "bg-red-500" },
           { name: "Usuarios", href: "/admin/users", icon: Users, color: "bg-blue-500" },
-          { name: "Sistema", href: "/admin/system", icon: Settings, color: "bg-purple-500" },
-          { name: "Reportes", href: "/admin/reports", icon: TrendingUp, color: "bg-orange-500" },
+          { name: "Estudiantes", href: "/students", icon: GraduationCap, color: "bg-green-500" },
+          { name: "Recursos", href: "/resources", icon: BookOpen, color: "bg-purple-500" },
         ];
       default:
         return [];

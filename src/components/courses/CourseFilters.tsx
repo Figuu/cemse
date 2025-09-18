@@ -36,6 +36,7 @@ interface CourseFiltersProps {
   onReset: () => void;
   onApply: () => void;
   className?: string;
+  userRole?: string;
 }
 
 export function CourseFilters({
@@ -55,7 +56,8 @@ export function CourseFilters({
   levels,
   onReset,
   onApply,
-  className
+  className,
+  userRole
 }: CourseFiltersProps) {
   const [showAdvanced, setShowAdvanced] = useState(false);
 
@@ -202,23 +204,25 @@ export function CourseFilters({
           <div className="space-y-4 pt-4 border-t">
             <h4 className="font-medium text-sm">Filtros Avanzados</h4>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Estado de Inscripción</label>
-                <Select 
-                  value={isEnrolled === undefined ? "all" : isEnrolled.toString()} 
-                  onValueChange={(value) => onEnrolledChange(value === "all" ? undefined : value === "true")}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar estado" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
-                    <SelectItem value="true">Inscritos</SelectItem>
-                    <SelectItem value="false">No Inscritos</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className={`grid grid-cols-1 ${userRole === "YOUTH" ? "md:grid-cols-2" : "md:grid-cols-1"} gap-4`}>
+              {userRole === "YOUTH" && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Estado de Inscripción</label>
+                  <Select 
+                    value={isEnrolled === undefined ? "all" : isEnrolled.toString()} 
+                    onValueChange={(value) => onEnrolledChange(value === "all" ? undefined : value === "true")}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar estado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="true">Inscritos</SelectItem>
+                      <SelectItem value="false">No Inscritos</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">Ordenar por</label>

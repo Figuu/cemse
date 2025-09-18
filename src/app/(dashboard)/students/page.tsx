@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { RoleGuard } from "@/components/auth/RoleGuard";
 import { 
   Users, 
   Search, 
@@ -19,7 +20,7 @@ import {
   BookOpen
 } from "lucide-react";
 
-export default function StudentsPage() {
+function StudentsPageContent() {
   const [searchTerm, setSearchTerm] = useState("");
 
   // Mock data - in real app, this would come from API
@@ -272,5 +273,13 @@ export default function StudentsPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function StudentsPage() {
+  return (
+    <RoleGuard allowedRoles={["INSTITUTION", "SUPERADMIN"]}>
+      <StudentsPageContent />
+    </RoleGuard>
   );
 }

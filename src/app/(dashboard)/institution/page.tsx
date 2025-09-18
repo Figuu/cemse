@@ -3,6 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { RoleGuard } from "@/components/auth/RoleGuard";
 import { 
   Building2, 
   Users, 
@@ -126,7 +127,7 @@ const mockStats: InstitutionStats = {
   averageCompletion: 78
 };
 
-export default function InstitutionPage() {
+function InstitutionPageContent() {
   const [activeTab, setActiveTab] = useState<"overview" | "courses" | "students" | "resources" | "analytics">("overview");
 
   const getStatusColor = (status: string) => {
@@ -525,5 +526,13 @@ export default function InstitutionPage() {
         </Card>
       )}
     </div>
+  );
+}
+
+export default function InstitutionPage() {
+  return (
+    <RoleGuard allowedRoles={["INSTITUTION", "SUPERADMIN"]}>
+      <InstitutionPageContent />
+    </RoleGuard>
   );
 }

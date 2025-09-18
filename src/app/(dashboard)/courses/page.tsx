@@ -27,9 +27,11 @@ import { CourseCard } from "@/components/courses/CourseCard";
 import { CourseFilters } from "@/components/courses/CourseFilters";
 import { CourseCreationModal } from "@/components/courses/CourseCreationModal";
 import { cn } from "@/lib/utils";
+import { useSession } from "next-auth/react";
 
 export default function CoursesPage() {
   const router = useRouter();
+  const { data: session } = useSession();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedLevel, setSelectedLevel] = useState("all");
@@ -41,6 +43,11 @@ export default function CoursesPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [deleteCourseId, setDeleteCourseId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Role-based logic
+  const isYouth = session?.user?.role === "YOUTH";
+  const isInstitution = session?.user?.role === "INSTITUTION";
+  const isSuperAdmin = session?.user?.role === "SUPERADMIN";
 
   const {
     courses,
@@ -221,6 +228,7 @@ export default function CoursesPage() {
           levels={levels}
           onReset={handleResetFilters}
           onApply={handleApplyFilters}
+          userRole={session?.user?.role}
         />
 
         {/* View Mode Toggle */}
@@ -248,10 +256,14 @@ export default function CoursesPage() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className={`grid w-full ${isYouth ? 'grid-cols-3' : 'grid-cols-1'}`}>
             <TabsTrigger value="all">Todos ({courses.length})</TabsTrigger>
-            <TabsTrigger value="enrolled">Mis Cursos ({enrolledCourses.length})</TabsTrigger>
-            <TabsTrigger value="available">Disponibles ({availableCourses.length})</TabsTrigger>
+            {isYouth && (
+              <>
+                <TabsTrigger value="enrolled">Mis Cursos ({enrolledCourses.length})</TabsTrigger>
+                <TabsTrigger value="available">Disponibles ({availableCourses.length})</TabsTrigger>
+              </>
+            )}
           </TabsList>
 
           <TabsContent value="all" className="space-y-4">

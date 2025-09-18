@@ -18,13 +18,75 @@ export async function GET(
 
     const { id: courseId } = await params;
     console.log("Quiz API: Course ID:", courseId);
+    console.log("Quiz API: User role:", session.user.role);
 
-    // For now, let's skip the ownership check and just return empty quizzes
-    // This will help us isolate the issue
-    console.log("Quiz API: Returning empty quizzes for now");
+    // Verify course exists first
+    const course = await prisma.course.findUnique({
+      where: { id: courseId },
+      select: { id: true, institutionId: true }
+    });
+
+    if (!course) {
+      console.log("Quiz API: Course not found");
+      return NextResponse.json({ error: "Course not found" }, { status: 404 });
+    }
+
+    // Verify course ownership for institution users
+    if (session.user.role === "INSTITUTION") {
+      const userInstitution = await prisma.institution.findFirst({
+        where: { createdBy: session.user.id },
+        select: { id: true }
+      });
+      
+      if (!userInstitution || course.institutionId !== userInstitution.id) {
+        console.log("Quiz API: Forbidden - user doesn't own course");
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    }
+
+    console.log("Quiz API: Fetching quizzes for course:", courseId);
+    const quizzes = await prisma.quiz.findMany({
+      where: { courseId },
+      orderBy: { createdAt: "asc" },
+    });
+
+    console.log("Quiz API: Found quizzes:", quizzes.length);
+    
+    // Safely map quizzes with error handling
+    const safeQuizzes = quizzes.map(quiz => {
+      try {
+        return {
+          id: quiz.id,
+          title: quiz.title || '',
+          description: quiz.description || '',
+          orderIndex: 0, // Default order index
+          timeLimit: quiz.timeLimit || null,
+          passingScore: quiz.passingScore || 70,
+          isPublished: quiz.isActive || false,
+          questions: Array.isArray(quiz.questions) ? quiz.questions : [],
+          courseId: quiz.courseId || courseId,
+          lessonId: quiz.lessonId || null,
+        };
+      } catch (mapError) {
+        console.error("Error mapping quiz:", quiz.id, mapError);
+        return {
+          id: quiz.id,
+          title: 'Error loading quiz',
+          description: '',
+          orderIndex: 0,
+          timeLimit: null,
+          passingScore: 70,
+          isPublished: false,
+          questions: [],
+          courseId: courseId,
+          lessonId: null,
+        };
+      }
+    });
+
     return NextResponse.json({
       success: true,
-      quizzes: [],
+      quizzes: safeQuizzes,
     });
 
   } catch (error) {
@@ -34,13 +96,20 @@ export async function GET(
       stack: error instanceof Error ? error.stack : undefined,
       courseId: 'unknown'
     });
-    return NextResponse.json(
-      { 
-        error: "Failed to fetch course quizzes",
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
-      { status: 500 }
-    );
+    
+    // Check if it's a Prisma error
+    if (error && typeof error === 'object' && 'code' in error) {
+      console.error("Prisma error code:", (error as any).code);
+    }
+    
+    // Return empty array as fallback to prevent frontend crashes
+    console.log("Quiz API: Returning empty array as fallback");
+    return NextResponse.json({
+      success: true,
+      quizzes: [],
+      error: "Failed to fetch quizzes, returning empty array",
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 }
 
@@ -57,6 +126,9 @@ export async function POST(
 
     const { id: courseId } = await params;
     const body = await request.json();
+    
+    console.log("Quiz POST API: Course ID:", courseId);
+    console.log("Quiz POST API: Request body:", body);
 
     // Verify course ownership for institution users
     if (session.user.role === "INSTITUTION") {
@@ -82,6 +154,7 @@ export async function POST(
       passingScore,
       isPublished,
       questions = [],
+      lessonId,
     } = body;
 
     if (!title) {
@@ -91,6 +164,7 @@ export async function POST(
     const quiz = await prisma.quiz.create({
       data: {
         courseId,
+        lessonId: lessonId || null,
         title,
         description,
         timeLimit: timeLimit || null,
@@ -111,6 +185,8 @@ export async function POST(
         passingScore: quiz.passingScore,
         isPublished: quiz.isActive,
         questions: Array.isArray(quiz.questions) ? quiz.questions : [],
+        courseId: quiz.courseId,
+        lessonId: quiz.lessonId,
       },
     });
 

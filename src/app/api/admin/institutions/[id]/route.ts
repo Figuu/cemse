@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -19,8 +19,9 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    const { id } = await params;
     const institution = await prisma.institution.findUnique({
-      where: { id: params.id }
+      where: { id }
     });
 
     if (!institution) {
@@ -39,7 +40,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -53,6 +54,7 @@ export async function PUT(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    const { id } = await params;
     const body = await request.json();
     const {
       name,
@@ -75,7 +77,7 @@ export async function PUT(
 
     // Check if institution exists
     const existingInstitution = await prisma.institution.findUnique({
-      where: { id: params.id }
+      where: { id }
     });
 
     if (!existingInstitution) {
@@ -98,7 +100,7 @@ export async function PUT(
 
     // Update institution
     const institution = await prisma.institution.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         name: name || existingInstitution.name,
         email: email || existingInstitution.email,
@@ -154,7 +156,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -168,9 +170,10 @@ export async function DELETE(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    const { id } = await params;
     // Check if institution exists
     const existingInstitution = await prisma.institution.findUnique({
-      where: { id: params.id }
+      where: { id }
     });
 
     if (!existingInstitution) {
@@ -179,7 +182,7 @@ export async function DELETE(
 
     // Delete institution (related data will be handled by cascade rules)
     await prisma.institution.delete({
-      where: { id: params.id }
+      where: { id }
     });
 
     return NextResponse.json({

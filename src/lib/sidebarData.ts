@@ -434,7 +434,7 @@ export const superAdminSidebarData: SidebarData = {
       items: [
         {
           title: "Gestión de Cursos",
-          url: "/admin/courses",
+          url: "/courses",
           icon: GraduationCap,
         },
       ],
@@ -469,23 +469,8 @@ export const superAdminSidebarData: SidebarData = {
       items: [
         {
           title: "Gestión de Noticias",
-          url: "/admin/news",
+          url: "/news",
           icon: Newspaper,
-        },
-      ],
-    },
-    {
-      title: "Sistema",
-      items: [
-        {
-          title: "Base de Datos",
-          url: "/admin/database",
-          icon: Database,
-        },
-        {
-          title: "Estadísticas",
-          url: "/admin/analytics",
-          icon: BarChart3,
         },
       ],
     },
@@ -493,9 +478,9 @@ export const superAdminSidebarData: SidebarData = {
       title: "Personal",
       items: [
         {
-          title: "Configuración",
-          url: "/admin/settings",
-          icon: Settings,
+          title: "Mi Institución",
+          url: "/institution",
+          icon: Building2,
         },
         {
           title: "Mi Perfil",

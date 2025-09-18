@@ -35,7 +35,8 @@ import {
   FileText,
   Video,
   Headphones,
-  Image
+  Image,
+  BookOpen
 } from "lucide-react";
 import { LessonFileUpload } from "./LessonFileUpload";
 import { LessonResources } from "./LessonResources";
@@ -54,6 +55,12 @@ interface CourseLesson {
   isRequired: boolean;
   isPreview: boolean;
   attachments: Record<string, any>;
+  moduleId?: string;
+  module?: {
+    id: string;
+    title: string;
+    orderIndex: number;
+  };
 }
 
 interface LessonManagerProps {
@@ -61,9 +68,11 @@ interface LessonManagerProps {
   moduleId: string;
   lessons: CourseLesson[];
   onLessonsChange: (lessons: CourseLesson[]) => void;
+  selectedLessonId?: string | null;
+  onClose?: () => void;
 }
 
-export function LessonManager({ courseId, moduleId, lessons, onLessonsChange }: LessonManagerProps) {
+export function LessonManager({ courseId, moduleId, lessons, onLessonsChange, selectedLessonId, onClose }: LessonManagerProps) {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingLesson, setEditingLesson] = useState<CourseLesson | null>(null);
@@ -86,6 +95,20 @@ export function LessonManager({ courseId, moduleId, lessons, onLessonsChange }: 
   const [isFileUploading, setIsFileUploading] = useState(false);
   const [lessonResources, setLessonResources] = useState<Record<string, any[]>>({});
   const [lessonQuizzes, setLessonQuizzes] = useState<Record<string, any[]>>({});
+
+  // Handle selectedLessonId prop
+  useEffect(() => {
+    if (selectedLessonId) {
+      const lesson = lessons.find(l => l.id === selectedLessonId);
+      if (lesson) {
+        openEditModal(lesson);
+      }
+    } else if (selectedLessonId === null) {
+      // Open create modal
+      setIsCreateModalOpen(true);
+      setIsEditModalOpen(false);
+    }
+  }, [selectedLessonId, lessons]);
 
   const resetForm = () => {
     setFormData({
@@ -197,6 +220,7 @@ export function LessonManager({ courseId, moduleId, lessons, onLessonsChange }: 
       onLessonsChange([...lessons, data.lesson]);
       setIsCreateModalOpen(false);
       resetForm();
+      onClose?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create lesson");
     } finally {
@@ -257,6 +281,7 @@ export function LessonManager({ courseId, moduleId, lessons, onLessonsChange }: 
       setIsEditModalOpen(false);
       setEditingLesson(null);
       resetForm();
+      onClose?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update lesson");
     } finally {
@@ -478,7 +503,10 @@ export function LessonManager({ courseId, moduleId, lessons, onLessonsChange }: 
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>
+              <Button variant="outline" onClick={() => {
+                setIsCreateModalOpen(false);
+                onClose?.();
+              }}>
                 Cancelar
               </Button>
               <Button onClick={handleCreateLesson} disabled={isLoading || isFileUploading}>
@@ -545,6 +573,12 @@ export function LessonManager({ courseId, moduleId, lessons, onLessonsChange }: 
                           <Badge variant="outline">
                             {getContentTypeLabel(lesson.contentType)}
                           </Badge>
+                          {lesson.module && (
+                            <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                              <BookOpen className="h-3 w-3 mr-1" />
+                              {lesson.module.title}
+                            </Badge>
+                          )}
                           {lesson.isRequired && (
                             <Badge variant="secondary">Requerida</Badge>
                           )}
@@ -724,7 +758,10 @@ export function LessonManager({ courseId, moduleId, lessons, onLessonsChange }: 
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
+            <Button variant="outline" onClick={() => {
+              setIsEditModalOpen(false);
+              onClose?.();
+            }}>
               Cancelar
             </Button>
             <Button onClick={handleEditLesson} disabled={isLoading || isFileUploading}>
