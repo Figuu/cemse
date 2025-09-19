@@ -99,7 +99,8 @@ export function useEntrepreneurshipConnections(filters: ConnectionsFilters = {})
       });
 
       if (!response.ok) {
-        throw new Error("Failed to create connection");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to create connection");
       }
 
       return response.json();

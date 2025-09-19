@@ -191,12 +191,25 @@ export class MinIOService {
    */
   async getFile(bucket: string, key: string, start?: number, length?: number): Promise<Buffer> {
     try {
-      const stream = await this.client.getObject(bucket, key, start, length);
+      // MinIO getObject only accepts bucket and key, then we can use range headers
+      const stream = await this.client.getObject(bucket, key);
       const chunks: Buffer[] = [];
       
       return new Promise((resolve, reject) => {
-        stream.on('data', (chunk) => chunks.push(chunk));
-        stream.on('end', () => resolve(Buffer.concat(chunks)));
+        stream.on('data', (chunk) => {
+          chunks.push(chunk);
+        });
+        stream.on('end', () => {
+          let buffer = Buffer.concat(chunks);
+          
+          // Apply range if specified
+          if (start !== undefined) {
+            const end = length !== undefined ? start + length - 1 : buffer.length - 1;
+            buffer = buffer.slice(start, end + 1);
+          }
+          
+          resolve(buffer);
+        });
         stream.on('error', reject);
       });
     } catch (error) {

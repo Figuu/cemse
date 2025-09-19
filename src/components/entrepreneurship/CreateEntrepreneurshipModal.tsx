@@ -34,9 +34,7 @@ const createEntrepreneurshipSchema = z.object({
   description: z.string().min(10, "La descripción debe tener al menos 10 caracteres").max(1000, "La descripción es muy larga"),
   category: z.string().min(1, "La categoría es requerida"),
   subcategory: z.string().optional(),
-  businessStage: z.enum(["IDEA", "STARTUP", "GROWTH", "MATURE", "SCALE"], {
-    required_error: "La etapa del negocio es requerida",
-  }),
+  businessStage: z.enum(["IDEA", "STARTUP", "GROWING", "ESTABLISHED"]),
   website: z.string().url("URL inválida").optional().or(z.literal("")),
   email: z.string().email("Email inválido").optional().or(z.literal("")),
   phone: z.string().optional(),
@@ -61,9 +59,8 @@ interface CreateEntrepreneurshipModalProps {
 const businessStages: { value: BusinessStage; label: string }[] = [
   { value: "IDEA", label: "Idea" },
   { value: "STARTUP", label: "Startup" },
-  { value: "GROWTH", label: "Crecimiento" },
-  { value: "MATURE", label: "Maduro" },
-  { value: "SCALE", label: "Escalado" },
+  { value: "GROWING", label: "Crecimiento" },
+  { value: "ESTABLISHED", label: "Establecido" },
 ];
 
 const categories = [
@@ -134,7 +131,7 @@ export function CreateEntrepreneurshipModal({ onClose, onSuccess }: CreateEntrep
     formState: { errors },
     setValue,
     watch,
-  } = useForm<CreateEntrepreneurshipFormData>({
+  } = useForm({
     resolver: zodResolver(createEntrepreneurshipSchema),
     defaultValues: {
       department: "Cochabamba",
@@ -189,6 +186,7 @@ export function CreateEntrepreneurshipModal({ onClose, onSuccess }: CreateEntrep
     try {
       const entrepreneurshipData: CreateEntrepreneurshipData = {
         ...data,
+        businessStage: data.businessStage as BusinessStage,
         logo,
         images: bannerImages,
         socialMedia: socialMediaLinks.length > 0 ? JSON.stringify(

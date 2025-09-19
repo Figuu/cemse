@@ -3,17 +3,34 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Plus, Search, Filter } from "lucide-react";
+import { Plus, Search, Filter, MessageCircle } from "lucide-react";
 import { EntrepreneurshipGrid } from "@/components/entrepreneurship/EntrepreneurshipGrid";
 import { MyEntrepreneurshipsGrid } from "@/components/entrepreneurship/MyEntrepreneurshipsGrid";
 import { CreateEntrepreneurshipModal } from "@/components/entrepreneurship/CreateEntrepreneurshipModal";
 import { EntrepreneurshipFilters } from "@/components/entrepreneurship/EntrepreneurshipFilters";
+import { ChatSidebar } from "@/components/entrepreneurship/ChatSidebar";
 import { EntrepreneurshipsFilters } from "@/hooks/useEntrepreneurships";
 
 export default function EntrepreneurshipNetworkPage() {
   const [activeTab, setActiveTab] = useState("emprendimientos");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [filters, setFilters] = useState<EntrepreneurshipsFilters>({});
+  
+  // Chat sidebar state
+  const [chatSidebarOpen, setChatSidebarOpen] = useState(false);
+
+  // Chat handlers
+  const handleOpenChat = () => {
+    setChatSidebarOpen(true);
+  };
+
+  const handleCloseChat = () => {
+    setChatSidebarOpen(false);
+  };
+
+  const handleMinimizeChat = () => {
+    setChatSidebarOpen(false);
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -38,6 +55,10 @@ export default function EntrepreneurshipNetworkPage() {
                 onFiltersChange={setFilters} 
               />
             )}
+            <Button variant="outline" onClick={handleOpenChat}>
+              <MessageCircle className="h-4 w-4 mr-2" />
+              Mensajes
+            </Button>
             <Button onClick={() => setShowCreateModal(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Crear Emprendimiento
@@ -63,6 +84,13 @@ export default function EntrepreneurshipNetworkPage() {
           }}
         />
       )}
+
+      {/* Chat Sidebar */}
+      <ChatSidebar
+        isOpen={chatSidebarOpen}
+        onClose={handleCloseChat}
+        onMinimize={handleMinimizeChat}
+      />
     </div>
   );
 }

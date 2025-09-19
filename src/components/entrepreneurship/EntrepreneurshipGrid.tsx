@@ -11,11 +11,18 @@ import {
   Users, 
   Eye,
   Star,
-  ExternalLink
+  ExternalLink,
+  UserPlus,
+  MessageCircle
 } from "lucide-react";
 import { useEntrepreneurships, EntrepreneurshipsFilters } from "@/hooks/useEntrepreneurships";
+import { useEntrepreneurshipConnections } from "@/hooks/useEntrepreneurshipConnections";
+import { useSession } from "next-auth/react";
 import { BusinessStage } from "@prisma/client";
 import { EntrepreneurshipDetailsModal } from "./EntrepreneurshipDetailsModal";
+import { ConnectionRequestModal } from "./ConnectionRequestModal";
+import { ConnectionActions } from "./ConnectionActions";
+import { ChatSidebar } from "./ChatSidebar";
 
 interface EntrepreneurshipGridProps {
   filters: EntrepreneurshipsFilters;
@@ -24,22 +31,59 @@ interface EntrepreneurshipGridProps {
 const businessStageLabels: Record<BusinessStage, string> = {
   IDEA: "Idea",
   STARTUP: "Startup",
-  GROWTH: "Crecimiento",
-  MATURE: "Maduro",
-  SCALE: "Escalado",
+  GROWING: "Crecimiento",
+  ESTABLISHED: "Establecido",
 };
 
 const businessStageColors: Record<BusinessStage, string> = {
   IDEA: "bg-blue-100 text-blue-800",
   STARTUP: "bg-green-100 text-green-800",
-  GROWTH: "bg-yellow-100 text-yellow-800",
-  MATURE: "bg-purple-100 text-purple-800",
-  SCALE: "bg-orange-100 text-orange-800",
+  GROWING: "bg-yellow-100 text-yellow-800",
+  ESTABLISHED: "bg-purple-100 text-purple-800",
 };
 
 export function EntrepreneurshipGrid({ filters }: EntrepreneurshipGridProps) {
+  const { data: session } = useSession();
   const { entrepreneurships, isLoading, error } = useEntrepreneurships(filters);
+  const { connections } = useEntrepreneurshipConnections();
   const [selectedEntrepreneurshipId, setSelectedEntrepreneurshipId] = useState<string | null>(null);
+  const [showConnectionModal, setShowConnectionModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<{
+    id: string;
+    firstName: string;
+    lastName: string;
+    avatarUrl?: string;
+  } | null>(null);
+  const [selectedEntrepreneurshipName, setSelectedEntrepreneurshipName] = useState<string>("");
+
+  // Helper function to get connection status
+  const getConnectionStatus = (ownerUserId: string) => {
+    if (!session?.user?.id || ownerUserId === session.user.id) return null;
+    
+    return connections.find(conn => 
+      (conn.requesterId === session.user.id || conn.addresseeId === session.user.id) &&
+      (conn.requesterId === ownerUserId || conn.addresseeId === ownerUserId)
+    );
+  };
+
+  // Helper function to handle connection request
+  const handleConnectionRequest = (entrepreneurship: any) => {
+    setSelectedUser({
+      id: entrepreneurship.owner.userId, // Use userId instead of profile id
+      firstName: entrepreneurship.owner.firstName,
+      lastName: entrepreneurship.owner.lastName,
+      avatarUrl: entrepreneurship.owner.avatarUrl
+    });
+    setSelectedEntrepreneurshipName(entrepreneurship.name);
+    setShowConnectionModal(true);
+  };
+
+  // Helper function to handle chat - now handled by the main chat sidebar
+  const handleChat = (entrepreneurship: any) => {
+    // Chat functionality is now handled by the main chat sidebar
+    // This function can be used for future enhancements if needed
+  };
+
 
   if (isLoading) {
     return (
@@ -168,6 +212,18 @@ export function EntrepreneurshipGrid({ filters }: EntrepreneurshipGridProps) {
                 </Button>
               </div>
             </div>
+
+            {/* Connection Actions */}
+            {session?.user?.id && (
+              <div className="pt-3 border-t">
+                <ConnectionActions
+                  connectionStatus={getConnectionStatus(entrepreneurship.owner.userId)?.status || null}
+                  isOwnEntrepreneurship={session.user.id === entrepreneurship.owner.userId}
+                  onConnect={() => handleConnectionRequest(entrepreneurship)}
+                  onChat={() => handleChat(entrepreneurship)}
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
       ))}
@@ -177,6 +233,19 @@ export function EntrepreneurshipGrid({ filters }: EntrepreneurshipGridProps) {
           entrepreneurshipId={selectedEntrepreneurshipId}
           isOpen={!!selectedEntrepreneurshipId}
           onClose={() => setSelectedEntrepreneurshipId(null)}
+        />
+      )}
+
+      {showConnectionModal && selectedUser && (
+        <ConnectionRequestModal
+          isOpen={showConnectionModal}
+          onClose={() => {
+            setShowConnectionModal(false);
+            setSelectedUser(null);
+            setSelectedEntrepreneurshipName("");
+          }}
+          targetUser={selectedUser}
+          entrepreneurshipName={selectedEntrepreneurshipName}
         />
       )}
     </div>

@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { useEntrepreneurshipConnections } from "@/hooks/useEntrepreneurshipConnections";
 import { Loader2, UserPlus } from "lucide-react";
+import { toast } from "sonner";
 
 interface ConnectionRequestModalProps {
   isOpen: boolean;
@@ -45,11 +46,18 @@ export function ConnectionRequestModal({
         message: message.trim() || undefined,
       });
       
+      toast.success("Solicitud de conexión enviada", {
+        description: `Tu solicitud ha sido enviada a ${targetUser.firstName} ${targetUser.lastName}`,
+      });
+      
       // Reset form and close modal
       setMessage("");
       onClose();
     } catch (error) {
       console.error("Error sending connection request:", error);
+      toast.error("Error al enviar solicitud", {
+        description: "No se pudo enviar la solicitud de conexión. Intenta nuevamente.",
+      });
     }
   };
 

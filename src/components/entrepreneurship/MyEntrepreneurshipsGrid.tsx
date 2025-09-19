@@ -30,20 +30,20 @@ import {
 const businessStageLabels: Record<BusinessStage, string> = {
   IDEA: "Idea",
   STARTUP: "Startup",
-  GROWTH: "Crecimiento",
-  MATURE: "Maduro",
-  SCALE: "Escalado",
+  GROWING: "Crecimiento",
+  ESTABLISHED: "Establecido",
 };
 
 const businessStageColors: Record<BusinessStage, string> = {
   IDEA: "bg-blue-100 text-blue-800",
   STARTUP: "bg-green-100 text-green-800",
-  GROWTH: "bg-yellow-100 text-yellow-800",
-  MATURE: "bg-purple-100 text-purple-800",
-  SCALE: "bg-orange-100 text-orange-800",
+  GROWING: "bg-yellow-100 text-yellow-800",
+  ESTABLISHED: "bg-purple-100 text-purple-800",
 };
 
-export function MyEntrepreneurshipsGrid() {
+interface MyEntrepreneurshipsGridProps {}
+
+export function MyEntrepreneurshipsGrid({}: MyEntrepreneurshipsGridProps) {
   const { entrepreneurships, isLoading, error, deleteEntrepreneurship, isDeleting } = useMyEntrepreneurships();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedEntrepreneurshipId, setSelectedEntrepreneurshipId] = useState<string | null>(null);

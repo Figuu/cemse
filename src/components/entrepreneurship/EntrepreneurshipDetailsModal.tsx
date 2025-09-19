@@ -47,17 +47,15 @@ interface EntrepreneurshipDetailsModalProps {
 const businessStageLabels: Record<BusinessStage, string> = {
   IDEA: "Idea",
   STARTUP: "Startup",
-  GROWTH: "Crecimiento",
-  MATURE: "Maduro",
-  SCALE: "Escalado",
+  GROWING: "Crecimiento",
+  ESTABLISHED: "Establecido",
 };
 
 const businessStageColors: Record<BusinessStage, string> = {
   IDEA: "bg-blue-100 text-blue-800",
   STARTUP: "bg-green-100 text-green-800",
-  GROWTH: "bg-yellow-100 text-yellow-800",
-  MATURE: "bg-purple-100 text-purple-800",
-  SCALE: "bg-orange-100 text-orange-800",
+  GROWING: "bg-yellow-100 text-yellow-800",
+  ESTABLISHED: "bg-purple-100 text-purple-800",
 };
 
 export function EntrepreneurshipDetailsModal({ 
@@ -120,12 +118,12 @@ export function EntrepreneurshipDetailsModal({
 
   // Check if user is authenticated and not trying to connect with themselves
   const isAuthenticated = !!session?.user?.id;
-  const isOwnEntrepreneurship = session?.user?.id === entrepreneurship.ownerId;
+  const isOwnEntrepreneurship = session?.user?.id === entrepreneurship.owner.userId;
 
   // Check connection status
   const existingConnection = connections.find(conn => 
     (conn.requesterId === session?.user?.id || conn.addresseeId === session?.user?.id) &&
-    (conn.requesterId === entrepreneurship.ownerId || conn.addresseeId === entrepreneurship.ownerId)
+    (conn.requesterId === entrepreneurship.owner.userId || conn.addresseeId === entrepreneurship.owner.userId)
   );
 
   const getConnectionButtonText = () => {
@@ -474,7 +472,12 @@ export function EntrepreneurshipDetailsModal({
         <ConnectionRequestModal
           isOpen={showConnectionModal}
           onClose={() => setShowConnectionModal(false)}
-          targetUser={entrepreneurship.owner}
+          targetUser={{
+            id: entrepreneurship.owner.userId,
+            firstName: entrepreneurship.owner.firstName,
+            lastName: entrepreneurship.owner.lastName,
+            avatarUrl: entrepreneurship.owner.avatarUrl
+          }}
           entrepreneurshipName={entrepreneurship.name}
         />
       )}
@@ -484,7 +487,7 @@ export function EntrepreneurshipDetailsModal({
           isOpen={showChat}
           onClose={() => setShowChat(false)}
           onMinimize={() => setShowChat(false)}
-          recipientId={entrepreneurship.owner.id}
+          recipientId={entrepreneurship.owner.userId}
           recipientName={`${entrepreneurship.owner.firstName} ${entrepreneurship.owner.lastName}`}
           recipientAvatar={entrepreneurship.owner.avatarUrl}
           entrepreneurshipId={entrepreneurship.id}

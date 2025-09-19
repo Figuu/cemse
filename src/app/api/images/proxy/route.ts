@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { minioService } from "@/lib/minioService";
 
 export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const bucket = searchParams.get('bucket');
+  const key = searchParams.get('key');
+  
   try {
-    const { searchParams } = new URL(request.url);
-    const bucket = searchParams.get('bucket');
-    const key = searchParams.get('key');
     
     if (!bucket || !key) {
       return NextResponse.json({ error: "Missing bucket or key parameter" }, { status: 400 });
