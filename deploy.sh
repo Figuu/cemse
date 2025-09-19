@@ -165,6 +165,18 @@ run_migrations() {
         # Run migrations
         if pnpm prisma migrate deploy; then
             success "Database migrations completed"
+            
+            # Seed database if in development mode
+            if [ "${NODE_ENV:-development}" = "development" ]; then
+                log "Seeding database..."
+                if pnpm prisma db seed; then
+                    success "Database seeded successfully"
+                else
+                    warn "Database seeding failed, but continuing..."
+                fi
+            else
+                info "Skipping database seeding in production mode"
+            fi
         else
             error "Database migrations failed"
             exit 1

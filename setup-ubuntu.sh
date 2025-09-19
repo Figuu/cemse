@@ -694,6 +694,20 @@ pnpm install
 log "🔧 Generating Prisma client..."
 pnpm prisma generate
 
+# Run database migrations and seed (if database is available)
+log "🗄️ Setting up database..."
+if docker-compose ps db | grep -q "Up" 2>/dev/null; then
+    log "Database container is running, running migrations..."
+    pnpm prisma migrate deploy
+    
+    log "Seeding database..."
+    pnpm prisma db seed
+    success "Database setup completed"
+else
+    warn "Database container not running, skipping database setup"
+    info "Database will be set up when you run the deployment script"
+fi
+
 success "Application dependencies installed"
 
 # =============================================================================
