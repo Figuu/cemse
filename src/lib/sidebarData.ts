@@ -243,14 +243,9 @@ export const companySidebarData: SidebarData = {
       title: "Personal",
       items: [
         {
-          title: "Mi Empresa",
-          url: "/company",
+          title: "Perfil",
+          url: "/profile",
           icon: Building2,
-        },
-        {
-          title: "Configuración",
-          url: "/settings",
-          icon: Settings,
         },
       ],
     },

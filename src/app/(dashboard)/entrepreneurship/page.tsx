@@ -16,11 +16,13 @@ import {
 } from "lucide-react";
 import { BusinessPlanBuilder } from "@/components/entrepreneurship/BusinessPlanBuilder";
 import { FinancialCalculator } from "@/components/entrepreneurship/FinancialCalculator";
+import { useRouter } from "next/navigation";
 
 export default function EntrepreneurshipPage() {
   const [activeTab, setActiveTab] = useState("overview");
   const [showBusinessPlanBuilder, setShowBusinessPlanBuilder] = useState(false);
   const [showFinancialCalculator, setShowFinancialCalculator] = useState(false);
+  const router = useRouter();
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -78,7 +80,7 @@ export default function EntrepreneurshipPage() {
               </CardContent>
             </Card>
 
-            <Card className="cursor-pointer hover:shadow-md transition-shadow">
+            <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => router.push('/entrepreneurship/network')}>
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <Users className="h-5 w-5 mr-2" />

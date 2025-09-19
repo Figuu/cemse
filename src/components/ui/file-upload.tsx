@@ -16,6 +16,7 @@ import {
   Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useFileUpload } from "@/hooks/useFileUpload";
 
 interface FileUploadProps {
   onUpload: (files: File[]) => Promise<void>;
@@ -49,6 +50,7 @@ export function FileUpload({
 }: FileUploadProps) {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const { uploadFile } = useFileUpload();
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const newFiles: UploadedFile[] = acceptedFiles.map(file => ({
@@ -85,29 +87,37 @@ export function FileUpload({
     );
 
     try {
-      // Simulate upload progress
-      for (let i = 0; i <= 100; i += 10) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-        setUploadedFiles(prev => 
-          prev.map(f => 
-            f.status === "uploading" 
-              ? { ...f, progress: i }
-              : f
-          )
-        );
+      // Upload each file individually
+      for (const fileItem of pendingFiles) {
+        try {
+          const uploadUrl = await uploadFile(fileItem.file);
+          
+          // Update status to success
+          setUploadedFiles(prev => 
+            prev.map(f => 
+              f.id === fileItem.id 
+                ? { ...f, status: "success" as const, progress: 100, url: uploadUrl }
+                : f
+            )
+          );
+        } catch (error) {
+          // Update status to error
+          setUploadedFiles(prev => 
+            prev.map(f => 
+              f.id === fileItem.id 
+                ? { 
+                    ...f, 
+                    status: "error" as const, 
+                    error: error instanceof Error ? error.message : "Upload failed"
+                  }
+                : f
+            )
+          );
+        }
       }
 
       // Call the actual upload function
       await onUpload(pendingFiles.map(f => f.file));
-
-      // Update status to success
-      setUploadedFiles(prev => 
-        prev.map(f => 
-          f.status === "uploading" 
-            ? { ...f, status: "success" as const, progress: 100 }
-            : f
-        )
-      );
     } catch (error) {
       // Update status to error
       setUploadedFiles(prev => 

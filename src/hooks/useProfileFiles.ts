@@ -76,9 +76,8 @@ export function useProfileFiles(): UseProfileFilesReturn {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("category", category);
-      formData.append("userId", session.user.id);
 
-      const response = await fetch("/api/files/upload", {
+      const response = await fetch("/api/files/minio/upload", {
         method: "POST",
         body: formData,
       });

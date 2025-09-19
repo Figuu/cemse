@@ -27,21 +27,37 @@ export async function POST(request: NextRequest) {
     const allowedTypes = {
       "course-thumbnail": ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp", "image/svg+xml"],
       "course-video": ["video/mp4", "video/avi", "video/mov", "video/wmv", "video/flv", "video/webm", "video/quicktime"],
+      "course-audio": ["audio/mp3", "audio/wav", "audio/ogg", "audio/m4a", "audio/aac", "audio/flac"],
+      "news-image": ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp", "image/svg+xml"],
+      "news-video": ["video/mp4", "video/avi", "video/mov", "video/wmv", "video/flv", "video/webm", "video/quicktime"],
       "profile-picture": ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp"],
       "cv": ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
       "certificate": ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp", "application/pdf"],
-      "other": ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp", "application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]
+      "other": ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp", "application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "audio/mp3", "audio/wav", "audio/ogg", "audio/m4a", "audio/aac", "audio/flac"]
     };
 
     if (!allowedTypes[category as keyof typeof allowedTypes]?.includes(file.type)) {
-      const allowedExtensions = allowedTypes[category as keyof typeof allowedTypes]?.map(type => {
-        if (type.startsWith("image/")) return "PNG, JPG, JPEG, GIF, WebP, SVG";
-        if (type.startsWith("video/")) return "MP4, AVI, MOV, WMV, FLV, WebM";
-        if (type === "application/pdf") return "PDF";
-        if (type === "application/msword") return "DOC";
-        if (type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") return "DOCX";
-        return type;
-      }).join(", ");
+      // Create a unique set of allowed extensions for this category
+      const categoryTypes = allowedTypes[category as keyof typeof allowedTypes] || [];
+      const extensions = new Set<string>();
+      
+      categoryTypes.forEach(type => {
+        if (type.startsWith("image/")) {
+          extensions.add("PNG, JPG, JPEG, GIF, WebP, SVG");
+        } else if (type.startsWith("video/")) {
+          extensions.add("MP4, AVI, MOV, WMV, FLV, WebM");
+        } else if (type.startsWith("audio/")) {
+          extensions.add("MP3, WAV, OGG, M4A, AAC, FLAC");
+        } else if (type === "application/pdf") {
+          extensions.add("PDF");
+        } else if (type === "application/msword") {
+          extensions.add("DOC");
+        } else if (type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+          extensions.add("DOCX");
+        }
+      });
+      
+      const allowedExtensions = Array.from(extensions).join(", ");
       
       return NextResponse.json({ 
         error: `Invalid file type for ${category}. Allowed types: ${allowedExtensions}` 
@@ -55,6 +71,9 @@ export async function POST(request: NextRequest) {
       "certificate": 10 * 1024 * 1024, // 10MB
       "course-thumbnail": 10 * 1024 * 1024, // 10MB
       "course-video": 500 * 1024 * 1024, // 500MB
+      "course-audio": 100 * 1024 * 1024, // 100MB
+      "news-image": 10 * 1024 * 1024, // 10MB
+      "news-video": 500 * 1024 * 1024, // 500MB
       "other": 10 * 1024 * 1024 // 10MB
     };
 
@@ -72,10 +91,12 @@ export async function POST(request: NextRequest) {
 
     // Determine bucket based on category
     let bucket: string = BUCKETS.UPLOADS;
-    if (category === "course-thumbnail" || category === "profile-picture" || category === "certificate") {
+    if (category === "course-thumbnail" || category === "profile-picture" || category === "certificate" || category === "news-image") {
       bucket = BUCKETS.IMAGES;
-    } else if (category === "course-video") {
+    } else if (category === "course-video" || category === "news-video") {
       bucket = BUCKETS.VIDEOS;
+    } else if (category === "course-audio") {
+      bucket = BUCKETS.AUDIO;
     } else if (category === "cv") {
       bucket = BUCKETS.DOCUMENTS;
     }

@@ -136,7 +136,7 @@ export function NewsForm({ initialData, onSubmit, onCancel, isLoading = false }:
       }
       
       resetUpload();
-      const url = await uploadFile(file);
+      const url = await uploadFile(file, "news");
       
       if (type === 'image') {
         setFormData(prev => ({ ...prev, imageUrl: url }));

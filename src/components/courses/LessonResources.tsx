@@ -89,9 +89,9 @@ export function LessonResources({ lessonId, resources, onResourcesChange }: Less
       for (const file of files) {
         const formData = new FormData();
         formData.append("file", file);
-        formData.append("contentType", file.type);
+        formData.append("category", "other");
 
-        const response = await fetch("/api/upload", {
+        const response = await fetch("/api/files/minio/upload", {
           method: "POST",
           body: formData,
         });
@@ -103,17 +103,21 @@ export function LessonResources({ lessonId, resources, onResourcesChange }: Less
 
         const data = await response.json();
         
-        const newResource: LessonResource = {
-          id: Math.random().toString(36).substr(2, 9),
-          title: file.name,
-          description: "",
-          type: "file",
-          fileUrl: data.url,
-          fileSize: file.size,
-          mimeType: file.type,
-        };
+        if (data.success && data.file) {
+          const newResource: LessonResource = {
+            id: Math.random().toString(36).substr(2, 9),
+            title: file.name,
+            description: "",
+            type: "file",
+            fileUrl: data.file.url, // Use the proxy URL from MinIO upload
+            fileSize: file.size,
+            mimeType: file.type,
+          };
 
-        onResourcesChange([...resources, newResource]);
+          onResourcesChange([...resources, newResource]);
+        } else {
+          throw new Error("Invalid response format");
+        }
       }
 
       setIsCreateModalOpen(false);

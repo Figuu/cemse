@@ -411,12 +411,22 @@ export function UnifiedCourseManager({
     console.log("handleFileUpload called with file:", file.name, file.type);
     
     try {
+      // Determine category based on file type
+      let category = "other";
+      if (file.type.startsWith("video/")) {
+        category = "course-video";
+      } else if (file.type.startsWith("audio/")) {
+        category = "course-audio";
+      } else if (file.type.startsWith("image/")) {
+        category = "course-thumbnail";
+      }
+      
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("contentType", file.type);
+      formData.append("category", category);
 
-      console.log("Uploading file to /api/upload...");
-      const response = await fetch("/api/upload", {
+      console.log("Uploading file to /api/files/minio/upload...");
+      const response = await fetch("/api/files/minio/upload", {
         method: "POST",
         body: formData,
       });
@@ -430,8 +440,13 @@ export function UnifiedCourseManager({
       const data = await response.json();
       console.log("Upload successful:", data);
       
-      setUploadedFileUrl(data.url);
-      return data.url;
+      if (data.success && data.file) {
+        // Use the proxy URL which works in both local and production environments
+        setUploadedFileUrl(data.file.url);
+        return data.file.url;
+      } else {
+        throw new Error("Invalid response format");
+      }
     } catch (error) {
       console.error("File upload error:", error);
       throw error;

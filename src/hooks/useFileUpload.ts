@@ -17,7 +17,7 @@ export function useFileUpload() {
     error: null,
   });
 
-  const uploadFile = useCallback(async (file: File): Promise<string> => {
+  const uploadFile = useCallback(async (file: File, context?: string): Promise<string> => {
     if (!session?.user?.id) {
       throw new Error("User not authenticated");
     }
@@ -29,11 +29,21 @@ export function useFileUpload() {
     });
 
     try {
+      // Determine category based on file type and context
+      let category = "other";
+      if (file.type.startsWith("video/")) {
+        category = context === "news" ? "news-video" : "course-video";
+      } else if (file.type.startsWith("audio/")) {
+        category = "course-audio";
+      } else if (file.type.startsWith("image/")) {
+        category = context === "news" ? "news-image" : "course-thumbnail";
+      }
+
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("contentType", file.type);
+      formData.append("category", category);
 
-      const response = await fetch("/api/upload", {
+      const response = await fetch("/api/files/minio/upload", {
         method: "POST",
         body: formData,
       });
@@ -45,13 +55,17 @@ export function useFileUpload() {
 
       const result = await response.json();
       
-      setState({
-        isUploading: false,
-        progress: 100,
-        error: null,
-      });
+      if (result.success && result.file) {
+        setState({
+          isUploading: false,
+          progress: 100,
+          error: null,
+        });
 
-      return result.url;
+        return result.file.url; // Return the proxy URL
+      } else {
+        throw new Error("Invalid response format");
+      }
 
     } catch (error) {
       setState({

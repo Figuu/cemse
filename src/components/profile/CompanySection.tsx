@@ -121,13 +121,24 @@ export function CompanySection() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          ...formData,
-          foundedYear: formData.foundedYear ? parseInt(formData.foundedYear) : null,
+          name: formData.name || undefined,
+          description: formData.description || undefined,
+          taxId: formData.taxId || undefined,
+          legalRepresentative: formData.legalRepresentative || undefined,
+          businessSector: formData.businessSector || undefined,
+          companySize: formData.companySize || undefined,
+          website: formData.website || undefined,
+          email: formData.email || undefined,
+          phone: formData.phone || undefined,
+          address: formData.address || undefined,
+          foundedYear: formData.foundedYear ? parseInt(formData.foundedYear) : undefined,
+          logoUrl: formData.logoUrl || undefined,
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Error al guardar la empresa');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al guardar la empresa');
       }
 
       const result = await response.json();

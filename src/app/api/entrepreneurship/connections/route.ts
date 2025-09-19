@@ -87,6 +87,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
+    
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -101,7 +102,7 @@ export async function POST(request: NextRequest) {
     if (addresseeId === session.user.id) {
       return NextResponse.json({ error: "Cannot connect with yourself" }, { status: 400 });
     }
-
+    
     // Check if addressee exists
     const addressee = await prisma.user.findUnique({
       where: { id: addresseeId },
@@ -139,11 +140,6 @@ export async function POST(request: NextRequest) {
             firstName: true,
             lastName: true,
             avatarUrl: true,
-            user: {
-              select: {
-                email: true,
-              },
-            },
           },
         },
         addressee: {
@@ -152,11 +148,6 @@ export async function POST(request: NextRequest) {
             firstName: true,
             lastName: true,
             avatarUrl: true,
-            user: {
-              select: {
-                email: true,
-              },
-            },
           },
         },
       },

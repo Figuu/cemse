@@ -22,6 +22,7 @@ import {
   Info
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useFileUpload } from "@/hooks/useFileUpload";
 
 const youthApplicationSchema = z.object({
   title: z.string().min(1, "El título es requerido"),
@@ -72,6 +73,11 @@ export function YouthApplicationForm({
 }: YouthApplicationFormProps) {
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [coverLetterFile, setCoverLetterFile] = useState<File | null>(null);
+  const [cvUploadUrl, setCvUploadUrl] = useState<string | null>(null);
+  const [coverLetterUploadUrl, setCoverLetterUploadUrl] = useState<string | null>(null);
+
+  const { uploadFile: uploadCvFile, isUploading: isUploadingCv, error: cvUploadError } = useFileUpload();
+  const { uploadFile: uploadCoverLetterFile, isUploading: isUploadingCoverLetter, error: coverLetterUploadError } = useFileUpload();
 
   const {
     register,
@@ -94,21 +100,39 @@ export function YouthApplicationForm({
 
   const watchedValues = watch();
 
-  const handleCvUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCvUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       setCvFile(file);
-      // In a real app, you would upload the file and get a URL
-      // For now, we'll just store the file name
-      setValue("cvFile", file.name);
+      setCvUploadUrl(null);
+      
+      try {
+        const uploadUrl = await uploadCvFile(file);
+        setCvUploadUrl(uploadUrl);
+        setValue("cvUrl", uploadUrl);
+        setValue("cvFile", file.name);
+      } catch (error) {
+        console.error("Error uploading CV file:", error);
+        setCvUploadUrl(null);
+      }
     }
   };
 
-  const handleCoverLetterUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCoverLetterUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       setCoverLetterFile(file);
-      setValue("coverLetterFile", file.name);
+      setCoverLetterUploadUrl(null);
+      
+      try {
+        const uploadUrl = await uploadCoverLetterFile(file);
+        setCoverLetterUploadUrl(uploadUrl);
+        setValue("coverLetterUrl", uploadUrl);
+        setValue("coverLetterFile", file.name);
+      } catch (error) {
+        console.error("Error uploading cover letter file:", error);
+        setCoverLetterUploadUrl(null);
+      }
     }
   };
 
@@ -289,14 +313,29 @@ export function YouthApplicationForm({
                     onChange={handleCvUpload}
                     className="flex-1"
                   />
-                  <Button type="button" variant="outline" size="sm">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    disabled={isUploadingCv}
+                    onClick={() => {
+                      const input = document.getElementById('cv') as HTMLInputElement;
+                      input?.click();
+                    }}
+                  >
                     <Upload className="h-4 w-4 mr-2" />
-                    Subir
+                    {isUploadingCv ? "Subiendo..." : "Subir"}
                   </Button>
                 </div>
                 {cvFile && (
                   <p className="text-sm text-muted-foreground">
                     Archivo seleccionado: {cvFile.name}
+                    {cvUploadUrl && " ✓ Subido"}
+                  </p>
+                )}
+                {cvUploadError && (
+                  <p className="text-sm text-destructive">
+                    Error al subir CV: {cvUploadError}
                   </p>
                 )}
               </div>
@@ -312,14 +351,29 @@ export function YouthApplicationForm({
                     onChange={handleCoverLetterUpload}
                     className="flex-1"
                   />
-                  <Button type="button" variant="outline" size="sm">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    disabled={isUploadingCoverLetter}
+                    onClick={() => {
+                      const input = document.getElementById('coverLetter') as HTMLInputElement;
+                      input?.click();
+                    }}
+                  >
                     <Upload className="h-4 w-4 mr-2" />
-                    Subir
+                    {isUploadingCoverLetter ? "Subiendo..." : "Subir"}
                   </Button>
                 </div>
                 {coverLetterFile && (
                   <p className="text-sm text-muted-foreground">
                     Archivo seleccionado: {coverLetterFile.name}
+                    {coverLetterUploadUrl && " ✓ Subido"}
+                  </p>
+                )}
+                {coverLetterUploadError && (
+                  <p className="text-sm text-destructive">
+                    Error al subir carta de presentación: {coverLetterUploadError}
                   </p>
                 )}
               </div>

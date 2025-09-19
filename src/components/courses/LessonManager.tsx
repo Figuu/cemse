@@ -130,12 +130,22 @@ export function LessonManager({ courseId, moduleId, lessons, onLessonsChange, se
     setIsFileUploading(true);
     
     try {
+      // Determine category based on file type
+      let category = "other";
+      if (file.type.startsWith("video/")) {
+        category = "course-video";
+      } else if (file.type.startsWith("audio/")) {
+        category = "course-audio";
+      } else if (file.type.startsWith("image/")) {
+        category = "course-thumbnail";
+      }
+      
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("contentType", file.type);
+      formData.append("category", category);
 
-      console.log("Uploading file to /api/upload...");
-      const response = await fetch("/api/upload", {
+      console.log("Uploading file to /api/files/minio/upload...");
+      const response = await fetch("/api/files/minio/upload", {
         method: "POST",
         body: formData,
       });
@@ -147,14 +157,18 @@ export function LessonManager({ courseId, moduleId, lessons, onLessonsChange, se
       }
 
       const data = await response.json();
-      const url = data.url;
       
-      console.log("Upload successful, setting uploadedFileUrl to:", url);
-      
-      // Set the uploaded file URL in state
-      setUploadedFileUrl(url);
-      
-      return url;
+      if (data.success && data.file) {
+        const url = data.file.url;
+        console.log("Upload successful, setting uploadedFileUrl to:", url);
+        
+        // Set the uploaded file URL in state
+        setUploadedFileUrl(url);
+        
+        return url;
+      } else {
+        throw new Error("Invalid response format");
+      }
     } catch (error) {
       console.error("Error in handleFileUpload:", error);
       throw error;

@@ -190,9 +190,19 @@ export function LessonFileUpload({
 
   const uploadWithProgress = (file: File, onProgress: (progress: number) => void): Promise<string> => {
     return new Promise((resolve, reject) => {
+      // Determine category based on file type
+      let category = "other";
+      if (file.type.startsWith("video/")) {
+        category = "course-video";
+      } else if (file.type.startsWith("audio/")) {
+        category = "course-audio";
+      } else if (file.type.startsWith("image/")) {
+        category = "course-thumbnail";
+      }
+      
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("contentType", file.type);
+      formData.append("category", category);
 
       const xhr = new XMLHttpRequest();
 
@@ -237,7 +247,7 @@ export function LessonFileUpload({
       xhr.timeout = 5 * 60 * 1000;
 
       // Start the upload
-      xhr.open("POST", "/api/upload");
+      xhr.open("POST", "/api/files/minio/upload");
       xhr.send(formData);
     });
   };

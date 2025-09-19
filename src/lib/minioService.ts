@@ -189,9 +189,9 @@ export class MinIOService {
   /**
    * Get file from MinIO
    */
-  async getFile(bucket: string, key: string): Promise<Buffer> {
+  async getFile(bucket: string, key: string, start?: number, length?: number): Promise<Buffer> {
     try {
-      const stream = await this.client.getObject(bucket, key);
+      const stream = await this.client.getObject(bucket, key, start, length);
       const chunks: Buffer[] = [];
       
       return new Promise((resolve, reject) => {

@@ -22,6 +22,7 @@ import {
   ExternalLink
 } from "lucide-react";
 import { JobPosting } from "@/types/company";
+import { useFileUpload } from "@/hooks/useFileUpload";
 
 const applicationFormSchema = z.object({
   coverLetter: z.string().optional(),
@@ -59,6 +60,11 @@ export function JobApplicationForm({
 }: JobApplicationFormProps) {
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [coverLetterFile, setCoverLetterFile] = useState<File | null>(null);
+  const [cvUploadUrl, setCvUploadUrl] = useState<string | null>(null);
+  const [coverLetterUploadUrl, setCoverLetterUploadUrl] = useState<string | null>(null);
+
+  const { uploadFile: uploadCvFile, isUploading: isUploadingCv, error: cvUploadError } = useFileUpload();
+  const { uploadFile: uploadCoverLetterFile, isUploading: isUploadingCoverLetter, error: coverLetterUploadError } = useFileUpload();
 
   const {
     register,
@@ -78,21 +84,66 @@ export function JobApplicationForm({
 
   const watchedValues = watch();
 
-  const handleCvFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFormSubmit = async (data: ApplicationFormData) => {
+    // Ensure files are uploaded before submitting
+    if (cvFile && !cvUploadUrl) {
+      try {
+        const uploadUrl = await uploadCvFile(cvFile);
+        setCvUploadUrl(uploadUrl);
+        data.cvFile = uploadUrl;
+      } catch (error) {
+        console.error("Error uploading CV file during submit:", error);
+        return;
+      }
+    } else if (cvUploadUrl) {
+      data.cvFile = cvUploadUrl;
+    }
+    
+    if (coverLetterFile && !coverLetterUploadUrl) {
+      try {
+        const uploadUrl = await uploadCoverLetterFile(coverLetterFile);
+        setCoverLetterUploadUrl(uploadUrl);
+        data.coverLetterFile = uploadUrl;
+      } catch (error) {
+        console.error("Error uploading cover letter file during submit:", error);
+        return;
+      }
+    } else if (coverLetterUploadUrl) {
+      data.coverLetterFile = coverLetterUploadUrl;
+    }
+    
+    onSubmit(data);
+  };
+
+  const handleCvFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       setCvFile(file);
-      // In a real app, you would upload the file and get a URL
-      // For now, we'll just store the file name
+      setCvUploadUrl(null);
+      
+      try {
+        const uploadUrl = await uploadCvFile(file);
+        setCvUploadUrl(uploadUrl);
+      } catch (error) {
+        console.error("Error uploading CV file:", error);
+        setCvUploadUrl(null);
+      }
     }
   };
 
-  const handleCoverLetterFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCoverLetterFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       setCoverLetterFile(file);
-      // In a real app, you would upload the file and get a URL
-      // For now, we'll just store the file name
+      setCoverLetterUploadUrl(null);
+      
+      try {
+        const uploadUrl = await uploadCoverLetterFile(file);
+        setCoverLetterUploadUrl(uploadUrl);
+      } catch (error) {
+        console.error("Error uploading cover letter file:", error);
+        setCoverLetterUploadUrl(null);
+      }
     }
   };
 
@@ -214,7 +265,7 @@ export function JobApplicationForm({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
             {/* Personal Information */}
             <div className="space-y-4">
               <h4 className="font-medium">Información Personal</h4>
@@ -262,14 +313,29 @@ export function JobApplicationForm({
                     onChange={handleCvFileUpload}
                     className="flex-1"
                   />
-                  <Button type="button" variant="outline" size="sm">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    disabled={isUploadingCv}
+                    onClick={() => {
+                      const input = document.getElementById('cvFile') as HTMLInputElement;
+                      input?.click();
+                    }}
+                  >
                     <Upload className="h-4 w-4 mr-2" />
-                    Subir
+                    {isUploadingCv ? "Subiendo..." : "Subir"}
                   </Button>
                 </div>
                 {cvFile && (
                   <p className="text-sm text-muted-foreground">
                     Archivo seleccionado: {cvFile.name}
+                    {cvUploadUrl && " ✓ Subido"}
+                  </p>
+                )}
+                {cvUploadError && (
+                  <p className="text-sm text-destructive">
+                    Error al subir CV: {cvUploadError}
                   </p>
                 )}
               </div>
