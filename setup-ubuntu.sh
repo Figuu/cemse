@@ -280,12 +280,35 @@ success "Application directories created"
 # 12. CLONE REPOSITORY
 # =============================================================================
 log "📥 Cloning repository..."
-cd $APP_PATH
 
-if [ -d ".git" ]; then
-    warn "Repository already exists, pulling latest changes..."
-    git pull
+# Check if directory exists and is not empty
+if [ -d "$APP_PATH" ] && [ "$(ls -A $APP_PATH 2>/dev/null)" ]; then
+    warn "Directory $APP_PATH already exists and is not empty"
+    
+    # Check if it's already a git repository
+    if [ -d "$APP_PATH/.git" ]; then
+        warn "Git repository already exists, pulling latest changes..."
+        cd $APP_PATH
+        git pull
+    else
+        warn "Directory exists but is not a git repository"
+        read -p "Do you want to remove the existing directory and clone fresh? (y/N): " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            warn "Removing existing directory..."
+            sudo rm -rf $APP_PATH
+            sudo mkdir -p $APP_PATH
+            sudo chown $USER:$USER $APP_PATH
+            cd $APP_PATH
+            git clone $GIT_REPO .
+        else
+            error "Cannot proceed without a clean directory. Please remove $APP_PATH manually or choose 'y' to remove it automatically."
+            exit 1
+        fi
+    fi
 else
+    # Directory doesn't exist or is empty, clone fresh
+    cd $APP_PATH
     git clone $GIT_REPO .
 fi
 
