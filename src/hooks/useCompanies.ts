@@ -74,9 +74,13 @@ export function useCompany(id: string) {
 export function useCompanyByUser(userId: string) {
   return useQuery({
     queryKey: ["company", "by-user", userId],
-    queryFn: async (): Promise<Company> => {
+    queryFn: async (): Promise<Company | null> => {
       const response = await fetch(`/api/companies/by-user/${userId}`);
       if (!response.ok) {
+        if (response.status === 404) {
+          // User doesn't have a company, return null instead of throwing
+          return null;
+        }
         throw new Error("Failed to fetch company by user");
       }
       return response.json();

@@ -256,17 +256,17 @@ export default function BookmarkedJobsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 p-2 sm:p-0">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Trabajos Guardados</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-xl font-bold text-foreground sm:text-2xl">Trabajos Guardados</h1>
+          <p className="text-sm text-muted-foreground sm:text-base">
             {filteredJobs.length} trabajos guardados
           </p>
         </div>
         {jobs.length > 0 && (
-          <Button variant="outline" onClick={clearAllBookmarks}>
+          <Button variant="outline" onClick={clearAllBookmarks} size="sm" className="w-full sm:w-auto">
             <Trash2 className="h-4 w-4 mr-2" />
             Limpiar Todo
           </Button>
@@ -274,21 +274,21 @@ export default function BookmarkedJobsPage() {
       </div>
 
       {/* Search and Sort */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Buscar trabajos guardados..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className="pl-10 text-sm"
           />
         </div>
         <div className="flex items-center space-x-2">
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="px-3 py-2 border border-input rounded-md text-sm"
+            className="px-3 py-2 border border-input rounded-md text-sm flex-1 sm:flex-none"
           >
             <option value="newest">Más recientes</option>
             <option value="oldest">Más antiguos</option>
@@ -340,8 +340,8 @@ export default function BookmarkedJobsPage() {
       ) : (
         <div className={
           viewMode === "grid"
-            ? "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
-            : "space-y-4"
+            ? "grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3"
+            : "space-y-3 sm:space-y-4"
         }>
           {filteredJobs.map(job => {
             const jobPosting = {
@@ -445,6 +445,7 @@ export default function BookmarkedJobsPage() {
               <JobCard
                 key={job.id}
                 job={jobPosting}
+                currentUserId="current-user" // This would come from session in real app
                 onBookmark={handleBookmark}
                 onApply={handleApply}
               />

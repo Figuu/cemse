@@ -26,7 +26,10 @@ export async function GET(
         institution: {
           select: {
             id: true,
-            name: true
+            name: true,
+            department: true,
+            region: true,
+            institutionType: true
           }
         }
       }

@@ -47,6 +47,13 @@ interface YouthUser {
     birthDate?: string;
     gender?: string;
     educationLevel?: string;
+    institutionId?: string;
+    institution?: {
+      id: string;
+      name: string;
+      department: string;
+      region?: string;
+    };
   };
 }
 
@@ -67,12 +74,18 @@ interface UserFormData {
   lastName: string;
   phone: string;
   address: string;
-  city: string;
-  state: string;
+  municipalityId: string;
   birthDate: string;
   gender: string;
   educationLevel: string;
   isActive: string;
+}
+
+interface Municipality {
+  id: string;
+  name: string;
+  department: string;
+  region?: string;
 }
 
 // Validation utility functions
@@ -181,6 +194,17 @@ function YouthUsersManagement() {
       const response = await fetch('/api/admin/users?role=YOUTH');
       if (!response.ok) throw new Error('Failed to fetch users');
       return response.json();
+    }
+  });
+
+  // Fetch municipalities
+  const { data: municipalities = [] } = useQuery({
+    queryKey: ['municipalities'],
+    queryFn: async () => {
+      const response = await fetch('/api/institutions?type=MUNICIPALITY');
+      if (!response.ok) throw new Error('Failed to fetch municipalities');
+      const data = await response.json();
+      return data.institutions || [];
     }
   });
 
@@ -378,8 +402,7 @@ function YouthUsersManagement() {
       lastName: formData.get('lastName') as string || '',
       phone: formData.get('phone') as string || '',
       address: formData.get('address') as string || '',
-      city: formData.get('city') as string || '',
-      state: formData.get('state') as string || '',
+      municipalityId: formData.get('municipalityId') as string || '',
       birthDate: formData.get('birthDate') as string || '',
       gender: formData.get('gender') as string || '',
       educationLevel: formData.get('educationLevel') as string || '',
@@ -401,8 +424,7 @@ function YouthUsersManagement() {
       lastName: formDataObj.lastName || undefined,
       phone: formDataObj.phone || undefined,
       address: formDataObj.address || undefined,
-      city: formDataObj.city || undefined,
-      state: formDataObj.state || undefined,
+      municipalityId: formDataObj.municipalityId || undefined,
       birthDate: formDataObj.birthDate || undefined,
       gender: formDataObj.gender || undefined,
       educationLevel: formDataObj.educationLevel || undefined,
@@ -426,8 +448,7 @@ function YouthUsersManagement() {
       lastName: formData.get('lastName') as string || '',
       phone: formData.get('phone') as string || '',
       address: formData.get('address') as string || '',
-      city: formData.get('city') as string || '',
-      state: formData.get('state') as string || '',
+      municipalityId: formData.get('municipalityId') as string || '',
       birthDate: formData.get('birthDate') as string || '',
       gender: formData.get('gender') as string || '',
       educationLevel: formData.get('educationLevel') as string || '',
@@ -448,8 +469,7 @@ function YouthUsersManagement() {
       lastName: formDataObj.lastName || undefined,
       phone: formDataObj.phone || undefined,
       address: formDataObj.address || undefined,
-      city: formDataObj.city || undefined,
-      state: formDataObj.state || undefined,
+      municipalityId: formDataObj.municipalityId || undefined,
       birthDate: formDataObj.birthDate || undefined,
       gender: formDataObj.gender || undefined,
       educationLevel: formDataObj.educationLevel || undefined,
@@ -536,25 +556,26 @@ function YouthUsersManagement() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
         <div>
-          <h1 className="text-2xl font-bold">Gestión de Jóvenes</h1>
-          <p className="text-muted-foreground">Administra los usuarios jóvenes del sistema</p>
+          <h1 className="text-xl font-bold sm:text-2xl">Gestión de Jóvenes</h1>
+          <p className="text-sm text-muted-foreground sm:text-base">Administra los usuarios jóvenes del sistema</p>
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={(open) => {
           setIsCreateDialogOpen(open);
           if (!open) setCreateErrors({});
         }}>
           <DialogTrigger asChild>
-            <Button onClick={openCreateDialog}>
+            <Button onClick={openCreateDialog} className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
-              Nuevo Usuario
+              <span className="hidden sm:inline">Nuevo Usuario</span>
+              <span className="sm:hidden">Nuevo</span>
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Crear Nuevo Usuario Joven</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-lg sm:text-xl">Crear Nuevo Usuario Joven</DialogTitle>
+              <DialogDescription className="text-sm">
                 Crea un nuevo usuario joven con credenciales básicas
               </DialogDescription>
             </DialogHeader>
@@ -567,21 +588,21 @@ function YouthUsersManagement() {
                   </div>
                 </div>
               )}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email *</Label>
+                  <Label htmlFor="email" className="text-sm">Email *</Label>
                   <Input 
                     id="email" 
                     name="email" 
                     type="email" 
                     required 
                     maxLength={100}
-                    className={createErrors.email ? "border-red-500" : ""}
+                    className={`text-sm ${createErrors.email ? "border-red-500" : ""}`}
                   />
                   <ErrorMessage error={createErrors.email} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password">Contraseña *</Label>
+                  <Label htmlFor="password" className="text-sm">Contraseña *</Label>
                   <div className="relative">
                     <Input 
                       id="password" 
@@ -591,7 +612,7 @@ function YouthUsersManagement() {
                       minLength={8}
                       maxLength={100}
                       pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$"
-                      className={createErrors.password ? "border-red-500 pr-10" : "pr-10"}
+                      className={`text-sm pr-10 ${createErrors.password ? "border-red-500" : ""}`}
                     />
                     <Button
                       type="button"
@@ -610,31 +631,31 @@ function YouthUsersManagement() {
                   <ErrorMessage error={createErrors.password} />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName">Nombre</Label>
+                  <Label htmlFor="firstName" className="text-sm">Nombre</Label>
                   <Input 
                     id="firstName" 
                     name="firstName" 
                     maxLength={50}
-                    className={createErrors.firstName ? "border-red-500" : ""}
+                    className={`text-sm ${createErrors.firstName ? "border-red-500" : ""}`}
                   />
                   <ErrorMessage error={createErrors.firstName} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="lastName">Apellido</Label>
+                  <Label htmlFor="lastName" className="text-sm">Apellido</Label>
                   <Input 
                     id="lastName" 
                     name="lastName" 
                     maxLength={50}
-                    className={createErrors.lastName ? "border-red-500" : ""}
+                    className={`text-sm ${createErrors.lastName ? "border-red-500" : ""}`}
                   />
                   <ErrorMessage error={createErrors.lastName} />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Teléfono</Label>
+                  <Label htmlFor="phone" className="text-sm">Teléfono</Label>
                   <Input 
                     id="phone" 
                     name="phone" 
@@ -647,14 +668,14 @@ function YouthUsersManagement() {
                         e.preventDefault();
                       }
                     }}
-                    className={createErrors.phone ? "border-red-500" : ""}
+                    className={`text-sm ${createErrors.phone ? "border-red-500" : ""}`}
                   />
                   <ErrorMessage error={createErrors.phone} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="gender">Género</Label>
+                  <Label htmlFor="gender" className="text-sm">Género</Label>
                   <Select name="gender">
-                    <SelectTrigger>
+                    <SelectTrigger className="text-sm">
                       <SelectValue placeholder="Seleccionar género" />
                     </SelectTrigger>
                     <SelectContent>
@@ -666,48 +687,46 @@ function YouthUsersManagement() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="address">Dirección</Label>
+                <Label htmlFor="address" className="text-sm">Dirección</Label>
                 <Input 
                   id="address" 
                   name="address" 
                   maxLength={200}
+                  className="text-sm"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="city">Ciudad</Label>
-                  <Input 
-                    id="city" 
-                    name="city" 
-                    maxLength={50}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="state">Estado/Departamento</Label>
-                  <Input 
-                    id="state" 
-                    name="state" 
-                    maxLength={50}
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="municipalityId" className="text-sm">Municipio *</Label>
+                <Select name="municipalityId" required>
+                  <SelectTrigger className="text-sm">
+                    <SelectValue placeholder="Seleccionar municipio" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {municipalities.map((municipality: Municipality) => (
+                      <SelectItem key={municipality.id} value={municipality.id}>
+                        {municipality.name} - {municipality.department}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="birthDate">Fecha de Nacimiento</Label>
+                  <Label htmlFor="birthDate" className="text-sm">Fecha de Nacimiento</Label>
                   <Input 
                     id="birthDate" 
                     name="birthDate" 
                     type="date" 
                     max={new Date().toISOString().split('T')[0]}
                     min="1900-01-01"
-                    className={createErrors.birthDate ? "border-red-500" : ""}
+                    className={`text-sm ${createErrors.birthDate ? "border-red-500" : ""}`}
                   />
                   <ErrorMessage error={createErrors.birthDate} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="educationLevel">Nivel Educativo</Label>
+                  <Label htmlFor="educationLevel" className="text-sm">Nivel Educativo</Label>
                   <Select name="educationLevel">
-                    <SelectTrigger>
+                    <SelectTrigger className="text-sm">
                       <SelectValue placeholder="Seleccionar nivel" />
                     </SelectTrigger>
                     <SelectContent>
@@ -721,16 +740,17 @@ function YouthUsersManagement() {
                   </Select>
                 </div>
               </div>
-              <DialogFooter>
+              <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0">
                 <Button type="button" variant="outline" onClick={() => {
                   setIsCreateDialogOpen(false);
                   setCreateErrors({});
-                }}>
+                }} className="w-full sm:w-auto order-2 sm:order-1">
                   Cancelar
                 </Button>
                 <Button 
                   type="submit" 
                   disabled={createUserMutation.isPending || isValidating}
+                  className="w-full sm:w-auto order-1 sm:order-2"
                 >
                   {createUserMutation.isPending || isValidating ? 'Creando...' : 'Crear Usuario'}
                 </Button>
@@ -745,10 +765,10 @@ function YouthUsersManagement() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar por email, nombre o apellido..."
+            placeholder="Buscar usuarios..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className="pl-10 text-sm sm:text-base"
           />
         </div>
       </div>
@@ -757,57 +777,79 @@ function YouthUsersManagement() {
       <div className="space-y-4">
         {filteredUsers.map((user: YouthUser) => (
           <Card key={user.id}>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                    <UserCog className="h-6 w-6 text-blue-600" />
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+                <div className="flex items-start space-x-3 sm:space-x-4">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <UserCog className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
                   </div>
-                  <div className="flex-1">
-                    <h4 className="font-semibold">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-semibold text-sm sm:text-base truncate">
                       {user.profile?.firstName || user.firstName} {user.profile?.lastName || user.lastName}
                     </h4>
-                    <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                      <div className="flex items-center space-x-1">
-                        <Mail className="h-3 w-3" />
-                        <span>{user.email}</span>
+                    <div className="flex flex-col space-y-1 sm:flex-row sm:items-center sm:space-x-4 sm:space-y-0 text-xs sm:text-sm text-muted-foreground">
+                      <div className="flex items-center space-x-1 min-w-0">
+                        <Mail className="h-3 w-3 flex-shrink-0" />
+                        <span className="truncate">{user.email}</span>
                       </div>
                       {user.profile?.phone && (
-                        <div className="flex items-center space-x-1">
-                          <Phone className="h-3 w-3" />
-                          <span>{user.profile.phone}</span>
+                        <div className="flex items-center space-x-1 min-w-0">
+                          <Phone className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate">{user.profile.phone}</span>
                         </div>
                       )}
-                      {user.profile?.city && (
-                        <div className="flex items-center space-x-1">
-                          <MapPin className="h-3 w-3" />
-                          <span>{user.profile.city}</span>
+                      {user.profile?.institution && (
+                        <div className="flex items-center space-x-1 min-w-0">
+                          <MapPin className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate">{user.profile.institution.name}</span>
                         </div>
                       )}
                     </div>
-                    <div className="flex items-center space-x-2 mt-2">
-                      <Badge variant={user.isActive ? "default" : "secondary"}>
+                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                      <Badge variant={user.isActive ? "default" : "secondary"} className="text-xs">
                         {user.isActive ? "Activo" : "Inactivo"}
                       </Badge>
-                      <Badge variant="outline">
+                      <Badge variant="outline" className="text-xs">
                         Joven
                       </Badge>
                     </div>
                   </div>
                 </div>
-                <div className="text-right text-sm text-muted-foreground">
-                  <div className="flex items-center space-x-1">
+                
+                {/* Desktop layout */}
+                <div className="hidden sm:flex sm:items-center sm:space-x-4">
+                  <div className="text-right text-sm text-muted-foreground">
+                    <div className="flex items-center space-x-1">
+                      <Calendar className="h-3 w-3" />
+                      <span>Registrado: {formatDate(user.createdAt)}</span>
+                    </div>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button variant="outline" size="sm" onClick={() => openEditDialog(user)}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => handleDeleteUser(user)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Mobile layout */}
+                <div className="flex sm:hidden flex-col space-y-3">
+                  <div className="flex items-center space-x-1 text-xs text-muted-foreground">
                     <Calendar className="h-3 w-3" />
                     <span>Registrado: {formatDate(user.createdAt)}</span>
                   </div>
-                </div>
-                <div className="flex space-x-2">
-                  <Button variant="outline" size="sm" onClick={() => openEditDialog(user)}>
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleDeleteUser(user)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex space-x-2">
+                    <Button variant="outline" size="sm" onClick={() => openEditDialog(user)} className="flex-1">
+                      <Edit className="h-4 w-4 mr-2" />
+                      Editar
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => handleDeleteUser(user)} className="flex-1">
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Eliminar
+                    </Button>
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -835,10 +877,10 @@ function YouthUsersManagement() {
           setSelectedUser(null);
         }
       }}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Editar Usuario</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-lg sm:text-xl">Editar Usuario</DialogTitle>
+            <DialogDescription className="text-sm">
               Modifica la información del usuario
             </DialogDescription>
           </DialogHeader>
@@ -852,9 +894,9 @@ function YouthUsersManagement() {
                   </div>
                 </div>
               )}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="edit-email">Email *</Label>
+                  <Label htmlFor="edit-email" className="text-sm">Email *</Label>
                   <Input 
                     id="edit-email" 
                     name="email" 
@@ -862,14 +904,14 @@ function YouthUsersManagement() {
                     defaultValue={selectedUser.email}
                     required 
                     maxLength={100}
-                    className={editErrors.email ? "border-red-500" : ""}
+                    className={`text-sm ${editErrors.email ? "border-red-500" : ""}`}
                   />
                   <ErrorMessage error={editErrors.email} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-isActive">Estado</Label>
+                  <Label htmlFor="edit-isActive" className="text-sm">Estado</Label>
                   <Select name="isActive" defaultValue={selectedUser.isActive.toString()}>
-                    <SelectTrigger>
+                    <SelectTrigger className="text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -879,46 +921,46 @@ function YouthUsersManagement() {
                   </Select>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="edit-firstName">Nombre</Label>
+                  <Label htmlFor="edit-firstName" className="text-sm">Nombre</Label>
                   <Input 
                     id="edit-firstName" 
                     name="firstName" 
                     defaultValue={selectedUser.profile?.firstName || selectedUser.firstName}
                     maxLength={50}
-                    className={editErrors.firstName ? "border-red-500" : ""}
+                    className={`text-sm ${editErrors.firstName ? "border-red-500" : ""}`}
                   />
                   <ErrorMessage error={editErrors.firstName} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-lastName">Apellido</Label>
+                  <Label htmlFor="edit-lastName" className="text-sm">Apellido</Label>
                   <Input 
                     id="edit-lastName" 
                     name="lastName" 
                     defaultValue={selectedUser.profile?.lastName || selectedUser.lastName}
                     maxLength={50}
-                    className={editErrors.lastName ? "border-red-500" : ""}
+                    className={`text-sm ${editErrors.lastName ? "border-red-500" : ""}`}
                   />
                   <ErrorMessage error={editErrors.lastName} />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="edit-phone">Teléfono</Label>
+                  <Label htmlFor="edit-phone" className="text-sm">Teléfono</Label>
                   <Input 
                     id="edit-phone" 
                     name="phone" 
                     defaultValue={selectedUser.profile?.phone || selectedUser.phone}
                     maxLength={20}
-                    className={editErrors.phone ? "border-red-500" : ""}
+                    className={`text-sm ${editErrors.phone ? "border-red-500" : ""}`}
                   />
                   <ErrorMessage error={editErrors.phone} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-gender">Género</Label>
+                  <Label htmlFor="edit-gender" className="text-sm">Género</Label>
                   <Select name="gender" defaultValue={selectedUser.profile?.gender}>
-                    <SelectTrigger>
+                    <SelectTrigger className="text-sm">
                       <SelectValue placeholder="Seleccionar género" />
                     </SelectTrigger>
                     <SelectContent>
@@ -930,51 +972,47 @@ function YouthUsersManagement() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-address">Dirección</Label>
+                <Label htmlFor="edit-address" className="text-sm">Dirección</Label>
                 <Input 
                   id="edit-address" 
                   name="address" 
                   defaultValue={selectedUser.profile?.address || selectedUser.address}
                   maxLength={200}
+                  className="text-sm"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-city">Ciudad</Label>
-                  <Input 
-                    id="edit-city" 
-                    name="city" 
-                    defaultValue={selectedUser.profile?.city}
-                    maxLength={50}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-state">Estado/Departamento</Label>
-                  <Input 
-                    id="edit-state" 
-                    name="state" 
-                    defaultValue={selectedUser.profile?.state}
-                    maxLength={50}
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-municipalityId" className="text-sm">Municipio *</Label>
+                <Select name="municipalityId" defaultValue={selectedUser.profile?.institutionId} required>
+                  <SelectTrigger className="text-sm">
+                    <SelectValue placeholder="Seleccionar municipio" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {municipalities.map((municipality: Municipality) => (
+                      <SelectItem key={municipality.id} value={municipality.id}>
+                        {municipality.name} - {municipality.department}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="edit-birthDate">Fecha de Nacimiento</Label>
+                  <Label htmlFor="edit-birthDate" className="text-sm">Fecha de Nacimiento</Label>
                   <Input 
                     id="edit-birthDate" 
                     name="birthDate" 
                     type="date" 
                     defaultValue={selectedUser.profile?.birthDate ? selectedUser.profile.birthDate.split('T')[0] : ''}
                     max={new Date().toISOString().split('T')[0]}
-                    className={editErrors.birthDate ? "border-red-500" : ""}
+                    className={`text-sm ${editErrors.birthDate ? "border-red-500" : ""}`}
                   />
                   <ErrorMessage error={editErrors.birthDate} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-educationLevel">Nivel Educativo</Label>
+                  <Label htmlFor="edit-educationLevel" className="text-sm">Nivel Educativo</Label>
                   <Select name="educationLevel" defaultValue={selectedUser.profile?.educationLevel}>
-                    <SelectTrigger>
+                    <SelectTrigger className="text-sm">
                       <SelectValue placeholder="Seleccionar nivel" />
                     </SelectTrigger>
                     <SelectContent>
@@ -988,16 +1026,17 @@ function YouthUsersManagement() {
                   </Select>
                 </div>
               </div>
-              <DialogFooter>
+              <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0">
                 <Button type="button" variant="outline" onClick={() => {
                   setIsEditDialogOpen(false);
                   setEditErrors({});
-                }}>
+                }} className="w-full sm:w-auto order-2 sm:order-1">
                   Cancelar
                 </Button>
                 <Button 
                   type="submit" 
                   disabled={updateUserMutation.isPending || isValidating}
+                  className="w-full sm:w-auto order-1 sm:order-2"
                 >
                   {updateUserMutation.isPending || isValidating ? 'Actualizando...' : 'Actualizar Usuario'}
                 </Button>
@@ -1024,11 +1063,11 @@ function YouthUsersManagement() {
               </p>
             </div>
           )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} className="w-full sm:w-auto order-2 sm:order-1">
               Cancelar
             </Button>
-            <Button variant="destructive" onClick={confirmDelete} disabled={deleteUserMutation.isPending}>
+            <Button variant="destructive" onClick={confirmDelete} disabled={deleteUserMutation.isPending} className="w-full sm:w-auto order-1 sm:order-2">
               {deleteUserMutation.isPending ? 'Eliminando...' : 'Eliminar'}
             </Button>
           </DialogFooter>

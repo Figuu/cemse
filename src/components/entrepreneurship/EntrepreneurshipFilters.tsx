@@ -93,6 +93,11 @@ export function EntrepreneurshipFilters({ filters, onFiltersChange }: Entreprene
     setLocalFilters(newFilters);
   };
 
+  const handleClearFilter = (key: keyof EntrepreneurshipsFilters) => {
+    const newFilters = { ...localFilters, [key]: undefined };
+    setLocalFilters(newFilters);
+  };
+
   const handleApplyFilters = () => {
     onFiltersChange(localFilters);
     setIsOpen(false);
@@ -158,16 +163,27 @@ export function EntrepreneurshipFilters({ filters, onFiltersChange }: Entreprene
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="category">Categoría</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="category">Categoría</Label>
+                {localFilters.category && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleClearFilter("category")}
+                    className="h-6 px-2 text-muted-foreground"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
               <Select
-                value={localFilters.category || ""}
+                value={localFilters.category || undefined}
                 onValueChange={(value) => handleFilterChange("category", value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar categoría" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todas las categorías</SelectItem>
                   {categories.map((category) => (
                     <SelectItem key={category} value={category}>
                       {category}
@@ -178,16 +194,27 @@ export function EntrepreneurshipFilters({ filters, onFiltersChange }: Entreprene
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="businessStage">Etapa del Negocio</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="businessStage">Etapa del Negocio</Label>
+                {localFilters.businessStage && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleClearFilter("businessStage")}
+                    className="h-6 px-2 text-muted-foreground"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
               <Select
-                value={localFilters.businessStage || ""}
+                value={localFilters.businessStage || undefined}
                 onValueChange={(value) => handleFilterChange("businessStage", value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar etapa" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todas las etapas</SelectItem>
                   {businessStages.map((stage) => (
                     <SelectItem key={stage.value} value={stage.value}>
                       {stage.label}
@@ -198,16 +225,27 @@ export function EntrepreneurshipFilters({ filters, onFiltersChange }: Entreprene
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="municipality">Municipio</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="municipality">Municipio</Label>
+                {localFilters.municipality && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleClearFilter("municipality")}
+                    className="h-6 px-2 text-muted-foreground"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
               <Select
-                value={localFilters.municipality || ""}
+                value={localFilters.municipality || undefined}
                 onValueChange={(value) => handleFilterChange("municipality", value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar municipio" />
                 </SelectTrigger>
                 <SelectContent className="max-h-60">
-                  <SelectItem value="">Todos los municipios</SelectItem>
                   {municipalities.map((municipality) => (
                     <SelectItem key={municipality} value={municipality}>
                       {municipality}

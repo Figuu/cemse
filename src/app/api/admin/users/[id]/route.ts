@@ -24,7 +24,11 @@ export async function GET(
     const user = await prisma.user.findUnique({
       where: { id },
       include: {
-        profile: true
+        profile: {
+          include: {
+            institution: true
+          }
+        }
       }
     });
 
@@ -76,8 +80,7 @@ export async function PUT(
       lastName,
       phone,
       address,
-      city,
-      state,
+      municipalityId,
       birthDate,
       gender,
       educationLevel,
@@ -131,8 +134,7 @@ export async function PUT(
             lastName: lastName || existingUser.profile.lastName,
             phone: phone || existingUser.profile.phone,
             address: address || existingUser.profile.address,
-            city: city || existingUser.profile.city,
-            state: state || existingUser.profile.state,
+            institutionId: municipalityId || existingUser.profile.institutionId,
             birthDate: birthDate ? new Date(birthDate) : existingUser.profile.birthDate,
             gender: gender || existingUser.profile.gender,
             educationLevel: educationLevel || existingUser.profile.educationLevel
@@ -146,8 +148,7 @@ export async function PUT(
             lastName: lastName || existingUser.lastName,
             phone,
             address,
-            city,
-            state,
+            institutionId: municipalityId,
             birthDate: birthDate ? new Date(birthDate) : undefined,
             gender,
             educationLevel: educationLevel as any,

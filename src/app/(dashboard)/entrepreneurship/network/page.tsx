@@ -42,26 +42,28 @@ export default function EntrepreneurshipNetworkPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <div className="flex items-center justify-between">
-          <TabsList>
-            <TabsTrigger value="emprendimientos">Emprendimientos</TabsTrigger>
-            <TabsTrigger value="mis-emprendimientos">Mis Emprendimientos</TabsTrigger>
+        <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
+          <TabsList className="w-full lg:w-auto">
+            <TabsTrigger value="emprendimientos" className="flex-1 lg:flex-none">Emprendimientos</TabsTrigger>
+            <TabsTrigger value="mis-emprendimientos" className="flex-1 lg:flex-none">Mis Emprendimientos</TabsTrigger>
           </TabsList>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-2">
             {activeTab === "emprendimientos" && (
               <EntrepreneurshipFilters 
                 filters={filters} 
                 onFiltersChange={setFilters} 
               />
             )}
-            <Button variant="outline" onClick={handleOpenChat}>
+            <Button variant="outline" onClick={handleOpenChat} className="w-full sm:w-auto">
               <MessageCircle className="h-4 w-4 mr-2" />
-              Mensajes
+              <span className="hidden sm:inline">Mensajes</span>
+              <span className="sm:hidden">Chat</span>
             </Button>
-            <Button onClick={() => setShowCreateModal(true)}>
+            <Button onClick={() => setShowCreateModal(true)} className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
-              Crear Emprendimiento
+              <span className="hidden sm:inline">Crear Emprendimiento</span>
+              <span className="sm:hidden">Crear</span>
             </Button>
           </div>
         </div>

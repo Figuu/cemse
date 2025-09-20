@@ -20,8 +20,11 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CourseProgress, ModuleProgress } from "@/hooks/useCourseProgress";
+import { useLessonAccess } from "@/hooks/useLessonAccess";
+import { useSession } from "next-auth/react";
 
 interface CourseProgressTrackerProps {
+  courseId: string;
   progress: CourseProgress;
   onModuleClick?: (moduleId: string) => void;
   onLessonClick?: (lessonId: string) => void;
@@ -29,12 +32,92 @@ interface CourseProgressTrackerProps {
 }
 
 export function CourseProgressTracker({ 
+  courseId,
   progress, 
   onModuleClick,
   onLessonClick,
   className 
 }: CourseProgressTrackerProps) {
+  const { data: session } = useSession();
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
+
+  // Component for individual lesson items with access checking
+  const LessonItem = ({ lesson, moduleTitle }: { lesson: any; moduleTitle: string }) => {
+    const { data: accessData, isLoading: accessLoading } = useLessonAccess(
+      courseId, 
+      lesson.id
+    );
+    
+    const isAccessible = session?.user?.role !== "YOUTH" || accessData?.accessible;
+    const isLocked = session?.user?.role === "YOUTH" && !accessData?.accessible;
+    
+    const handleLessonClick = () => {
+      if (isAccessible && onLessonClick) {
+        onLessonClick(lesson.id);
+      }
+    };
+
+    return (
+      <div
+        className={cn(
+          "flex items-center justify-between p-3 rounded-lg border transition-colors",
+          isAccessible 
+            ? "cursor-pointer hover:bg-gray-50" 
+            : "cursor-not-allowed opacity-60",
+          lesson.progress.isCompleted ? "bg-green-50 border-green-200" : "bg-white"
+        )}
+        onClick={handleLessonClick}
+      >
+        <div className="flex items-center space-x-3">
+          {accessLoading ? (
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600" />
+          ) : isLocked ? (
+            <Lock className="h-4 w-4 text-gray-400" />
+          ) : (
+            getStatusIcon(lesson.progress.isCompleted, false)
+          )}
+          <div>
+            <div className="font-medium">{lesson.title}</div>
+            {lesson.description && (
+              <div className="text-sm text-muted-foreground">
+                {lesson.description}
+              </div>
+            )}
+            {isLocked && accessData?.blockingLesson && (
+              <div className="text-xs text-amber-600 mt-1">
+                Complete: {accessData.blockingLesson.title}
+                {accessData.requiredQuiz && (
+                  <span> (Quiz: {accessData.requiredQuiz.currentScore}%/{accessData.requiredQuiz.passingScore}%)</span>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center space-x-2">
+          {lesson.duration && (
+            <div className="text-sm text-muted-foreground">
+              {formatDuration(lesson.duration)}
+            </div>
+          )}
+          {lesson.isRequired && (
+            <Badge variant="outline" className="text-xs">
+              Requerida
+            </Badge>
+          )}
+          {lesson.isPreview && (
+            <Badge variant="outline" className="text-xs">
+              Vista Previa
+            </Badge>
+          )}
+          {isLocked && (
+            <Badge variant="secondary" className="text-xs">
+              Bloqueada
+            </Badge>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   const toggleModule = (moduleId: string) => {
     const newExpanded = new Set(expandedModules);
@@ -255,43 +338,11 @@ export function CourseProgressTracker({
                 <div className="space-y-2">
                   <h4 className="font-medium text-sm text-muted-foreground">Lecciones</h4>
                   {module.lessons.map((lesson) => (
-                    <div
-                      key={lesson.id}
-                      className={cn(
-                        "flex items-center justify-between p-3 rounded-lg border cursor-pointer hover:bg-gray-50 transition-colors",
-                        lesson.progress.isCompleted ? "bg-green-50 border-green-200" : "bg-white"
-                      )}
-                      onClick={() => onLessonClick?.(lesson.id)}
-                    >
-                      <div className="flex items-center space-x-3">
-                        {getStatusIcon(lesson.progress.isCompleted, false)}
-                        <div>
-                          <div className="font-medium">{lesson.title}</div>
-                          {lesson.description && (
-                            <div className="text-sm text-muted-foreground">
-                              {lesson.description}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        {lesson.duration && (
-                          <div className="text-sm text-muted-foreground">
-                            {formatDuration(lesson.duration)}
-                          </div>
-                        )}
-                        {lesson.isRequired && (
-                          <Badge variant="outline" className="text-xs">
-                            Requerida
-                          </Badge>
-                        )}
-                        {lesson.isPreview && (
-                          <Badge variant="outline" className="text-xs">
-                            Vista Previa
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
+                    <LessonItem 
+                      key={lesson.id} 
+                      lesson={lesson} 
+                      moduleTitle={module.title}
+                    />
                   ))}
                 </div>
               </CardContent>

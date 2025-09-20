@@ -1,316 +1,182 @@
-import { prisma } from "@/lib/prisma";
+import { pdf } from '@react-pdf/renderer';
+import { CourseCertificateTemplate } from '@/components/certificates/CourseCertificateTemplate';
+import { minioClient } from './minioClientService';
 
 export interface CertificateData {
+  studentId: string;
   studentName: string;
-  courseTitle: string;
-  moduleTitle?: string;
-  instructorName?: string;
-  completionDate: string;
-  certificateId: string;
   courseId: string;
-  moduleId?: string;
+  courseTitle: string;
+  instructorName: string;
+  completionDate: string;
+  courseDuration: string;
+  courseLevel: string;
+  institutionName?: string;
 }
 
-export interface CertificateTemplate {
-  id: string;
-  name: string;
-  template: string;
-  isActive: boolean;
-}
-
-export interface CertificateVerificationResult {
-  isValid: boolean;
-  certificate?: {
-    id: string;
-    certificateUrl: string | null;
-    issuedAt: Date;
-  };
-  student?: {
-    id: string;
-    firstName: string | null;
-    lastName: string | null;
-  };
-  course?: {
-    id: string;
-    title: string;
-  };
+export interface CertificateResult {
+  success: boolean;
+  certificateUrl?: string;
+  error?: string;
 }
 
 export class CertificateService {
+  private static readonly BUCKET_NAME = 'certificates';
+  private static readonly CERTIFICATE_PREFIX = 'course-certificates/';
+
   /**
-   * Generate a certificate for course completion
+   * Generate and upload a course completion certificate
    */
-  static async generateCourseCertificate(
-    studentId: string,
-    courseId: string
-  ): Promise<string | null> {
+  static async generateCourseCertificate(data: CertificateData): Promise<CertificateResult> {
     try {
-      // Get course and student data
-      const course = await prisma.course.findUnique({
-        where: { id: courseId },
-        include: {
-          instructor: true,
-        },
-      });
-
-      const student = await prisma.profile.findUnique({
-        where: { userId: studentId },
-      });
-
-      if (!course || !student) {
-        throw new Error("Course or student not found");
-      }
-
-      // Check if student is enrolled and completed
-      const enrollment = await prisma.courseEnrollment.findUnique({
-        where: {
-          studentId_courseId: {
-            studentId: studentId,
-            courseId: courseId,
-          },
-        },
-      });
-
-      if (!enrollment || !enrollment.completedAt) {
-        throw new Error("Student has not completed the course");
-      }
-
-      // Check if certificate already exists
-      const existingCert = await prisma.certificate.findFirst({
-        where: {
-          studentId: studentId,
-          courseId: courseId,
-        },
-      });
-
-      if (existingCert) {
-        return existingCert.fileUrl;
-      }
-
-      // Generate certificate data
-      const certificateData: CertificateData = {
-        studentName: `${student.firstName || ''} ${student.lastName || ''}`.trim(),
-        courseTitle: course.title,
-        instructorName: course.instructor ? 
-          `${course.instructor.firstName || ''} ${course.instructor.lastName || ''}`.trim() : 
-          undefined,
-        completionDate: enrollment.completedAt!.toISOString(),
-        certificateId: `CERT-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        courseId: courseId,
+      // Generate PDF blob
+      const pdfBlob = await this.generatePDFBlob(data);
+      
+      // Upload to MinIO
+      const certificateUrl = await this.uploadToMinIO(pdfBlob, data);
+      
+      return {
+        success: true,
+        certificateUrl,
       };
-
-      // Generate certificate URL (in a real implementation, this would generate an actual PDF)
-      const certificateUrl = await this.generateCertificateUrl(certificateData);
-
-      // Create certificate record
-      await prisma.certificate.create({
-        data: {
-          studentId: studentId,
-          courseId: courseId,
-          fileUrl: certificateUrl,
-        },
-      });
-
-      return certificateUrl;
     } catch (error) {
-      console.error("Error generating course certificate:", error);
-      return null;
-    }
-  }
-
-  /**
-   * Generate a certificate for module completion
-   */
-  static async generateModuleCertificate(
-    studentId: string,
-    moduleId: string
-  ): Promise<string | null> {
-    try {
-      // Get module and student data
-      const courseModule = await prisma.courseModule.findUnique({
-        where: { id: moduleId },
-        include: {
-          course: {
-            include: {
-              instructor: true,
-            },
-          },
-        },
-      });
-
-      const student = await prisma.profile.findUnique({
-        where: { userId: studentId },
-      });
-
-      if (!courseModule || !student) {
-        throw new Error("Module or student not found");
-      }
-
-      // Check if student is enrolled in the course
-      const enrollment = await prisma.courseEnrollment.findFirst({
-        where: {
-          studentId: studentId,
-          courseId: courseModule.courseId,
-        },
-      });
-
-      if (!enrollment) {
-        throw new Error("Student is not enrolled in the course");
-      }
-
-      // Check if certificate already exists
-      const existingCert = await prisma.moduleCertificate.findFirst({
-        where: {
-          studentId: studentId,
-          moduleId: moduleId,
-        },
-      });
-
-      if (existingCert) {
-        return existingCert.fileUrl;
-      }
-
-      // Generate certificate data
-      const certificateData: CertificateData = {
-        studentName: `${student.firstName || ''} ${student.lastName || ''}`.trim(),
-        courseTitle: courseModule.course.title,
-        moduleTitle: courseModule.title,
-        instructorName: courseModule.course.instructor ? 
-          `${courseModule.course.instructor.firstName || ''} ${courseModule.course.instructor.lastName || ''}`.trim() : 
-          undefined,
-        completionDate: new Date().toISOString(),
-        certificateId: `MOD-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        courseId: courseModule.courseId,
-        moduleId: moduleId,
+      console.error('Error generating certificate:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred',
       };
-
-      // Generate certificate URL
-      const certificateUrl = await this.generateCertificateUrl(certificateData);
-
-      // Create certificate record
-      await prisma.moduleCertificate.create({
-        data: {
-          studentId: studentId,
-          moduleId: moduleId,
-          fileUrl: certificateUrl,
-        },
-      });
-
-      return certificateUrl;
-    } catch (error) {
-      console.error("Error generating module certificate:", error);
-      return null;
     }
   }
 
   /**
-   * Generate certificate URL (placeholder implementation)
-   * In a real implementation, this would generate an actual PDF certificate
+   * Generate PDF blob from certificate template
    */
-  private static async generateCertificateUrl(data: CertificateData): Promise<string> {
-    // This is a placeholder implementation
-    // In a real application, you would:
-    // 1. Use a PDF generation library like Puppeteer or jsPDF
-    // 2. Create a certificate template with the student's data
-    // 3. Upload the generated PDF to a cloud storage service
-    // 4. Return the public URL of the certificate
+  private static async generatePDFBlob(data: CertificateData): Promise<Blob> {
+    const certificateDoc = CourseCertificateTemplate({
+      studentName: data.studentName,
+      courseTitle: data.courseTitle,
+      instructorName: data.instructorName,
+      completionDate: data.completionDate,
+      courseDuration: data.courseDuration,
+      courseLevel: data.courseLevel,
+      institutionName: data.institutionName,
+    });
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    const certificateId = data.certificateId;
-    
-    // For now, return a placeholder URL
-    // In production, this would be the actual certificate PDF URL
-    return `${baseUrl}/api/certificates/${certificateId}/download`;
-  }
-
-
-  /**
-   * Get certificate download URL
-   */
-  static async getCertificateDownloadUrl(certificateId: string): Promise<string | null> {
-    try {
-      // Check if it's a course certificate
-      const courseCert = await prisma.certificate.findUnique({
-        where: { id: certificateId },
-      });
-
-      if (courseCert) {
-        return courseCert.fileUrl;
-      }
-
-      // Check if it's a module certificate
-      const moduleCert = await prisma.moduleCertificate.findUnique({
-        where: { id: certificateId },
-      });
-
-      if (moduleCert) {
-        return moduleCert.fileUrl;
-      }
-
-      return null;
-    } catch (error) {
-      console.error("Error getting certificate download URL:", error);
-      return null;
-    }
+    const pdfBlob = await pdf(certificateDoc).toBlob();
+    return pdfBlob;
   }
 
   /**
-   * Verify certificate authenticity
+   * Upload certificate to MinIO
    */
-  static async verifyCertificate(certificateId: string): Promise<CertificateVerificationResult> {
-    try {
-      // Check course certificates
-      const courseCert = await prisma.certificate.findUnique({
-        where: { id: certificateId },
-        include: {
-          student: true,
-          course: true,
-        },
-      });
+  private static async uploadToMinIO(pdfBlob: Blob, data: CertificateData): Promise<string> {
+    // Ensure bucket exists
+    await this.ensureBucketExists();
 
-      if (courseCert) {
-        return {
-          isValid: true,
-          certificate: {
-            id: courseCert.id,
-            certificateUrl: courseCert.fileUrl,
-            issuedAt: courseCert.issuedAt,
-          },
-          student: courseCert.student,
-          course: courseCert.course,
-        };
+    // Generate unique filename
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const filename = `${data.courseId}_${data.studentId}_${timestamp}.pdf`;
+    const objectName = `${this.CERTIFICATE_PREFIX}${filename}`;
+
+    // Convert blob to buffer
+    const buffer = Buffer.from(await pdfBlob.arrayBuffer());
+
+    // Upload to MinIO
+    await minioClient.putObject(
+      this.BUCKET_NAME,
+      objectName,
+      buffer,
+      buffer.length,
+      {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="${filename}"`,
       }
+    );
 
-      // Check module certificates
-      const moduleCert = await prisma.moduleCertificate.findUnique({
-        where: { id: certificateId },
-        include: {
-          student: true,
-          module: {
-            include: {
-              course: true,
+    // Return the public URL
+    return `${process.env.MINIO_PUBLIC_URL || 'http://localhost:9000'}/${this.BUCKET_NAME}/${objectName}`;
+  }
+
+  /**
+   * Ensure the certificates bucket exists
+   */
+  private static async ensureBucketExists(): Promise<void> {
+    try {
+      const exists = await minioClient.bucketExists(this.BUCKET_NAME);
+      if (!exists) {
+        await minioClient.makeBucket(this.BUCKET_NAME, 'us-east-1');
+        
+        // Set bucket policy to allow public read access
+        const policy = {
+          Version: '2012-10-17',
+          Statement: [
+            {
+              Effect: 'Allow',
+              Principal: { AWS: ['*'] },
+              Action: ['s3:GetObject'],
+              Resource: [`arn:aws:s3:::${this.BUCKET_NAME}/*`],
             },
-          },
-        },
-      });
-
-      if (moduleCert) {
-        return {
-          isValid: true,
-          certificate: {
-            id: moduleCert.id,
-            certificateUrl: moduleCert.fileUrl,
-            issuedAt: moduleCert.issuedAt,
-          },
-          student: moduleCert.student,
-          course: moduleCert.module.course,
+          ],
         };
+        
+        await minioClient.setBucketPolicy(this.BUCKET_NAME, JSON.stringify(policy));
       }
-
-      return { isValid: false };
     } catch (error) {
-      console.error("Error verifying certificate:", error);
-      return { isValid: false };
+      console.error('Error ensuring bucket exists:', error);
+      throw new Error('Failed to create certificates bucket');
+    }
+  }
+
+  /**
+   * Get certificate URL if it exists
+   */
+  static async getCertificateUrl(courseId: string, studentId: string): Promise<string | null> {
+    try {
+      await this.ensureBucketExists();
+      
+      // List objects with the course and student prefix
+      const prefix = `${this.CERTIFICATE_PREFIX}${courseId}_${studentId}_`;
+      const objects = await minioClient.listObjects(this.BUCKET_NAME, prefix);
+      
+      let latestObject: any = null;
+      let latestDate = new Date(0);
+      
+      for await (const obj of objects) {
+        if (obj.lastModified && obj.lastModified > latestDate) {
+          latestDate = obj.lastModified;
+          latestObject = obj;
+        }
+      }
+      
+      if (latestObject) {
+        return `${process.env.MINIO_PUBLIC_URL || 'http://localhost:9000'}/${this.BUCKET_NAME}/${latestObject.name}`;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error getting certificate URL:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Delete certificate
+   */
+  static async deleteCertificate(courseId: string, studentId: string): Promise<boolean> {
+    try {
+      await this.ensureBucketExists();
+      
+      const prefix = `${this.CERTIFICATE_PREFIX}${courseId}_${studentId}_`;
+      const objects = await minioClient.listObjects(this.BUCKET_NAME, prefix);
+      
+      for await (const obj of objects) {
+        await minioClient.removeObject(this.BUCKET_NAME, obj.name!);
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error deleting certificate:', error);
+      return false;
     }
   }
 }

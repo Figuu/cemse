@@ -41,13 +41,16 @@ export default function JobDetailPage() {
   // Get the company for company users
   const { data: company, isLoading: companyLoading } = useCompanyByUser(session?.user?.id || "");
   
+  // Determine if user is a company user (has a company)
+  const isCompanyUser = !!company;
+  
   // Get job data based on user role
   const { data: companyJob, isLoading: companyJobLoading } = useJob(company?.id || "", jobId);
   const { data: youthJob, isLoading: youthJobLoading } = useJobById(jobId);
   
   // Use appropriate job data
-  const job = isCompany ? companyJob : youthJob;
-  const jobLoading = isCompany ? companyJobLoading : youthJobLoading;
+  const job = isCompanyUser ? companyJob : youthJob;
+  const jobLoading = isCompanyUser ? companyJobLoading : youthJobLoading;
   
   // Get applications only for company users
   const { data: applicationsData, isLoading: applicationsLoading } = useJobApplications({
@@ -137,36 +140,37 @@ export default function JobDetailPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8 max-w-4xl">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-8">
+      <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:gap-4 sm:space-y-0 mb-6 sm:mb-8">
         <Link href="/jobs">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" className="w-full sm:w-auto">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Volver
           </Button>
         </Link>
         <div className="flex-1">
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Briefcase className="h-8 w-8 text-primary" />
-            {job.title}
+          <h1 className="text-xl sm:text-3xl font-bold flex items-center gap-2">
+            <Briefcase className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
+            <span className="truncate">{job.title}</span>
           </h1>
-          <p className="text-muted-foreground">
-            {isCompany 
+          <p className="text-sm sm:text-base text-muted-foreground">
+            {isCompanyUser 
               ? "Gestiona este trabajo y sus aplicaciones"
               : `Oferta de trabajo en ${job.company?.name || "Empresa"}`
             }
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handleShare}>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
+          <Button variant="outline" size="sm" onClick={handleShare} className="w-full sm:w-auto">
             <Share2 className="h-4 w-4 mr-2" />
-            Compartir
+            <span className="hidden sm:inline">Compartir</span>
+            <span className="sm:hidden">Compartir</span>
           </Button>
-          {isCompany && (
+          {isCompanyUser && (
             <>
               <Link href={`/jobs/${jobId}/edit`}>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="w-full sm:w-auto">
                   Editar
                 </Button>
               </Link>
@@ -174,6 +178,7 @@ export default function JobDetailPage() {
                 variant="destructive" 
                 size="sm" 
                 onClick={() => setShowDeleteDialog(true)}
+                className="w-full sm:w-auto"
               >
                 <Trash2 className="h-4 w-4 mr-2" />
                 Eliminar
@@ -183,14 +188,15 @@ export default function JobDetailPage() {
           {isYouth && (
             <>
               <Link href={`/jobs/${jobId}/apply`}>
-                <Button size="sm">
+                <Button size="sm" className="w-full sm:w-auto">
                   {(job as any).isApplied ? "Ver Aplicación" : "Aplicar Ahora"}
                 </Button>
               </Link>
               <Link href={`/jobs/${jobId}/apply`}>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="w-full sm:w-auto">
                   <MessageCircle className="h-4 w-4 mr-2" />
-                  Contactar Empresa
+                  <span className="hidden sm:inline">Contactar Empresa</span>
+                  <span className="sm:hidden">Contactar</span>
                 </Button>
               </Link>
             </>
@@ -199,48 +205,48 @@ export default function JobDetailPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        {isCompany ? (
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+        {isCompanyUser ? (
           <>
             <Card>
-              <CardContent className="p-4">
+              <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <Eye className="h-4 w-4 text-blue-600" />
-                  <span className="text-sm font-medium">Vistas</span>
+                  <span className="text-xs sm:text-sm font-medium">Vistas</span>
                 </div>
-                <p className="text-2xl font-bold">{(job as any).viewsCount || 0}</p>
+                <p className="text-lg sm:text-2xl font-bold">{(job as any).viewsCount || 0}</p>
               </CardContent>
             </Card>
             
             <Card>
-              <CardContent className="p-4">
+              <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <Users className="h-4 w-4 text-green-600" />
-                  <span className="text-sm font-medium">Aplicaciones</span>
+                  <span className="text-xs sm:text-sm font-medium">Aplicaciones</span>
                 </div>
-                <p className="text-2xl font-bold">{applications.length}</p>
+                <p className="text-lg sm:text-2xl font-bold">{applications.length}</p>
               </CardContent>
             </Card>
             
             <Card>
-              <CardContent className="p-4">
+              <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <Target className="h-4 w-4 text-purple-600" />
-                  <span className="text-sm font-medium">Tasa de Conversión</span>
+                  <span className="text-xs sm:text-sm font-medium">Tasa de Conversión</span>
                 </div>
-                <p className="text-2xl font-bold">
+                <p className="text-lg sm:text-2xl font-bold">
                   {safePercentage(applications.length, (job as any).viewsCount)}%
                 </p>
               </CardContent>
             </Card>
             
             <Card>
-              <CardContent className="p-4">
+              <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <Calendar className="h-4 w-4 text-orange-600" />
-                  <span className="text-sm font-medium">Días Activo</span>
+                  <span className="text-xs sm:text-sm font-medium">Días Activo</span>
                 </div>
-                <p className="text-2xl font-bold">
+                <p className="text-lg sm:text-2xl font-bold">
                   {Math.ceil((Date.now() - new Date(job.createdAt).getTime()) / (1000 * 60 * 60 * 24))}
                 </p>
               </CardContent>
@@ -429,7 +435,7 @@ export default function JobDetailPage() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {isCompany ? (
+            {isCompanyUser ? (
               <>
                 <Link href={`/jobs/${jobId}/applications`}>
                   <Button className="w-full">
@@ -476,7 +482,7 @@ export default function JobDetailPage() {
       </Card>
 
       {/* Recent Applications Preview - Only for company users */}
-      {isCompany && applications.length > 0 && (
+      {isCompanyUser && applications.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>Aplicaciones Recientes</CardTitle>
@@ -529,7 +535,7 @@ export default function JobDetailPage() {
       )}
 
       {/* Delete Confirmation Dialog - Only for company users */}
-      {isCompany && showDeleteDialog && (
+      {isCompanyUser && showDeleteDialog && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <Card className="max-w-md w-full">
             <CardHeader>

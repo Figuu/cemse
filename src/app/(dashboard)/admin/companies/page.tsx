@@ -46,8 +46,22 @@ interface Company {
   logoUrl?: string;
   isActive: boolean;
   institutionId?: string;
+  institution?: {
+    id: string;
+    name: string;
+    department: string;
+    region?: string;
+    institutionType: string;
+  };
   createdAt: string;
   updatedAt: string;
+}
+
+interface Municipality {
+  id: string;
+  name: string;
+  department: string;
+  region?: string;
 }
 
 interface FormErrors {
@@ -288,6 +302,25 @@ function CompaniesManagement() {
     company.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     company.businessSector?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Helper function to get associated municipality
+  const getAssociatedMunicipality = (company: Company): Municipality | null => {
+    if (!company.institution) {
+      return null;
+    }
+    
+    // If the institution is a municipality, return it
+    if (company.institution.institutionType === 'MUNICIPALITY') {
+      return {
+        id: company.institution.id,
+        name: company.institution.name,
+        department: company.institution.department,
+        region: company.institution.region
+      };
+    }
+    
+    return null;
+  };
 
   // Validation functions
   const validateCreateForm = (formData: CompanyFormData): FormErrors => {
@@ -583,25 +616,26 @@ function CompaniesManagement() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
         <div>
-          <h1 className="text-2xl font-bold">Gestión de Empresas</h1>
-          <p className="text-muted-foreground">Administra las empresas del sistema</p>
+          <h1 className="text-xl font-bold sm:text-2xl">Gestión de Empresas</h1>
+          <p className="text-sm text-muted-foreground sm:text-base">Administra las empresas del sistema</p>
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={(open) => {
           setIsCreateDialogOpen(open);
           if (!open) setCreateErrors({});
         }}>
           <DialogTrigger asChild>
-            <Button onClick={openCreateDialog}>
+            <Button onClick={openCreateDialog} className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
-              Nueva Empresa
+              <span className="hidden sm:inline">Nueva Empresa</span>
+              <span className="sm:hidden">Nueva</span>
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Crear Nueva Empresa</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-lg sm:text-xl">Crear Nueva Empresa</DialogTitle>
+              <DialogDescription className="text-sm">
                 Crea una nueva empresa con credenciales básicas
               </DialogDescription>
             </DialogHeader>
@@ -614,33 +648,33 @@ function CompaniesManagement() {
                   </div>
                 </div>
               )}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Nombre de la Empresa *</Label>
+                  <Label htmlFor="name" className="text-sm">Nombre de la Empresa *</Label>
                   <Input 
                     id="name" 
                     name="name" 
                     required 
                     maxLength={100}
-                    className={createErrors.name ? "border-red-500" : ""}
+                    className={`text-sm ${createErrors.name ? "border-red-500" : ""}`}
                   />
                   <ErrorMessage error={createErrors.name} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email *</Label>
+                  <Label htmlFor="email" className="text-sm">Email *</Label>
                   <Input 
                     id="email" 
                     name="email" 
                     type="email" 
                     required 
                     maxLength={100}
-                    className={createErrors.email ? "border-red-500" : ""}
+                    className={`text-sm ${createErrors.email ? "border-red-500" : ""}`}
                   />
                   <ErrorMessage error={createErrors.email} />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Contraseña *</Label>
+                <Label htmlFor="password" className="text-sm">Contraseña *</Label>
                 <div className="relative">
                   <Input 
                     id="password" 
@@ -669,16 +703,17 @@ function CompaniesManagement() {
                 <ErrorMessage error={createErrors.password} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="description">Descripción</Label>
+                <Label htmlFor="description" className="text-sm">Descripción</Label>
                 <Input 
                   id="description" 
                   name="description" 
                   maxLength={500}
+                  className="text-sm"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="taxId">NIT/RUC</Label>
+                  <Label htmlFor="taxId" className="text-sm">NIT/RUC</Label>
                   <Input 
                     id="taxId" 
                     name="taxId" 
@@ -686,35 +721,37 @@ function CompaniesManagement() {
                     maxLength={15}
                     pattern="^[0-9]{7,15}$"
                     placeholder="1234567890"
+                    className={`text-sm ${createErrors.taxId ? "border-red-500" : ""}`}
                     onKeyPress={(e) => {
                       if (!/[0-9]/.test(e.key)) {
                         e.preventDefault();
                       }
                     }}
-                    className={createErrors.taxId ? "border-red-500" : ""}
                   />
                   <ErrorMessage error={createErrors.taxId} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="legalRepresentative">Representante Legal</Label>
+                  <Label htmlFor="legalRepresentative" className="text-sm">Representante Legal</Label>
                   <Input 
                     id="legalRepresentative" 
                     name="legalRepresentative" 
                     maxLength={100}
+                    className="text-sm"
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="businessSector">Sector de Negocio</Label>
+                  <Label htmlFor="businessSector" className="text-sm">Sector de Negocio</Label>
                   <Input 
                     id="businessSector" 
                     name="businessSector" 
                     maxLength={100}
+                    className="text-sm"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="companySize">Tamaño de Empresa</Label>
+                  <Label htmlFor="companySize" className="text-sm">Tamaño de Empresa</Label>
                   <Select name="companySize">
                     <SelectTrigger>
                       <SelectValue placeholder="Seleccionar tamaño" />
@@ -728,25 +765,26 @@ function CompaniesManagement() {
                   </Select>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="website">Sitio Web</Label>
+                  <Label htmlFor="website" className="text-sm">Sitio Web</Label>
                   <Input 
                     id="website" 
                     name="website" 
                     type="url" 
                     maxLength={200}
-                    className={createErrors.website ? "border-red-500" : ""}
+                    className={`text-sm ${createErrors.website ? "border-red-500" : ""}`}
                   />
                   <ErrorMessage error={createErrors.website} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Teléfono</Label>
+                  <Label htmlFor="phone" className="text-sm">Teléfono</Label>
                   <Input 
                     id="phone" 
                     name="phone" 
-                    type="tel"
+                    type="tel" 
                     maxLength={20}
+                    className={`text-sm ${createErrors.phone ? "border-red-500" : ""}`}
                     pattern="^[\+]?[0-9\s\-\(\)]{7,15}$"
                     placeholder="+1234567890"
                     onKeyPress={(e) => {
@@ -754,28 +792,29 @@ function CompaniesManagement() {
                         e.preventDefault();
                       }
                     }}
-                    className={createErrors.phone ? "border-red-500" : ""}
                   />
                   <ErrorMessage error={createErrors.phone} />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="address">Dirección</Label>
+                <Label htmlFor="address" className="text-sm">Dirección</Label>
                 <Input 
                   id="address" 
                   name="address" 
                   maxLength={200}
+                  className="text-sm"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="foundedYear">Año de Fundación</Label>
+                  <Label htmlFor="foundedYear" className="text-sm">Año de Fundación</Label>
                   <Input 
                     id="foundedYear" 
                     name="foundedYear" 
                     type="number" 
                     min="1800" 
                     max={new Date().getFullYear()}
+                    className={`text-sm ${createErrors.foundedYear ? "border-red-500" : ""}`}
                     step="1"
                     placeholder="2020"
                     onKeyPress={(e) => {
@@ -783,12 +822,11 @@ function CompaniesManagement() {
                         e.preventDefault();
                       }
                     }}
-                    className={createErrors.foundedYear ? "border-red-500" : ""}
                   />
                   <ErrorMessage error={createErrors.foundedYear} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="institutionId">Municipio Asociado</Label>
+                  <Label htmlFor="institutionId" className="text-sm">Municipio Asociado</Label>
                   <Select name="institutionId">
                     <SelectTrigger>
                       <SelectValue placeholder="Seleccionar municipio (opcional)" />
@@ -804,16 +842,22 @@ function CompaniesManagement() {
                   </Select>
                 </div>
               </div>
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => {
-                  setIsCreateDialogOpen(false);
-                  setCreateErrors({});
-                }}>
+              <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => {
+                    setIsCreateDialogOpen(false);
+                    setCreateErrors({});
+                  }}
+                  className="w-full sm:w-auto order-2 sm:order-1"
+                >
                   Cancelar
                 </Button>
                 <Button 
                   type="submit" 
                   disabled={createCompanyMutation.isPending || isValidating}
+                  className="w-full sm:w-auto order-1 sm:order-2"
                 >
                   {createCompanyMutation.isPending || isValidating ? 'Creando...' : 'Crear Empresa'}
                 </Button>
@@ -828,10 +872,10 @@ function CompaniesManagement() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar por nombre, email o sector..."
+            placeholder="Buscar empresas..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className="pl-10 text-sm sm:text-base"
           />
         </div>
       </div>
@@ -840,80 +884,111 @@ function CompaniesManagement() {
       <div className="space-y-4">
         {filteredCompanies.map((company: Company) => (
           <Card key={company.id}>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                    <Building2 className="h-6 w-6 text-green-600" />
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+                <div className="flex items-start space-x-3 sm:space-x-4">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
                   </div>
-                  <div className="flex-1">
-                    <h4 className="font-semibold">{company.name}</h4>
-                    <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-semibold text-sm sm:text-base truncate">{company.name}</h4>
+                    <div className="flex flex-col space-y-1 sm:flex-row sm:items-center sm:space-x-4 sm:space-y-0 text-xs sm:text-sm text-muted-foreground">
                       {company.email && (
-                        <div className="flex items-center space-x-1">
-                          <Mail className="h-3 w-3" />
-                          <span>{company.email}</span>
+                        <div className="flex items-center space-x-1 min-w-0">
+                          <Mail className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate">{company.email}</span>
                         </div>
                       )}
                       {company.phone && (
-                        <div className="flex items-center space-x-1">
-                          <Phone className="h-3 w-3" />
-                          <span>{company.phone}</span>
+                        <div className="flex items-center space-x-1 min-w-0">
+                          <Phone className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate">{company.phone}</span>
                         </div>
                       )}
                       {company.address && (
-                        <div className="flex items-center space-x-1">
-                          <MapPin className="h-3 w-3" />
-                          <span className="truncate max-w-32">{company.address}</span>
+                        <div className="flex items-center space-x-1 min-w-0">
+                          <MapPin className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate">{company.address}</span>
                         </div>
                       )}
                       {company.website && (
-                        <div className="flex items-center space-x-1">
-                          <Globe className="h-3 w-3" />
-                          <span className="truncate max-w-32">{company.website}</span>
+                        <div className="flex items-center space-x-1 min-w-0">
+                          <Globe className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate">{company.website}</span>
                         </div>
                       )}
                     </div>
-                    <div className="flex items-center space-x-2 mt-2">
-                      <Badge variant={company.isActive ? "default" : "secondary"}>
+                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                      <Badge variant={company.isActive ? "default" : "secondary"} className="text-xs">
                         {company.isActive ? "Activo" : "Inactivo"}
                       </Badge>
                       {company.companySize && (
-                        <Badge className={getCompanySizeColor(company.companySize)}>
+                        <Badge className={`text-xs ${getCompanySizeColor(company.companySize)}`}>
                           {getCompanySizeText(company.companySize)}
                         </Badge>
                       )}
                       {company.businessSector && (
-                        <Badge variant="outline">
+                        <Badge variant="outline" className="text-xs">
                           <Briefcase className="h-3 w-3 mr-1" />
                           {company.businessSector}
                         </Badge>
                       )}
                       {company.foundedYear && (
-                        <Badge variant="outline">
+                        <Badge variant="outline" className="text-xs">
                           <Calendar className="h-3 w-3 mr-1" />
                           {company.foundedYear}
+                        </Badge>
+                      )}
+                      {getAssociatedMunicipality(company) && (
+                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-xs">
+                          <MapPin className="h-3 w-3 mr-1" />
+                          {getAssociatedMunicipality(company)?.name}
                         </Badge>
                       )}
                     </div>
                   </div>
                 </div>
-                <div className="text-right text-sm text-muted-foreground">
-                  <div className="flex items-center space-x-1">
+                
+                {/* Desktop layout */}
+                <div className="hidden sm:flex sm:items-center sm:space-x-4">
+                  <div className="text-right text-sm text-muted-foreground">
+                    <div className="flex items-center space-x-1">
+                      <Calendar className="h-3 w-3" />
+                      <span>Registrado: {formatDate(company.createdAt)}</span>
+                    </div>
+                    {company.legalRepresentative && (
+                      <p className="text-xs mt-1">Rep. Legal: {company.legalRepresentative}</p>
+                    )}
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button variant="outline" size="sm" onClick={() => openEditDialog(company)}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => handleDeleteCompany(company)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Mobile layout */}
+                <div className="flex sm:hidden flex-col space-y-3">
+                  <div className="flex items-center space-x-1 text-xs text-muted-foreground">
                     <Calendar className="h-3 w-3" />
                     <span>Registrado: {formatDate(company.createdAt)}</span>
                   </div>
                   {company.legalRepresentative && (
-                    <p className="text-xs mt-1">Rep. Legal: {company.legalRepresentative}</p>
+                    <p className="text-xs text-muted-foreground">Rep. Legal: {company.legalRepresentative}</p>
                   )}
-                </div>
-                <div className="flex space-x-2">
-                  <Button variant="outline" size="sm" onClick={() => openEditDialog(company)}>
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleDeleteCompany(company)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex space-x-2">
+                    <Button variant="outline" size="sm" onClick={() => openEditDialog(company)} className="flex-1">
+                      <Edit className="h-4 w-4 mr-2" />
+                      Editar
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => handleDeleteCompany(company)} className="flex-1">
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Eliminar
+                    </Button>
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -943,8 +1018,8 @@ function CompaniesManagement() {
       }}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Editar Empresa</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-lg sm:text-xl">Editar Empresa</DialogTitle>
+            <DialogDescription className="text-sm">
               Modifica la información de la empresa
             </DialogDescription>
           </DialogHeader>
@@ -958,9 +1033,9 @@ function CompaniesManagement() {
                   </div>
                 </div>
               )}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="edit-name">Nombre de la Empresa *</Label>
+                  <Label htmlFor="edit-name" className="text-sm">Nombre de la Empresa *</Label>
                   <Input 
                     id="edit-name" 
                     name="name" 
@@ -972,7 +1047,7 @@ function CompaniesManagement() {
                   <ErrorMessage error={editErrors.name} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-email">Email *</Label>
+                  <Label htmlFor="edit-email" className="text-sm">Email *</Label>
                   <Input 
                     id="edit-email" 
                     name="email" 
@@ -986,48 +1061,51 @@ function CompaniesManagement() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-description">Descripción</Label>
+                <Label htmlFor="edit-description" className="text-sm">Descripción</Label>
                 <Input 
                   id="edit-description" 
                   name="description" 
                   defaultValue={selectedCompany.description}
                   maxLength={500}
+                  className="text-sm"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="edit-taxId">NIT/RUC</Label>
+                  <Label htmlFor="edit-taxId" className="text-sm">NIT/RUC</Label>
                   <Input 
                     id="edit-taxId" 
                     name="taxId" 
                     defaultValue={selectedCompany.taxId}
                     maxLength={15}
-                    className={editErrors.taxId ? "border-red-500" : ""}
+                    className={`text-sm ${editErrors.taxId ? "border-red-500" : ""}`}
                   />
                   <ErrorMessage error={editErrors.taxId} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-legalRepresentative">Representante Legal</Label>
+                  <Label htmlFor="edit-legalRepresentative" className="text-sm">Representante Legal</Label>
                   <Input 
                     id="edit-legalRepresentative" 
                     name="legalRepresentative" 
                     defaultValue={selectedCompany.legalRepresentative}
                     maxLength={100}
+                    className="text-sm"
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="edit-businessSector">Sector de Negocio</Label>
+                  <Label htmlFor="edit-businessSector" className="text-sm">Sector de Negocio</Label>
                   <Input 
                     id="edit-businessSector" 
                     name="businessSector" 
                     defaultValue={selectedCompany.businessSector}
                     maxLength={100}
+                    className="text-sm"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-companySize">Tamaño de Empresa</Label>
+                  <Label htmlFor="edit-companySize" className="text-sm">Tamaño de Empresa</Label>
                   <Select name="companySize" defaultValue={selectedCompany.companySize}>
                     <SelectTrigger>
                       <SelectValue placeholder="Seleccionar tamaño" />
@@ -1041,43 +1119,44 @@ function CompaniesManagement() {
                   </Select>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="edit-website">Sitio Web</Label>
+                  <Label htmlFor="edit-website" className="text-sm">Sitio Web</Label>
                   <Input 
                     id="edit-website" 
                     name="website" 
                     type="url" 
                     defaultValue={selectedCompany.website}
                     maxLength={200}
-                    className={editErrors.website ? "border-red-500" : ""}
+                    className={`text-sm ${editErrors.website ? "border-red-500" : ""}`}
                   />
                   <ErrorMessage error={editErrors.website} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-phone">Teléfono</Label>
+                  <Label htmlFor="edit-phone" className="text-sm">Teléfono</Label>
                   <Input 
                     id="edit-phone" 
                     name="phone" 
                     defaultValue={selectedCompany.phone}
                     maxLength={20}
-                    className={editErrors.phone ? "border-red-500" : ""}
+                    className={`text-sm ${editErrors.phone ? "border-red-500" : ""}`}
                   />
                   <ErrorMessage error={editErrors.phone} />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-address">Dirección</Label>
+                <Label htmlFor="edit-address" className="text-sm">Dirección</Label>
                 <Input 
                   id="edit-address" 
                   name="address" 
                   defaultValue={selectedCompany.address}
                   maxLength={200}
+                  className="text-sm"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="edit-foundedYear">Año de Fundación</Label>
+                  <Label htmlFor="edit-foundedYear" className="text-sm">Año de Fundación</Label>
                   <Input 
                     id="edit-foundedYear" 
                     name="foundedYear" 
@@ -1085,12 +1164,12 @@ function CompaniesManagement() {
                     min="1800" 
                     max={new Date().getFullYear()}
                     defaultValue={selectedCompany.foundedYear}
-                    className={editErrors.foundedYear ? "border-red-500" : ""}
+                    className={`text-sm ${editErrors.foundedYear ? "border-red-500" : ""}`}
                   />
                   <ErrorMessage error={editErrors.foundedYear} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-institutionId">Institución Asociada</Label>
+                  <Label htmlFor="edit-institutionId" className="text-sm">Municipio Asociado</Label>
                   <Select name="institutionId" defaultValue={selectedCompany.institutionId || "none"}>
                     <SelectTrigger>
                       <SelectValue placeholder="Seleccionar municipio (opcional)" />
@@ -1107,7 +1186,7 @@ function CompaniesManagement() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-isActive">Estado</Label>
+                <Label htmlFor="edit-isActive" className="text-sm">Estado</Label>
                 <Select name="isActive" defaultValue={selectedCompany.isActive.toString()}>
                   <SelectTrigger>
                     <SelectValue />
@@ -1118,16 +1197,22 @@ function CompaniesManagement() {
                   </SelectContent>
                 </Select>
               </div>
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => {
-                  setIsEditDialogOpen(false);
-                  setEditErrors({});
-                }}>
+              <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => {
+                    setIsEditDialogOpen(false);
+                    setEditErrors({});
+                  }}
+                  className="w-full sm:w-auto order-2 sm:order-1"
+                >
                   Cancelar
                 </Button>
                 <Button 
                   type="submit" 
                   disabled={updateCompanyMutation.isPending || isValidating}
+                  className="w-full sm:w-auto order-1 sm:order-2"
                 >
                   {updateCompanyMutation.isPending || isValidating ? 'Actualizando...' : 'Actualizar Empresa'}
                 </Button>

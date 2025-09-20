@@ -101,9 +101,9 @@ export function CourseFilters({
   return (
     <Card className={className}>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
           <div>
-            <CardTitle className="flex items-center">
+            <CardTitle className="flex items-center text-lg sm:text-xl">
               <Filter className="h-5 w-5 mr-2" />
               Filtros y Búsqueda
               {activeFiltersCount > 0 && (
@@ -112,15 +112,16 @@ export function CourseFilters({
                 </Badge>
               )}
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-sm">
               Encuentra los cursos que mejor se adapten a tus necesidades
             </CardDescription>
           </div>
-          <div className="flex space-x-2">
+          <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setShowAdvanced(!showAdvanced)}
+              className="w-full sm:w-auto"
             >
               {showAdvanced ? "Ocultar" : "Mostrar"} Avanzado
             </Button>
@@ -129,6 +130,7 @@ export function CourseFilters({
                 variant="outline"
                 size="sm"
                 onClick={onReset}
+                className="w-full sm:w-auto"
               >
                 <X className="h-4 w-4 mr-1" />
                 Limpiar
@@ -144,16 +146,16 @@ export function CourseFilters({
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar por título, descripción, instructor..."
+              placeholder="Buscar cursos..."
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="pl-10"
+              className="pl-10 text-sm"
             />
           </div>
         </div>
 
         {/* Basic Filters */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">Categoría</label>
             <Select value={selectedCategory} onValueChange={onCategoryChange}>
@@ -204,7 +206,7 @@ export function CourseFilters({
           <div className="space-y-4 pt-4 border-t">
             <h4 className="font-medium text-sm">Filtros Avanzados</h4>
             
-            <div className={`grid grid-cols-1 ${userRole === "YOUTH" ? "md:grid-cols-2" : "md:grid-cols-1"} gap-4`}>
+            <div className={`grid grid-cols-1 ${userRole === "YOUTH" ? "sm:grid-cols-2" : "sm:grid-cols-1"} gap-4`}>
               {userRole === "YOUTH" && (
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Estado de Inscripción</label>
@@ -248,6 +250,7 @@ export function CourseFilters({
                   variant={sortOrder === "asc" ? "default" : "outline"}
                   size="sm"
                   onClick={() => onSortOrderChange("asc")}
+                  className="flex-1 sm:flex-none"
                 >
                   Ascendente
                 </Button>
@@ -255,6 +258,7 @@ export function CourseFilters({
                   variant={sortOrder === "desc" ? "default" : "outline"}
                   size="sm"
                   onClick={() => onSortOrderChange("desc")}
+                  className="flex-1 sm:flex-none"
                 >
                   Descendente
                 </Button>
@@ -264,7 +268,7 @@ export function CourseFilters({
         )}
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t">
           <div className="text-center">
             <div className="flex items-center justify-center mb-1">
               <BookOpen className="h-4 w-4 text-blue-600 mr-1" />
@@ -308,7 +312,7 @@ export function CourseFilters({
 
         {/* Apply Button */}
         <div className="flex justify-end pt-4">
-          <Button onClick={onApply} className="w-full md:w-auto">
+          <Button onClick={onApply} className="w-full sm:w-auto">
             <RefreshCw className="h-4 w-4 mr-2" />
             Aplicar Filtros
           </Button>

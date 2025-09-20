@@ -234,19 +234,19 @@ export function CourseCard({
 
       <CardHeader className="pb-3">
         <div className="space-y-2">
-          <CardTitle className="text-lg line-clamp-2 group-hover:text-blue-600 transition-colors">
+          <CardTitle className="text-base sm:text-lg line-clamp-2 group-hover:text-blue-600 transition-colors">
             {course.title}
           </CardTitle>
           
           {course.instructor && (
-            <CardDescription className="flex items-center">
+            <CardDescription className="flex items-center text-sm">
               <User className="h-4 w-4 mr-1" />
               {course.instructor.name}
             </CardDescription>
           )}
 
           {course.shortDescription && (
-            <p className="text-sm text-muted-foreground line-clamp-2">
+            <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
               {course.shortDescription}
             </p>
           )}
@@ -255,18 +255,18 @@ export function CourseCard({
 
       <CardContent className="pt-0 space-y-4">
         {/* Course Stats */}
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <div className="flex items-center space-x-4">
+        <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 text-xs sm:text-sm text-muted-foreground">
+          <div className="flex items-center space-x-3 sm:space-x-4">
             <div className="flex items-center">
-              <Clock className="h-4 w-4 mr-1" />
+              <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
               {formatDuration(course.duration)}
             </div>
             <div className="flex items-center">
-              <Users className="h-4 w-4 mr-1" />
+              <Users className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
               {course.studentsCount.toLocaleString()}
             </div>
             <div className="flex items-center">
-              <Star className="h-4 w-4 mr-1 fill-yellow-400 text-yellow-400" />
+              <Star className="h-3 w-3 sm:h-4 sm:w-4 mr-1 fill-yellow-400 text-yellow-400" />
               {course.rating.toFixed(1)}
             </div>
           </div>
@@ -274,16 +274,16 @@ export function CourseCard({
 
         {/* Course Details */}
         <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center justify-between text-xs sm:text-sm">
             <span className="text-muted-foreground">Lecciones</span>
             <span className="font-medium">{course.totalLessons}</span>
           </div>
-          <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center justify-between text-xs sm:text-sm">
             <span className="text-muted-foreground">Módulos</span>
             <span className="font-medium">{course.totalModules}</span>
           </div>
           {course.totalQuizzes > 0 && (
-            <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center justify-between text-xs sm:text-sm">
               <span className="text-muted-foreground">Cuestionarios</span>
               <span className="font-medium">{course.totalQuizzes}</span>
             </div>
@@ -326,12 +326,13 @@ export function CourseCard({
 
         {/* Actions */}
         {showActions && (
-          <div className="flex items-center justify-between pt-2">
+          <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 pt-2">
             <div className="flex space-x-2">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => onView(course.id)}
+                className="flex-1 sm:flex-none"
               >
                 <ExternalLink className="h-4 w-4 mr-1" />
                 Ver
@@ -340,8 +341,10 @@ export function CourseCard({
                 variant="outline"
                 size="sm"
                 onClick={() => {/* TODO: Implement share */}}
+                className="flex-1 sm:flex-none"
               >
                 <Share2 className="h-4 w-4" />
+                <span className="ml-1 sm:hidden">Compartir</span>
               </Button>
             </div>
 
@@ -353,15 +356,16 @@ export function CourseCard({
                   <Button
                     size="sm"
                     onClick={() => onView(course.id)}
-                    className="bg-blue-600 hover:bg-blue-700"
+                    className="bg-blue-600 hover:bg-blue-700 flex-1 sm:flex-none"
                   >
                     <BookOpen className="h-4 w-4 mr-1" />
                     Gestionar
                   </Button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" className="flex-1 sm:flex-none">
                         <MoreVertical className="h-4 w-4" />
+                        <span className="ml-1 sm:hidden">Más</span>
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
@@ -388,7 +392,7 @@ export function CourseCard({
                 <Button
                   size="sm"
                   onClick={() => onView(course.id)}
-                  className="bg-gray-600 hover:bg-gray-700"
+                  className="bg-gray-600 hover:bg-gray-700 w-full sm:w-auto"
                 >
                   <ExternalLink className="h-4 w-4 mr-1" />
                   Ver Detalles
@@ -398,7 +402,7 @@ export function CourseCard({
                 <Button
                   size="sm"
                   onClick={() => onView(course.id)}
-                  className="bg-blue-600 hover:bg-blue-700"
+                  className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
                 >
                   <Play className="h-4 w-4 mr-1" />
                   Continuar
@@ -409,7 +413,7 @@ export function CourseCard({
                   size="sm"
                   onClick={handleEnroll}
                   disabled={isEnrolling}
-                  className="bg-green-600 hover:bg-green-700"
+                  className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
                 >
                   {isEnrolling ? (
                     <>

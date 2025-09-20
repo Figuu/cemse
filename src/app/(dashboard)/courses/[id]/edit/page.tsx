@@ -355,23 +355,23 @@ export default function CourseEditPage() {
     <RoleGuard allowedRoles={["INSTITUTION", "SUPERADMIN"]}>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Button variant="outline" size="sm" onClick={() => router.push('/courses')}>
+        <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+          <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-x-4 sm:space-y-0">
+            <Button variant="outline" size="sm" onClick={() => router.push('/courses')} className="w-full sm:w-auto">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Volver
             </Button>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Editar Curso</h1>
-              <p className="text-muted-foreground">{course.title}</p>
+              <h1 className="text-xl font-bold text-foreground sm:text-2xl">Editar Curso</h1>
+              <p className="text-sm text-muted-foreground sm:text-base">{course.title}</p>
             </div>
           </div>
-          <div className="flex space-x-2">
-            <Button variant="outline" onClick={() => router.push(`/courses/${courseId}`)}>
+          <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
+            <Button variant="outline" onClick={() => router.push(`/courses/${courseId}`)} className="w-full sm:w-auto">
               <Eye className="h-4 w-4 mr-2" />
               Vista Previa
             </Button>
-            <Button onClick={handleSave} disabled={isSaving}>
+            <Button onClick={handleSave} disabled={isSaving} className="w-full sm:w-auto">
               <Save className="h-4 w-4 mr-2" />
               {isSaving ? "Guardando..." : "Guardar Cambios"}
             </Button>
@@ -380,16 +380,28 @@ export default function CourseEditPage() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="basic">Información Básica</TabsTrigger>
-            <TabsTrigger value="modules">Módulos</TabsTrigger>
-            <TabsTrigger value="lessons">Lecciones</TabsTrigger>
-            <TabsTrigger value="quizzes">Cuestionarios</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
+            <TabsTrigger value="basic" className="text-xs sm:text-sm">
+              <span className="hidden sm:inline">Información Básica</span>
+              <span className="sm:hidden">Básica</span>
+            </TabsTrigger>
+            <TabsTrigger value="modules" className="text-xs sm:text-sm">
+              <span className="hidden sm:inline">Módulos</span>
+              <span className="sm:hidden">Módulos</span>
+            </TabsTrigger>
+            <TabsTrigger value="lessons" className="text-xs sm:text-sm">
+              <span className="hidden sm:inline">Lecciones</span>
+              <span className="sm:hidden">Lecciones</span>
+            </TabsTrigger>
+            <TabsTrigger value="quizzes" className="text-xs sm:text-sm">
+              <span className="hidden sm:inline">Cuestionarios</span>
+              <span className="sm:hidden">Quiz</span>
+            </TabsTrigger>
           </TabsList>
 
           {/* Basic Information Tab */}
           <TabsContent value="basic" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
                   <CardTitle>Información del Curso</CardTitle>
@@ -427,7 +439,7 @@ export default function CourseEditPage() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="level">Nivel</Label>
                       <Select
@@ -519,7 +531,7 @@ export default function CourseEditPage() {
               </Card>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
                   <CardTitle>Prerrequisitos</CardTitle>

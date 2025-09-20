@@ -270,9 +270,48 @@ export async function PATCH(
         },
       });
 
-      // Course completion logic (notification system not implemented yet)
+      // Course completion logic - generate certificate if applicable
       if (isCourseCompleted && !enrollment.completedAt) {
         console.log(`Course completed: ${course.title} by user ${session.user.id}`);
+        
+        // Generate certificate if course has certification enabled
+        if (course.certification) {
+          try {
+            const { CertificateService } = await import("@/lib/certificateService");
+            
+            // Get student profile
+            const studentProfile = await prisma.profile.findUnique({
+              where: { userId: session.user.id },
+            });
+            
+            // Get instructor profile
+            const instructorProfile = await prisma.profile.findUnique({
+              where: { userId: course.instructorId },
+            });
+            
+            const certificateData = {
+              studentId: session.user.id,
+              studentName: studentProfile?.fullName || session.user.name || 'Estudiante',
+              courseId: courseId,
+              courseTitle: course.title,
+              instructorName: instructorProfile?.fullName || course.instructor?.name || 'Instructor',
+              completionDate: new Date().toISOString(),
+              courseDuration: `${Math.floor(course.duration / 60)}h ${course.duration % 60}m`,
+              courseLevel: course.level,
+              institutionName: 'CEMSE - Centro de Emprendimiento y Desarrollo Sostenible',
+            };
+            
+            const result = await CertificateService.generateCourseCertificate(certificateData);
+            
+            if (result.success) {
+              console.log(`Certificate generated for course ${course.title}: ${result.certificateUrl}`);
+            } else {
+              console.error(`Failed to generate certificate for course ${course.title}:`, result.error);
+            }
+          } catch (error) {
+            console.error("Error generating certificate on course completion:", error);
+          }
+        }
       }
     }
 

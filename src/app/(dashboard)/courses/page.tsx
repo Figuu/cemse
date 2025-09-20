@@ -138,13 +138,13 @@ export default function CoursesPage() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Cursos</h1>
-            <p className="text-muted-foreground">Explora y gestiona tus cursos de formación profesional</p>
+            <h1 className="text-xl font-bold text-foreground sm:text-2xl">Cursos</h1>
+            <p className="text-sm text-muted-foreground sm:text-base">Explora y gestiona tus cursos de formación profesional</p>
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {Array.from({ length: 6 }).map((_, i) => (
             <Card key={i} className="animate-pulse">
               <div className="aspect-video bg-gray-200"></div>
@@ -166,10 +166,10 @@ export default function CoursesPage() {
   if (error) {
   return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Cursos</h1>
-            <p className="text-muted-foreground">Explora y gestiona tus cursos de formación profesional</p>
+            <h1 className="text-xl font-bold text-foreground sm:text-2xl">Cursos</h1>
+            <p className="text-sm text-muted-foreground sm:text-base">Explora y gestiona tus cursos de formación profesional</p>
           </div>
         </div>
         <Card>
@@ -191,23 +191,25 @@ export default function CoursesPage() {
     <RoleGuard allowedRoles={["YOUTH", "COMPANIES", "INSTITUTION", "SUPERADMIN"]}>
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Cursos</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-xl font-bold text-foreground sm:text-2xl">Cursos</h1>
+          <p className="text-sm text-muted-foreground sm:text-base">
             Explora y gestiona tus cursos de formación profesional
           </p>
         </div>
-          <div className="flex space-x-2 mt-4 sm:mt-0">
-            <Button variant="outline" onClick={refetch}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Actualizar
-            </Button>
-            <Button onClick={handleCreateCourse}>
-              <Plus className="h-4 w-4 mr-2" />
-          Crear Curso
-        </Button>
-          </div>
+        <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
+          <Button variant="outline" onClick={refetch} className="w-full sm:w-auto">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            <span className="hidden sm:inline">Actualizar</span>
+            <span className="sm:hidden">Actualizar</span>
+          </Button>
+          <Button onClick={handleCreateCourse} className="w-full sm:w-auto">
+            <Plus className="h-4 w-4 mr-2" />
+            <span className="hidden sm:inline">Crear Curso</span>
+            <span className="sm:hidden">Crear</span>
+          </Button>
+        </div>
       </div>
 
         {/* Filters */}
@@ -232,36 +234,49 @@ export default function CoursesPage() {
         />
 
         {/* View Mode Toggle */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
           <div className="flex items-center space-x-2">
             <Button
               variant={viewMode === "grid" ? "default" : "outline"}
               size="sm"
               onClick={() => setViewMode("grid")}
+              className="flex-1 sm:flex-none"
             >
               <Grid3X3 className="h-4 w-4" />
+              <span className="ml-2 sm:hidden">Cuadrícula</span>
             </Button>
             <Button
               variant={viewMode === "list" ? "default" : "outline"}
               size="sm"
               onClick={() => setViewMode("list")}
+              className="flex-1 sm:flex-none"
             >
               <List className="h-4 w-4" />
-              </Button>
-            </div>
-          <div className="text-sm text-muted-foreground">
+              <span className="ml-2 sm:hidden">Lista</span>
+            </Button>
+          </div>
+          <div className="text-sm text-muted-foreground text-center sm:text-right">
             {courses.length} cursos encontrados
-                </div>
-              </div>
+          </div>
+        </div>
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className={`grid w-full ${isYouth ? 'grid-cols-3' : 'grid-cols-1'}`}>
-            <TabsTrigger value="all">Todos ({courses.length})</TabsTrigger>
+            <TabsTrigger value="all" className="text-xs sm:text-sm">
+              <span className="hidden sm:inline">Todos ({courses.length})</span>
+              <span className="sm:hidden">Todos</span>
+            </TabsTrigger>
             {isYouth && (
               <>
-                <TabsTrigger value="enrolled">Mis Cursos ({enrolledCourses.length})</TabsTrigger>
-                <TabsTrigger value="available">Disponibles ({availableCourses.length})</TabsTrigger>
+                <TabsTrigger value="enrolled" className="text-xs sm:text-sm">
+                  <span className="hidden sm:inline">Mis Cursos ({enrolledCourses.length})</span>
+                  <span className="sm:hidden">Mis Cursos</span>
+                </TabsTrigger>
+                <TabsTrigger value="available" className="text-xs sm:text-sm">
+                  <span className="hidden sm:inline">Disponibles ({availableCourses.length})</span>
+                  <span className="sm:hidden">Disponibles</span>
+                </TabsTrigger>
               </>
             )}
           </TabsList>
@@ -279,9 +294,9 @@ export default function CoursesPage() {
         </Card>
             ) : (
               <div className={cn(
-                "gap-6",
+                "gap-4 sm:gap-6",
                 viewMode === "grid" 
-                  ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3" 
+                  ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" 
                   : "space-y-4"
               )}>
                 {courses.map((course) => (
@@ -313,9 +328,9 @@ export default function CoursesPage() {
               </Card>
             ) : (
               <div className={cn(
-                "gap-6",
+                "gap-4 sm:gap-6",
                 viewMode === "grid" 
-                  ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3" 
+                  ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" 
                   : "space-y-4"
               )}>
                 {enrolledCourses.map((course) => (
@@ -347,9 +362,9 @@ export default function CoursesPage() {
               </Card>
             ) : (
               <div className={cn(
-                "gap-6",
+                "gap-4 sm:gap-6",
                 viewMode === "grid" 
-                  ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3" 
+                  ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" 
                   : "space-y-4"
               )}>
                 {availableCourses.map((course) => (
@@ -380,22 +395,26 @@ export default function CoursesPage() {
 
     {/* Delete Confirmation Dialog */}
     <Dialog open={!!deleteCourseId} onOpenChange={() => setDeleteCourseId(null)}>
-      <DialogContent>
+      <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>¿Eliminar curso?</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-lg sm:text-xl">¿Eliminar curso?</DialogTitle>
+          <DialogDescription className="text-sm">
             Esta acción no se puede deshacer. El curso será eliminado permanentemente
             y todos los datos asociados se perderán.
           </DialogDescription>
         </DialogHeader>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setDeleteCourseId(null)}>
+        <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0">
+          <Button 
+            variant="outline" 
+            onClick={() => setDeleteCourseId(null)}
+            className="w-full sm:w-auto order-2 sm:order-1"
+          >
             Cancelar
           </Button>
           <Button
             onClick={confirmDelete}
             disabled={isDeleting}
-            className="bg-red-600 hover:bg-red-700"
+            className="bg-red-600 hover:bg-red-700 w-full sm:w-auto order-1 sm:order-2"
           >
             {isDeleting ? "Eliminando..." : "Eliminar"}
           </Button>

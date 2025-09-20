@@ -22,7 +22,10 @@ export async function GET(request: NextRequest) {
         institution: {
           select: {
             id: true,
-            name: true
+            name: true,
+            department: true,
+            region: true,
+            institutionType: true
           }
         }
       },

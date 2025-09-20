@@ -157,91 +157,91 @@ export default function JobApplicationPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 p-2 sm:p-0">
       {/* Header */}
-      <div className="flex items-center gap-4">
+      <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:gap-4 sm:space-y-0">
         <Link href="/jobs">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" className="w-full sm:w-auto">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Volver
           </Button>
         </Link>
-        <div>
-          <h1 className="text-2xl font-bold">{job.title}</h1>
-          <p className="text-muted-foreground">en {job.company.name}</p>
+        <div className="flex-1">
+          <h1 className="text-lg font-bold sm:text-2xl">{job.title}</h1>
+          <p className="text-sm text-muted-foreground sm:text-base">en {job.company.name}</p>
         </div>
       </div>
 
       {/* Success/Error Messages */}
       {applicationSuccess && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+        <div className="bg-green-50 border border-green-200 rounded-lg p-3 sm:p-4">
           <div className="flex items-center gap-2">
-            <div className="h-4 w-4 bg-green-500 rounded-full"></div>
-            <p className="text-green-800 font-medium">¡Aplicación enviada exitosamente!</p>
+            <div className="h-4 w-4 bg-green-500 rounded-full flex-shrink-0"></div>
+            <p className="text-green-800 font-medium text-sm sm:text-base">¡Aplicación enviada exitosamente!</p>
           </div>
-          <p className="text-green-700 text-sm mt-1">
+          <p className="text-green-700 text-xs sm:text-sm mt-1">
             Tu aplicación ha sido enviada a {job.company.name}. Te contactaremos pronto.
           </p>
         </div>
       )}
 
       {applicationError && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 sm:p-4">
           <div className="flex items-center gap-2">
-            <div className="h-4 w-4 bg-red-500 rounded-full"></div>
-            <p className="text-red-800 font-medium">Error al enviar aplicación</p>
+            <div className="h-4 w-4 bg-red-500 rounded-full flex-shrink-0"></div>
+            <p className="text-red-800 font-medium text-sm sm:text-base">Error al enviar aplicación</p>
           </div>
-          <p className="text-red-700 text-sm mt-1">{applicationError}</p>
+          <p className="text-red-700 text-xs sm:text-sm mt-1">{applicationError}</p>
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Job Details */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4 sm:space-y-6">
           <Card>
-            <CardHeader>
-              <div className="flex items-start justify-between">
+            <CardHeader className="p-4 sm:p-6">
+              <div className="flex flex-col space-y-3 sm:flex-row sm:items-start sm:justify-between sm:space-y-0">
                 <div className="flex items-center gap-3">
-                  <Avatar className="h-12 w-12">
+                  <Avatar className="h-10 w-10 sm:h-12 sm:w-12">
                     <AvatarImage src={job.company.logo} />
                     <AvatarFallback>
-                      <Building2 className="h-6 w-6" />
+                      <Building2 className="h-5 w-5 sm:h-6 sm:w-6" />
                     </AvatarFallback>
                   </Avatar>
-                  <div>
-                    <h2 className="text-xl font-semibold">{job.company.name}</h2>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <div className="flex-1 min-w-0">
+                    <h2 className="text-lg font-semibold sm:text-xl truncate">{job.company.name}</h2>
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                       <div className="flex items-center gap-1">
-                        <MapPin className="h-4 w-4" />
-                        {job.location}
+                        <MapPin className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                        <span className="truncate">{job.location}</span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        {new Date(job.createdAt).toLocaleDateString()}
+                        <Calendar className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                        <span>{new Date(job.createdAt).toLocaleDateString()}</span>
                       </div>
                     </div>
                   </div>
                 </div>
-                <Badge variant={job.isActive ? "default" : "secondary"}>
+                <Badge variant={job.isActive ? "default" : "secondary"} className="w-fit">
                   {job.isActive ? "Activo" : "Inactivo"}
                 </Badge>
               </div>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="p-4 sm:p-6 pt-0 space-y-3 sm:space-y-4">
               <div>
-                <h3 className="font-medium mb-2">Descripción</h3>
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                <h3 className="font-medium mb-2 text-sm sm:text-base">Descripción</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground whitespace-pre-wrap">
                   {job.description}
                 </p>
               </div>
 
               {job.requirements && job.requirements.length > 0 && (
                 <div>
-                  <h3 className="font-medium mb-2">Requisitos</h3>
-                  <ul className="text-sm text-muted-foreground space-y-1">
+                  <h3 className="font-medium mb-2 text-sm sm:text-base">Requisitos</h3>
+                  <ul className="text-xs sm:text-sm text-muted-foreground space-y-1">
                     {job.requirements.map((req, index) => (
                       <li key={index} className="flex items-start gap-2">
-                        <span className="text-primary">•</span>
+                        <span className="text-primary flex-shrink-0">•</span>
                         <span>{req}</span>
                       </li>
                     ))}
@@ -251,11 +251,11 @@ export default function JobApplicationPage() {
 
               {job.benefits && job.benefits.length > 0 && (
                 <div>
-                  <h3 className="font-medium mb-2">Beneficios</h3>
-                  <ul className="text-sm text-muted-foreground space-y-1">
+                  <h3 className="font-medium mb-2 text-sm sm:text-base">Beneficios</h3>
+                  <ul className="text-xs sm:text-sm text-muted-foreground space-y-1">
                     {job.benefits.map((benefit, index) => (
                       <li key={index} className="flex items-start gap-2">
-                        <span className="text-primary">•</span>
+                        <span className="text-primary flex-shrink-0">•</span>
                         <span>{benefit}</span>
                       </li>
                     ))}
@@ -267,15 +267,16 @@ export default function JobApplicationPage() {
         </div>
 
         {/* Actions Sidebar */}
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Acciones</CardTitle>
+            <CardHeader className="p-4 sm:p-6">
+              <CardTitle className="text-base sm:text-lg">Acciones</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="p-4 sm:p-6 pt-0 space-y-3">
               <Button 
                 className="w-full"
                 onClick={() => setShowApplicationForm(true)}
+                size="sm"
               >
                 <Briefcase className="h-4 w-4 mr-2" />
                 Aplicar al Trabajo
@@ -285,6 +286,7 @@ export default function JobApplicationPage() {
                 variant="outline" 
                 className="w-full"
                 onClick={() => setIsChatModalOpen(true)}
+                size="sm"
               >
                 <MessageCircle className="h-4 w-4 mr-2" />
                 Contactar Empresa
@@ -294,10 +296,10 @@ export default function JobApplicationPage() {
 
           {/* Job Stats */}
           <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Estadísticas</CardTitle>
+            <CardHeader className="p-4 sm:p-6">
+              <CardTitle className="text-base sm:text-lg">Estadísticas</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3 text-sm">
+            <CardContent className="p-4 sm:p-6 pt-0 space-y-3 text-xs sm:text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Vistas:</span>
                 <span className="font-medium">{job.totalViews || 0}</span>
@@ -333,21 +335,21 @@ export default function JobApplicationPage() {
 
       {/* Chat Modal */}
       <Dialog open={isChatModalOpen} onOpenChange={setIsChatModalOpen}>
-        <DialogContent className="max-w-2xl h-[600px] flex flex-col">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <MessageCircle className="h-5 w-5" />
-              Conversación con {job.company.name}
+        <DialogContent className="max-w-2xl h-[80vh] sm:h-[600px] flex flex-col p-2 sm:p-6">
+          <DialogHeader className="p-2 sm:p-0">
+            <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="truncate">Conversación con {job.company.name}</span>
             </DialogTitle>
           </DialogHeader>
           
           <div className="flex-1 flex flex-col">
             {/* Chat Messages */}
-            <div className="flex-1 overflow-y-auto space-y-4 p-4 border rounded-lg bg-muted/20">
+            <div className="flex-1 overflow-y-auto space-y-3 sm:space-y-4 p-2 sm:p-4 border rounded-lg bg-muted/20">
               {messagesData?.messages?.length === 0 ? (
-                <div className="text-center text-muted-foreground py-8">
-                  <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p>No hay mensajes aún. ¡Inicia la conversación!</p>
+                <div className="text-center text-muted-foreground py-6 sm:py-8">
+                  <MessageCircle className="h-6 w-6 sm:h-8 sm:w-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm sm:text-base">No hay mensajes aún. ¡Inicia la conversación!</p>
                 </div>
               ) : (
                 messagesData?.messages?.map((message) => {
@@ -358,13 +360,13 @@ export default function JobApplicationPage() {
                       className={`flex ${isFromCompany ? 'justify-start' : 'justify-end'}`}
                     >
                       <div
-                        className={`max-w-[70%] p-3 rounded-lg ${
+                        className={`max-w-[85%] sm:max-w-[70%] p-2 sm:p-3 rounded-lg ${
                           isFromCompany
                             ? 'bg-background border'
                             : 'bg-primary text-primary-foreground'
                         }`}
                       >
-                        <p className="text-sm">{message.content}</p>
+                        <p className="text-xs sm:text-sm">{message.content}</p>
                         <p className={`text-xs mt-1 ${
                           isFromCompany ? 'text-muted-foreground' : 'text-primary-foreground/70'
                         }`}>
@@ -381,7 +383,7 @@ export default function JobApplicationPage() {
             </div>
 
             {/* Message Input */}
-            <div className="flex items-center gap-2 pt-4 border-t">
+            <div className="flex items-center gap-2 pt-3 sm:pt-4 border-t">
               <Input
                 value={messageText}
                 onChange={(e) => setMessageText(e.target.value)}
@@ -391,26 +393,29 @@ export default function JobApplicationPage() {
                     handleSendMessage();
                   }
                 }}
-                className="flex-1"
+                className="flex-1 text-sm"
               />
               <Button 
                 onClick={handleSendMessage}
                 disabled={!messageText.trim() || sendMessageMutation.isPending}
+                size="sm"
               >
                 <Send className="h-4 w-4" />
               </Button>
             </div>
 
             {/* Quick Actions */}
-            <div className="flex items-center gap-2 pt-2">
+            <div className="flex flex-wrap items-center gap-2 pt-2">
               <Button 
                 variant="outline" 
                 size="sm"
                 onClick={() => {
                   setMessageText("Hola! Me interesa mucho esta posición. ¿Podríamos programar una entrevista?");
                 }}
+                className="text-xs"
               >
-                Solicitar entrevista
+                <span className="hidden sm:inline">Solicitar entrevista</span>
+                <span className="sm:hidden">Entrevista</span>
               </Button>
               <Button 
                 variant="outline" 
@@ -418,13 +423,16 @@ export default function JobApplicationPage() {
                 onClick={() => {
                   setMessageText("Hola! Tengo algunas preguntas sobre la posición. ¿Podrías ayudarme?");
                 }}
+                className="text-xs"
               >
-                Hacer preguntas
+                <span className="hidden sm:inline">Hacer preguntas</span>
+                <span className="sm:hidden">Preguntas</span>
               </Button>
               <Button 
                 variant="outline" 
                 size="sm"
                 onClick={() => setIsChatModalOpen(false)}
+                className="text-xs"
               >
                 Cerrar
               </Button>

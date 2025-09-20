@@ -46,6 +46,7 @@ import { LessonManager } from "@/components/courses/LessonManager";
 import { QuizManager } from "@/components/courses/QuizManager";
 import { CourseStructureView } from "@/components/courses/CourseStructureView";
 import { UnifiedCourseManager } from "@/components/courses/UnifiedCourseManager";
+import { CertificateDownload } from "@/components/certificates/CertificateDownload";
 import { useSession } from "next-auth/react";
 
 export default function CourseDetailPage() {
@@ -100,7 +101,29 @@ export default function CourseDetailPage() {
     }
   };
 
-  const handleLessonClick = (lessonId: string) => {
+  const handleLessonClick = async (lessonId: string) => {
+    // For youth users, check if lesson is accessible
+    if (session?.user?.role === "YOUTH") {
+      try {
+        const response = await fetch(`/api/courses/${courseId}/lessons/${lessonId}/access`);
+        const accessData = await response.json();
+        
+        if (!accessData.accessible) {
+          // Show error message or prevent access
+          alert(`No puedes acceder a esta lección. ${accessData.reason === "Previous lesson not completed" ? 
+            `Debes completar: ${accessData.blockingLesson?.title}` : 
+            accessData.reason === "Previous lesson quiz not passed" ?
+            `Debes aprobar el quiz de: ${accessData.blockingLesson?.title} (${accessData.requiredQuiz?.currentScore}%/${accessData.requiredQuiz?.passingScore}%)` :
+            accessData.reason
+          }`);
+          return;
+        }
+      } catch (error) {
+        console.error("Error checking lesson access:", error);
+        return;
+      }
+    }
+    
     setSelectedLessonId(lessonId);
     setActiveTab("lesson");
   };
@@ -249,16 +272,16 @@ export default function CourseDetailPage() {
     return (
       <div className="space-y-6">
         <div className="flex items-center space-x-4">
-          <Button variant="outline" size="sm" onClick={() => router.push('/courses')}>
+          <Button variant="outline" size="sm" onClick={() => router.push('/courses')} className="w-full sm:w-auto">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Volver
           </Button>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="sm:col-span-2 lg:col-span-2 space-y-4 sm:space-y-6">
             <Card className="animate-pulse">
               <div className="aspect-video bg-gray-200"></div>
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <div className="space-y-3">
                   <div className="h-6 bg-gray-200 rounded w-3/4"></div>
                   <div className="h-4 bg-gray-200 rounded w-1/2"></div>
@@ -267,9 +290,9 @@ export default function CourseDetailPage() {
               </CardContent>
             </Card>
           </div>
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             <Card className="animate-pulse">
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <div className="space-y-3">
                   <div className="h-4 bg-gray-200 rounded w-1/2"></div>
                   <div className="h-4 bg-gray-200 rounded w-full"></div>
@@ -287,7 +310,7 @@ export default function CourseDetailPage() {
     return (
       <div className="space-y-6">
         <div className="flex items-center space-x-4">
-          <Button variant="outline" size="sm" onClick={() => router.push('/courses')}>
+          <Button variant="outline" size="sm" onClick={() => router.push('/courses')} className="w-full sm:w-auto">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Volver
           </Button>
@@ -337,17 +360,17 @@ export default function CourseDetailPage() {
       <div className="container mx-auto px-4 py-8">
         {/* Management Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 mb-4">
             <div>
-              <h1 className="text-3xl font-bold">{course.title}</h1>
-              <p className="text-muted-foreground">Gestión del Curso</p>
+              <h1 className="text-2xl font-bold sm:text-3xl">{course.title}</h1>
+              <p className="text-sm text-muted-foreground sm:text-base">Gestión del Curso</p>
             </div>
-            <div className="flex gap-2">
-              <Button onClick={() => router.push(`/courses/${courseId}/edit`)}>
+            <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:gap-2">
+              <Button onClick={() => router.push(`/courses/${courseId}/edit`)} className="w-full sm:w-auto">
                 <Edit className="h-4 w-4 mr-2" />
                 Editar Curso
               </Button>
-              <Button variant="outline" onClick={() => router.push('/courses')}>
+              <Button variant="outline" onClick={() => router.push('/courses')} className="w-full sm:w-auto">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Volver a Cursos
               </Button>
@@ -355,7 +378,7 @@ export default function CourseDetailPage() {
           </div>
           
           {/* Quick Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center space-x-2">
@@ -447,26 +470,26 @@ export default function CourseDetailPage() {
       <RoleGuard allowedRoles={["YOUTH", "COMPANIES", "INSTITUTION", "SUPERADMIN"]}>
         <div className="space-y-6">
           {/* Compact Header for Youth */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Button variant="outline" size="sm" onClick={() => router.push('/courses')}>
+          <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+            <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-x-4 sm:space-y-0">
+              <Button variant="outline" size="sm" onClick={() => router.push('/courses')} className="w-full sm:w-auto">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Volver
               </Button>
               <div>
-                <h1 className="text-xl font-bold text-foreground">{course.title}</h1>
-                <p className="text-sm text-muted-foreground">
+                <h1 className="text-lg font-bold text-foreground sm:text-xl">{course.title}</h1>
+                <p className="text-xs text-muted-foreground sm:text-sm">
                   {course.instructor?.name} • {course.category} • {course.level}
                 </p>
               </div>
             </div>
             <div className="flex space-x-2">
               {course.isEnrolled ? (
-                <Button variant="outline" size="sm" onClick={handleUnenroll}>
+                <Button variant="outline" size="sm" onClick={handleUnenroll} className="w-full sm:w-auto">
                   Desinscribirse
                 </Button>
               ) : (
-                <Button size="sm" onClick={handleEnroll}>
+                <Button size="sm" onClick={handleEnroll} className="w-full sm:w-auto">
                   <Play className="h-4 w-4 mr-2" />
                   Inscribirse
                 </Button>
@@ -476,9 +499,9 @@ export default function CourseDetailPage() {
 
           {/* Learning Content - Main Focus */}
           {course.isEnrolled && progress ? (
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
               {/* Course Progress Sidebar */}
-              <div className="lg:col-span-1">
+              <div className="sm:col-span-2 lg:col-span-1">
                 <Card className="sticky top-4">
                   <CardHeader>
                     <CardTitle className="text-lg">Tu Progreso</CardTitle>
@@ -519,7 +542,7 @@ export default function CourseDetailPage() {
               </div>
 
               {/* Main Learning Content */}
-              <div className="lg:col-span-3">
+              <div className="sm:col-span-2 lg:col-span-3">
                 {selectedLesson ? (
                   <LessonViewer
                     lesson={selectedLesson}
@@ -569,24 +592,39 @@ export default function CourseDetailPage() {
                               
                               {/* Module Lessons */}
                               <div className="space-y-2">
-                                {module.lessons.map((lesson, lessonIndex) => (
-                                  <div 
-                                    key={lesson.id}
-                                    className={`flex items-center space-x-3 p-3 rounded-lg cursor-pointer transition-colors ${
-                                      lesson.progress.isCompleted 
-                                        ? 'bg-green-50 border border-green-200' 
-                                        : lesson.id === selectedLessonId
-                                        ? 'bg-blue-50 border border-blue-200'
-                                        : 'bg-gray-50 hover:bg-gray-100'
-                                    }`}
-                                    onClick={() => handleLessonClick(lesson.id)}
-                                  >
+                                {module.lessons.map((lesson, lessonIndex) => {
+                                  // Check if this is the first lesson or if previous lessons are completed
+                                  const isFirstLesson = moduleIndex === 0 && lessonIndex === 0;
+                                  const previousLessonsCompleted = moduleIndex === 0 ? 
+                                    module.lessons.slice(0, lessonIndex).every(l => l.progress.isCompleted) :
+                                    true; // For now, assume previous modules are completed
+                                  
+                                  const isAccessible = isFirstLesson || previousLessonsCompleted;
+                                  
+                                  return (
+                                    <div 
+                                      key={lesson.id}
+                                      className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
+                                        !isAccessible 
+                                          ? 'bg-gray-100 border border-gray-200 opacity-60 cursor-not-allowed'
+                                          : lesson.progress.isCompleted 
+                                          ? 'bg-green-50 border border-green-200 cursor-pointer hover:bg-green-100' 
+                                          : lesson.id === selectedLessonId
+                                          ? 'bg-blue-50 border border-blue-200 cursor-pointer hover:bg-blue-100'
+                                          : 'bg-gray-50 border border-gray-200 cursor-pointer hover:bg-gray-100'
+                                      }`}
+                                      onClick={() => isAccessible && handleLessonClick(lesson.id)}
+                                    >
                                     <div className={`flex items-center justify-center w-6 h-6 rounded-full text-sm font-medium ${
-                                      lesson.progress.isCompleted 
+                                      !isAccessible
+                                        ? 'bg-gray-400 text-white'
+                                        : lesson.progress.isCompleted 
                                         ? 'bg-green-500 text-white' 
                                         : 'bg-gray-300 text-gray-600'
                                     }`}>
-                                      {lesson.progress.isCompleted ? (
+                                      {!isAccessible ? (
+                                        <Lock className="h-3 w-3" />
+                                      ) : lesson.progress.isCompleted ? (
                                         <CheckCircle className="h-4 w-4" />
                                       ) : (
                                         `${moduleIndex + 1}.${lessonIndex + 1}`
@@ -598,6 +636,9 @@ export default function CourseDetailPage() {
                                         {lesson.duration || 0} min • {lesson.contentType}
                                       </p>
                                     </div>
+                                    {!isAccessible && (
+                                      <Badge variant="secondary" className="text-xs">Bloqueada</Badge>
+                                    )}
                                     {lesson.isRequired && (
                                       <Badge variant="secondary" className="text-xs">Requerida</Badge>
                                     )}
@@ -605,7 +646,8 @@ export default function CourseDetailPage() {
                                       <Badge variant="default" className="text-xs">Vista Previa</Badge>
                                     )}
                                   </div>
-                                ))}
+                                  );
+                                })}
                               </div>
                             </div>
                           ))}
@@ -648,6 +690,18 @@ export default function CourseDetailPage() {
                         )}
                       </CardContent>
                     </Card>
+
+                    {/* Certificate Download - Show only if course is completed and has certification */}
+                    {Math.round(progress.overall.progress) === 100 && course.certification && (
+                      <div className="mt-4">
+                        <CertificateDownload
+                          courseId={courseId}
+                          courseTitle={course.title}
+                          isCompleted={true}
+                          hasCertification={course.certification}
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -730,21 +784,21 @@ export default function CourseDetailPage() {
     <RoleGuard allowedRoles={["YOUTH", "COMPANIES", "INSTITUTION", "SUPERADMIN"]}>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Button variant="outline" size="sm" onClick={() => router.push('/courses')}>
+        <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+          <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-x-4 sm:space-y-0">
+            <Button variant="outline" size="sm" onClick={() => router.push('/courses')} className="w-full sm:w-auto">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Volver
             </Button>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">{course.title}</h1>
-              <p className="text-muted-foreground">
+              <h1 className="text-xl font-bold text-foreground sm:text-2xl">{course.title}</h1>
+              <p className="text-sm text-muted-foreground sm:text-base">
                 {course.instructor?.name} • {course.category}
               </p>
             </div>
           </div>
-          <div className="flex space-x-2">
-            <Button variant="outline" size="sm">
+          <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
+            <Button variant="outline" size="sm" className="w-full sm:w-auto">
               <Share2 className="h-4 w-4 mr-2" />
               Compartir
             </Button>
@@ -757,21 +811,26 @@ export default function CourseDetailPage() {
                   variant="outline" 
                   size="sm"
                   onClick={() => setActiveTab("modules")}
+                  className="w-full sm:w-auto"
                 >
                   <BookOpen className="h-4 w-4 mr-2" />
-                  Gestionar Módulos
+                  <span className="hidden sm:inline">Gestionar Módulos</span>
+                  <span className="sm:hidden">Módulos</span>
                 </Button>
                 <Button 
                   variant="outline" 
                   size="sm"
                   onClick={() => setActiveTab("lessons")}
+                  className="w-full sm:w-auto"
                 >
                   <FileText className="h-4 w-4 mr-2" />
-                  Gestionar Lecciones
+                  <span className="hidden sm:inline">Gestionar Lecciones</span>
+                  <span className="sm:hidden">Lecciones</span>
                 </Button>
                 <Button 
                   size="sm"
                   onClick={() => router.push(`/courses/${courseId}/edit`)}
+                  className="w-full sm:w-auto"
                 >
                   <Edit className="h-4 w-4 mr-2" />
                   Editar Curso
@@ -780,11 +839,11 @@ export default function CourseDetailPage() {
             ) : (
               // Enrollment actions for other roles
               course.isEnrolled ? (
-                <Button variant="outline" size="sm" onClick={handleUnenroll}>
+                <Button variant="outline" size="sm" onClick={handleUnenroll} className="w-full sm:w-auto">
                   Desinscribirse
                 </Button>
               ) : (
-                <Button size="sm" onClick={handleEnroll}>
+                <Button size="sm" onClick={handleEnroll} className="w-full sm:w-auto">
                   <Play className="h-4 w-4 mr-2" />
                   Inscribirse
                 </Button>
@@ -794,8 +853,8 @@ export default function CourseDetailPage() {
         </div>
 
         {/* Course Info */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="sm:col-span-2 lg:col-span-2">
             <CourseCard
               course={course}
               onEnroll={handleEnroll}
@@ -804,10 +863,10 @@ export default function CourseDetailPage() {
               showActions={false}
             />
           </div>
-          <div className="space-y-4">
+          <div className="sm:col-span-2 lg:col-span-1 space-y-4 sm:space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Información del Curso</CardTitle>
+                <CardTitle className="text-base sm:text-lg">Información del Curso</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">

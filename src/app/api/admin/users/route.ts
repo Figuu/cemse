@@ -29,7 +29,11 @@ export async function GET(request: NextRequest) {
     const users = await prisma.user.findMany({
       where,
       include: {
-        profile: true
+        profile: {
+          include: {
+            institution: true
+          }
+        }
       },
       orderBy: {
         createdAt: 'desc'
@@ -80,8 +84,7 @@ export async function POST(request: NextRequest) {
       lastName,
       phone,
       address,
-      city,
-      state,
+      municipalityId,
       birthDate,
       gender,
       educationLevel,
@@ -133,8 +136,7 @@ export async function POST(request: NextRequest) {
           lastName,
           phone,
           address,
-          city,
-          state,
+          institutionId: municipalityId,
           birthDate: birthDate ? new Date(birthDate) : undefined,
           gender,
           educationLevel: educationLevel as any,

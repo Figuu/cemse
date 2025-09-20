@@ -212,115 +212,122 @@ function JobsPageContent() {
     >
       <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">
+          <h1 className="text-xl font-bold text-foreground sm:text-2xl">
             {isCompany ? "Gestionar Trabajos" : "Ofertas de Trabajo"}
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm text-muted-foreground sm:text-base">
             {isCompany 
               ? "Administra y publica ofertas de trabajo para tu empresa"
               : `${filteredJobs.length} ofertas encontradas`
             }
           </p>
         </div>
-        <div className="flex items-center space-x-2">
-          {isCompany && (
-            <>
-              <Link href="/company">
-                <Button variant="outline">
-                  <Settings className="h-4 w-4 mr-2" />
-                  Mi Empresa
-                </Button>
-              </Link>
-              <Link href="/jobs/create">
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Crear Trabajo
-                </Button>
-              </Link>
-            </>
-          )}
-          {isYouth && (
-            <>
+        <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-2">
+          <div className="flex items-center space-x-2">
+            {isCompany && (
+              <>
+                <Link href="/company">
+                  <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                    <Settings className="h-4 w-4 mr-2" />
+                    <span className="hidden sm:inline">Mi Empresa</span>
+                    <span className="sm:hidden">Empresa</span>
+                  </Button>
+                </Link>
+                <Link href="/jobs/create">
+                  <Button size="sm" className="w-full sm:w-auto">
+                    <Plus className="h-4 w-4 mr-2" />
+                    <span className="hidden sm:inline">Crear Trabajo</span>
+                    <span className="sm:hidden">Crear</span>
+                  </Button>
+                </Link>
+              </>
+            )}
+            {isYouth && (
               <Link href="/applications">
-                <Button variant="outline">
+                <Button variant="outline" size="sm" className="w-full sm:w-auto">
                   <FileText className="h-4 w-4 mr-2" />
-                  Mis Aplicaciones
+                  <span className="hidden sm:inline">Mis Aplicaciones</span>
+                  <span className="sm:hidden">Aplicaciones</span>
                 </Button>
               </Link>
-            </>
-          )}
-          <Button
-            variant="outline"
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            <Filter className="h-4 w-4 mr-2" />
-            Filtros
-          </Button>
-          <div className="flex items-center border rounded-lg">
+            )}
+          </div>
+          <div className="flex items-center space-x-2">
             <Button
-              variant={viewMode === "grid" ? "default" : "ghost"}
+              variant="outline"
               size="sm"
-              onClick={() => setViewMode("grid")}
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex-1 sm:flex-none"
             >
-              <Grid className="h-4 w-4" />
+              <Filter className="h-4 w-4 mr-2" />
+              Filtros
             </Button>
-            <Button
-              variant={viewMode === "list" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setViewMode("list")}
-            >
-              <List className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center border rounded-lg">
+              <Button
+                variant={viewMode === "grid" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("grid")}
+              >
+                <Grid className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === "list" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("list")}
+              >
+                <List className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Company Stats Section */}
       {isCompany && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <Card>
-            <CardContent className="p-4">
+            <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 mb-2">
                 <Briefcase className="h-4 w-4 text-blue-600" />
-                <span className="text-sm font-medium">Mis Trabajos</span>
+                <span className="text-xs sm:text-sm font-medium">Mis Trabajos</span>
               </div>
-              <p className="text-2xl font-bold">{filteredJobs.length}</p>
+              <p className="text-lg sm:text-2xl font-bold">{filteredJobs.length}</p>
             </CardContent>
           </Card>
           
           <Card>
-            <CardContent className="p-4">
+            <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 mb-2">
                 <Users className="h-4 w-4 text-green-600" />
-                <span className="text-sm font-medium">Aplicaciones</span>
+                <span className="text-xs sm:text-sm font-medium">Aplicaciones</span>
               </div>
-              <p className="text-2xl font-bold">
+              <p className="text-lg sm:text-2xl font-bold">
                 {safeSum(filteredJobs.map(job => job._count?.applications || 0))}
               </p>
             </CardContent>
           </Card>
           
           <Card>
-            <CardContent className="p-4">
+            <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 mb-2">
                 <Eye className="h-4 w-4 text-purple-600" />
-                <span className="text-sm font-medium">Vistas</span>
+                <span className="text-xs sm:text-sm font-medium">Vistas</span>
               </div>
-              <p className="text-2xl font-bold">
+              <p className="text-lg sm:text-2xl font-bold">
                 {safeSum(filteredJobs.map(job => job.totalViews || 0))}
               </p>
             </CardContent>
           </Card>
           
           <Card>
-            <CardContent className="p-4">
+            <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 mb-2">
                 <BarChart3 className="h-4 w-4 text-orange-600" />
-                <span className="text-sm font-medium">Activos</span>
+                <span className="text-xs sm:text-sm font-medium">Activos</span>
               </div>
-              <p className="text-2xl font-bold">
+              <p className="text-lg sm:text-2xl font-bold">
                 {filteredJobs.filter(job => job.isActive).length}
               </p>
             </CardContent>
@@ -351,11 +358,11 @@ function JobsPageContent() {
         )}
 
         {/* Sort */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Label htmlFor="sort">Ordenar por:</Label>
+        <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+          <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-2">
+            <Label htmlFor="sort" className="text-sm font-medium">Ordenar por:</Label>
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-full sm:w-48">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -402,8 +409,8 @@ function JobsPageContent() {
       ) : (
         <div className={
           viewMode === "grid"
-            ? "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
-            : "space-y-4"
+            ? "grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3"
+            : "space-y-3 sm:space-y-4"
         }>
           {filteredJobs.map(job => {
             const applicationStatus = getApplicationStatus(job.id);
@@ -411,6 +418,7 @@ function JobsPageContent() {
               <div key={job.id} className="relative group">
                 <JobCard
                   job={job}
+                  currentUserId={session?.user?.id}
                   onBookmark={handleBookmark}
                   onApply={handleApply}
                   showActions={!isCompany}
@@ -457,12 +465,23 @@ function JobsPageContent() {
 
       {/* Application Form Modal */}
       {showApplicationForm && selectedJob && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="w-full max-w-4xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
             <JobApplicationForm
               job={selectedJob}
               onClose={handleCloseApplicationForm}
               onSubmit={handleApplicationSubmit}
+              currentUser={session?.user ? {
+                id: session.user.id,
+                email: session.user.email || '',
+                profile: {
+                  firstName: session.user.profile?.firstName || '',
+                  lastName: session.user.profile?.lastName || '',
+                  phone: session.user.profile?.phone || '',
+                  address: session.user.profile?.address || '',
+                  cvUrl: session.user.profile?.cvUrl || ''
+                }
+              } : undefined}
             />
           </div>
         </div>

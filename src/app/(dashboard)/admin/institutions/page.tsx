@@ -51,6 +51,13 @@ interface Institution {
   updatedAt: string;
 }
 
+interface Municipality {
+  id: string;
+  name: string;
+  department: string;
+  region?: string;
+}
+
 interface FormErrors {
   name?: string;
   email?: string;
@@ -163,6 +170,17 @@ function InstitutionsManagement() {
     }
   });
 
+  // Fetch municipalities for association
+  const { data: municipalities = [] } = useQuery({
+    queryKey: ['municipalities-for-association'],
+    queryFn: async () => {
+      const response = await fetch('/api/institutions?type=MUNICIPALITY');
+      if (!response.ok) throw new Error('Failed to fetch municipalities');
+      const data = await response.json();
+      return data.institutions || [];
+    }
+  });
+
   // Create institution mutation
   const createInstitutionMutation = useMutation({
     mutationFn: async (institutionData: any) => {
@@ -257,6 +275,20 @@ function InstitutionsManagement() {
     institution.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     institution.department.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Helper function to get associated municipality
+  const getAssociatedMunicipality = (institution: Institution): Municipality | null => {
+    if (institution.institutionType === 'MUNICIPALITY') {
+      return null; // It's a municipality itself
+    }
+    
+    // Find municipality with same department
+    const municipality = municipalities.find((municipality: Municipality) => 
+      municipality.department === institution.department
+    );
+    
+    return municipality || null;
+  };
 
   // Validation functions
   const validateCreateForm = (formData: InstitutionFormData): FormErrors => {
@@ -382,6 +414,10 @@ function InstitutionsManagement() {
     setIsValidating(true);
     setCreateErrors({});
 
+    // Get municipality association
+    const associatedMunicipality = formData.get('associatedMunicipality') as string;
+    const selectedMunicipality = municipalities.find((m: Municipality) => m.department === associatedMunicipality);
+
     const formDataObj: InstitutionFormData = {
       name: formData.get('name') as string || '',
       email: formData.get('email') as string || '',
@@ -389,8 +425,8 @@ function InstitutionsManagement() {
       phone: formData.get('phone') as string || '',
       address: formData.get('address') as string || '',
       website: formData.get('website') as string || '',
-      department: formData.get('department') as string || '',
-      region: formData.get('region') as string || '',
+      department: selectedMunicipality ? selectedMunicipality.department : (formData.get('department') as string || ''),
+      region: selectedMunicipality ? selectedMunicipality.region : (formData.get('region') as string || ''),
       population: formData.get('population') as string || '',
       mayorName: formData.get('mayorName') as string || '',
       mayorEmail: formData.get('mayorEmail') as string || '',
@@ -439,6 +475,10 @@ function InstitutionsManagement() {
     setIsValidating(true);
     setEditErrors({});
 
+    // Get municipality association
+    const associatedMunicipality = formData.get('associatedMunicipality') as string;
+    const selectedMunicipality = municipalities.find((m: Municipality) => m.department === associatedMunicipality);
+
     const formDataObj: InstitutionFormData = {
       name: formData.get('name') as string || '',
       email: formData.get('email') as string || '',
@@ -446,8 +486,8 @@ function InstitutionsManagement() {
       phone: formData.get('phone') as string || '',
       address: formData.get('address') as string || '',
       website: formData.get('website') as string || '',
-      department: formData.get('department') as string || '',
-      region: formData.get('region') as string || '',
+      department: selectedMunicipality ? selectedMunicipality.department : (formData.get('department') as string || ''),
+      region: selectedMunicipality ? selectedMunicipality.region : (formData.get('region') as string || ''),
       population: formData.get('population') as string || '',
       mayorName: formData.get('mayorName') as string || '',
       mayorEmail: formData.get('mayorEmail') as string || '',
@@ -796,6 +836,26 @@ function InstitutionsManagement() {
                   <ErrorMessage error={createErrors.customType} />
                 </div>
               </div>
+              
+              {/* Municipality Association - Only show for non-municipality institutions */}
+              <div className="space-y-2" id="municipality-association">
+                <Label htmlFor="associatedMunicipality">Municipio Asociado</Label>
+                <Select name="associatedMunicipality">
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar municipio (opcional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {municipalities.map((municipality: Municipality) => (
+                      <SelectItem key={municipality.id} value={municipality.department}>
+                        {municipality.name} - {municipality.department}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Selecciona un municipio para asociar esta institución. Esto establecerá la misma región/departamento.
+                </p>
+              </div>
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="mayorName">Nombre del Alcalde/Director</Label>
@@ -934,6 +994,12 @@ function InstitutionsManagement() {
                         <Badge variant="outline">
                           <Users className="h-3 w-3 mr-1" />
                           {institution.population.toLocaleString()} hab.
+                        </Badge>
+                      )}
+                      {getAssociatedMunicipality(institution) && (
+                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                          <MapPin className="h-3 w-3 mr-1" />
+                          {getAssociatedMunicipality(institution)?.name}
                         </Badge>
                       )}
                     </div>
@@ -1137,6 +1203,26 @@ function InstitutionsManagement() {
                   />
                   <ErrorMessage error={editErrors.customType} />
                 </div>
+              </div>
+              
+              {/* Municipality Association - Only show for non-municipality institutions */}
+              <div className="space-y-2" id="edit-municipality-association">
+                <Label htmlFor="edit-associatedMunicipality">Municipio Asociado</Label>
+                <Select name="associatedMunicipality" defaultValue={getAssociatedMunicipality(selectedInstitution)?.department}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar municipio (opcional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {municipalities.map((municipality: Municipality) => (
+                      <SelectItem key={municipality.id} value={municipality.department}>
+                        {municipality.name} - {municipality.department}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Selecciona un municipio para asociar esta institución. Esto establecerá la misma región/departamento.
+                </p>
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
