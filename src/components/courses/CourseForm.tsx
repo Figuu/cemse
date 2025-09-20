@@ -191,73 +191,73 @@ export const CourseForm = ({ onSubmit, onCancel, isLoading = false, initialData 
   };
 
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit as any)} className="space-y-6">
+    <form onSubmit={handleSubmit(handleFormSubmit as any)} className="space-y-4 sm:space-y-6">
       {/* Basic Information */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BookOpen className="h-5 w-5" />
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <BookOpen className="h-4 w-4 sm:h-5 sm:w-5" />
             Información Básica
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <CardContent className="space-y-4 p-4 sm:p-6 pt-0">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div className="space-y-2">
-              <Label htmlFor="title">Título del Curso *</Label>
+              <Label htmlFor="title" className="text-sm">Título del Curso *</Label>
               <Input
                 id="title"
                 {...register("title")}
                 placeholder="Ej: Introducción a la Programación"
-                className={cn(errors.title && "border-red-500")}
+                className={cn(errors.title && "border-red-500", "text-sm")}
               />
               {errors.title && (
-                <p className="text-sm text-red-500">{errors.title.message}</p>
+                <p className="text-xs text-red-500">{errors.title.message}</p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="institutionName">Nombre de la Institución *</Label>
+              <Label htmlFor="institutionName" className="text-sm">Nombre de la Institución *</Label>
               <Input
                 id="institutionName"
                 {...register("institutionName")}
                 placeholder="Ej: Universidad Nacional"
-                className={cn(errors.institutionName && "border-red-500")}
+                className={cn(errors.institutionName && "border-red-500", "text-sm")}
               />
               {errors.institutionName && (
-                <p className="text-sm text-red-500">{errors.institutionName.message}</p>
+                <p className="text-xs text-red-500">{errors.institutionName.message}</p>
               )}
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="shortDescription">Descripción Corta *</Label>
+            <Label htmlFor="shortDescription" className="text-sm">Descripción Corta *</Label>
             <Input
               id="shortDescription"
               {...register("shortDescription")}
               placeholder="Una breve descripción del curso (máximo 150 caracteres)"
               maxLength={150}
-              className={cn(errors.shortDescription && "border-red-500")}
+              className={cn(errors.shortDescription && "border-red-500", "text-sm")}
             />
             {errors.shortDescription && (
-              <p className="text-sm text-red-500">{errors.shortDescription.message}</p>
+              <p className="text-xs text-red-500">{errors.shortDescription.message}</p>
             )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Descripción Completa *</Label>
+            <Label htmlFor="description" className="text-sm">Descripción Completa *</Label>
             <Textarea
               id="description"
               {...register("description")}
               placeholder="Describe detalladamente el contenido del curso, metodología, y beneficios para los estudiantes"
-              rows={4}
-              className={cn(errors.description && "border-red-500")}
+              rows={3}
+              className={cn(errors.description && "border-red-500", "text-sm")}
             />
             {errors.description && (
-              <p className="text-sm text-red-500">{errors.description.message}</p>
+              <p className="text-xs text-red-500">{errors.description.message}</p>
             )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             <div className="space-y-2">
               <Label htmlFor="level">Nivel *</Label>
               <Select onValueChange={(value) => setValue("level", value as any)}>
@@ -488,10 +488,10 @@ export const CourseForm = ({ onSubmit, onCancel, isLoading = false, initialData 
 
       {/* Media Upload */}
       <Card>
-        <CardHeader>
-          <CardTitle>Medios del Curso</CardTitle>
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="text-base sm:text-lg">Medios del Curso</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6 pt-0">
           {/* Thumbnail Upload */}
           <ThumbnailUpload
             onThumbnailUploaded={handleThumbnailUploaded}
@@ -509,18 +509,19 @@ export const CourseForm = ({ onSubmit, onCancel, isLoading = false, initialData 
           />
 
           {/* Fallback URL inputs for external media */}
-          <div className="space-y-4">
-            <div className="text-sm text-gray-600">
+          <div className="space-y-3 sm:space-y-4">
+            <div className="text-xs sm:text-sm text-gray-600">
               O proporciona URLs externas:
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div className="space-y-2">
-                <Label htmlFor="thumbnailUrl">URL Externa de Imagen</Label>
+                <Label htmlFor="thumbnailUrl" className="text-sm">URL Externa de Imagen</Label>
                 <Input
                   id="thumbnailUrl"
                   {...register("thumbnail")}
                   placeholder="https://ejemplo.com/imagen.jpg"
                   disabled={!!uploadedThumbnail}
+                  className="text-sm"
                 />
                 {uploadedThumbnail && (
                   <p className="text-xs text-gray-500">
@@ -530,12 +531,13 @@ export const CourseForm = ({ onSubmit, onCancel, isLoading = false, initialData 
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="videoUrl">URL Externa de Video</Label>
+                <Label htmlFor="videoUrl" className="text-sm">URL Externa de Video</Label>
                 <Input
                   id="videoUrl"
                   {...register("videoPreview")}
                   placeholder="https://ejemplo.com/video.mp4"
                   disabled={!!uploadedVideo}
+                  className="text-sm"
                 />
                 {uploadedVideo && (
                   <p className="text-xs text-gray-500">
@@ -550,18 +552,18 @@ export const CourseForm = ({ onSubmit, onCancel, isLoading = false, initialData 
 
       {/* Course Settings */}
       <Card>
-        <CardHeader>
-          <CardTitle>Configuración del Curso</CardTitle>
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="text-base sm:text-lg">Configuración del Curso</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="flex items-center space-x-6">
+        <CardContent className="p-4 sm:p-6 pt-0">
+          <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-6">
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="isMandatory"
                 checked={watchedValues.isMandatory}
                 onCheckedChange={(checked) => setValue("isMandatory", !!checked)}
               />
-              <Label htmlFor="isMandatory">Curso Obligatorio</Label>
+              <Label htmlFor="isMandatory" className="text-sm">Curso Obligatorio</Label>
             </div>
 
             <div className="flex items-center space-x-2">
@@ -570,18 +572,18 @@ export const CourseForm = ({ onSubmit, onCancel, isLoading = false, initialData 
                 checked={watchedValues.certification}
                 onCheckedChange={(checked) => setValue("certification", !!checked)}
               />
-              <Label htmlFor="certification">Incluye Certificación</Label>
+              <Label htmlFor="certification" className="text-sm">Incluye Certificación</Label>
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Actions */}
-      <div className="flex justify-end space-x-4">
-        <Button type="button" variant="outline" onClick={onCancel}>
+      <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-4">
+        <Button type="button" variant="outline" onClick={onCancel} className="w-full sm:w-auto text-sm">
           Cancelar
         </Button>
-        <Button type="submit" disabled={isLoading}>
+        <Button type="submit" disabled={isLoading} className="w-full sm:w-auto text-sm">
           {isLoading ? (
             <>
               <Clock className="h-4 w-4 mr-2 animate-spin" />

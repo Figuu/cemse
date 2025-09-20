@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +30,7 @@ import {
 } from "lucide-react";
 import { cn, formatDate, formatDateTime } from "@/lib/utils";
 import Link from "next/link";
+import { JobApplicationChat } from "@/components/jobs/JobApplicationChat";
 
 interface JobApplication {
   id: string;
@@ -36,6 +38,7 @@ interface JobApplication {
   jobTitle: string;
   company: string;
   companyLogo?: string;
+  companyOwnerId?: string;
   companyDescription?: string;
   location: string;
   appliedDate: string;
@@ -46,13 +49,13 @@ interface JobApplication {
     max: number;
     currency: string;
   };
-  jobType: "full-time" | "part-time" | "contract" | "internship";
+  jobType: "tiempo-completo" | "medio-tiempo" | "contrato" | "pasantía" | "voluntario";
   remote: boolean;
   experience: string;
   skills: string[];
-  description: string;
-  requirements: string[];
-  benefits: string[];
+  description?: string;
+  requirements?: string[];
+  benefits?: string[];
   notes?: string;
   nextSteps?: string;
   interviewDate?: string;
@@ -70,6 +73,7 @@ interface JobApplication {
     email: string;
     phone?: string;
   };
+  communication?: any[];
 }
 
 interface ApplicationTimelineEvent {
@@ -83,11 +87,12 @@ interface ApplicationTimelineEvent {
 }
 
 const mockApplication: JobApplication = {
-  id: "1",
-  jobId: "job-1",
+  id: "app-1",
+  jobId: "job-offer-123",
   jobTitle: "Senior Frontend Developer",
   company: "TechCorp Bolivia",
   companyLogo: "/api/placeholder/60/60",
+  companyOwnerId: "company-owner-456",
   companyDescription: "TechCorp Bolivia es una empresa líder en desarrollo de software con más de 10 años de experiencia en el mercado. Nos especializamos en soluciones web y móviles para empresas de todos los tamaños.",
   location: "La Paz, Bolivia",
   appliedDate: "2024-01-15T10:30:00Z",
@@ -98,7 +103,7 @@ const mockApplication: JobApplication = {
     max: 20000,
     currency: "BOB"
   },
-  jobType: "full-time",
+  jobType: "tiempo-completo",
   remote: true,
   experience: "3-5 años",
   skills: ["React", "TypeScript", "Node.js", "MongoDB", "AWS", "Docker"],
@@ -178,6 +183,14 @@ const statusConfig = {
   withdrawn: { label: "Retirado", color: "bg-gray-100 text-gray-800", icon: AlertCircle }
 };
 
+const jobTypeLabels = {
+  "tiempo-completo": "Tiempo Completo",
+  "medio-tiempo": "Medio Tiempo",
+  "contrato": "Contrato",
+  "pasantía": "Pasantía",
+  "voluntario": "Voluntario"
+};
+
 const priorityConfig = {
   low: { label: "Baja", color: "bg-gray-100 text-gray-800" },
   medium: { label: "Media", color: "bg-yellow-100 text-yellow-800" },
@@ -186,16 +199,43 @@ const priorityConfig = {
 
 export default function ApplicationDetailPage() {
   const params = useParams();
+  const { data: session } = useSession();
   const [application, setApplication] = useState<JobApplication | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
+  const [showChat, setShowChat] = useState(false);
+  
+  // Determine user role
+  const isYouth = session?.user?.role === "YOUTH";
 
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setApplication(mockApplication);
-      setIsLoading(false);
-    }, 1000);
+    const fetchApplication = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch(`/api/applications/${params.id}`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch application');
+        }
+        
+        const data = await response.json();
+        if (data.success) {
+          setApplication(data.application);
+        } else {
+          throw new Error(data.error || 'Failed to fetch application');
+        }
+      } catch (error) {
+        console.error('Error fetching application:', error);
+        // Fallback to mock data for development
+        setApplication(mockApplication);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (params.id) {
+      fetchApplication();
+    }
   }, [params.id]);
 
   if (isLoading) {
@@ -226,8 +266,17 @@ export default function ApplicationDetailPage() {
 
   const StatusIcon = statusConfig[application.status].icon;
 
+  const handleOpenChat = () => {
+    setShowChat(true);
+  };
+
+  const handleCloseChat = () => {
+    setShowChat(false);
+  };
+
   return (
-    <div className="space-y-6">
+    <>
+      <div className={`space-y-6 ${showChat ? 'mr-96' : ''}`}>
       {/* Back Button */}
       <Button variant="ghost" asChild>
         <Link href="/applications">
@@ -238,8 +287,8 @@ export default function ApplicationDetailPage() {
 
       {/* Application Header */}
       <Card>
-        <CardContent className="p-6">
-          <div className="flex flex-col lg:flex-row lg:items-start space-y-6 lg:space-y-0 lg:space-x-6">
+        <CardContent className="p-4 sm:p-6">
+          <div className="flex flex-col lg:flex-row lg:items-start space-y-4 sm:space-y-6 lg:space-y-0 lg:space-x-6">
             {/* Company Logo and Basic Info */}
             <div className="flex flex-col items-center lg:items-start">
               <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center mb-4">
@@ -247,93 +296,99 @@ export default function ApplicationDetailPage() {
               </div>
               
               <div className="text-center lg:text-left">
-                <div className="flex items-center space-x-2 mb-2">
-                  <h1 className="text-2xl font-bold">{application.jobTitle}</h1>
+                <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 mb-2">
+                  <h1 className="text-xl sm:text-2xl font-bold">{application.jobTitle}</h1>
                   <Badge className={statusConfig[application.status].color}>
                     <StatusIcon className="h-3 w-3 mr-1" />
                     {statusConfig[application.status].label}
                   </Badge>
                 </div>
                 <p className="text-lg text-muted-foreground mb-2">{application.company}</p>
-                <div className="flex items-center text-muted-foreground mb-4">
+                <div className="flex items-center justify-center lg:justify-start text-muted-foreground mb-4">
                   <MapPin className="h-4 w-4 mr-1" />
                   {application.location}
                 </div>
-                <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                  <div className="flex items-center">
+                <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 text-sm text-muted-foreground">
+                  <div className="flex items-center justify-center lg:justify-start">
                     <Clock className="h-4 w-4 mr-1" />
                     Aplicado {formatDate(application.appliedDate)}
                   </div>
-                  <Badge variant="outline" className={priorityConfig[application.priority].color}>
-                    {priorityConfig[application.priority].label}
-                  </Badge>
+                  <div className="flex justify-center lg:justify-start">
+                    <Badge variant="outline" className={priorityConfig[application.priority].color}>
+                      {priorityConfig[application.priority].label}
+                    </Badge>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Job Details */}
             <div className="flex-1">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">{application.jobType}</div>
-                  <div className="text-sm text-muted-foreground">Tipo de Trabajo</div>
+                  <div className="text-lg sm:text-2xl font-bold text-blue-600">{jobTypeLabels[application.jobType]}</div>
+                  <div className="text-xs sm:text-sm text-muted-foreground">Tipo de Trabajo</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">{application.experience}</div>
-                  <div className="text-sm text-muted-foreground">Experiencia</div>
+                  <div className="text-lg sm:text-2xl font-bold text-green-600">{application.experience}</div>
+                  <div className="text-xs sm:text-sm text-muted-foreground">Experiencia</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-purple-600">{application.skills.length}</div>
-                  <div className="text-sm text-muted-foreground">Habilidades</div>
+                  <div className="text-lg sm:text-2xl font-bold text-purple-600">{application.skills.length}</div>
+                  <div className="text-xs sm:text-sm text-muted-foreground">Habilidades</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-orange-600">
+                  <div className="text-lg sm:text-2xl font-bold text-orange-600">
                     {application.remote ? "Sí" : "No"}
                   </div>
-                  <div className="text-sm text-muted-foreground">Remoto</div>
+                  <div className="text-xs sm:text-sm text-muted-foreground">Remoto</div>
                 </div>
               </div>
 
               {application.salary && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3 sm:p-4 mb-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="font-semibold text-green-800">Salario Ofrecido</h4>
-                      <p className="text-green-700">
+                      <h4 className="font-semibold text-green-800 text-sm sm:text-base">Salario Ofrecido</h4>
+                      <p className="text-green-700 text-sm sm:text-base">
                         {application.salary.min.toLocaleString()} - {application.salary.max.toLocaleString()} {application.salary.currency}
                       </p>
                     </div>
-                    <DollarSign className="h-8 w-8 text-green-600" />
+                    <DollarSign className="h-6 w-6 sm:h-8 sm:w-8 text-green-600" />
                   </div>
                 </div>
               )}
 
               <div className="flex flex-wrap gap-2">
-                {application.skills.map((skill) => (
-                  <Badge key={skill} variant="outline">
-                    {skill}
-                  </Badge>
-                ))}
+                {Array.isArray(application.skills) && application.skills.length > 0 ? (
+                  application.skills.map((skill) => (
+                    <Badge key={skill} variant="outline" className="text-xs sm:text-sm">
+                      {skill}
+                    </Badge>
+                  ))
+                ) : (
+                  <span className="text-sm text-muted-foreground">No hay habilidades específicas disponibles</span>
+                )}
               </div>
             </div>
 
             {/* Actions */}
-            <div className="lg:w-64">
-              <div className="space-y-2">
-                <Button className="w-full">
+            <div className="w-full lg:w-64">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2">
+                <Button className="w-full text-sm sm:text-base">
                   <Eye className="h-4 w-4 mr-2" />
                   Ver Trabajo
                 </Button>
-                <Button variant="outline" className="w-full">
+                <Button variant="outline" className="w-full text-sm sm:text-base" onClick={handleOpenChat}>
                   <MessageCircle className="h-4 w-4 mr-2" />
                   Contactar
                 </Button>
-                <Button variant="outline" className="w-full">
+                <Button variant="outline" className="w-full text-sm sm:text-base">
                   <Download className="h-4 w-4 mr-2" />
                   Descargar CV
                 </Button>
-                {application.status === "offered" && (
-                  <Button className="w-full bg-green-600 hover:bg-green-700">
+                {application.status === "offered" && !isYouth && (
+                  <Button className="w-full bg-green-600 hover:bg-green-700 text-sm sm:text-base col-span-1 sm:col-span-2 lg:col-span-1">
                     Responder Oferta
                   </Button>
                 )}
@@ -345,15 +400,15 @@ export default function ApplicationDetailPage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Resumen</TabsTrigger>
-          <TabsTrigger value="timeline">Cronología</TabsTrigger>
-          <TabsTrigger value="details">Detalles</TabsTrigger>
-          <TabsTrigger value="contact">Contacto</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto">
+          <TabsTrigger value="overview" className="text-xs sm:text-sm py-2">Resumen</TabsTrigger>
+          <TabsTrigger value="timeline" className="text-xs sm:text-sm py-2">Cronología</TabsTrigger>
+          <TabsTrigger value="details" className="text-xs sm:text-sm py-2">Detalles</TabsTrigger>
+          <TabsTrigger value="contact" className="text-xs sm:text-sm py-2">Contacto</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <TabsContent value="overview" className="space-y-4 sm:space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {/* Job Description */}
             <Card>
               <CardHeader>
@@ -361,7 +416,7 @@ export default function ApplicationDetailPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground leading-relaxed">
-                  {application.description}
+                  {application.description || "Descripción del puesto no disponible"}
                 </p>
               </CardContent>
             </Card>
@@ -373,12 +428,18 @@ export default function ApplicationDetailPage() {
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2">
-                  {application.requirements.map((requirement, index) => (
-                    <li key={index} className="flex items-start">
-                      <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                      <span className="text-sm">{requirement}</span>
+                  {Array.isArray(application.requirements) && application.requirements.length > 0 ? (
+                    application.requirements.map((requirement, index) => (
+                      <li key={index} className="flex items-start">
+                        <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                        <span className="text-sm">{requirement}</span>
+                      </li>
+                    ))
+                  ) : (
+                    <li className="text-sm text-muted-foreground">
+                      No hay requisitos específicos disponibles
                     </li>
-                  ))}
+                  )}
                 </ul>
               </CardContent>
             </Card>
@@ -390,12 +451,18 @@ export default function ApplicationDetailPage() {
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2">
-                  {application.benefits.map((benefit, index) => (
-                    <li key={index} className="flex items-start">
-                      <Star className="h-4 w-4 text-yellow-500 mr-2 mt-0.5 flex-shrink-0" />
-                      <span className="text-sm">{benefit}</span>
+                  {Array.isArray(application.benefits) && application.benefits.length > 0 ? (
+                    application.benefits.map((benefit, index) => (
+                      <li key={index} className="flex items-start">
+                        <Star className="h-4 w-4 text-yellow-500 mr-2 mt-0.5 flex-shrink-0" />
+                        <span className="text-sm">{benefit}</span>
+                      </li>
+                    ))
+                  ) : (
+                    <li className="text-sm text-muted-foreground">
+                      No hay beneficios específicos disponibles
                     </li>
-                  ))}
+                  )}
                 </ul>
               </CardContent>
             </Card>
@@ -435,41 +502,41 @@ export default function ApplicationDetailPage() {
           </div>
         </TabsContent>
 
-        <TabsContent value="timeline" className="space-y-6">
+        <TabsContent value="timeline" className="space-y-4 sm:space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Cronología de la Aplicación</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-lg sm:text-xl">Cronología de la Aplicación</CardTitle>
+              <CardDescription className="text-sm sm:text-base">
                 Seguimiento de todos los eventos relacionados con tu aplicación
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 {application.timeline.map((event) => (
-                  <div key={event.id} className="flex items-start space-x-4">
+                  <div key={event.id} className="flex items-start space-x-3 sm:space-x-4">
                     <div className="flex-shrink-0">
                       <div className={cn(
-                        "w-8 h-8 rounded-full flex items-center justify-center",
+                        "w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center",
                         event.status === "completed" ? "bg-green-100" : 
                         event.status === "pending" ? "bg-orange-100" : "bg-gray-100"
                       )}>
                         {event.status === "completed" ? (
-                          <CheckCircle className="h-4 w-4 text-green-600" />
+                          <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
                         ) : event.status === "pending" ? (
-                          <Clock className="h-4 w-4 text-orange-600" />
+                          <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-orange-600" />
                         ) : (
-                          <XCircle className="h-4 w-4 text-gray-600" />
+                          <XCircle className="h-3 w-3 sm:h-4 sm:w-4 text-gray-600" />
                         )}
                       </div>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <h4 className="font-semibold">{event.title}</h4>
-                        <span className="text-sm text-muted-foreground">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-1 space-y-1 sm:space-y-0">
+                        <h4 className="font-semibold text-sm sm:text-base">{event.title}</h4>
+                        <span className="text-xs sm:text-sm text-muted-foreground">
                           {formatDateTime(event.date)}
                         </span>
                       </div>
-                      <p className="text-sm text-muted-foreground mb-2">
+                      <p className="text-xs sm:text-sm text-muted-foreground mb-2">
                         {event.description}
                       </p>
                       {event.details && (
@@ -485,8 +552,8 @@ export default function ApplicationDetailPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="details" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <TabsContent value="details" className="space-y-4 sm:space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             <Card>
               <CardHeader>
                 <CardTitle>Información de la Empresa</CardTitle>
@@ -523,7 +590,7 @@ export default function ApplicationDetailPage() {
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Tipo de Trabajo</span>
-                    <span className="text-sm font-medium">{application.jobType}</span>
+                    <span className="text-sm font-medium">{jobTypeLabels[application.jobType]}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Experiencia Requerida</span>
@@ -547,7 +614,7 @@ export default function ApplicationDetailPage() {
           </div>
         </TabsContent>
 
-        <TabsContent value="contact" className="space-y-6">
+        <TabsContent value="contact" className="space-y-4 sm:space-y-6">
           {application.contactPerson ? (
             <Card>
               <CardHeader>
@@ -558,27 +625,29 @@ export default function ApplicationDetailPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                  <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
+                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto sm:mx-0">
                       <Users className="h-6 w-6 text-gray-600" />
                     </div>
-                    <div>
-                      <h4 className="font-semibold">{application.contactPerson.name}</h4>
+                    <div className="text-center sm:text-left">
+                      <h4 className="font-semibold text-sm sm:text-base">{application.contactPerson.name}</h4>
                       <p className="text-sm text-muted-foreground">{application.contactPerson.title}</p>
                     </div>
                   </div>
                   
                   <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Mail className="h-4 w-4 text-muted-foreground" />
-                      <a href={`mailto:${application.contactPerson.email}`} className="text-blue-600 hover:underline">
-                        {application.contactPerson.email}
-                      </a>
+                    <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2">
+                      <div className="flex items-center justify-center sm:justify-start space-x-2">
+                        <Mail className="h-4 w-4 text-muted-foreground" />
+                        <a href={`mailto:${application.contactPerson.email}`} className="text-blue-600 hover:underline text-sm sm:text-base">
+                          {application.contactPerson.email}
+                        </a>
+                      </div>
                     </div>
                     {application.contactPerson.phone && (
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center justify-center sm:justify-start space-x-2">
                         <Phone className="h-4 w-4 text-muted-foreground" />
-                        <a href={`tel:${application.contactPerson.phone}`} className="text-blue-600 hover:underline">
+                        <a href={`tel:${application.contactPerson.phone}`} className="text-blue-600 hover:underline text-sm sm:text-base">
                           {application.contactPerson.phone}
                         </a>
                       </div>
@@ -600,6 +669,34 @@ export default function ApplicationDetailPage() {
           )}
         </TabsContent>
       </Tabs>
-    </div>
+
+      </div>
+
+      {/* Chat Sidebar - Rendered outside main container */}
+      {showChat && application && (
+        <JobApplicationChat
+          jobId={application.jobId}
+          applicationId={application.id}
+          applicant={{
+            id: application.companyOwnerId || "company-1",
+            firstName: application.company,
+            lastName: "",
+            avatarUrl: "/placeholder-company.png",
+            email: application.contactPerson?.email || "company@example.com"
+          }}
+          application={{
+            id: application.id,
+            status: application.status,
+            appliedAt: application.appliedDate,
+            coverLetter: application.notes || "",
+            cvFile: null,
+            cvUrl: "",
+            coverLetterFile: null,
+            coverLetterUrl: ""
+          }}
+          onClose={handleCloseChat}
+        />
+      )}
+    </>
   );
 }

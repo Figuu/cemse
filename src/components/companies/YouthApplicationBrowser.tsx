@@ -196,22 +196,22 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
     return (
     <Card className="hover:shadow-md transition-shadow cursor-pointer" 
           onClick={() => setSelectedApplication(application)}>
-      <CardContent className="p-6">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center space-x-4">
-            <Avatar className="h-12 w-12">
+      <CardContent className="p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
+          <div className="flex items-center space-x-3 sm:space-x-4">
+            <Avatar className="h-10 w-10 sm:h-12 sm:w-12">
               <AvatarImage src={application.youth?.profile?.avatarUrl} />
               <AvatarFallback>
                 {application.youth?.profile?.firstName?.[0]}
                 {application.youth?.profile?.lastName?.[0]}
               </AvatarFallback>
             </Avatar>
-            <div>
-              <h4 className="font-semibold text-lg">{application.title}</h4>
-              <p className="text-muted-foreground">
+            <div className="flex-1 min-w-0">
+              <h4 className="font-semibold text-base sm:text-lg truncate">{application.title}</h4>
+              <p className="text-muted-foreground text-sm sm:text-base">
                 {application.youth?.profile?.firstName} {application.youth?.profile?.lastName}
               </p>
-              <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-1 text-xs sm:text-sm text-muted-foreground">
                 {application.youth?.profile?.city && (
                   <div className="flex items-center gap-1">
                     <MapPin className="h-3 w-3" />
@@ -219,7 +219,7 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
                   </div>
                 )}
                 {application.youth?.profile?.education && (
-                  <Badge variant="outline" className="text-xs">
+                  <Badge variant="outline" className="text-xs w-fit">
                     {application.youth?.profile.education}
                   </Badge>
                 )}
@@ -235,11 +235,11 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
               </div>
             </div>
           </div>
-          <div className="text-right">
+          <div className="flex items-center justify-between sm:flex-col sm:items-end sm:text-right">
             <Badge className={getStatusColor(application.status)}>
               {getStatusLabel(application.status)}
             </Badge>
-            <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1 sm:gap-4 text-xs text-muted-foreground">
               <div className="flex items-center gap-1">
                 <Heart className="h-3 w-3" />
                 <span>{application.totalInterests}</span>
@@ -270,25 +270,26 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
           </div>
         )}
 
-        <div className="flex items-center justify-between pt-4 border-t">
-          <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-4 border-t">
+          <div className="flex items-center space-x-3 sm:space-x-4 text-xs sm:text-sm text-muted-foreground">
             {application.cvFile || application.cvUrl && (
               <div className="flex items-center space-x-1">
-                <Download className="h-4 w-4" />
-                <span>CV disponible</span>
+                <Download className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">CV disponible</span>
+                <span className="sm:hidden">CV</span>
               </div>
             )}
             {application.youth?.profile.phone && (
               <div className="flex items-center space-x-1">
-                <Phone className="h-4 w-4" />
+                <Phone className="h-3 w-3 sm:h-4 sm:w-4" />
                 <span>Contacto</span>
               </div>
             )}
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:space-x-2">
             {application.hasInterest ? (
-              <div className="flex items-center space-x-2">
-                <Badge variant="default" className="text-xs">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:space-x-2">
+                <Badge variant="default" className="text-xs w-fit">
                   {application.interestStatus === "INTERESTED" && "Interés Expresado"}
                   {application.interestStatus === "CONTACTED" && "Contactado"}
                   {application.interestStatus === "INTERVIEW_SCHEDULED" && "Entrevista Programada"}
@@ -299,6 +300,7 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
                   <Button 
                     size="sm" 
                     variant="outline"
+                    className="w-full sm:w-auto"
                     onClick={(e) => {
                       e.stopPropagation();
                       updateInterest(application.id, application.interestId!, "CONTACTED");
@@ -311,18 +313,21 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
                   <Button 
                     size="sm" 
                     variant="outline"
+                    className="w-full sm:w-auto"
                     onClick={(e) => {
                       e.stopPropagation();
                       updateInterest(application.id, application.interestId!, "INTERVIEW_SCHEDULED");
                     }}
                   >
-                    Programar Entrevista
+                    <span className="hidden sm:inline">Programar Entrevista</span>
+                    <span className="sm:hidden">Entrevista</span>
                   </Button>
                 )}
                 {application.interestStatus === "INTERVIEW_SCHEDULED" && (
                   <Button 
                     size="sm" 
                     variant="outline"
+                    className="w-full sm:w-auto"
                     onClick={(e) => {
                       e.stopPropagation();
                       updateInterest(application.id, application.interestId!, "HIRED");
@@ -335,37 +340,41 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
             ) : (
               <Button 
                 size="sm" 
+                className="w-full sm:w-auto"
                 onClick={(e) => {
                   e.stopPropagation();
                   expressInterest(application.id);
                 }}
               >
                 <UserPlus className="h-4 w-4 mr-2" />
-                Expresar Interés
+                <span className="hidden sm:inline">Expresar Interés</span>
+                <span className="sm:hidden">Interés</span>
               </Button>
             )}
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                startChat(application);
-              }}
-              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-            >
-              <MessageSquare className="h-4 w-4 mr-1" />
-              Chat
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelectedApplication(application);
-              }}
-            >
-              <Eye className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="flex-1 sm:flex-none text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  startChat(application);
+                }}
+              >
+                <MessageSquare className="h-4 w-4 mr-1" />
+                Chat
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedApplication(application);
+                }}
+              >
+                <Eye className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </CardContent>
@@ -382,20 +391,20 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex flex-col lg:flex-row h-screen bg-gray-50">
       {/* Main Content */}
-      <div className={`flex-1 transition-all duration-300 ${showChat ? 'mr-96' : ''}`}>
-        <div className="p-6 space-y-6">
+      <div className={`flex-1 transition-all duration-300 ${showChat ? 'lg:mr-96' : ''}`}>
+        <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
           {/* Header */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold">Candidatos Jóvenes</h2>
-              <p className="text-muted-foreground">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="text-center sm:text-left">
+              <h2 className="text-xl sm:text-2xl font-bold">Candidatos Jóvenes</h2>
+              <p className="text-muted-foreground text-sm sm:text-base">
                 Descubre talento joven disponible para oportunidades laborales
               </p>
             </div>
-            <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm">
+            <div className="flex items-center justify-center sm:justify-end space-x-2">
+              <Button variant="outline" size="sm" className="w-full sm:w-auto">
                 <Filter className="h-4 w-4 mr-2" />
                 Filtros
               </Button>
@@ -403,53 +412,53 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <Card>
-              <CardContent className="p-4">
+              <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center space-x-2">
-                  <Users className="h-5 w-5 text-blue-600" />
+                  <Users className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
                   <div>
-                    <p className="text-2xl font-bold">{filteredApplications.length}</p>
-                    <p className="text-sm text-muted-foreground">Aplicaciones</p>
+                    <p className="text-lg sm:text-2xl font-bold">{filteredApplications.length}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Aplicaciones</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
             <Card>
-              <CardContent className="p-4">
+              <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center space-x-2">
-                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
                   <div>
-                    <p className="text-2xl font-bold">
+                    <p className="text-lg sm:text-2xl font-bold">
                       {filteredApplications.filter(app => app.status === "ACTIVE").length}
                     </p>
-                    <p className="text-sm text-muted-foreground">Activas</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Activas</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
             <Card>
-              <CardContent className="p-4">
+              <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center space-x-2">
-                  <Heart className="h-5 w-5 text-red-600" />
+                  <Heart className="h-4 w-4 sm:h-5 sm:w-5 text-red-600" />
                   <div>
-                    <p className="text-2xl font-bold">
+                    <p className="text-lg sm:text-2xl font-bold">
                       {filteredApplications.filter(app => app.hasInterest).length}
                     </p>
-                    <p className="text-sm text-muted-foreground">Con Interés</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Con Interés</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
             <Card>
-              <CardContent className="p-4">
+              <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center space-x-2">
-                  <Star className="h-5 w-5 text-yellow-600" />
+                  <Star className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-600" />
                   <div>
-                    <p className="text-2xl font-bold">
+                    <p className="text-lg sm:text-2xl font-bold">
                       {filteredApplications.filter(app => app.totalInterests > 0).length}
                     </p>
-                    <p className="text-sm text-muted-foreground">Populares</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Populares</p>
                   </div>
                 </div>
               </CardContent>
@@ -457,49 +466,51 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
           </div>
 
           {/* Filters */}
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <div className="flex-1">
               <Input
                 placeholder="Buscar aplicaciones..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="max-w-sm"
+                className="w-full"
               />
             </div>
-            <Select value={educationFilter} onValueChange={setEducationFilter}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Nivel educativo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los niveles</SelectItem>
-                <SelectItem value="HIGH_SCHOOL">Bachillerato</SelectItem>
-                <SelectItem value="TECHNICAL">Técnico</SelectItem>
-                <SelectItem value="UNIVERSITY">Universitario</SelectItem>
-                <SelectItem value="GRADUATE">Postgrado</SelectItem>
-              </SelectContent>
-            </Select>
-        <Select value={cityFilter} onValueChange={setCityFilter}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="Ciudad" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas las ciudades</SelectItem>
-            <SelectItem value="Cochabamba">Cochabamba</SelectItem>
-            <SelectItem value="La Paz">La Paz</SelectItem>
-            <SelectItem value="Santa Cruz">Santa Cruz</SelectItem>
-            <SelectItem value="Sucre">Sucre</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={sortBy} onValueChange={setSortBy}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="Ordenar por" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="createdAt">Más recientes</SelectItem>
-            <SelectItem value="applicationsCount">Más populares</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+              <Select value={educationFilter} onValueChange={setEducationFilter}>
+                <SelectTrigger className="w-full sm:w-48">
+                  <SelectValue placeholder="Nivel educativo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los niveles</SelectItem>
+                  <SelectItem value="HIGH_SCHOOL">Bachillerato</SelectItem>
+                  <SelectItem value="TECHNICAL">Técnico</SelectItem>
+                  <SelectItem value="UNIVERSITY">Universitario</SelectItem>
+                  <SelectItem value="GRADUATE">Postgrado</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={cityFilter} onValueChange={setCityFilter}>
+                <SelectTrigger className="w-full sm:w-48">
+                  <SelectValue placeholder="Ciudad" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas las ciudades</SelectItem>
+                  <SelectItem value="Cochabamba">Cochabamba</SelectItem>
+                  <SelectItem value="La Paz">La Paz</SelectItem>
+                  <SelectItem value="Santa Cruz">Santa Cruz</SelectItem>
+                  <SelectItem value="Sucre">Sucre</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-full sm:w-48">
+                  <SelectValue placeholder="Ordenar por" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="createdAt">Más recientes</SelectItem>
+                  <SelectItem value="applicationsCount">Más populares</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
 
       {/* Applications List */}
       <div className="space-y-4">
@@ -526,7 +537,7 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
 
       {/* Chat Sidebar */}
       {showChat && activeChat && (
-        <div className="fixed right-0 top-0 h-full w-96 bg-white border-l shadow-lg z-50">
+        <div className="fixed inset-0 lg:inset-auto lg:right-0 lg:top-0 lg:h-full lg:w-96 bg-white border-l shadow-lg z-50">
           <div className="flex flex-col h-full">
             {/* Chat Header */}
             <div className="p-4 border-b bg-gray-50">
@@ -534,8 +545,8 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
                 <div className="flex items-center space-x-3">
                   <MessageSquare className="h-5 w-5 text-blue-600" />
                   <div>
-                    <h3 className="font-semibold">Chat con {activeChat.youthName}</h3>
-                    <p className="text-sm text-muted-foreground">Solicitud abierta</p>
+                    <h3 className="font-semibold text-sm sm:text-base">Chat con {activeChat.youthName}</h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Solicitud abierta</p>
                   </div>
                 </div>
                 <Button
@@ -595,35 +606,35 @@ function YouthApplicationDetailModal({
   const [notes, setNotes] = useState("");
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <Card className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-        <CardHeader>
+        <CardHeader className="p-4 sm:p-6">
           <div className="flex items-center justify-between">
-            <CardTitle>{application.title}</CardTitle>
-            <Button variant="ghost" onClick={onClose}>✕</Button>
+            <CardTitle className="text-lg sm:text-xl">{application.title}</CardTitle>
+            <Button variant="ghost" onClick={onClose} size="sm">✕</Button>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6">
           {/* Youth Info */}
-          <div className="flex items-center space-x-4">
-            <Avatar className="h-16 w-16">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <Avatar className="h-12 w-12 sm:h-16 sm:w-16 mx-auto sm:mx-0">
               <AvatarImage src={application.youth?.profile.avatarUrl} />
               <AvatarFallback>
                 {application.youth?.profile.firstName?.[0]}
                 {application.youth?.profile.lastName?.[0]}
               </AvatarFallback>
             </Avatar>
-            <div>
-              <h3 className="text-xl font-semibold">
+            <div className="text-center sm:text-left">
+              <h3 className="text-lg sm:text-xl font-semibold">
                 {application.youth?.profile.firstName} {application.youth?.profile.lastName}
               </h3>
-              <p className="text-muted-foreground">{application.youth.email}</p>
-              <div className="flex items-center gap-4 mt-2">
+              <p className="text-muted-foreground text-sm sm:text-base">{application.youth.email}</p>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-2">
                 <Badge className={getStatusColor(application.status)}>
                   {getStatusLabel(application.status)}
                 </Badge>
                 {application.youth?.profile.city && (
-                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                  <div className="flex items-center justify-center sm:justify-start gap-1 text-sm text-muted-foreground">
                     <MapPin className="h-4 w-4" />
                     <span>{application.youth?.profile.city}</span>
                   </div>
@@ -658,11 +669,12 @@ function YouthApplicationDetailModal({
           {(application.cvFile || application.cvUrl || application.coverLetterFile || application.coverLetterUrl) && (
             <div>
               <h4 className="font-semibold mb-2">Documentos</h4>
-              <div className="flex items-center space-x-4">
+              <div className="flex flex-col sm:flex-row gap-2 sm:space-x-4">
                 {(application.cvFile || application.cvUrl) && (
                   <Button 
                     variant="outline" 
                     size="sm"
+                    className="w-full sm:w-auto"
                     onClick={() => {
                       const cvUrl = application.cvUrl || application.cvFile;
                       if (cvUrl) {
@@ -685,6 +697,7 @@ function YouthApplicationDetailModal({
                   <Button 
                     variant="outline" 
                     size="sm"
+                    className="w-full sm:w-auto"
                     onClick={() => {
                       const coverLetterUrl = application.coverLetterUrl || application.coverLetterFile;
                       if (coverLetterUrl) {
@@ -700,7 +713,8 @@ function YouthApplicationDetailModal({
                     }}
                   >
                     <Download className="h-4 w-4 mr-2" />
-                    Carta de Presentación
+                    <span className="hidden sm:inline">Carta de Presentación</span>
+                    <span className="sm:hidden">Carta</span>
                   </Button>
                 )}
               </div>
@@ -708,43 +722,50 @@ function YouthApplicationDetailModal({
           )}
 
           {/* Action Buttons */}
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-col sm:flex-row gap-2 sm:space-x-2">
             {!application.hasInterest ? (
               <Button 
+                className="w-full sm:w-auto"
                 onClick={() => onExpressInterest(application.id, notes)}
               >
                 <UserPlus className="h-4 w-4 mr-2" />
                 Expresar Interés
               </Button>
             ) : (
-              <>
+              <div className="flex flex-col sm:flex-row gap-2 sm:space-x-2">
                 <Button 
+                  className="w-full sm:w-auto"
                   onClick={() => onUpdateInterest(application.id, application.interestId!, "CONTACTED", notes)}
                 >
                   <MessageSquare className="h-4 w-4 mr-2" />
-                  Marcar como Contactado
+                  <span className="hidden sm:inline">Marcar como Contactado</span>
+                  <span className="sm:hidden">Contactado</span>
                 </Button>
                 <Button 
+                  className="w-full sm:w-auto"
                   onClick={() => onUpdateInterest(application.id, application.interestId!, "INTERVIEW_SCHEDULED", notes)}
                 >
                   <Calendar className="h-4 w-4 mr-2" />
-                  Programar Entrevista
+                  <span className="hidden sm:inline">Programar Entrevista</span>
+                  <span className="sm:hidden">Entrevista</span>
                 </Button>
                 <Button 
+                  className="w-full sm:w-auto bg-green-600 hover:bg-green-700"
                   onClick={() => onUpdateInterest(application.id, application.interestId!, "HIRED", notes)}
-                  className="bg-green-600 hover:bg-green-700"
                 >
                   <CheckCircle className="h-4 w-4 mr-2" />
                   Contratar
                 </Button>
-              </>
+              </div>
             )}
             <Button 
               variant="outline"
+              className="w-full sm:w-auto"
               onClick={onOpenChat}
             >
               <MessageSquare className="h-4 w-4 mr-2" />
-              Enviar Mensaje
+              <span className="hidden sm:inline">Enviar Mensaje</span>
+              <span className="sm:hidden">Mensaje</span>
             </Button>
           </div>
         </CardContent>

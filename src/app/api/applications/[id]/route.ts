@@ -56,12 +56,44 @@ export async function GET(
       "HIRED": "offered"
     };
 
+    // Translation functions
+    const translateContractType = (type: string) => {
+      const translations = {
+        "FULL_TIME": "tiempo-completo",
+        "PART_TIME": "medio-tiempo", 
+        "INTERNSHIP": "pasantía",
+        "VOLUNTEER": "voluntario",
+        "FREELANCE": "contrato"
+      };
+      return translations[type as keyof typeof translations] || "tiempo-completo";
+    };
+
+    const translateExperienceLevel = (level: string) => {
+      const translations = {
+        "NO_EXPERIENCE": "Sin experiencia",
+        "ENTRY_LEVEL": "Nivel inicial",
+        "MID_LEVEL": "Nivel intermedio", 
+        "SENIOR_LEVEL": "Nivel senior"
+      };
+      return translations[level as keyof typeof translations] || "No especificado";
+    };
+
+    const translateWorkModality = (modality: string) => {
+      const translations = {
+        "ON_SITE": "Presencial",
+        "REMOTE": "Remoto",
+        "HYBRID": "Híbrido"
+      };
+      return translations[modality as keyof typeof translations] || "No especificado";
+    };
+
     const transformedApplication = {
       id: application.id,
       jobId: application.jobOfferId,
       jobTitle: jobOffer?.title || "Unknown Job",
       company: jobOffer?.company?.name || "Unknown Company",
       companyLogo: jobOffer?.company?.logoUrl,
+      companyOwnerId: jobOffer?.company?.ownerId,
       location: jobOffer?.location || "Unknown Location",
       appliedDate: application.appliedAt.toISOString(),
       status: statusMap[application.status as keyof typeof statusMap] || "applied",
@@ -71,10 +103,23 @@ export async function GET(
         max: Number(jobOffer.salaryMax),
         currency: jobOffer.salaryCurrency || "BOB",
       } : undefined,
-      jobType: jobOffer?.contractType,
+      jobType: translateContractType(jobOffer?.contractType || "FULL_TIME"),
       remote: jobOffer?.workModality === "REMOTE",
-      experience: jobOffer?.experienceLevel,
-      skills: jobOffer?.skillsRequired || [],
+      experience: translateExperienceLevel(jobOffer?.experienceLevel || "ENTRY_LEVEL"),
+      skills: Array.isArray(jobOffer?.skillsRequired) ? jobOffer.skillsRequired : [],
+      requirements: Array.isArray(jobOffer?.requirements) ? jobOffer.requirements : [
+        "Experiencia relevante en el campo",
+        "Conocimientos técnicos específicos",
+        "Capacidad de trabajo en equipo",
+        "Comunicación efectiva"
+      ],
+      benefits: Array.isArray(jobOffer?.benefits) ? jobOffer.benefits : [
+        "Salario competitivo",
+        "Ambiente de trabajo colaborativo",
+        "Oportunidades de crecimiento",
+        "Beneficios adicionales"
+      ],
+      description: jobOffer?.description || "Descripción del puesto no disponible",
       notes: application.notes,
       nextSteps: getNextSteps(application.status, application.decisionReason || undefined),
       interviewDate: application.reviewedAt?.toISOString(),
@@ -93,6 +138,12 @@ export async function GET(
       coverLetter: application.coverLetter,
       documents: [], // Would come from file uploads
       communication: [], // Would come from messages/emails
+      contactPerson: jobOffer?.company?.ownerId ? {
+        name: jobOffer?.company?.name || "Representante de la empresa",
+        title: "Representante de RRHH",
+        email: `contacto@${jobOffer?.company?.name?.toLowerCase().replace(/\s+/g, '')}.com` || "contacto@empresa.com",
+        phone: "+591 70000000"
+      } : undefined,
     };
 
     return NextResponse.json({

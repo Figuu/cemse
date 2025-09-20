@@ -50,41 +50,44 @@ export default function TalentPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-4 sm:py-8">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6 sm:mb-8">
         <Link href="/jobs">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" className="w-full sm:w-auto">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Volver a Trabajos
           </Button>
         </Link>
-        <div>
-          <h1 className="text-3xl font-bold">Descubre Talento</h1>
-          <p className="text-muted-foreground">
+        <div className="text-center sm:text-left">
+          <h1 className="text-2xl sm:text-3xl font-bold">Descubre Talento</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">
             Explora aplicaciones de jóvenes talentosos y encuentra el candidato perfecto
           </p>
         </div>
       </div>
 
       {/* Quick Navigation */}
-      <div className="flex items-center space-x-4 mb-8">
-        <Link href="/candidates">
-          <Button variant="outline">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-6 sm:mb-8">
+        <Link href="/candidates" className="w-full sm:w-auto">
+          <Button variant="outline" className="w-full sm:w-auto">
             <Users className="h-4 w-4 mr-2" />
-            Todos los Candidatos
+            <span className="hidden sm:inline">Todos los Candidatos</span>
+            <span className="sm:hidden">Candidatos</span>
           </Button>
         </Link>
-        <Link href="/jobs">
-          <Button variant="outline">
+        <Link href="/jobs" className="w-full sm:w-auto">
+          <Button variant="outline" className="w-full sm:w-auto">
             <Briefcase className="h-4 w-4 mr-2" />
-            Mis Ofertas de Trabajo
+            <span className="hidden sm:inline">Mis Ofertas de Trabajo</span>
+            <span className="sm:hidden">Mis Trabajos</span>
           </Button>
         </Link>
-        <Link href="/analytics">
-          <Button variant="outline">
+        <Link href="/analytics" className="w-full sm:w-auto">
+          <Button variant="outline" className="w-full sm:w-auto">
             <BarChart3 className="h-4 w-4 mr-2" />
-            Analytics de Contratación
+            <span className="hidden sm:inline">Analytics de Contratación</span>
+            <span className="sm:hidden">Analytics</span>
           </Button>
         </Link>
       </div>

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -17,11 +17,15 @@ import {
   Briefcase,
   FileText,
   Download,
-  ExternalLink
+  ExternalLink,
+  Send,
+  Minimize2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMessages, useSendMessage } from "@/hooks/useMessages";
 import { useSession } from "next-auth/react";
+import { formatDistanceToNow } from "date-fns";
+import { es } from "date-fns/locale";
 
 interface JobApplicationChatProps {
   jobId: string;
@@ -58,6 +62,9 @@ export function JobApplicationChat({
 }: JobApplicationChatProps) {
   const { data: session } = useSession();
   const [showApplicationDetails, setShowApplicationDetails] = useState(false);
+  const [message, setMessage] = useState("");
+  const [isMinimized, setIsMinimized] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Fetch messages for this application - only by contextId (jobOfferId)
   const { data: messagesData, isLoading: messagesLoading } = useMessages({
@@ -65,25 +72,39 @@ export function JobApplicationChat({
     contextId: jobId,
   });
 
-  const sendMessage = useSendMessage();
+  const sendMessageMutation = useSendMessage();
 
   const messages = messagesData?.messages || [];
 
-  const handleSendMessage = async (e: React.FormEvent, message: string) => {
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!message.trim() || sendMessage.isPending) return;
+    if (!message.trim() || sendMessageMutation.isPending) return;
+
+    const messageText = message.trim();
+    setMessage("");
 
     try {
-      await sendMessage.mutateAsync({
+      await sendMessageMutation.mutateAsync({
         recipientId: applicant.id, // Required for sending, but fetching will show all messages
-        content: message.trim(),
+        content: messageText,
         contextType: 'JOB_APPLICATION',
         contextId: jobId,
       });
     } catch (error) {
       console.error("Error sending message:", error);
+      // Restore message if sending failed
+      setMessage(messageText);
     }
+  };
+
+  const handleMinimize = () => {
+    setIsMinimized(!isMinimized);
   };
 
   const getInitials = (name: string) => {
@@ -93,16 +114,6 @@ export function JobApplicationChat({
       .join("")
       .toUpperCase()
       .slice(0, 2);
-  };
-
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString('es-ES', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
   };
 
   const getStatusColor = (status: string) => {
@@ -129,257 +140,303 @@ export function JobApplicationChat({
 
   const applicantName = `${applicant.firstName || ''} ${applicant.lastName || ''}`.trim() || 'Candidato';
 
+  const isOwnMessage = (senderId: string) => {
+    return senderId === session?.user?.id;
+  };
+
   return (
-    <div className="fixed right-0 top-0 h-full w-96 bg-white border-l shadow-lg z-50">
-      <div className="flex flex-col h-full">
-        {/* Chat Header */}
-        <div className="p-4 border-b bg-gray-50">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <MessageSquare className="h-5 w-5 text-blue-600" />
+    <div className={cn(
+      "fixed right-0 top-0 h-screen bg-white border-l shadow-lg transition-all duration-300 z-50 flex flex-col",
+      isMinimized ? "w-16" : "w-96"
+    )}>
+      {isMinimized ? (
+        // Minimized state
+        <div className="h-full flex flex-col items-center justify-center space-y-4 p-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleMinimize}
+            className="h-8 w-8 p-0"
+          >
+            <MessageCircle className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            className="h-8 w-8 p-0"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      ) : (
+        // Expanded state
+        <div className="flex-1 flex flex-col min-h-0">
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b bg-muted/50 flex-shrink-0">
+            <div className="flex items-center gap-3">
+              <MessageSquare className="h-6 w-6" />
               <div>
-                <h3 className="font-semibold">Chat con Candidato</h3>
-                <p className="text-sm text-muted-foreground">
-                  {applicantName}
-                </p>
+                <h3 className="font-medium text-sm">Chat con Empresa</h3>
+                <p className="text-xs text-muted-foreground">{applicantName}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleMinimize}
+                className="h-8 w-8 p-0"
+              >
+                <Minimize2 className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onClose}
+                className="h-8 w-8 p-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Application Header */}
+          <div className="flex items-center gap-3 p-4 border-b bg-muted/50 flex-shrink-0">
+            <Avatar className="h-8 w-8">
+              <AvatarImage src={applicant.avatarUrl} />
+              <AvatarFallback>
+                <User className="h-4 w-4" />
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1">
+              <h4 className="font-medium text-sm">{applicantName}</h4>
+              <div className="flex items-center gap-2">
+                <Badge className={getStatusColor(application.status)} variant="secondary">
+                  {getStatusLabel(application.status)}
+                </Badge>
+                <p className="text-xs text-muted-foreground">Empresa</p>
               </div>
             </div>
             <Button
               variant="ghost"
               size="sm"
-              onClick={onClose}
+              onClick={() => setShowApplicationDetails(!showApplicationDetails)}
+              className="h-8 w-8 p-0"
             >
-              <X className="h-4 w-4" />
+              <Briefcase className="h-4 w-4" />
             </Button>
           </div>
-        </div>
 
-        {/* Chat Content */}
-        <div className="flex-1 overflow-hidden">
-          <div className="h-full flex flex-col">
-            {/* Application Header */}
-            <div className="p-4 border-b bg-gray-50">
-              <div className="flex items-center space-x-3">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={applicant.avatarUrl} />
-                  <AvatarFallback>
-                    <User className="h-4 w-4" />
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <h4 className="font-medium">{applicantName}</h4>
-                  <div className="flex items-center gap-2">
-                    <Badge className={getStatusColor(application.status)} variant="secondary">
-                      {getStatusLabel(application.status)}
-                    </Badge>
-                    <p className="text-sm text-muted-foreground">Candidato</p>
-                  </div>
+          {/* Application Details */}
+          {showApplicationDetails && (
+            <div className="p-4 border-b bg-muted/50 max-h-64 overflow-y-auto">
+              <h5 className="font-medium mb-3 text-sm">Detalles de la Aplicación</h5>
+              
+              {/* Contact Info */}
+              <div className="space-y-2 mb-4">
+                <div className="text-sm">
+                  <span className="font-medium">Email:</span> {applicant.email}
                 </div>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowApplicationDetails(!showApplicationDetails)}
-                className="mt-2"
-              >
-                {showApplicationDetails ? 'Ocultar Detalles' : 'Ver Detalles de Aplicación'}
-              </Button>
-            </div>
-
-            {/* Application Details */}
-            {showApplicationDetails && (
-              <div className="p-4 border-b bg-gray-50 max-h-64 overflow-y-auto">
-                <h5 className="font-medium mb-3">Detalles de la Aplicación</h5>
-                
-                {/* Contact Info */}
-                <div className="space-y-2 mb-4">
+                {applicant.phone && (
                   <div className="text-sm">
-                    <span className="font-medium">Email:</span> {applicant.email}
-                  </div>
-                  {applicant.phone && (
-                    <div className="text-sm">
-                      <span className="font-medium">Teléfono:</span> {applicant.phone}
-                    </div>
-                  )}
-                  <div className="text-sm">
-                    <span className="font-medium">Aplicó:</span> {formatDateTime(application.appliedAt)}
-                  </div>
-                </div>
-
-                {/* Cover Letter */}
-                {application.coverLetter && (
-                  <div className="mb-4">
-                    <h6 className="font-medium text-sm mb-2">Carta de Presentación</h6>
-                    <div className="text-sm text-muted-foreground bg-white p-3 rounded border max-h-32 overflow-y-auto">
-                      {application.coverLetter}
-                    </div>
+                    <span className="font-medium">Teléfono:</span> {applicant.phone}
                   </div>
                 )}
-
-                {/* Documents */}
-                <div className="space-y-2">
-                  <h6 className="font-medium text-sm">Documentos</h6>
-                  {application.cvFile && (
-                    <div className="flex items-center justify-between p-2 bg-white rounded border">
-                      <div className="flex items-center gap-2">
-                        <FileText className="h-4 w-4 text-blue-600" />
-                        <span className="text-sm">CV/Resume</span>
-                      </div>
-                      <Button variant="outline" size="sm">
-                        <Download className="h-4 w-4 mr-1" />
-                        Descargar
-                      </Button>
-                    </div>
-                  )}
-                  {application.cvUrl && (
-                    <div className="flex items-center justify-between p-2 bg-white rounded border">
-                      <div className="flex items-center gap-2">
-                        <ExternalLink className="h-4 w-4 text-blue-600" />
-                        <span className="text-sm">CV/Resume (URL)</span>
-                      </div>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => window.open(application.cvUrl, '_blank')}
-                      >
-                        <ExternalLink className="h-4 w-4 mr-1" />
-                        Ver
-                      </Button>
-                    </div>
-                  )}
-                  {application.coverLetterFile && (
-                    <div className="flex items-center justify-between p-2 bg-white rounded border">
-                      <div className="flex items-center gap-2">
-                        <FileText className="h-4 w-4 text-green-600" />
-                        <span className="text-sm">Carta de Presentación</span>
-                      </div>
-                      <Button variant="outline" size="sm">
-                        <Download className="h-4 w-4 mr-1" />
-                        Descargar
-                      </Button>
-                    </div>
-                  )}
-                  {application.coverLetterUrl && (
-                    <div className="flex items-center justify-between p-2 bg-white rounded border">
-                      <div className="flex items-center gap-2">
-                        <ExternalLink className="h-4 w-4 text-green-600" />
-                        <span className="text-sm">Carta de Presentación (URL)</span>
-                      </div>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => window.open(application.coverLetterUrl, '_blank')}
-                      >
-                        <ExternalLink className="h-4 w-4 mr-1" />
-                        Ver
-                      </Button>
-                    </div>
-                  )}
+                <div className="text-sm">
+                  <span className="font-medium">Aplicó:</span> {formatDistanceToNow(new Date(application.appliedAt), { addSuffix: true, locale: es })}
                 </div>
               </div>
-            )}
 
-            {/* Messages */}
-            <ScrollArea className="flex-1 p-4">
-              <div className="space-y-4">
-                {messagesLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin" />
+              {/* Cover Letter */}
+              {application.coverLetter && (
+                <div className="mb-4">
+                  <h6 className="font-medium text-sm mb-2">Carta de Presentación</h6>
+                  <div className="text-sm text-muted-foreground bg-white p-3 rounded border max-h-32 overflow-y-auto">
+                    {application.coverLetter}
                   </div>
-                ) : messages.length === 0 ? (
-                  <div className="text-center py-8">
-                    <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">Inicia la conversación</h3>
-                    <p className="text-muted-foreground text-sm">
-                      Envía tu primer mensaje a {applicantName}.
-                    </p>
+                </div>
+              )}
+
+              {/* Documents */}
+              <div className="space-y-2">
+                <h6 className="font-medium text-sm">Documentos</h6>
+                {application.cvFile && (
+                  <div className="flex items-center justify-between p-2 bg-white rounded border">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-blue-600" />
+                      <span className="text-sm">CV/Resume</span>
+                    </div>
+                    <Button variant="outline" size="sm">
+                      <Download className="h-4 w-4 mr-1" />
+                      Descargar
+                    </Button>
                   </div>
-                ) : (
-                  messages.map((msg) => {
-                    const isOwnMessage = msg.senderId === session?.user?.id;
-                    return (
-                      <div
-                        key={msg.id}
-                        className={cn(
-                          "flex gap-3",
-                          isOwnMessage ? "justify-end" : "justify-start"
-                        )}
-                      >
+                )}
+                {application.cvUrl && (
+                  <div className="flex items-center justify-between p-2 bg-white rounded border">
+                    <div className="flex items-center gap-2">
+                      <ExternalLink className="h-4 w-4 text-blue-600" />
+                      <span className="text-sm">CV/Resume (URL)</span>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => window.open(application.cvUrl, '_blank')}
+                    >
+                      <ExternalLink className="h-4 w-4 mr-1" />
+                      Ver
+                    </Button>
+                  </div>
+                )}
+                {application.coverLetterFile && (
+                  <div className="flex items-center justify-between p-2 bg-white rounded border">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-green-600" />
+                      <span className="text-sm">Carta de Presentación</span>
+                    </div>
+                    <Button variant="outline" size="sm">
+                      <Download className="h-4 w-4 mr-1" />
+                      Descargar
+                    </Button>
+                  </div>
+                )}
+                {application.coverLetterUrl && (
+                  <div className="flex items-center justify-between p-2 bg-white rounded border">
+                    <div className="flex items-center gap-2">
+                      <ExternalLink className="h-4 w-4 text-green-600" />
+                      <span className="text-sm">Carta de Presentación (URL)</span>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => window.open(application.coverLetterUrl, '_blank')}
+                    >
+                      <ExternalLink className="h-4 w-4 mr-1" />
+                      Ver
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Messages */}
+          <div className="flex-1 min-h-0">
+            <ScrollArea className="h-full p-4">
+              {messagesLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                </div>
+              ) : messages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <MessageCircle className="h-12 w-12 text-muted-foreground mb-2" />
+                  <p className="text-sm text-muted-foreground">
+                    Inicia una conversación con {applicantName}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {messages.map((msg) => (
+                    <div
+                      key={msg.id}
+                      className={cn(
+                        "flex gap-2",
+                        isOwnMessage(msg.senderId) ? "justify-end" : "justify-start"
+                      )}
+                    >
+                      {!isOwnMessage(msg.senderId) && (
+                        <Avatar className="h-6 w-6 mt-1">
+                          <AvatarImage src={applicant.avatarUrl} />
+                          <AvatarFallback className="text-xs">
+                            {getInitials(applicantName)}
+                          </AvatarFallback>
+                        </Avatar>
+                      )}
+                      
+                      <div className={cn(
+                        "max-w-[70%] space-y-1",
+                        isOwnMessage(msg.senderId) && "flex flex-col items-end"
+                      )}>
+                        <div
+                          className={cn(
+                            "rounded-lg px-3 py-2 text-sm",
+                            isOwnMessage(msg.senderId)
+                              ? "bg-blue-600 text-white"
+                              : "bg-muted"
+                          )}
+                        >
+                          {msg.content}
+                        </div>
                         <div className={cn(
-                          "flex gap-3 max-w-[80%]",
-                          isOwnMessage ? "flex-row-reverse" : "flex-row"
+                          "flex items-center gap-1 text-xs text-muted-foreground",
+                          isOwnMessage(msg.senderId) ? "flex-row-reverse" : "flex-row"
                         )}>
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage src={isOwnMessage ? session?.user?.profile?.avatarUrl : applicant.avatarUrl} />
-                            <AvatarFallback>
-                              {isOwnMessage ? getInitials(`${session?.user?.name || 'Yo'}`) : <User className="h-4 w-4" />}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className={cn(
-                            "rounded-lg px-3 py-2",
-                            isOwnMessage 
-                              ? "bg-blue-600 text-white" 
-                              : "bg-gray-100"
-                          )}>
-                            <p className="text-sm">{msg.content}</p>
-                            <div className={cn(
-                              "flex items-center gap-1 mt-1 text-xs",
-                              isOwnMessage ? "text-blue-100" : "text-muted-foreground"
-                            )}>
-                              <span>{formatDateTime(msg.createdAt)}</span>
-                              {isOwnMessage && (
-                                <span>
-                                  {msg.readAt ? <CheckCheck className="h-3 w-3" /> : <Check className="h-3 w-3" />}
-                                </span>
+                          <span>
+                            {formatDistanceToNow(new Date(msg.createdAt), { 
+                              addSuffix: true, 
+                              locale: es 
+                            })}
+                          </span>
+                          {isOwnMessage(msg.senderId) && (
+                            <div className="flex items-center">
+                              {msg.readAt ? (
+                                <CheckCheck className="h-3 w-3 text-blue-600" />
+                              ) : (
+                                <Check className="h-3 w-3" />
                               )}
                             </div>
-                          </div>
+                          )}
                         </div>
                       </div>
-                    );
-                  })
-                )}
-              </div>
-            </ScrollArea>
 
-            {/* Message Input */}
-            <div className="border-t p-4">
-              <form onSubmit={(e) => {
-                const input = e.currentTarget.querySelector('input') as HTMLInputElement;
-                if (input) {
-                  handleSendMessage(e, input.value);
-                  input.value = '';
-                }
-              }} className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Escribe tu mensaje..."
-                  className="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      const input = e.currentTarget;
-                      handleSendMessage(e, input.value);
-                      input.value = '';
-                    }
-                  }}
-                />
-                <Button 
-                  type="submit" 
-                  disabled={sendMessage.isPending}
-                  size="sm"
-                >
-                  {sendMessage.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <MessageCircle className="h-4 w-4" />
-                  )}
-                </Button>
-              </form>
-            </div>
+                      {isOwnMessage(msg.senderId) && (
+                        <Avatar className="h-6 w-6 mt-1">
+                          <AvatarImage src={session?.user?.profile?.avatarUrl} />
+                          <AvatarFallback className="text-xs">
+                            {getInitials(session?.user?.name || "Yo")}
+                          </AvatarFallback>
+                        </Avatar>
+                      )}
+                    </div>
+                  ))}
+                  <div ref={messagesEndRef} />
+                </div>
+              )}
+            </ScrollArea>
+          </div>
+
+          {/* Message Input */}
+          <div className="p-4 border-t flex-shrink-0">
+            <form onSubmit={handleSendMessage} className="flex gap-2">
+              <Textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder={`Escribe un mensaje a ${applicantName}...`}
+                className="min-h-[40px] max-h-[120px] resize-none"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage(e);
+                  }
+                }}
+              />
+              <Button
+                type="submit"
+                size="sm"
+                disabled={!message.trim() || sendMessageMutation.isPending}
+                className="px-3"
+              >
+                {sendMessageMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+              </Button>
+            </form>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

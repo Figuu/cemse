@@ -222,41 +222,44 @@ export default function ProfilePage() {
   const profile = session.user.profile;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
 
       {/* Profile Header */}
       <div className="bg-card shadow rounded-lg">
         <div className="px-4 py-5 sm:p-6">
-          <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <ProfileImageUpload
-              currentImageUrl={formData.avatarUrl}
-              onImageUpdate={handleImageUpdate}
-              disabled={!isEditing}
-            />
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">
-                {formData.firstName} {formData.lastName}
-              </h1>
-              <p className="text-muted-foreground">{session.user.email}</p>
-              <div className="mt-2">
-                <Badge variant="secondary">
-                  {getRoleDisplayName(session.user.role)}
-                </Badge>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="flex justify-center sm:justify-start">
+                <ProfileImageUpload
+                  currentImageUrl={formData.avatarUrl}
+                  onImageUpdate={handleImageUpdate}
+                  disabled={!isEditing}
+                />
+              </div>
+              <div className="text-center sm:text-left">
+                <h1 className="text-xl sm:text-2xl font-bold text-foreground">
+                  {formData.firstName} {formData.lastName}
+                </h1>
+                <p className="text-muted-foreground text-sm sm:text-base">{session.user.email}</p>
+                <div className="mt-2 flex justify-center sm:justify-start">
+                  <Badge variant="secondary">
+                    {getRoleDisplayName(session.user.role)}
+                  </Badge>
+                </div>
               </div>
             </div>
-          </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:space-x-2">
               <Button
                 variant="outline"
                 onClick={handleEditToggle}
                 disabled={isLoading}
+                className="w-full sm:w-auto"
               >
                 <Edit className="h-4 w-4 mr-2" />
                 {isEditing ? "Cancelar" : "Editar"}
               </Button>
               {isEditing && (
-                <Button onClick={handleSave} disabled={isLoading}>
+                <Button onClick={handleSave} disabled={isLoading} className="w-full sm:w-auto">
                   <Save className="h-4 w-4 mr-2" />
                   {isLoading ? "Guardando..." : "Guardar"}
                 </Button>
@@ -271,58 +274,63 @@ export default function ProfilePage() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* Personal Information */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <User className="h-5 w-5 mr-2" />
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="flex items-center text-base sm:text-lg">
+              <User className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
               Información Personal
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+          <CardContent className="space-y-4 p-4 sm:p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="firstName">Nombre</Label>
+                <Label htmlFor="firstName" className="text-sm sm:text-base">Nombre</Label>
                 <Input
                   id="firstName"
                   value={formData.firstName}
                   onChange={(e) => handleInputChange('firstName', e.target.value)}
                   disabled={!isEditing}
+                  className="mt-1"
                 />
               </div>
               <div>
-                <Label htmlFor="lastName">Apellido</Label>
+                <Label htmlFor="lastName" className="text-sm sm:text-base">Apellido</Label>
                 <Input
                   id="lastName"
                   value={formData.lastName}
                   onChange={(e) => handleInputChange('lastName', e.target.value)}
                   disabled={!isEditing}
+                  className="mt-1"
                 />
               </div>
             </div>
             <div>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-sm sm:text-base">Email</Label>
               <Input
                 id="email"
                 value={session.user.email || ""}
                 disabled
+                className="mt-1"
               />
             </div>
             <div>
-              <Label htmlFor="phone">Teléfono</Label>
+              <Label htmlFor="phone" className="text-sm sm:text-base">Teléfono</Label>
               <Input
                 id="phone"
                 value={formData.phone}
                 onChange={(e) => handleInputChange('phone', e.target.value)}
                 disabled={!isEditing}
+                className="mt-1"
               />
             </div>
             <div>
-              <Label htmlFor="address">Dirección</Label>
+              <Label htmlFor="address" className="text-sm sm:text-base">Dirección</Label>
               <Textarea
                 id="address"
                 value={formData.address}
                 onChange={(e) => handleInputChange('address', e.target.value)}
                 disabled={!isEditing}
                 rows={3}
+                className="mt-1"
               />
             </div>
           </CardContent>
@@ -330,24 +338,25 @@ export default function ProfilePage() {
 
         {/* Professional Information */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Briefcase className="h-5 w-5 mr-2" />
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="flex items-center text-base sm:text-lg">
+              <Briefcase className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
               Información Profesional
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 p-4 sm:p-6">
             <div>
-              <Label htmlFor="title">Título Profesional</Label>
+              <Label htmlFor="title" className="text-sm sm:text-base">Título Profesional</Label>
               <Input
                 id="title"
                 value={formData.jobTitle}
                 onChange={(e) => handleInputChange('jobTitle', e.target.value)}
                 disabled={!isEditing}
+                className="mt-1"
               />
             </div>
             <div>
-              <Label htmlFor="bio">Biografía</Label>
+              <Label htmlFor="bio" className="text-sm sm:text-base">Biografía</Label>
               <Textarea
                 id="bio"
                 value={formData.professionalSummary}
@@ -355,16 +364,17 @@ export default function ProfilePage() {
                 disabled={!isEditing}
                 rows={4}
                 placeholder="Cuéntanos sobre ti..."
+                className="mt-1"
               />
             </div>
             <div>
-              <Label htmlFor="experience">Años de Experiencia</Label>
+              <Label htmlFor="experience" className="text-sm sm:text-base">Años de Experiencia</Label>
               <Select 
                 value={formData.experienceLevel} 
                 onValueChange={(value) => handleInputChange('experienceLevel', value)}
                 disabled={!isEditing}
               >
-                <SelectTrigger>
+                <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Selecciona experiencia" />
                 </SelectTrigger>
                 <SelectContent>
@@ -390,10 +400,10 @@ export default function ProfilePage() {
 
       {/* Settings */}
       <Card>
-        <CardHeader>
-          <CardTitle>Configuración</CardTitle>
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="text-base sm:text-lg">Configuración</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 sm:p-6">
           <UserPreferences />
         </CardContent>
       </Card>

@@ -269,26 +269,27 @@ export function PresentationLettersTab() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-semibold">Cartas de Presentación</h2>
-          <p className="text-muted-foreground">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="text-center sm:text-left">
+          <h2 className="text-lg sm:text-xl font-semibold">Cartas de Presentación</h2>
+          <p className="text-muted-foreground text-sm sm:text-base">
             Crea cartas de presentación profesionales para tus aplicaciones
           </p>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:space-x-2">
           <Button
             variant="outline"
             onClick={() => setIsEditing(!isEditing)}
             disabled={isLoading}
+            className="w-full sm:w-auto"
           >
             <Edit className="h-4 w-4 mr-2" />
             {isEditing ? "Cancelar" : "Editar"}
           </Button>
           {isEditing && (
-            <Button onClick={handleSave} disabled={isLoading}>
+            <Button onClick={handleSave} disabled={isLoading} className="w-full sm:w-auto">
               <Save className="h-4 w-4 mr-2" />
               {isLoading ? "Guardando..." : "Guardar"}
             </Button>
@@ -299,55 +300,59 @@ export function PresentationLettersTab() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Letter Content Form */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Mail className="h-5 w-5 mr-2" />
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="flex items-center text-base sm:text-lg">
+              <Mail className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
               Contenido de la Carta
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+          <CardContent className="space-y-4 p-4 sm:p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="recipientName">Nombre del Destinatario</Label>
+                <Label htmlFor="recipientName" className="text-sm sm:text-base">Nombre del Destinatario</Label>
                 <Input
                   id="recipientName"
                   value={formData.recipientName}
                   onChange={(e) => handleInputChange('recipientName', e.target.value)}
                   disabled={!isEditing}
                   placeholder="Ej: Juan Pérez"
+                  className="mt-1"
                 />
               </div>
               <div>
-                <Label htmlFor="recipientTitle">Cargo del Destinatario</Label>
+                <Label htmlFor="recipientTitle" className="text-sm sm:text-base">Cargo del Destinatario</Label>
                 <Input
                   id="recipientTitle"
                   value={formData.recipientTitle}
                   onChange={(e) => handleInputChange('recipientTitle', e.target.value)}
                   disabled={!isEditing}
                   placeholder="Ej: Gerente de Recursos Humanos"
+                  className="mt-1"
                 />
               </div>
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="companyName">Nombre de la Empresa</Label>
+                <Label htmlFor="companyName" className="text-sm sm:text-base">Nombre de la Empresa</Label>
                 <Input
                   id="companyName"
                   value={formData.companyName}
                   onChange={(e) => handleInputChange('companyName', e.target.value)}
                   disabled={!isEditing}
                   placeholder="Ej: Empresa ABC"
+                  className="mt-1"
                 />
               </div>
               <div>
-                <Label htmlFor="position">Posición a la que aplicas</Label>
+                <Label htmlFor="position" className="text-sm sm:text-base">Posición a la que aplicas</Label>
                 <Input
                   id="position"
                   value={formData.position}
                   onChange={(e) => handleInputChange('position', e.target.value)}
                   disabled={!isEditing}
                   placeholder="Ej: Desarrollador Frontend"
+                  className="mt-1"
                 />
               </div>
             </div>

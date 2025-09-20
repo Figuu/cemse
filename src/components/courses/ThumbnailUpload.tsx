@@ -188,7 +188,7 @@ export const ThumbnailUpload = ({
           onDragOver={handleDrag}
           onDrop={handleDrop}
         >
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             {selectedFile ? (
               <div className="space-y-4">
                 {/* Selected File Preview */}
@@ -221,12 +221,13 @@ export const ThumbnailUpload = ({
 
                 {/* Image Preview */}
                 {previewUrl && (
-                  <div className="relative w-full h-48">
+                  <div className="relative w-full h-32 sm:h-48 max-w-full overflow-hidden">
                     <Image
                       src={previewUrl}
                       alt="Preview"
                       fill
                       className="object-cover rounded-lg border"
+                      sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
                     />
                     <div className="absolute top-2 right-2">
                       <Button
@@ -247,7 +248,7 @@ export const ThumbnailUpload = ({
                           }
                         }}
                       >
-                        <Eye className="h-4 w-4" />
+                        <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
                       </Button>
                     </div>
                   </div>
@@ -317,10 +318,10 @@ export const ThumbnailUpload = ({
         </Card>
       ) : (
         <Card>
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-3 p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <ImageIcon className="h-4 w-4" />
+                <ImageIcon className="h-3 w-3 sm:h-4 sm:w-4" />
                 Imagen de Portada
               </CardTitle>
               <Button
@@ -330,18 +331,19 @@ export const ThumbnailUpload = ({
                 onClick={handleRemoveThumbnail}
                 disabled={disabled}
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 p-4 sm:p-6 pt-0">
             {/* Thumbnail Preview */}
-            <div className="relative w-full h-48">
+            <div className="relative w-full h-32 sm:h-48 max-w-full overflow-hidden">
               <Image
                 src={thumbnailUrl}
                 alt="Course thumbnail"
                 fill
                 className="object-cover rounded-lg border"
+                sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
               />
               <div className="absolute top-2 right-2">
                 <Button
@@ -362,7 +364,7 @@ export const ThumbnailUpload = ({
                     }
                   }}
                 >
-                  <Eye className="h-4 w-4" />
+                  <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
                 </Button>
               </div>
             </div>

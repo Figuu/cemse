@@ -43,6 +43,7 @@ interface CourseCardProps {
   onDelete?: (courseId: string) => void;
   showActions?: boolean;
   className?: string;
+  viewMode?: "grid" | "list";
 }
 
 export function CourseCard({ 
@@ -53,7 +54,8 @@ export function CourseCard({
   onEdit,
   onDelete,
   showActions = true,
-  className 
+  className,
+  viewMode = "grid"
 }: CourseCardProps) {
   const { data: session } = useSession();
   const [isEnrolling, setIsEnrolling] = useState(false);
@@ -172,9 +174,266 @@ export function CourseCard({
     }
   };
 
+  if (viewMode === "list") {
+    return (
+      <Card className={cn("overflow-hidden hover:shadow-lg transition-all duration-200 group", className)}>
+        <div className="flex flex-col sm:flex-row">
+          {/* Course Thumbnail - List View */}
+          <div className="w-full sm:w-48 h-32 sm:h-auto bg-gradient-to-br from-blue-50 to-indigo-100 relative overflow-hidden flex-shrink-0">
+            {course.thumbnail ? (
+              <Image
+                src={getImageUrl(course.thumbnail) || ''}
+                alt={course.title}
+                fill
+                className="object-cover"
+                onError={(e) => {
+                  console.error('Image failed to load:', course.thumbnail);
+                  console.error('Error:', e);
+                }}
+                onLoad={() => {
+                  console.log('Image loaded successfully:', course.thumbnail);
+                }}
+              />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <BookOpen className="h-12 w-12 sm:h-16 sm:w-16 text-muted-foreground" />
+              </div>
+            )}
+            
+            {/* Progress Bar for Enrolled Courses */}
+            {course.isEnrolled && course.progress > 0 && (
+              <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2">
+                <div className="flex items-center justify-between text-xs mb-1">
+                  <span>Progreso</span>
+                  <span>{Math.round(course.progress)}%</span>
+                </div>
+                <Progress value={course.progress} className="h-1" />
+              </div>
+            )}
+
+            {/* Course Level Badge */}
+            <div className="absolute top-2 left-2">
+              <Badge className={cn(getLevelColor(course.level), "text-xs")}>
+                {getLevelLabel(course.level)}
+              </Badge>
+            </div>
+
+            {/* Category Badge */}
+            <div className="absolute top-2 right-2">
+              <Badge className={cn(getCategoryColor(course.category), "text-xs")}>
+                {getCategoryLabel(course.category)}
+              </Badge>
+            </div>
+
+            {/* Certification Badge */}
+            {course.certification && (
+              <div className="absolute bottom-2 right-2">
+                <Badge className="bg-yellow-100 text-yellow-800 text-xs">
+                  <Award className="h-3 w-3 mr-1" />
+                  Certificado
+                </Badge>
+              </div>
+            )}
+          </div>
+
+          {/* Course Content - List View */}
+          <div className="flex-1 p-4 sm:p-6">
+            <div className="space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex-1">
+                  <h3 className="text-base sm:text-lg font-semibold line-clamp-2 group-hover:text-blue-600 transition-colors">
+                    {course.title}
+                  </h3>
+                  
+                  {course.instructor && (
+                    <p className="text-sm text-muted-foreground mt-1 flex items-center">
+                      <User className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                      {course.instructor.name}
+                    </p>
+                  )}
+
+                  {course.shortDescription && (
+                    <p className="text-xs sm:text-sm text-muted-foreground mt-2 line-clamp-2">
+                      {course.shortDescription}
+                    </p>
+                  )}
+                </div>
+
+                {/* Course Stats - List View */}
+                <div className="flex items-center space-x-4 mt-3 sm:mt-0 sm:ml-4 text-xs sm:text-sm text-muted-foreground">
+                  <div className="flex items-center">
+                    <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                    {formatDuration(course.duration)}
+                  </div>
+                  <div className="flex items-center">
+                    <Users className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                    {course.studentsCount.toLocaleString()}
+                  </div>
+                  <div className="flex items-center">
+                    <Star className="h-3 w-3 sm:h-4 sm:w-4 mr-1 fill-yellow-400 text-yellow-400" />
+                    {course.rating.toFixed(1)}
+                  </div>
+                </div>
+              </div>
+
+              {/* Course Details - List View */}
+              <div className="flex flex-wrap gap-4 text-xs sm:text-sm">
+                <span>Lecciones: <strong>{course.totalLessons}</strong></span>
+                <span>Módulos: <strong>{course.totalModules}</strong></span>
+                {course.totalQuizzes > 0 && (
+                  <span>Cuestionarios: <strong>{course.totalQuizzes}</strong></span>
+                )}
+              </div>
+
+              {/* Tags - List View */}
+              {course.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {course.tags.slice(0, 4).map((tag, index) => (
+                    <Badge key={index} variant="outline" className="text-xs">
+                      <Tag className="h-3 w-3 mr-1" />
+                      {tag}
+                    </Badge>
+                  ))}
+                  {course.tags.length > 4 && (
+                    <Badge variant="outline" className="text-xs">
+                      +{course.tags.length - 4} más
+                    </Badge>
+                  )}
+                </div>
+              )}
+
+              {/* Enrollment Status - List View */}
+              {course.isEnrolled && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Progreso</span>
+                    <span className="font-medium">{Math.round(course.progress)}%</span>
+                  </div>
+                  <Progress value={course.progress} className="h-2" />
+                  {course.isCompleted && (
+                    <div className="flex items-center text-green-600 text-sm">
+                      <CheckCircle className="h-4 w-4 mr-1" />
+                      Completado
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Actions - List View */}
+              {showActions && (
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0 pt-2">
+                  <div className="flex space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onView(course.id)}
+                      className="text-xs"
+                    >
+                      <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                      Ver
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {/* TODO: Implement share */}}
+                      className="text-xs"
+                    >
+                      <Share2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <span className="ml-1 sm:hidden">Compartir</span>
+                    </Button>
+                  </div>
+
+                  <div className="flex space-x-2">
+                    {/* Show different actions based on user role and course ownership */}
+                    {(session?.user?.role === "INSTITUTION" || session?.user?.role === "SUPERADMIN") && course.isOwner ? (
+                      // Institution or Super Admin viewing their own course
+                      <>
+                        <Button
+                          size="sm"
+                          onClick={() => onView(course.id)}
+                          className="bg-blue-600 hover:bg-blue-700 text-xs"
+                        >
+                          <BookOpen className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                          Gestionar
+                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm" className="text-xs">
+                              <MoreVertical className="h-3 w-3 sm:h-4 sm:w-4" />
+                              <span className="ml-1 sm:hidden">Más</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            {onEdit && (
+                              <DropdownMenuItem onClick={() => onEdit(course.id)}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Editar
+                              </DropdownMenuItem>
+                            )}
+                            {onDelete && (
+                              <DropdownMenuItem 
+                                onClick={() => onDelete(course.id)}
+                                className="text-red-600 focus:text-red-600"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Eliminar
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </>
+                    ) : (session?.user?.role === "INSTITUTION" || session?.user?.role === "SUPERADMIN") ? (
+                      // Institution or Super Admin viewing someone else's course
+                      <Button
+                        size="sm"
+                        onClick={() => onView(course.id)}
+                        className="bg-gray-600 hover:bg-gray-700 text-xs"
+                      >
+                        <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                        Ver Detalles
+                      </Button>
+                    ) : course.isEnrolled ? (
+                      // Student viewing enrolled course
+                      <Button
+                        size="sm"
+                        onClick={() => onView(course.id)}
+                        className="bg-blue-600 hover:bg-blue-700 text-xs"
+                      >
+                        <Play className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                        Continuar
+                      </Button>
+                    ) : (
+                      // Student viewing available course
+                      <Button
+                        size="sm"
+                        onClick={handleEnroll}
+                        disabled={isEnrolling}
+                        className="bg-green-600 hover:bg-green-700 text-xs"
+                      >
+                        {isEnrolling ? (
+                          <>
+                            <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1 animate-spin" />
+                            Inscribiendo...
+                          </>
+                        ) : (
+                          "Inscribirse"
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
+  // Grid View (default)
   return (
     <Card className={cn("overflow-hidden hover:shadow-lg transition-all duration-200 group", className)}>
-      {/* Course Thumbnail */}
+      {/* Course Thumbnail - Grid View */}
       <div className="aspect-video bg-gradient-to-br from-blue-50 to-indigo-100 relative overflow-hidden">
         {course.thumbnail ? (
           <Image
@@ -195,8 +454,8 @@ export function CourseCard({
             <BookOpen className="h-16 w-16 text-muted-foreground" />
           </div>
         )}
-        
-        {/* Progress Bar for Enrolled Courses */}
+
+        {/* Progress Overlay */}
         {course.isEnrolled && course.progress > 0 && (
           <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2">
             <div className="flex items-center justify-between text-sm mb-1">

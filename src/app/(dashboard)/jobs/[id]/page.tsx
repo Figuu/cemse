@@ -15,17 +15,16 @@ import {
   Clock,
   DollarSign,
   Target,
-  Share2,
-  Copy,
-  Trash2,
-  MessageCircle
+  Trash2
 } from "lucide-react";
 import { useJob, useJobById, useJobApplications, useDeleteJob } from "@/hooks/useJobs";
 import { useSession } from "next-auth/react";
 import { useCompanyByUser } from "@/hooks/useCompanies";
+import { useJobApplicationStatus } from "@/hooks/useJobApplicationStatus";
 import { EmploymentTypeLabels, ExperienceLevelLabels, ApplicationStatusLabels } from "@/types/company";
 import Link from "next/link";
 import { safePercentage } from "@/lib/utils";
+import { JobApplicationModal } from "@/components/jobs/JobApplicationModal";
 
 export default function JobDetailPage() {
   const params = useParams();
@@ -33,6 +32,7 @@ export default function JobDetailPage() {
   const { data: session } = useSession();
   const jobId = params.id as string;
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showApplicationModal, setShowApplicationModal] = useState(false);
 
   // Determine user role and fetch data accordingly
   const isCompany = session?.user?.role === "COMPANIES";
@@ -60,6 +60,10 @@ export default function JobDetailPage() {
 
   const applications = applicationsData?.applications || [];
   const deleteJobMutation = useDeleteJob(company?.id || "", jobId);
+  
+  // Check application status for youth users
+  const { getApplicationStatus } = useJobApplicationStatus(isYouth ? [jobId] : []);
+  const applicationStatus = getApplicationStatus(jobId);
 
   const handleDelete = async () => {
     try {
@@ -70,15 +74,6 @@ export default function JobDetailPage() {
     }
   };
 
-  const handleShare = async () => {
-    const jobUrl = `${window.location.origin}/jobs/${jobId}`;
-    try {
-      await navigator.clipboard.writeText(jobUrl);
-      // You could add a toast notification here
-    } catch (error) {
-      console.error("Error copying to clipboard:", error);
-    }
-  };
 
   if (jobLoading) {
     return (
@@ -162,11 +157,6 @@ export default function JobDetailPage() {
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
-          <Button variant="outline" size="sm" onClick={handleShare} className="w-full sm:w-auto">
-            <Share2 className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">Compartir</span>
-            <span className="sm:hidden">Compartir</span>
-          </Button>
           {isCompanyUser && (
             <>
               <Link href={`/jobs/${jobId}/edit`}>
@@ -186,20 +176,14 @@ export default function JobDetailPage() {
             </>
           )}
           {isYouth && (
-            <>
-              <Link href={`/jobs/${jobId}/apply`}>
-                <Button size="sm" className="w-full sm:w-auto">
-                  {(job as any).isApplied ? "Ver Aplicación" : "Aplicar Ahora"}
-                </Button>
-              </Link>
-              <Link href={`/jobs/${jobId}/apply`}>
-                <Button variant="outline" size="sm" className="w-full sm:w-auto">
-                  <MessageCircle className="h-4 w-4 mr-2" />
-                  <span className="hidden sm:inline">Contactar Empresa</span>
-                  <span className="sm:hidden">Contactar</span>
-                </Button>
-              </Link>
-            </>
+            <Button 
+              size="sm" 
+              className="w-full sm:w-auto"
+              onClick={() => applicationStatus.hasApplied ? router.push(`/applications/${applicationStatus.applicationId}`) : setShowApplicationModal(true)}
+              variant={applicationStatus.hasApplied ? "outline" : "default"}
+            >
+              {applicationStatus.hasApplied ? "Ver Mi Aplicación" : "Aplicar Ahora"}
+            </Button>
           )}
         </div>
       </div>
@@ -428,58 +412,30 @@ export default function JobDetailPage() {
         </CardContent>
       </Card>
 
-      {/* Quick Actions */}
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle>Acciones Rápidas</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {isCompanyUser ? (
-              <>
-                <Link href={`/jobs/${jobId}/applications`}>
-                  <Button className="w-full">
-                    <Users className="h-4 w-4 mr-2" />
-                    Ver Aplicaciones ({applications.length})
-                  </Button>
-                </Link>
-                
-                
-                <Link href={`/jobs/${jobId}/edit`}>
-                  <Button variant="outline" className="w-full">
-                    Editar Trabajo
-                  </Button>
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link href={`/jobs/${jobId}/apply`}>
-                  <Button className="w-full">
-                    {(job as any).isApplied ? "Ver Mi Aplicación" : "Aplicar Ahora"}
-                  </Button>
-                </Link>
-                
-                <Link href={`/jobs/${jobId}/apply`}>
-                  <Button variant="outline" className="w-full">
-                    <MessageCircle className="h-4 w-4 mr-2" />
-                    Contactar Empresa
-                  </Button>
-                </Link>
-                
-                <Button variant="outline" className="w-full" onClick={handleShare}>
-                  <Share2 className="h-4 w-4 mr-2" />
-                  Compartir Trabajo
+      {/* Quick Actions - Only for Company Users */}
+      {isCompanyUser && (
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Acciones Rápidas</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Link href={`/jobs/${jobId}/applications`}>
+                <Button className="w-full">
+                  <Users className="h-4 w-4 mr-2" />
+                  Ver Aplicaciones ({applications.length})
                 </Button>
-                
+              </Link>
+              
+              <Link href={`/jobs/${jobId}/edit`}>
                 <Button variant="outline" className="w-full">
-                  <Copy className="h-4 w-4 mr-2" />
-                  Guardar
+                  Editar Trabajo
                 </Button>
-              </>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Recent Applications Preview - Only for company users */}
       {isCompanyUser && applications.length > 0 && (
@@ -567,6 +523,18 @@ export default function JobDetailPage() {
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* Job Application Modal */}
+      {isYouth && !applicationStatus.hasApplied && (
+        <JobApplicationModal
+          isOpen={showApplicationModal}
+          onClose={() => setShowApplicationModal(false)}
+          jobId={jobId}
+          jobTitle={job.title}
+          companyName={job.company?.name || "Empresa"}
+          job={job}
+        />
       )}
     </div>
   );

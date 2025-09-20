@@ -73,8 +73,10 @@ export default function ResourcesPage() {
   // Show loading while session is loading
   if (sessionStatus === "loading") {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
+        <div className="flex items-center justify-center h-48 sm:h-64">
+          <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-primary"></div>
+        </div>
       </div>
     );
   }
@@ -198,30 +200,34 @@ export default function ResourcesPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
+        <div className="flex items-center justify-center h-48 sm:h-64">
+          <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-primary"></div>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <p className="text-red-600 mb-2">Error al cargar recursos</p>
-          <p className="text-sm text-muted-foreground">{error}</p>
+      <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
+        <div className="flex items-center justify-center h-48 sm:h-64">
+          <div className="text-center">
+            <p className="text-red-600 mb-2 text-sm sm:text-base">Error al cargar recursos</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">{error}</p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8 space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Recursos</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Recursos</h1>
+          <p className="text-sm sm:text-base text-muted-foreground mt-1">
             {isYouth 
               ? "Explora nuestra biblioteca de recursos educativos y materiales de apoyo"
               : "Gestiona tus recursos educativos y materiales de apoyo"
@@ -230,7 +236,7 @@ export default function ResourcesPage() {
         </div>
         {canManageResources && (
           <div className="flex items-center space-x-2">
-            <Button onClick={() => setShowForm(true)}>
+            <Button onClick={() => setShowForm(true)} className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               Crear Recurso
             </Button>
@@ -239,14 +245,14 @@ export default function ResourcesPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Recursos</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6">
+            <CardTitle className="text-xs sm:text-sm font-medium">Total Recursos</CardTitle>
+            <FileText className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{resources.length}</div>
+          <CardContent className="p-3 sm:p-6 pt-0">
+            <div className="text-lg sm:text-2xl font-bold">{resources.length}</div>
             <p className="text-xs text-muted-foreground">
               {isYouth ? "Disponibles" : "En tu biblioteca"}
             </p>
@@ -254,12 +260,12 @@ export default function ResourcesPage() {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Descargas Totales</CardTitle>
-            <Download className="h-4 w-4 text-blue-600" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6">
+            <CardTitle className="text-xs sm:text-sm font-medium">Descargas Totales</CardTitle>
+            <Download className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
+          <CardContent className="p-3 sm:p-6 pt-0">
+            <div className="text-lg sm:text-2xl font-bold">
               {resources.reduce((sum, r) => sum + r.downloads, 0)}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -269,12 +275,12 @@ export default function ResourcesPage() {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Categorías</CardTitle>
-            <Tag className="h-4 w-4 text-green-600" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6">
+            <CardTitle className="text-xs sm:text-sm font-medium">Categorías</CardTitle>
+            <Tag className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{categories.length - 1}</div>
+          <CardContent className="p-3 sm:p-6 pt-0">
+            <div className="text-lg sm:text-2xl font-bold">{categories.length - 1}</div>
             <p className="text-xs text-muted-foreground">
               Diferentes temas
             </p>
@@ -282,12 +288,12 @@ export default function ResourcesPage() {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Publicados</CardTitle>
-            <Eye className="h-4 w-4 text-purple-600" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6">
+            <CardTitle className="text-xs sm:text-sm font-medium">Publicados</CardTitle>
+            <Eye className="h-3 w-3 sm:h-4 sm:w-4 text-purple-600" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
+          <CardContent className="p-3 sm:p-6 pt-0">
+            <div className="text-lg sm:text-2xl font-bold">
               {resources.filter(r => r.status === "PUBLISHED").length}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -299,32 +305,32 @@ export default function ResourcesPage() {
 
       {/* Search and Filters */}
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>
+        <CardHeader className="p-3 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <CardTitle className="text-base sm:text-lg">
               {isYouth ? "Biblioteca de Recursos" : "Mis Recursos"}
             </CardTitle>
             <div className="flex items-center space-x-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <div className="relative w-full sm:w-auto">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-3 w-3 sm:h-4 sm:w-4" />
                 <Input
                   placeholder="Buscar recursos..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-64"
+                  className="pl-8 sm:pl-10 w-full sm:w-64 text-sm sm:text-base"
                 />
               </div>
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-3 sm:p-6 pt-0">
           <div className="space-y-4">
             {/* Filter Controls */}
-            <div className="flex flex-wrap gap-4">
-              <div className="flex items-center space-x-2">
-                <Label>Categoría:</Label>
+            <div className="flex flex-wrap gap-3 sm:gap-4">
+              <div className="flex items-center space-x-2 min-w-0 flex-1 sm:flex-none">
+                <Label className="text-xs sm:text-sm whitespace-nowrap">Categoría:</Label>
                 <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                  <SelectTrigger className="w-40">
+                  <SelectTrigger className="w-full sm:w-40 text-xs sm:text-sm">
                     <SelectValue placeholder="Todas" />
                   </SelectTrigger>
                   <SelectContent>
@@ -337,10 +343,10 @@ export default function ResourcesPage() {
                 </Select>
               </div>
 
-              <div className="flex items-center space-x-2">
-                <Label>Tipo:</Label>
+              <div className="flex items-center space-x-2 min-w-0 flex-1 sm:flex-none">
+                <Label className="text-xs sm:text-sm whitespace-nowrap">Tipo:</Label>
                 <Select value={selectedType} onValueChange={setSelectedType}>
-                  <SelectTrigger className="w-40">
+                  <SelectTrigger className="w-full sm:w-40 text-xs sm:text-sm">
                     <SelectValue placeholder="Todos" />
                   </SelectTrigger>
                   <SelectContent>
@@ -354,10 +360,10 @@ export default function ResourcesPage() {
               </div>
 
               {canManageResources && (
-                <div className="flex items-center space-x-2">
-                  <Label>Estado:</Label>
+                <div className="flex items-center space-x-2 min-w-0 flex-1 sm:flex-none">
+                  <Label className="text-xs sm:text-sm whitespace-nowrap">Estado:</Label>
                   <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                    <SelectTrigger className="w-40">
+                    <SelectTrigger className="w-full sm:w-40 text-xs sm:text-sm">
                       <SelectValue placeholder="Todos" />
                     </SelectTrigger>
                     <SelectContent>
@@ -374,68 +380,71 @@ export default function ResourcesPage() {
 
             {/* Resources Grid */}
             <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
-              <TabsList className="grid w-full grid-cols-5">
+              <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 h-auto">
                 {categories.slice(0, 5).map((category) => (
-                  <TabsTrigger key={category.id} value={category.id}>
-                    {category.name} ({category.count})
+                  <TabsTrigger key={category.id} value={category.id} className="text-xs sm:text-sm py-2 px-2">
+                    <span className="truncate">{category.name}</span>
+                    <span className="ml-1">({category.count})</span>
                   </TabsTrigger>
                 ))}
               </TabsList>
 
-            <TabsContent value={selectedCategory} className="mt-6">
+            <TabsContent value={selectedCategory} className="mt-4 sm:mt-6">
               {resources.length === 0 ? (
-                <div className="text-center py-12">
-                  <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-lg font-semibold mb-2">
+                <div className="text-center py-8 sm:py-12">
+                  <FileText className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-4 text-muted-foreground" />
+                  <h3 className="text-base sm:text-lg font-semibold mb-2">
                     {isYouth ? "No hay recursos disponibles" : "No tienes recursos creados"}
                   </h3>
-                  <p className="text-muted-foreground mb-4">
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-4">
                     {isYouth 
                       ? "Los recursos aparecerán aquí cuando estén disponibles"
                       : "Crea tu primer recurso para comenzar"
                     }
                   </p>
                   {canManageResources && (
-                    <Button onClick={() => setShowForm(true)}>
+                    <Button onClick={() => setShowForm(true)} size="sm">
                       <Plus className="h-4 w-4 mr-2" />
                       Crear Primer Recurso
                     </Button>
                   )}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   {resources.map((resource) => (
                     <Card key={resource.id} className="hover:shadow-md transition-shadow">
-                      <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center space-x-2">
+                      <CardHeader className="pb-3 p-4 sm:p-6">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-center space-x-2 min-w-0 flex-1">
                             {getTypeIcon(resource.type)}
-                            <Badge variant="outline">{resource.category}</Badge>
-                            {canManageResources && (
-                              <Badge className={getStatusColor(resource.status)}>
-                                {getStatusLabel(resource.status)}
-                              </Badge>
-                            )}
+                            <div className="flex flex-wrap gap-1">
+                              <Badge variant="outline" className="text-xs">{resource.category}</Badge>
+                              {canManageResources && (
+                                <Badge className={`text-xs ${getStatusColor(resource.status)}`}>
+                                  {getStatusLabel(resource.status)}
+                                </Badge>
+                              )}
+                            </div>
                           </div>
-                          <div className="flex items-center space-x-1 text-sm text-muted-foreground">
-                            <Download className="h-4 w-4" />
+                          <div className="flex items-center space-x-1 text-xs sm:text-sm text-muted-foreground flex-shrink-0">
+                            <Download className="h-3 w-3 sm:h-4 sm:w-4" />
                             <span>{resource.downloads}</span>
                           </div>
                         </div>
-                        <CardTitle className="text-lg">{resource.title}</CardTitle>
-                        <CardDescription className="line-clamp-2">
+                        <CardTitle className="text-base sm:text-lg mt-3">{resource.title}</CardTitle>
+                        <CardDescription className="line-clamp-2 text-xs sm:text-sm">
                           {resource.description}
                         </CardDescription>
                       </CardHeader>
-                      <CardContent className="pt-0">
+                      <CardContent className="pt-0 p-4 sm:p-6">
                         <div className="space-y-3">
-                          <div className="flex items-center justify-between text-sm text-muted-foreground">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs sm:text-sm text-muted-foreground">
                             <div className="flex items-center space-x-1">
-                              <User className="h-4 w-4" />
-                              <span>{resource.createdBy?.firstName} {resource.createdBy?.lastName}</span>
+                              <User className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                              <span className="truncate">{resource.createdBy?.firstName} {resource.createdBy?.lastName}</span>
                             </div>
                             <div className="flex items-center space-x-1">
-                              <Calendar className="h-4 w-4" />
+                              <Calendar className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
                               <span>{new Date(resource.publishedDate || resource.createdAt).toLocaleDateString()}</span>
                             </div>
                           </div>
@@ -455,20 +464,21 @@ export default function ResourcesPage() {
                             </div>
                           )}
                           
-                          <div className="flex items-center justify-between">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                             <div className="flex items-center space-x-2">
-                              <Star className="h-4 w-4 text-yellow-500" />
-                              <span className="text-sm text-muted-foreground">
+                              <Star className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-500 flex-shrink-0" />
+                              <span className="text-xs sm:text-sm text-muted-foreground">
                                 {resource.rating}/5
                               </span>
                             </div>
-                            <div className="flex space-x-2">
+                            <div className="flex flex-col sm:flex-row gap-2">
                               <Button 
                                 variant="outline" 
                                 size="sm"
                                 onClick={() => handleViewResource(resource)}
+                                className="text-xs sm:text-sm"
                               >
-                                <Eye className="h-4 w-4 mr-1" />
+                                <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                                 Ver
                               </Button>
                               <Button 
@@ -480,29 +490,32 @@ export default function ResourcesPage() {
                                     window.open(resource.externalUrl, '_blank');
                                   }
                                 }}
+                                className="text-xs sm:text-sm"
                               >
-                                <Download className="h-4 w-4 mr-1" />
+                                <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                                 Descargar
                               </Button>
                             </div>
                           </div>
 
                           {canManageResources && (
-                            <div className="flex justify-end space-x-2 pt-2 border-t">
+                            <div className="flex flex-wrap justify-end gap-2 pt-2 border-t">
                               <Button 
                                 variant="outline" 
                                 size="sm"
                                 onClick={() => handleEditResource(resource)}
+                                className="text-xs sm:text-sm"
                               >
-                                <Edit className="h-4 w-4 mr-1" />
+                                <Edit className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                                 Editar
                               </Button>
                               {resource.status === "DRAFT" && (
                                 <Button 
                                   size="sm"
                                   onClick={() => handlePublishResource(resource.id)}
+                                  className="text-xs sm:text-sm"
                                 >
-                                  <Eye className="h-4 w-4 mr-1" />
+                                  <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                                   Publicar
                                 </Button>
                               )}
@@ -511,8 +524,9 @@ export default function ResourcesPage() {
                                   variant="outline"
                                   size="sm"
                                   onClick={() => handleUnpublishResource(resource.id)}
+                                  className="text-xs sm:text-sm"
                                 >
-                                  <EyeOff className="h-4 w-4 mr-1" />
+                                  <EyeOff className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                                   Despublicar
                                 </Button>
                               )}
@@ -520,8 +534,9 @@ export default function ResourcesPage() {
                                 variant="destructive"
                                 size="sm"
                                 onClick={() => handleDeleteResource(resource.id)}
+                                className="text-xs sm:text-sm"
                               >
-                                <Trash2 className="h-4 w-4 mr-1" />
+                                <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                                 Eliminar
                               </Button>
                             </div>
@@ -540,8 +555,8 @@ export default function ResourcesPage() {
 
       {/* Resource Form Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="w-full max-w-4xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
             <ResourceForm
               initialData={editingResource}
               onSubmit={editingResource ? handleUpdateResource : handleCreateResource}

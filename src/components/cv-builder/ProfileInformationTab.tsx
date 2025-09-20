@@ -491,26 +491,27 @@ export function ProfileInformationTab() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-semibold">Información Personal</h2>
-          <p className="text-muted-foreground">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="text-center sm:text-left">
+          <h2 className="text-lg sm:text-xl font-semibold">Información Personal</h2>
+          <p className="text-muted-foreground text-sm sm:text-base">
             Completa tu información para crear un CV profesional
           </p>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:space-x-2">
           <Button
             variant="outline"
             onClick={() => setIsEditing(!isEditing)}
             disabled={isLoading}
+            className="w-full sm:w-auto"
           >
             <Edit className="h-4 w-4 mr-2" />
             {isEditing ? "Cancelar" : "Editar"}
           </Button>
           {isEditing && (
-            <Button onClick={handleSave} disabled={isLoading}>
+            <Button onClick={handleSave} disabled={isLoading} className="w-full sm:w-auto">
               <Save className="h-4 w-4 mr-2" />
               {isLoading ? "Guardando..." : "Guardar"}
             </Button>
@@ -521,105 +522,112 @@ export function ProfileInformationTab() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Personal Information */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <User className="h-5 w-5 mr-2" />
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="flex items-center text-base sm:text-lg">
+              <User className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
               Información Personal
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+          <CardContent className="space-y-4 p-4 sm:p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="firstName">Nombre</Label>
+                <Label htmlFor="firstName" className="text-sm sm:text-base">Nombre</Label>
                 <Input
                   id="firstName"
                   value={formData.firstName}
                   onChange={(e) => handleInputChange('firstName', e.target.value)}
                   disabled={!isEditing}
+                  className="mt-1"
                 />
               </div>
               <div>
-                <Label htmlFor="lastName">Apellido</Label>
+                <Label htmlFor="lastName" className="text-sm sm:text-base">Apellido</Label>
                 <Input
                   id="lastName"
                   value={formData.lastName}
                   onChange={(e) => handleInputChange('lastName', e.target.value)}
                   disabled={!isEditing}
+                  className="mt-1"
                 />
               </div>
             </div>
             
             <div>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-sm sm:text-base">Email</Label>
               <Input
                 id="email"
                 value={formData.email}
                 disabled
-                className="bg-muted"
+                className="bg-muted mt-1"
               />
             </div>
             
             <div>
-              <Label htmlFor="phone">Teléfono</Label>
+              <Label htmlFor="phone" className="text-sm sm:text-base">Teléfono</Label>
               <Input
                 id="phone"
                 value={formData.phone}
                 onChange={(e) => handleInputChange('phone', e.target.value)}
                 disabled={!isEditing}
+                className="mt-1"
               />
             </div>
             
             <div>
-              <Label htmlFor="address">Dirección</Label>
+              <Label htmlFor="address" className="text-sm sm:text-base">Dirección</Label>
               <Textarea
                 id="address"
                 value={formData.address}
                 onChange={(e) => handleInputChange('address', e.target.value)}
                 disabled={!isEditing}
                 rows={2}
+                className="mt-1"
               />
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="city">Ciudad</Label>
+                <Label htmlFor="city" className="text-sm sm:text-base">Ciudad</Label>
                 <Input
                   id="city"
                   value={formData.city}
                   onChange={(e) => handleInputChange('city', e.target.value)}
                   disabled={!isEditing}
+                  className="mt-1"
                 />
               </div>
               <div>
-                <Label htmlFor="state">Departamento</Label>
+                <Label htmlFor="state" className="text-sm sm:text-base">Departamento</Label>
                 <Input
                   id="state"
                   value={formData.state}
                   onChange={(e) => handleInputChange('state', e.target.value)}
                   disabled={!isEditing}
+                  className="mt-1"
                 />
               </div>
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="birthDate">Fecha de Nacimiento</Label>
+                <Label htmlFor="birthDate" className="text-sm sm:text-base">Fecha de Nacimiento</Label>
                 <Input
                   id="birthDate"
                   type="date"
                   value={formData.birthDate}
                   onChange={(e) => handleInputChange('birthDate', e.target.value)}
                   disabled={!isEditing}
+                  className="mt-1"
                 />
               </div>
               <div>
-                <Label htmlFor="gender">Género</Label>
+                <Label htmlFor="gender" className="text-sm sm:text-base">Género</Label>
                 <Select 
                   value={formData.gender} 
                   onValueChange={(value) => handleInputChange('gender', value)}
                   disabled={!isEditing}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="mt-1">
                     <SelectValue placeholder="Selecciona género" />
                   </SelectTrigger>
                   <SelectContent>
@@ -636,28 +644,29 @@ export function ProfileInformationTab() {
 
         {/* Professional Information */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Briefcase className="h-5 w-5 mr-2" />
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="flex items-center text-base sm:text-lg">
+              <Briefcase className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
               Información Profesional
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 p-4 sm:p-6">
             <div>
-              <Label htmlFor="jobTitle">Título Profesional</Label>
+              <Label htmlFor="jobTitle" className="text-sm sm:text-base">Título Profesional</Label>
               <Input
                 id="jobTitle"
                 value={formData.jobTitle}
                 onChange={(e) => handleInputChange('jobTitle', e.target.value)}
                 disabled={!isEditing}
                 placeholder="Ej: Desarrollador Frontend, Analista de Datos"
+                className="mt-1"
               />
             </div>
             
             <div>
-              <Label htmlFor="professionalSummary">Resumen Profesional</Label>
+              <Label htmlFor="professionalSummary" className="text-sm sm:text-base">Resumen Profesional</Label>
               <div className="mb-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm text-blue-800">
+                <p className="text-xs sm:text-sm text-blue-800">
                   💡 <strong>Consejo:</strong> Escribe 2-3 párrafos que resuman tu experiencia, habilidades clave y objetivos profesionales. 
                   Es lo primero que leen los empleadores. Sé específico y menciona logros cuantificables.
                 </p>
@@ -669,17 +678,18 @@ export function ProfileInformationTab() {
                 disabled={!isEditing}
                 rows={4}
                 placeholder="Ej: Estudiante de Ingeniería de Sistemas con experiencia en desarrollo web y pasión por la tecnología. He desarrollado aplicaciones web usando React y Node.js, y participé en competencias de programación. Busco oportunidades para aplicar mis conocimientos técnicos y contribuir al crecimiento de una empresa innovadora..."
+                className="mt-1"
               />
             </div>
             
             <div>
-              <Label htmlFor="experienceLevel">Nivel de Experiencia</Label>
+              <Label htmlFor="experienceLevel" className="text-sm sm:text-base">Nivel de Experiencia</Label>
               <Select 
                 value={formData.experienceLevel} 
                 onValueChange={(value) => handleInputChange('experienceLevel', value)}
                 disabled={!isEditing}
               >
-                <SelectTrigger>
+                <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Selecciona nivel de experiencia" />
                 </SelectTrigger>
                 <SelectContent>
@@ -692,24 +702,26 @@ export function ProfileInformationTab() {
             </div>
             
             <div>
-              <Label htmlFor="targetPosition">Posición Objetivo</Label>
+              <Label htmlFor="targetPosition" className="text-sm sm:text-base">Posición Objetivo</Label>
               <Input
                 id="targetPosition"
                 value={formData.targetPosition}
                 onChange={(e) => handleInputChange('targetPosition', e.target.value)}
                 disabled={!isEditing}
                 placeholder="Ej: Desarrollador Full Stack"
+                className="mt-1"
               />
             </div>
             
             <div>
-              <Label htmlFor="targetCompany">Empresa Objetivo</Label>
+              <Label htmlFor="targetCompany" className="text-sm sm:text-base">Empresa Objetivo</Label>
               <Input
                 id="targetCompany"
                 value={formData.targetCompany}
                 onChange={(e) => handleInputChange('targetCompany', e.target.value)}
                 disabled={!isEditing}
                 placeholder="Ej: Empresa de tecnología"
+                className="mt-1"
               />
             </div>
           </CardContent>
@@ -759,7 +771,7 @@ export function ProfileInformationTab() {
             </div>
           </div>
           
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
               <Label htmlFor="currentDegree">Título/Carrera</Label>
               <Input
@@ -780,19 +792,6 @@ export function ProfileInformationTab() {
                 onChange={(e) => handleInputChange('graduationYear', e.target.value)}
                 disabled={!isEditing}
                 placeholder="2024"
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="gpa">Promedio (GPA)</Label>
-              <Input
-                id="gpa"
-                type="number"
-                step="0.01"
-                value={formData.gpa}
-                onChange={(e) => handleInputChange('gpa', e.target.value)}
-                disabled={!isEditing}
-                placeholder="3.5"
               />
             </div>
           </div>
@@ -1475,35 +1474,6 @@ export function ProfileInformationTab() {
         </Card>
       )}
 
-      {/* Profile Statistics Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <User className="h-5 w-5 mr-2" />
-            Estadísticas del Perfil
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="text-center p-3 bg-muted/50 rounded-lg">
-              <div className="text-2xl font-bold text-primary">{formData.profileCompletion}%</div>
-              <div className="text-sm text-muted-foreground">Completitud del Perfil</div>
-            </div>
-            <div className="text-center p-3 bg-muted/50 rounded-lg">
-              <div className="text-2xl font-bold text-primary">{formData.certificates.length}</div>
-              <div className="text-sm text-muted-foreground">Certificados</div>
-            </div>
-            <div className="text-center p-3 bg-muted/50 rounded-lg">
-              <div className="text-2xl font-bold text-primary">{formData.completedCourses.length}</div>
-              <div className="text-sm text-muted-foreground">Cursos Completados</div>
-            </div>
-            <div className="text-center p-3 bg-muted/50 rounded-lg">
-              <div className="text-2xl font-bold text-primary">{formData.entrepreneurships.length}</div>
-              <div className="text-sm text-muted-foreground">Emprendimientos</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

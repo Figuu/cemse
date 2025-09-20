@@ -58,6 +58,28 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    // Translation functions
+    const translateContractType = (type: string) => {
+      const translations = {
+        "FULL_TIME": "tiempo-completo",
+        "PART_TIME": "medio-tiempo", 
+        "INTERNSHIP": "pasantía",
+        "VOLUNTEER": "voluntario",
+        "FREELANCE": "contrato"
+      };
+      return translations[type as keyof typeof translations] || "tiempo-completo";
+    };
+
+    const translateExperienceLevel = (level: string) => {
+      const translations = {
+        "NO_EXPERIENCE": "Sin experiencia",
+        "ENTRY_LEVEL": "Nivel inicial",
+        "MID_LEVEL": "Nivel intermedio", 
+        "SENIOR_LEVEL": "Nivel senior"
+      };
+      return translations[level as keyof typeof translations] || "No especificado";
+    };
+
     // Transform data for frontend with enhanced tracking
     const transformedApplications = await Promise.all(applications.map(async (app) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -91,9 +113,9 @@ export async function GET(request: NextRequest) {
           max: Number(jobOffer.salaryMax),
           currency: jobOffer.salaryCurrency || "BOB",
         } : undefined,
-        jobType: jobOffer?.contractType,
+        jobType: translateContractType(jobOffer?.contractType || "FULL_TIME"),
         remote: jobOffer?.workModality === "REMOTE",
-        experience: jobOffer?.experienceLevel,
+        experience: translateExperienceLevel(jobOffer?.experienceLevel || "ENTRY_LEVEL"),
         skills: jobOffer?.skillsRequired || [],
         notes: app.notes,
         nextSteps: getNextSteps(app.status, app.decisionReason || undefined),

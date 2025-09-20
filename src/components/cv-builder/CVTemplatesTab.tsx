@@ -363,17 +363,17 @@ export function CVTemplatesTab() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div>
-        <h2 className="text-xl font-semibold">Plantillas de CV</h2>
-        <p className="text-muted-foreground">
+      <div className="text-center sm:text-left">
+        <h2 className="text-lg sm:text-xl font-semibold">Plantillas de CV</h2>
+        <p className="text-muted-foreground text-sm sm:text-base">
           Selecciona una plantilla y genera tu CV profesional en PDF
         </p>
       </div>
 
       {/* Templates Grid */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
         {cvTemplates.map((template) => (
           <Card 
             key={template.id} 
@@ -382,31 +382,31 @@ export function CVTemplatesTab() {
             }`}
             onClick={() => setSelectedTemplate(template.id)}
           >
-            <CardHeader>
-              <div className="flex items-center justify-between">
+            <CardHeader className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <div className="flex items-center space-x-2">
                   {getTemplateIcon(template.style)}
-                  <CardTitle className="text-lg">{template.name}</CardTitle>
+                  <CardTitle className="text-base sm:text-lg">{template.name}</CardTitle>
                 </div>
-                <Badge variant="secondary">{template.style}</Badge>
+                <Badge variant="secondary" className="w-fit">{template.style}</Badge>
               </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">
+            <CardContent className="space-y-4 p-4 sm:p-6">
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 {template.description}
               </p>
               
-              <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center justify-between text-xs sm:text-sm">
                 <span className="text-muted-foreground">Color:</span>
-                <Badge variant="outline">{template.color}</Badge>
+                <Badge variant="outline" className="text-xs">{template.color}</Badge>
               </div>
               
-              <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center justify-between text-xs sm:text-sm">
                 <span className="text-muted-foreground">Vista previa:</span>
-                <span className="text-sm">{template.preview}</span>
+                <span className="text-xs sm:text-sm">{template.preview}</span>
               </div>
 
-              <div className="flex space-x-2 pt-2">
+              <div className="flex flex-col sm:flex-row gap-2 pt-2">
                 <Button
                   size="sm"
                   variant="outline"
@@ -414,10 +414,11 @@ export function CVTemplatesTab() {
                     e.stopPropagation();
                     handlePreview(template.id);
                   }}
-                  className="flex-1"
+                  className="w-full sm:flex-1"
                 >
                   <Eye className="h-4 w-4 mr-2" />
-                  Vista Previa
+                  <span className="hidden sm:inline">Vista Previa</span>
+                  <span className="sm:hidden">Vista</span>
                 </Button>
                 <Button
                   size="sm"
@@ -426,7 +427,7 @@ export function CVTemplatesTab() {
                     handleGeneratePDF(template.id);
                   }}
                   disabled={isGenerating}
-                  className="flex-1"
+                  className="w-full sm:flex-1"
                 >
                   <Download className="h-4 w-4 mr-2" />
                   {isGenerating ? "Generando..." : "Descargar PDF"}

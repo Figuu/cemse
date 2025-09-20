@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -50,14 +51,40 @@ export function YouthApplicationForm({
   onClose,
   isLoading = false,
 }: YouthApplicationFormProps) {
+  const { data: session } = useSession();
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [coverLetterFile, setCoverLetterFile] = useState<File | null>(null);
   const [cvUploadUrl, setCvUploadUrl] = useState<string | null>(null);
   const [coverLetterUploadUrl, setCoverLetterUploadUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
+  // Get user profile data for auto-population
+  const userCvUrl = session?.user?.profile?.cvUrl;
+  const userCoverLetterUrl = session?.user?.profile?.coverLetterUrl;
+  
+  // Debug logging
+  console.log("YouthApplicationForm - Session data:", session);
+  console.log("YouthApplicationForm - User profile:", session?.user?.profile);
+  console.log("YouthApplicationForm - User CV URL:", userCvUrl);
+  console.log("YouthApplicationForm - User Cover Letter URL:", userCoverLetterUrl);
+
   const { uploadFile: uploadCvFile, isUploading: isUploadingCv, error: cvUploadError } = useFileUpload();
   const { uploadFile: uploadCoverLetterFile, isUploading: isUploadingCoverLetter, error: coverLetterUploadError } = useFileUpload();
+
+  const defaultValues = {
+    title: initialData?.title || "",
+    description: initialData?.description || "",
+    cvFile: initialData?.cvFile || (mode === "create" && userCvUrl ? "CV del perfil" : ""),
+    coverLetterFile: initialData?.coverLetterFile || (mode === "create" && userCoverLetterUrl ? "Carta del perfil" : ""),
+    cvUrl: initialData?.cvUrl || (mode === "create" && userCvUrl ? userCvUrl : ""),
+    coverLetterUrl: initialData?.coverLetterUrl || (mode === "create" && userCoverLetterUrl ? userCoverLetterUrl : ""),
+    isPublic: initialData?.isPublic ?? true,
+  };
+  
+  console.log("YouthApplicationForm - Default values:", defaultValues);
+  console.log("YouthApplicationForm - Mode:", mode);
+  console.log("YouthApplicationForm - User CV URL exists:", !!userCvUrl);
+  console.log("YouthApplicationForm - User Cover Letter URL exists:", !!userCoverLetterUrl);
 
   const {
     register,
@@ -67,15 +94,7 @@ export function YouthApplicationForm({
     setValue,
   } = useForm<YouthApplicationFormData>({
     resolver: zodResolver(youthApplicationFormSchema),
-    defaultValues: {
-      title: initialData?.title || "",
-      description: initialData?.description || "",
-      cvFile: initialData?.cvFile || "",
-      coverLetterFile: initialData?.coverLetterFile || "",
-      cvUrl: initialData?.cvUrl || "",
-      coverLetterUrl: initialData?.coverLetterUrl || "",
-      isPublic: initialData?.isPublic ?? true,
-    },
+    defaultValues,
   });
 
   const watchedValues = watch();
@@ -126,10 +145,15 @@ export function YouthApplicationForm({
         const uploadUrl = await uploadCvFile(cvFile);
         setCvUploadUrl(uploadUrl);
         data.cvUrl = uploadUrl;
+        data.cvFile = cvFile.name;
       } catch (error) {
         console.error("Error uploading CV file during submit:", error);
         return;
       }
+    } else if (!cvFile && !data.cvUrl && userCvUrl && mode === "create") {
+      // Use profile CV if no file uploaded and no URL provided
+      data.cvUrl = userCvUrl;
+      data.cvFile = "CV del perfil";
     }
     
     if (coverLetterFile && !coverLetterUploadUrl) {
@@ -138,10 +162,15 @@ export function YouthApplicationForm({
         const uploadUrl = await uploadCoverLetterFile(coverLetterFile);
         setCoverLetterUploadUrl(uploadUrl);
         data.coverLetterUrl = uploadUrl;
+        data.coverLetterFile = coverLetterFile.name;
       } catch (error) {
         console.error("Error uploading cover letter file during submit:", error);
         return;
       }
+    } else if (!coverLetterFile && !data.coverLetterUrl && userCoverLetterUrl && mode === "create") {
+      // Use profile cover letter if no file uploaded and no URL provided
+      data.coverLetterUrl = userCoverLetterUrl;
+      data.coverLetterFile = "Carta del perfil";
     }
     
     setIsUploading(false);
@@ -201,6 +230,23 @@ export function YouthApplicationForm({
               
               <div className="space-y-2">
                 <Label htmlFor="cvFile">CV/Resume</Label>
+                
+                {mode === "create" && userCvUrl && !cvFile && (
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-md mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 w-4 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span className="text-white text-xs">✓</span>
+                      </div>
+                      <span className="text-sm font-medium text-green-800">
+                        Usando tu CV del perfil
+                      </span>
+                    </div>
+                    <p className="text-xs text-green-700 mt-1">
+                      Se utilizará automáticamente tu CV guardado en el perfil. Si quieres usar un CV diferente, puedes subir uno nuevo.
+                    </p>
+                  </div>
+                )}
+                
                 <div className="flex items-center gap-2">
                   <Input
                     id="cvFile"
@@ -247,6 +293,23 @@ export function YouthApplicationForm({
 
               <div className="space-y-2">
                 <Label htmlFor="coverLetterFile">Carta de Presentación</Label>
+                
+                {mode === "create" && userCoverLetterUrl && !coverLetterFile && (
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-md mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 w-4 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span className="text-white text-xs">✓</span>
+                      </div>
+                      <span className="text-sm font-medium text-blue-800">
+                        Usando tu carta de presentación del perfil
+                      </span>
+                    </div>
+                    <p className="text-xs text-blue-700 mt-1">
+                      Se utilizará automáticamente tu carta de presentación guardada en el perfil. Si quieres usar una carta diferente, puedes subir una nueva.
+                    </p>
+                  </div>
+                )}
+                
                 <div className="flex items-center gap-2">
                   <Input
                     id="coverLetterFile"

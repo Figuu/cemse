@@ -33,9 +33,9 @@ export const CourseCreationModal = ({ isOpen, onClose, onSuccess }: CourseCreati
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[95vw] max-w-4xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto mx-2 sm:mx-4">
         <DialogHeader>
-          <DialogTitle>Crear Nuevo Curso</DialogTitle>
+          <DialogTitle className="text-base sm:text-lg">Crear Nuevo Curso</DialogTitle>
         </DialogHeader>
         <CourseForm
           onSubmit={handleSubmit}

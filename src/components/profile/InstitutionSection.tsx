@@ -162,14 +162,14 @@ export function InstitutionSection() {
   if (!institution) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <School className="h-5 w-5 mr-2" />
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="flex items-center text-base sm:text-lg">
+            <School className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
             Información de la Institución
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
+        <CardContent className="p-4 sm:p-6">
+          <p className="text-muted-foreground text-sm sm:text-base">
             No se encontró información de institución asociada a tu cuenta.
           </p>
         </CardContent>
@@ -179,23 +179,24 @@ export function InstitutionSection() {
 
   return (
     <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center">
-            <School className="h-5 w-5 mr-2" />
+      <CardHeader className="p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <CardTitle className="flex items-center text-base sm:text-lg">
+            <School className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
             Información de la Institución
           </CardTitle>
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:space-x-2">
             <Button
               variant="outline"
               onClick={handleEditToggle}
               disabled={isLoading}
+              className="w-full sm:w-auto"
             >
               <Edit className="h-4 w-4 mr-2" />
               {isEditing ? "Cancelar" : "Editar"}
             </Button>
             {isEditing && (
-              <Button onClick={handleSave} disabled={isLoading}>
+              <Button onClick={handleSave} disabled={isLoading} className="w-full sm:w-auto">
                 <Save className="h-4 w-4 mr-2" />
                 {isLoading ? "Guardando..." : "Guardar"}
               </Button>
