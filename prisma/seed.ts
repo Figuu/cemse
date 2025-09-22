@@ -30,6 +30,7 @@ async function main() {
     },
   });
 
+  //seed?
   console.log('✅ Usuario administrador creado:', admin.email);
 
   // Create sample institution
