@@ -330,9 +330,9 @@ User=$USER
 Group=$USER
 WorkingDirectory=/opt/cemse
 Environment=NODE_ENV=production
-ExecStart=/usr/local/bin/docker-compose -f docker-compose.prod.yml up -d
-ExecStop=/usr/local/bin/docker-compose -f docker-compose.prod.yml down
-ExecReload=/usr/local/bin/docker-compose -f docker-compose.prod.yml restart
+ExecStart=/usr/local/bin/docker-compose up -d
+ExecStop=/usr/local/bin/docker-compose down
+ExecReload=/usr/local/bin/docker-compose restart
 TimeoutStartSec=300
 TimeoutStopSec=120
 Restart=always
@@ -586,8 +586,8 @@ pnpm build
 
 # Restart services
 log "🔄 Restarting services..."
-docker-compose -f docker-compose.prod.yml down
-docker-compose -f docker-compose.prod.yml up -d --build
+docker-compose down
+docker-compose up -d --build
 
 log "✅ Deployment completed successfully!"
 EOF
@@ -613,7 +613,7 @@ mkdir -p $BACKUP_DIR
 
 # Backup database
 log "🗄️ Backing up database..."
-docker-compose -f docker-compose.prod.yml exec -T db pg_dump -U postgres cemse_prod > $BACKUP_DIR/db_backup_$DATE.sql
+docker-compose exec -T db pg_dump -U postgres cemse_prod > $BACKUP_DIR/db_backup_$DATE.sql
 
 # Backup uploads
 log "📁 Backing up uploads..."

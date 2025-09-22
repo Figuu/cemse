@@ -1,26 +1,29 @@
-# CEMSE Application Deployment Guide
+# CEMSE Deployment Guide
 
-## 🚀 Ubuntu Server 24.04 LTS Deployment
+## Quick Start for AWS EC2
 
-This guide provides step-by-step instructions for deploying the CEMSE application on Ubuntu Server 24.04 LTS.
+### ✅ Issues Fixed
 
-## 📋 Prerequisites
+- **Container shutdown**: Added proper app service to docker-compose.yml with health checks
+- **Missing cemse service**: App now runs in Docker container with restart policies
+- **Shell script chaos**: Consolidated 10+ scripts into one `manage.sh` script
+- **Deployment complexity**: Simplified to 3 essential scripts
 
-- Ubuntu Server 24.04 LTS instance
-- Root or sudo access
-- Domain name (optional, for production)
-- Minimum 2GB RAM, 20GB disk space
+### 🛠️ Essential Scripts (Keep Only These)
 
-## 🛠️ Deployment Files
+1. **`setup-ubuntu.sh`** - Complete Ubuntu 24.04 LTS setup
+2. **`setup.sh`** - Complete Amazon Linux 2023 setup
+3. **`manage.sh`** - ⭐ **NEW** - Unified management script
 
-### Core Scripts
-
-1. **`setup-ubuntu.sh`** - Complete server setup and application installation
-2. **`deploy.sh`** - Application deployment and updates
-3. **`configure-domain.sh`** - Domain configuration management
-4. **`setup-ssl.sh`** - SSL certificate setup with Let's Encrypt
-5. **`backup.sh`** - Backup creation and management
-6. **`health-check.sh`** - Comprehensive health monitoring
+### ❌ Deleted/Deprecated Scripts
+- `backup.sh` → Use `./manage.sh backup`
+- `configure-domain.sh` → Use `./manage.sh domain <name>`
+- `deploy.sh` → Use `./manage.sh deploy`
+- `fix-nginx.sh` → Issues fixed in setup scripts
+- `fix-setup.sh` → Issues resolved
+- `health-check.sh` → Use `./manage.sh health`
+- `setup-ssl.sh` → Use `./manage.sh ssl`
+- `setup-nginx-production.sh` → Integrated in setup
 
 ## 🚀 Quick Start
 
