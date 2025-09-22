@@ -81,7 +81,6 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   table: {
-    display: 'table',
     width: 'auto',
     borderStyle: 'solid',
     borderWidth: 1,
@@ -322,11 +321,11 @@ const BusinessPlanPDF: React.FC<BusinessPlanPDFProps> = ({ businessPlan }) => {
           </View>
         )}
 
-        {/* Risk Assessment */}
-        {businessPlan.riskAssessment && (
+        {/* Risk Analysis */}
+        {businessPlan.riskAnalysis && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Evaluación de Riesgos</Text>
-            <Text style={styles.text}>{businessPlan.riskAssessment}</Text>
+            <Text style={styles.sectionTitle}>Análisis de Riesgos</Text>
+            <Text style={styles.text}>{businessPlan.riskAnalysis}</Text>
           </View>
         )}
 

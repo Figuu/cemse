@@ -22,7 +22,6 @@ export async function GET(
             avatarUrl: true,
           },
         },
-        businessPlan: true,
       },
     });
 

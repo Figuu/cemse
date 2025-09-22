@@ -36,7 +36,6 @@ const { GET: getBusinessPlan, PUT: updateBusinessPlan, DELETE: deleteBusinessPla
 
 describe('/api/business-plans', () => {
   const mockUserId = 'user-123';
-  const mockEntrepreneurshipId = 'entrepreneurship-123';
   const mockBusinessPlanId = 'business-plan-123';
 
   const mockSession = {
@@ -50,7 +49,7 @@ describe('/api/business-plans', () => {
     title: 'Test Business Plan',
     description: 'A test business plan',
     industry: 'Technology',
-    stage: 'startup',
+    stage: 'startup' as const,
     fundingGoal: 100000,
     currentFunding: 25000,
     teamSize: 5,
@@ -76,7 +75,40 @@ describe('/api/business-plans', () => {
     appendices: 'Appendices',
     team: [],
     milestones: [],
-    risks: []
+    risks: [],
+    // Required financial projections
+    financialProjections: {
+      startupCosts: 75000,
+      monthlyRevenue: 15000,
+      monthlyExpenses: 8000,
+      breakEvenMonth: 8,
+      revenueStreams: ['subscription', 'support', 'custom'],
+      initialInvestment: 75000,
+      monthlyOperatingCosts: 8000,
+      revenueProjection: 15000,
+      breakEvenPoint: 8,
+      estimatedROI: 200
+    },
+    // Required triple impact assessment
+    tripleImpactAssessment: {
+      problemSolved: 'Reduces business inefficiencies',
+      beneficiaries: 'Small business owners',
+      resourcesUsed: 'Minimal environmental impact',
+      communityInvolvement: 'Local partnerships',
+      longTermImpact: 'Economic growth'
+    },
+    // Required business model canvas
+    businessModelCanvas: {
+      keyPartners: 'Cloud providers',
+      keyActivities: 'Software development',
+      valuePropositions: 'Scalable software',
+      customerRelationships: 'Self-service platform',
+      customerSegments: 'Small businesses',
+      keyResources: 'Development team',
+      channels: 'Website, app stores',
+      costStructure: 'Development salaries',
+      revenueStreams: 'Subscription fees'
+    }
   };
 
   beforeEach(() => {
@@ -142,10 +174,6 @@ describe('/api/business-plans', () => {
   describe('POST /api/business-plans', () => {
     it('should create a business plan successfully', async () => {
       mockGetServerSession.mockResolvedValue(mockSession);
-      mockPrisma.entrepreneurship.findFirst.mockResolvedValue({
-        id: mockEntrepreneurshipId,
-        ownerId: mockUserId
-      } as any);
       mockBusinessPlanService.createBusinessPlan.mockResolvedValue({
         id: mockBusinessPlanId,
         userId: mockUserId,
@@ -167,13 +195,12 @@ describe('/api/business-plans', () => {
       expect(data.businessPlan.id).toBe(mockBusinessPlanId);
       expect(mockBusinessPlanService.createBusinessPlan).toHaveBeenCalledWith({
         ...mockBusinessPlanData,
-        userId: mockEntrepreneurshipId
+        userId: mockUserId
       });
     });
 
-    it('should return 404 if entrepreneurship not found', async () => {
-      mockGetServerSession.mockResolvedValue(mockSession);
-      mockPrisma.entrepreneurship.findFirst.mockResolvedValue(null);
+    it('should return 401 for unauthenticated user', async () => {
+      mockGetServerSession.mockResolvedValue(null);
 
       const request = new NextRequest('http://localhost:3000/api/business-plans', {
         method: 'POST',
@@ -185,19 +212,15 @@ describe('/api/business-plans', () => {
 
       const response = await createBusinessPlan(request);
 
-      expect(response.status).toBe(404);
+      expect(response.status).toBe(401);
       const data = await response.json();
-      expect(data.error).toBe('Entrepreneurship profile not found');
+      expect(data.error).toBe('Unauthorized');
     });
 
     it('should return 409 for duplicate business plan', async () => {
       mockGetServerSession.mockResolvedValue(mockSession);
-      mockPrisma.entrepreneurship.findFirst.mockResolvedValue({
-        id: mockEntrepreneurshipId,
-        ownerId: mockUserId
-      } as any);
       mockBusinessPlanService.createBusinessPlan.mockRejectedValue(
-        new Error('Business plan already exists for this entrepreneurship')
+        new Error('Business plan already exists for this user')
       );
 
       const request = new NextRequest('http://localhost:3000/api/business-plans', {
@@ -212,7 +235,26 @@ describe('/api/business-plans', () => {
 
       expect(response.status).toBe(409);
       const data = await response.json();
-      expect(data.error).toBe('Business plan already exists for this entrepreneurship');
+      expect(data.error).toBe('Business plan already exists for this user');
+    });
+
+    it('should return 500 for service errors', async () => {
+      mockGetServerSession.mockResolvedValue(mockSession);
+      mockBusinessPlanService.createBusinessPlan.mockRejectedValue(new Error('Service error'));
+
+      const request = new NextRequest('http://localhost:3000/api/business-plans', {
+        method: 'POST',
+        body: JSON.stringify(mockBusinessPlanData),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const response = await createBusinessPlan(request);
+
+      expect(response.status).toBe(500);
+      const data = await response.json();
+      expect(data.error).toBe('Failed to create business plan');
     });
   });
 });
@@ -234,7 +276,7 @@ describe('/api/business-plans/[id]', () => {
     title: 'Test Business Plan',
     description: 'A test business plan',
     industry: 'Technology',
-    stage: 'startup',
+    stage: 'startup' as const,
     fundingGoal: 100000,
     currentFunding: 25000,
     teamSize: 5,
@@ -260,7 +302,40 @@ describe('/api/business-plans/[id]', () => {
     appendices: 'Appendices',
     team: [],
     milestones: [],
-    risks: []
+    risks: [],
+    // Required financial projections
+    financialProjections: {
+      startupCosts: 75000,
+      monthlyRevenue: 15000,
+      monthlyExpenses: 8000,
+      breakEvenMonth: 8,
+      revenueStreams: ['subscription', 'support', 'custom'],
+      initialInvestment: 75000,
+      monthlyOperatingCosts: 8000,
+      revenueProjection: 15000,
+      breakEvenPoint: 8,
+      estimatedROI: 200
+    },
+    // Required triple impact assessment
+    tripleImpactAssessment: {
+      problemSolved: 'Reduces business inefficiencies',
+      beneficiaries: 'Small business owners',
+      resourcesUsed: 'Minimal environmental impact',
+      communityInvolvement: 'Local partnerships',
+      longTermImpact: 'Economic growth'
+    },
+    // Required business model canvas
+    businessModelCanvas: {
+      keyPartners: 'Cloud providers',
+      keyActivities: 'Software development',
+      valuePropositions: 'Scalable software',
+      customerRelationships: 'Self-service platform',
+      customerSegments: 'Small businesses',
+      keyResources: 'Development team',
+      channels: 'Website, app stores',
+      costStructure: 'Development salaries',
+      revenueStreams: 'Subscription fees'
+    }
   };
 
   beforeEach(() => {

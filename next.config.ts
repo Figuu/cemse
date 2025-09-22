@@ -41,9 +41,13 @@ const nextConfig: NextConfig = {
     };
 
     // Add canvas support for react-pdf
-    config.externals = config.externals || [];
     if (isServer) {
-      config.externals.push('canvas');
+      config.externals = config.externals || [];
+      if (Array.isArray(config.externals)) {
+        config.externals.push('canvas');
+      } else {
+        config.externals = [config.externals, 'canvas'];
+      }
     }
 
     return config;

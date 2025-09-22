@@ -55,7 +55,12 @@ const testBusinessPlanData = {
     monthlyRevenue: 15000,
     monthlyExpenses: 8000,
     breakEvenMonth: 8,
-    revenueStreams: ['subscription', 'support', 'custom']
+    revenueStreams: ['subscription', 'support', 'custom'],
+    initialInvestment: 75000,
+    monthlyOperatingCosts: 8000,
+    revenueProjection: 15000,
+    breakEvenPoint: 8,
+    estimatedROI: 200
   },
   executiveSummary: 'Our company provides innovative SaaS solutions that help businesses scale efficiently while reducing costs and environmental impact.',
   businessDescription: 'We are a technology company focused on creating scalable business software solutions.',

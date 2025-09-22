@@ -13,14 +13,13 @@ jest.mock('@/lib/prisma', () => ({
       delete: jest.fn(),
       count: jest.fn(),
     },
-    entrepreneurship: {
+    user: {
       findUnique: jest.fn(),
-      findFirst: jest.fn(),
     },
   },
 }));
 
-const mockPrisma = prisma as jest.Mocked<typeof prisma>;
+const mockPrisma = prisma as any;
 
 describe('BusinessPlanService', () => {
   const mockUserId = 'user-123';
@@ -28,7 +27,7 @@ describe('BusinessPlanService', () => {
   const mockBusinessPlanId = 'business-plan-123';
 
   const mockBusinessPlanData: BusinessPlanData = {
-    userId: mockEntrepreneurshipId,
+    userId: mockUserId,
     title: 'Test Business Plan',
     description: 'A test business plan for testing purposes',
     industry: 'Technology',
@@ -71,7 +70,12 @@ describe('BusinessPlanService', () => {
       monthlyRevenue: 10000,
       monthlyExpenses: 5000,
       breakEvenMonth: 6,
-      revenueStreams: ['subscription']
+      revenueStreams: ['subscription'],
+      initialInvestment: 50000,
+      monthlyOperatingCosts: 5000,
+      revenueProjection: 10000,
+      breakEvenPoint: 6,
+      estimatedROI: 200
     },
     executiveSummary: 'Executive summary',
     businessDescription: 'Business description',
@@ -94,7 +98,7 @@ describe('BusinessPlanService', () => {
     it('should create a business plan successfully', async () => {
       const mockCreatedPlan = {
         id: mockBusinessPlanId,
-        entrepreneurshipId: mockEntrepreneurshipId,
+        userId: mockUserId,
         content: mockBusinessPlanData,
         status: 'draft',
         tripleImpactAssessment: mockBusinessPlanData.tripleImpactAssessment,
@@ -102,43 +106,31 @@ describe('BusinessPlanService', () => {
         financialProjections: mockBusinessPlanData.financialProjections,
         completionPercentage: 85,
         createdAt: new Date(),
-        updatedAt: new Date(),
-        entrepreneurship: {
-          id: mockEntrepreneurshipId,
-          ownerId: mockUserId
-        }
+        updatedAt: new Date()
       };
 
-      mockPrisma.entrepreneurship.findUnique.mockResolvedValue({
-        id: mockEntrepreneurshipId,
-        ownerId: mockUserId
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: mockUserId,
+        email: 'test@example.com'
       } as any);
 
       mockPrisma.businessPlan.create.mockResolvedValue(mockCreatedPlan as any);
 
       const result = await BusinessPlanService.createBusinessPlan(mockBusinessPlanData);
 
-      expect(mockPrisma.entrepreneurship.findUnique).toHaveBeenCalledWith({
-        where: { id: mockEntrepreneurshipId }
+      expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
+        where: { id: mockUserId }
       });
 
       expect(mockPrisma.businessPlan.create).toHaveBeenCalledWith({
         data: {
-          entrepreneurshipId: mockEntrepreneurshipId,
+          userId: mockUserId,
           content: expect.any(Object),
           status: 'draft',
           tripleImpactAssessment: mockBusinessPlanData.tripleImpactAssessment,
           businessModelCanvas: mockBusinessPlanData.businessModelCanvas,
           financialProjections: mockBusinessPlanData.financialProjections,
           completionPercentage: expect.any(Number)
-        },
-        include: {
-          entrepreneurship: {
-            select: {
-              id: true,
-              ownerId: true
-            }
-          }
         }
       });
 
@@ -149,11 +141,11 @@ describe('BusinessPlanService', () => {
       }));
     });
 
-    it('should throw error if entrepreneurship not found', async () => {
-      mockPrisma.entrepreneurship.findUnique.mockResolvedValue(null);
+    it('should throw error if user not found', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(null);
 
       await expect(BusinessPlanService.createBusinessPlan(mockBusinessPlanData))
-        .rejects.toThrow('Entrepreneurship profile not found');
+        .rejects.toThrow('User not found');
     });
 
     it('should throw error for invalid data', async () => {
@@ -172,15 +164,15 @@ describe('BusinessPlanService', () => {
         }
       );
 
-      mockPrisma.entrepreneurship.findUnique.mockResolvedValue({
-        id: mockEntrepreneurshipId,
-        ownerId: mockUserId
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: mockUserId,
+        email: 'test@example.com'
       } as any);
 
       mockPrisma.businessPlan.create.mockRejectedValue(prismaError);
 
       await expect(BusinessPlanService.createBusinessPlan(mockBusinessPlanData))
-        .rejects.toThrow('Business plan already exists for this entrepreneurship');
+        .rejects.toThrow('Business plan already exists for this user');
     });
   });
 
@@ -188,7 +180,7 @@ describe('BusinessPlanService', () => {
     it('should get a business plan successfully', async () => {
       const mockPlan = {
         id: mockBusinessPlanId,
-        entrepreneurshipId: mockEntrepreneurshipId,
+        userId: mockUserId,
         content: mockBusinessPlanData,
         status: 'draft',
         tripleImpactAssessment: mockBusinessPlanData.tripleImpactAssessment,
@@ -196,11 +188,7 @@ describe('BusinessPlanService', () => {
         financialProjections: mockBusinessPlanData.financialProjections,
         completionPercentage: 85,
         createdAt: new Date(),
-        updatedAt: new Date(),
-        entrepreneurship: {
-          id: mockEntrepreneurshipId,
-          ownerId: mockUserId
-        }
+        updatedAt: new Date()
       };
 
       mockPrisma.businessPlan.findUnique.mockResolvedValue(mockPlan as any);
@@ -208,15 +196,7 @@ describe('BusinessPlanService', () => {
       const result = await BusinessPlanService.getBusinessPlan(mockBusinessPlanId);
 
       expect(mockPrisma.businessPlan.findUnique).toHaveBeenCalledWith({
-        where: { id: mockBusinessPlanId },
-        include: {
-          entrepreneurship: {
-            select: {
-              id: true,
-              ownerId: true
-            }
-          }
-        }
+        where: { id: mockBusinessPlanId }
       });
 
       expect(result).toEqual(expect.objectContaining({
@@ -245,16 +225,12 @@ describe('BusinessPlanService', () => {
       const mockPlans = [
         {
           id: mockBusinessPlanId,
-          entrepreneurshipId: mockEntrepreneurshipId,
+          userId: mockUserId,
           content: mockBusinessPlanData,
           status: 'draft',
           completionPercentage: 85,
           createdAt: new Date(),
-          updatedAt: new Date(),
-          entrepreneurship: {
-            id: mockEntrepreneurshipId,
-            ownerId: mockUserId
-          }
+          updatedAt: new Date()
         }
       ];
 
@@ -269,31 +245,19 @@ describe('BusinessPlanService', () => {
 
       expect(mockPrisma.businessPlan.count).toHaveBeenCalledWith({
         where: {
-          entrepreneurship: {
-            ownerId: mockUserId
-          },
+          userId: mockUserId,
           status: 'draft'
         }
       });
 
       expect(mockPrisma.businessPlan.findMany).toHaveBeenCalledWith({
         where: {
-          entrepreneurship: {
-            ownerId: mockUserId
-          },
+          userId: mockUserId,
           status: 'draft'
         },
         orderBy: { updatedAt: 'desc' },
         take: 10,
-        skip: 0,
-        include: {
-          entrepreneurship: {
-            select: {
-              id: true,
-              ownerId: true
-            }
-          }
-        }
+        skip: 0
       });
 
       expect(result).toEqual({
@@ -313,15 +277,11 @@ describe('BusinessPlanService', () => {
     it('should update a business plan successfully', async () => {
       const existingPlan = {
         id: mockBusinessPlanId,
-        entrepreneurshipId: mockEntrepreneurshipId,
+        userId: mockUserId,
         content: mockBusinessPlanData,
         status: 'draft',
         createdAt: new Date(),
-        updatedAt: new Date(),
-        entrepreneurship: {
-          id: mockEntrepreneurshipId,
-          ownerId: mockUserId
-        }
+        updatedAt: new Date()
       };
 
       const updatedPlan = {
@@ -337,15 +297,7 @@ describe('BusinessPlanService', () => {
       const result = await BusinessPlanService.updateBusinessPlan(mockBusinessPlanId, updateData);
 
       expect(mockPrisma.businessPlan.findUnique).toHaveBeenCalledWith({
-        where: { id: mockBusinessPlanId },
-        include: {
-          entrepreneurship: {
-            select: {
-              id: true,
-              ownerId: true
-            }
-          }
-        }
+        where: { id: mockBusinessPlanId }
       });
 
       expect(mockPrisma.businessPlan.update).toHaveBeenCalledWith({
@@ -354,15 +306,7 @@ describe('BusinessPlanService', () => {
           content: expect.any(Object),
           completionPercentage: expect.any(Number),
           updatedAt: expect.any(Date)
-        }),
-        include: {
-          entrepreneurship: {
-            select: {
-              id: true,
-              ownerId: true
-            }
-          }
-        }
+        })
       });
 
       expect(result).toEqual(expect.objectContaining({
@@ -419,8 +363,8 @@ describe('BusinessPlanService', () => {
     });
 
     it('should return low percentage for mostly empty business plan', () => {
-      const emptyPlan = {
-        userId: mockEntrepreneurshipId,
+      const emptyPlan: BusinessPlanData = {
+        userId: mockUserId,
         title: '',
         description: '',
         industry: '',
@@ -450,7 +394,38 @@ describe('BusinessPlanService', () => {
         appendices: '',
         team: [],
         milestones: [],
-        risks: []
+        risks: [],
+        // Required fields with empty values
+        tripleImpactAssessment: {
+          problemSolved: '',
+          beneficiaries: '',
+          resourcesUsed: '',
+          communityInvolvement: '',
+          longTermImpact: ''
+        },
+        businessModelCanvas: {
+          keyPartners: '',
+          keyActivities: '',
+          valuePropositions: '',
+          customerRelationships: '',
+          customerSegments: '',
+          keyResources: '',
+          channels: '',
+          costStructure: '',
+          revenueStreams: ''
+        },
+        financialProjections: {
+          startupCosts: 0,
+          monthlyRevenue: 0,
+          monthlyExpenses: 0,
+          breakEvenMonth: 0,
+          revenueStreams: [],
+          initialInvestment: 0,
+          monthlyOperatingCosts: 0,
+          revenueProjection: 0,
+          breakEvenPoint: 0,
+          estimatedROI: 0
+        }
       };
 
       const completion = BusinessPlanService.calculateCompletionPercentage(emptyPlan);

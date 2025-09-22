@@ -162,13 +162,60 @@ export function BusinessPlanBuilder({
           competitiveAdvantage: businessPlanData.competitiveAdvantage || "",
           marketingStrategy: businessPlanData.marketingStrategy || "",
           operationsPlan: businessPlanData.operationsPlan || "",
-          riskAssessment: businessPlanData.riskAssessment || "",
+          
+          // Triple Impact Assessment
+          tripleImpactAssessment: businessPlanData.tripleImpactAssessment || {
+            problemSolved: "",
+            beneficiaries: "",
+            resourcesUsed: "",
+            communityInvolvement: "",
+            longTermImpact: "",
+          },
+          
+          // Business Model Canvas
+          businessModelCanvas: businessPlanData.businessModelCanvas || {
+            keyPartners: "",
+            keyActivities: "",
+            valuePropositions: "",
+            customerRelationships: "",
+            customerSegments: "",
+            keyResources: "",
+            channels: "",
+            costStructure: "",
+            revenueStreams: "",
+          },
+          
+          // Enhanced Financial Projections
+          financialProjections: businessPlanData.financialProjections || {
+            startupCosts: 0,
+            monthlyRevenue: 0,
+            monthlyExpenses: 0,
+            breakEvenMonth: 0,
+            revenueStreams: [],
+            initialInvestment: 0,
+            monthlyOperatingCosts: 0,
+            revenueProjection: 0,
+            breakEvenPoint: 0,
+            estimatedROI: 0,
+            year1: { revenue: 0, expenses: 0, profit: 0, cashFlow: 0, customers: 0, growthRate: 0 },
+            year2: { revenue: 0, expenses: 0, profit: 0, cashFlow: 0, customers: 0, growthRate: 0 },
+            year3: { revenue: 0, expenses: 0, profit: 0, cashFlow: 0, customers: 0, growthRate: 0 }
+          },
+          
+          // Additional fields from simulator
+          executiveSummary: businessPlanData.executiveSummary || "",
+          businessDescription: businessPlanData.businessDescription || "",
+          marketAnalysis: businessPlanData.marketAnalysis || "",
+          competitiveAnalysis: businessPlanData.competitiveAnalysis || "",
+          operationalPlan: businessPlanData.operationalPlan || "",
+          managementTeam: businessPlanData.managementTeam || "",
+          riskAnalysis: businessPlanData.riskAnalysis || "",
+          appendices: businessPlanData.appendices || "",
+          
+          // Legacy fields
           team: businessPlanData.team || [],
           milestones: businessPlanData.milestones || [],
-          risks: businessPlanData.risks || [],
-          financialProjections: businessPlanData.financialProjections || {},
-          tripleImpactAssessment: businessPlanData.tripleImpactAssessment || {},
-          businessModelCanvas: businessPlanData.businessModelCanvas || {},
+          risks: businessPlanData.risks || []
         };
         
         setPlan(fullPlanData);

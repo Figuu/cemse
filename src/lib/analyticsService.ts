@@ -550,7 +550,7 @@ export class AnalyticsService {
         include: { course: true }
       }),
       prisma.businessPlan.findMany({
-        where: { entrepreneurshipId: userId }
+        where: { userId: userId }
       })
     ]);
 

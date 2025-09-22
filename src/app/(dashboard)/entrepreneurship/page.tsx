@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useMemo, memo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,12 +30,55 @@ import {
 } from "lucide-react";
 import { BusinessPlanBuilder } from "@/components/entrepreneurship/BusinessPlanBuilder";
 import FinancialCalculator from "@/components/entrepreneurship/FinancialCalculator";
+import BusinessModelCanvas from "@/components/entrepreneurship/BusinessModelCanvas";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useEntrepreneurshipNews, useLatestNews } from "@/hooks/useEntrepreneurshipNews";
 import { useEntrepreneurshipResources, useFeaturedResources } from "@/hooks/useEntrepreneurshipResources";
 import { useMyEntrepreneurships } from "@/hooks/useEntrepreneurships";
 import { useBusinessPlans } from "@/hooks/useBusinessPlans";
+
+// Memoized Business Model Canvas Modal to prevent re-renders
+const BusinessModelCanvasModal = memo(({ 
+  businessPlan, 
+  onSave, 
+  onClose 
+}: { 
+  businessPlan: any; 
+  onSave: (data: any) => void; 
+  onClose: () => void; 
+}) => {
+  const handleSave = useCallback((data: any) => {
+    onSave(data);
+  }, [onSave]);
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <Card className="w-full max-w-6xl max-h-[90vh] overflow-y-auto">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>Business Model Canvas</CardTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+            >
+              ✕
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <BusinessModelCanvas
+            businessPlan={businessPlan}
+            onSave={handleSave}
+          />
+        </CardContent>
+      </Card>
+    </div>
+  );
+});
+
+BusinessModelCanvasModal.displayName = 'BusinessModelCanvasModal';
 
 export default function EntrepreneurshipPage() {
   const [activeTab, setActiveTab] = useState("overview");
@@ -50,6 +93,21 @@ export default function EntrepreneurshipPage() {
   const { resources: featuredResources } = useFeaturedResources();
   const { entrepreneurships: myEntrepreneurships } = useMyEntrepreneurships({ limit: 3 });
   const { data: businessPlansData } = useBusinessPlans({ limit: 10 });
+
+  const handleCanvasSave = useCallback((canvasData: any) => {
+    console.log("Business Model Canvas saved:", canvasData);
+    setShowBusinessModelCanvas(false);
+  }, []);
+
+  const handleCanvasClose = useCallback(() => {
+    setShowBusinessModelCanvas(false);
+  }, []);
+
+  // Memoize the business plan to prevent unnecessary re-renders
+  const currentBusinessPlan = useMemo(() => {
+    return businessPlansData?.businessPlans?.[0];
+  }, [businessPlansData?.businessPlans?.[0]?.id]);
+
 
   return (
     <div className="space-y-8">
@@ -688,36 +746,13 @@ export default function EntrepreneurshipPage() {
       )}
 
       {/* Business Model Canvas Modal */}
-      {showBusinessModelCanvas && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-6xl max-h-[90vh] overflow-y-auto">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Business Model Canvas</CardTitle>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowBusinessModelCanvas(false)}
-                >
-                  ✕
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-12">
-                <BarChart3 className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium mb-2">Business Model Canvas</h3>
-                <p className="text-muted-foreground mb-4">
-                  Esta funcionalidad estará disponible próximamente
-                </p>
-                <Button onClick={() => setShowBusinessModelCanvas(false)}>
-                  Cerrar
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      <div className={showBusinessModelCanvas ? "block" : "hidden"}>
+        <BusinessModelCanvasModal
+          businessPlan={currentBusinessPlan}
+          onSave={handleCanvasSave}
+          onClose={handleCanvasClose}
+        />
+      </div>
     </div>
   );
 }
