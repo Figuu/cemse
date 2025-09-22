@@ -53,7 +53,11 @@ export async function GET(request: NextRequest) {
       include: {
         author: {
           include: {
-            profile: true
+            profile: {
+              include: {
+                institution: true
+              }
+            }
           }
         },
       },
@@ -151,7 +155,11 @@ export async function POST(request: NextRequest) {
       include: {
         author: {
           include: {
-            profile: true
+            profile: {
+              include: {
+                institution: true
+              }
+            }
           }
         },
       }

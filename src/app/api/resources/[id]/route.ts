@@ -23,6 +23,11 @@ export async function GET(
             // userId: true, // This field doesn't exist on User model
             firstName: true,
             lastName: true,
+            profile: {
+              include: {
+                institution: true
+              }
+            }
           }
         },
       }
@@ -125,6 +130,11 @@ export async function PUT(
             // userId: true, // This field doesn't exist on User model
             firstName: true,
             lastName: true,
+            profile: {
+              include: {
+                institution: true
+              }
+            }
           }
         }
       }

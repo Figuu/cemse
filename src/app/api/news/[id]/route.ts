@@ -20,7 +20,11 @@ export async function GET(
       include: {
         author: {
           include: {
-            profile: true
+            profile: {
+              include: {
+                institution: true
+              }
+            }
           }
         },
         // Note: views and likes relations don't exist on NewsArticle model
@@ -134,7 +138,11 @@ export async function PUT(
       include: {
         author: {
           include: {
-            profile: true
+            profile: {
+              include: {
+                institution: true
+              }
+            }
           }
         },
         // Note: _count relation doesn't exist on NewsArticle model

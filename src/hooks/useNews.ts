@@ -36,6 +36,10 @@ interface NewsArticle {
     profile?: {
       firstName?: string;
       lastName?: string;
+      institution?: {
+        id: string;
+        name: string;
+      };
     };
   };
 }
