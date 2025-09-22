@@ -337,10 +337,14 @@ setup_ssl() {
 
             # Check DNS resolution
             if nslookup "$domain" > /dev/null 2>&1; then
-                sudo certbot --nginx -d "$domain" -d "www.$domain" --non-interactive --agree-tos --email "admin@$domain" --redirect || {
-                    error "SSL setup failed"
-                    exit 1
-                }
+                # Try with both domain and www first, fallback to just main domain
+                if ! sudo certbot --nginx -d "$domain" -d "www.$domain" --non-interactive --agree-tos --email "admin@$domain" --redirect 2>/dev/null; then
+                    warn "Failed with www subdomain, trying main domain only..."
+                    sudo certbot --nginx -d "$domain" --non-interactive --agree-tos --email "admin@$domain" --redirect || {
+                        error "SSL setup failed"
+                        exit 1
+                    }
+                fi
                 success "SSL certificate installed successfully"
             else
                 error "Domain $domain does not resolve. Please configure DNS first."
