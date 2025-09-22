@@ -25,6 +25,9 @@ interface JobFiltersProps {
     remote: string;
     skills: string[];
   };
+  selectedMunicipality: string;
+  onMunicipalityChange: (value: string) => void;
+  municipalityInstitutions: Array<{ id: string; name: string }>;
   onFiltersChange: (filters: {
     location: string;
     type: string;
@@ -105,7 +108,7 @@ const popularSkills = [
   "Tableau"
 ];
 
-export function JobFilters({ filters, onFiltersChange, onClearFilters }: JobFiltersProps) {
+export function JobFilters({ filters, selectedMunicipality, onMunicipalityChange, municipalityInstitutions, onFiltersChange, onClearFilters }: JobFiltersProps) {
   const handleFilterChange = (key: string, value: string | string[]) => {
     onFiltersChange({
       ...filters,
@@ -133,8 +136,8 @@ export function JobFilters({ filters, onFiltersChange, onClearFilters }: JobFilt
   };
 
   const hasActiveFilters = Object.values(filters).some(value => 
-    Array.isArray(value) ? value.length > 0 : value !== ""
-  );
+    Array.isArray(value) ? value.length > 0 : value !== "all"
+  ) || selectedMunicipality !== "all";
 
   return (
     <Card>
@@ -169,13 +172,38 @@ export function JobFilters({ filters, onFiltersChange, onClearFilters }: JobFilt
             <SelectTrigger>
               <SelectValue placeholder="Selecciona ubicación" />
             </SelectTrigger>
+             <SelectContent>
+               <SelectItem value="all">Todas las ubicaciones</SelectItem>
+               {locations.map(location => (
+                 <SelectItem key={location} value={location}>
+                   {location}
+                 </SelectItem>
+               ))}
+             </SelectContent>
+          </Select>
+        </div>
+
+        {/* Municipality Filter */}
+        <div>
+          <Label className="flex items-center mb-2">
+            <MapPin className="h-4 w-4 mr-2" />
+            Municipio
+          </Label>
+          <Select
+            value={selectedMunicipality}
+            onValueChange={onMunicipalityChange}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecciona municipio" />
+            </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todas las ubicaciones</SelectItem>
-              {locations.map(location => (
-                <SelectItem key={location} value={location}>
-                  {location}
+              <SelectItem value="all">Todos los municipios</SelectItem>
+              {municipalityInstitutions.map((institution) => (
+                <SelectItem key={institution.id} value={institution.name}>
+                  {institution.name}
                 </SelectItem>
               ))}
+              <SelectItem value="Otro">Otro</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -193,14 +221,14 @@ export function JobFilters({ filters, onFiltersChange, onClearFilters }: JobFilt
             <SelectTrigger>
               <SelectValue placeholder="Selecciona tipo" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">Todos los tipos</SelectItem>
-              {jobTypes.map(type => (
-                <SelectItem key={type.value} value={type.value}>
-                  {type.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
+             <SelectContent>
+               <SelectItem value="all">Todos los tipos</SelectItem>
+               {jobTypes.map(type => (
+                 <SelectItem key={type.value} value={type.value}>
+                   {type.label}
+                 </SelectItem>
+               ))}
+             </SelectContent>
           </Select>
         </div>
 
@@ -217,14 +245,14 @@ export function JobFilters({ filters, onFiltersChange, onClearFilters }: JobFilt
             <SelectTrigger>
               <SelectValue placeholder="Selecciona experiencia" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">Todos los niveles</SelectItem>
-              {experienceLevels.map(level => (
-                <SelectItem key={level.value} value={level.value}>
-                  {level.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
+             <SelectContent>
+               <SelectItem value="all">Todos los niveles</SelectItem>
+               {experienceLevels.map(level => (
+                 <SelectItem key={level.value} value={level.value}>
+                   {level.label}
+                 </SelectItem>
+               ))}
+             </SelectContent>
           </Select>
         </div>
 
@@ -241,14 +269,14 @@ export function JobFilters({ filters, onFiltersChange, onClearFilters }: JobFilt
             <SelectTrigger>
               <SelectValue placeholder="Selecciona rango" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">Todos los rangos</SelectItem>
-              {salaryRanges.map(range => (
-                <SelectItem key={range.value} value={range.value}>
-                  {range.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
+             <SelectContent>
+               <SelectItem value="all">Todos los rangos</SelectItem>
+               {salaryRanges.map(range => (
+                 <SelectItem key={range.value} value={range.value}>
+                   {range.label}
+                 </SelectItem>
+               ))}
+             </SelectContent>
           </Select>
         </div>
 
@@ -265,12 +293,12 @@ export function JobFilters({ filters, onFiltersChange, onClearFilters }: JobFilt
             <SelectTrigger>
               <SelectValue placeholder="Selecciona opción" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">Todas las opciones</SelectItem>
-              <SelectItem value="yes">Solo remoto</SelectItem>
-              <SelectItem value="no">Solo presencial</SelectItem>
-              <SelectItem value="hybrid">Híbrido</SelectItem>
-            </SelectContent>
+             <SelectContent>
+               <SelectItem value="all">Todas las opciones</SelectItem>
+               <SelectItem value="yes">Solo remoto</SelectItem>
+               <SelectItem value="no">Solo presencial</SelectItem>
+               <SelectItem value="hybrid">Híbrido</SelectItem>
+             </SelectContent>
           </Select>
         </div>
 
@@ -322,38 +350,44 @@ export function JobFilters({ filters, onFiltersChange, onClearFilters }: JobFilt
                 Limpiar todos
               </Button>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {filters.location && (
-                <Badge variant="outline">
-                  Ubicación: {filters.location}
-                  <X className="h-3 w-3 ml-1 cursor-pointer" onClick={() => handleFilterChange("location", "")} />
-                </Badge>
-              )}
-              {filters.type && (
-                <Badge variant="outline">
-                  Tipo: {jobTypes.find(t => t.value === filters.type)?.label}
-                  <X className="h-3 w-3 ml-1 cursor-pointer" onClick={() => handleFilterChange("type", "")} />
-                </Badge>
-              )}
-              {filters.experience && (
-                <Badge variant="outline">
-                  Experiencia: {experienceLevels.find(e => e.value === filters.experience)?.label}
-                  <X className="h-3 w-3 ml-1 cursor-pointer" onClick={() => handleFilterChange("experience", "")} />
-                </Badge>
-              )}
-              {filters.salary && (
-                <Badge variant="outline">
-                  Salario: {salaryRanges.find(s => s.value === filters.salary)?.label}
-                  <X className="h-3 w-3 ml-1 cursor-pointer" onClick={() => handleFilterChange("salary", "")} />
-                </Badge>
-              )}
-              {filters.remote && (
-                <Badge variant="outline">
-                  Remoto: {filters.remote === "yes" ? "Sí" : filters.remote === "no" ? "No" : "Híbrido"}
-                  <X className="h-3 w-3 ml-1 cursor-pointer" onClick={() => handleFilterChange("remote", "")} />
-                </Badge>
-              )}
-            </div>
+             <div className="flex flex-wrap gap-2">
+               {filters.location && filters.location !== "all" && (
+                 <Badge variant="outline">
+                   Ubicación: {filters.location}
+                   <X className="h-3 w-3 ml-1 cursor-pointer" onClick={() => handleFilterChange("location", "all")} />
+                 </Badge>
+               )}
+               {filters.type && filters.type !== "all" && (
+                 <Badge variant="outline">
+                   Tipo: {jobTypes.find(t => t.value === filters.type)?.label}
+                   <X className="h-3 w-3 ml-1 cursor-pointer" onClick={() => handleFilterChange("type", "all")} />
+                 </Badge>
+               )}
+               {filters.experience && filters.experience !== "all" && (
+                 <Badge variant="outline">
+                   Experiencia: {experienceLevels.find(e => e.value === filters.experience)?.label}
+                   <X className="h-3 w-3 ml-1 cursor-pointer" onClick={() => handleFilterChange("experience", "all")} />
+                 </Badge>
+               )}
+               {filters.salary && filters.salary !== "all" && (
+                 <Badge variant="outline">
+                   Salario: {salaryRanges.find(s => s.value === filters.salary)?.label}
+                   <X className="h-3 w-3 ml-1 cursor-pointer" onClick={() => handleFilterChange("salary", "all")} />
+                 </Badge>
+               )}
+               {filters.remote && filters.remote !== "all" && (
+                 <Badge variant="outline">
+                   Remoto: {filters.remote === "yes" ? "Sí" : filters.remote === "no" ? "No" : "Híbrido"}
+                   <X className="h-3 w-3 ml-1 cursor-pointer" onClick={() => handleFilterChange("remote", "all")} />
+                 </Badge>
+               )}
+               {selectedMunicipality !== "all" && (
+                 <Badge variant="outline">
+                   Municipio: {selectedMunicipality}
+                   <X className="h-3 w-3 ml-1 cursor-pointer" onClick={() => onMunicipalityChange("all")} />
+                 </Badge>
+               )}
+             </div>
           </div>
         )}
       </CardContent>

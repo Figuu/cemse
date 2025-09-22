@@ -28,6 +28,7 @@ import { CourseFilters } from "@/components/courses/CourseFilters";
 import { CourseCreationModal } from "@/components/courses/CourseCreationModal";
 import { cn } from "@/lib/utils";
 import { useSession } from "next-auth/react";
+import { useQuery } from "@tanstack/react-query";
 
 export default function CoursesPage() {
   const router = useRouter();
@@ -35,6 +36,7 @@ export default function CoursesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedLevel, setSelectedLevel] = useState("all");
+  const [selectedMunicipality, setSelectedMunicipality] = useState("all");
   const [sortBy, setSortBy] = useState("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [isEnrolled, setIsEnrolled] = useState<boolean | undefined>(undefined);
@@ -48,6 +50,18 @@ export default function CoursesPage() {
   const isYouth = session?.user?.role === "YOUTH";
   const isInstitution = session?.user?.role === "INSTITUTION";
   const isSuperAdmin = session?.user?.role === "SUPERADMIN";
+
+  // Fetch municipality institutions for the filter
+  const { data: municipalityInstitutions = [] } = useQuery({
+    queryKey: ['municipality-institutions-courses'],
+    queryFn: async () => {
+      const response = await fetch('/api/admin/institutions');
+      if (!response.ok) throw new Error('Failed to fetch institutions');
+      const institutions = await response.json();
+      // Filter only municipality type institutions
+      return institutions.filter((institution: any) => institution.institutionType === 'MUNICIPALITY');
+    }
+  });
 
   const {
     courses,
@@ -67,8 +81,14 @@ export default function CoursesPage() {
     isEnrolled,
   });
 
-  const enrolledCourses = courses.filter(course => course.isEnrolled);
-  const availableCourses = courses.filter(course => !course.isEnrolled);
+  // Filter courses by municipality
+  const filteredCourses = courses.filter(course => {
+    if (selectedMunicipality === "all") return true;
+    return course.institutionName === selectedMunicipality;
+  });
+
+  const enrolledCourses = filteredCourses.filter(course => course.isEnrolled);
+  const availableCourses = filteredCourses.filter(course => !course.isEnrolled);
 
   const handleEnroll = async (courseId: string) => {
     await enrollInCourse(courseId);
@@ -87,6 +107,7 @@ export default function CoursesPage() {
     setSearchTerm("");
     setSelectedCategory("all");
     setSelectedLevel("all");
+    setSelectedMunicipality("all");
     setSortBy("createdAt");
     setSortOrder("desc");
     setIsEnrolled(undefined);
@@ -217,6 +238,8 @@ export default function CoursesPage() {
           onCategoryChange={setSelectedCategory}
           selectedLevel={selectedLevel}
           onLevelChange={setSelectedLevel}
+          selectedMunicipality={selectedMunicipality}
+          onMunicipalityChange={setSelectedMunicipality}
           sortBy={sortBy}
           onSortChange={setSortBy}
           sortOrder={sortOrder}
@@ -225,6 +248,7 @@ export default function CoursesPage() {
           onEnrolledChange={setIsEnrolled}
           categories={categories}
           levels={levels}
+          municipalityInstitutions={municipalityInstitutions}
           onReset={handleResetFilters}
           onApply={handleApplyFilters}
           userRole={session?.user?.role}

@@ -186,9 +186,20 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    // Check if institution exists
+    
+    // Check if institution exists and get related data
     const existingInstitution = await prisma.institution.findUnique({
-      where: { id }
+      where: { id },
+      include: {
+        profiles: {
+          include: {
+            user: true
+          }
+        },
+        companies: true,
+        courses: true,
+        creator: true
+      }
     });
 
     if (!existingInstitution) {
@@ -200,13 +211,41 @@ export async function DELETE(
       return NextResponse.json({ error: "Municipality users cannot delete other municipalities" }, { status: 403 });
     }
 
-    // Delete institution (related data will be handled by cascade rules)
-    await prisma.institution.delete({
-      where: { id }
+    // Use transaction to ensure all related data is deleted properly
+    await prisma.$transaction(async (tx) => {
+      // Delete all users associated with this institution (this will cascade delete their profiles and related data)
+      for (const profile of existingInstitution.profiles) {
+        await tx.user.delete({
+          where: { id: profile.user.id }
+        });
+      }
+
+      // Delete all companies associated with this institution
+      for (const company of existingInstitution.companies) {
+        await tx.company.delete({
+          where: { id: company.id }
+        });
+      }
+
+      // Delete all courses associated with this institution
+      for (const course of existingInstitution.courses) {
+        await tx.course.delete({
+          where: { id: course.id }
+        });
+      }
+
+      // Finally, delete the institution itself
+      await tx.institution.delete({
+        where: { id }
+      });
+
+      // Log what was deleted for audit purposes
+      console.log(`Deleted institution: ${existingInstitution.name} (${existingInstitution.institutionType})`);
+      console.log(`Related data deleted: ${existingInstitution.profiles.length} users/profiles, ${existingInstitution.companies.length} companies, ${existingInstitution.courses.length} courses`);
     });
 
     return NextResponse.json({
-      message: "Institution deleted successfully"
+      message: "Institution and all related data deleted successfully"
     });
   } catch (error) {
     console.error('Error deleting institution:', error);

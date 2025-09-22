@@ -3,7 +3,7 @@
 import { useSession } from "next-auth/react";
 import { YouthApplicationBrowser } from "@/components/companies/YouthApplicationBrowser";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Users, Briefcase, BarChart3 } from "lucide-react";
+import { ArrowLeft, BarChart3 } from "lucide-react";
 import Link from "next/link";
 import { useCompanyByUser } from "@/hooks/useCompanies";
 import { RoleGuard } from "@/components/auth/RoleGuard";
@@ -64,26 +64,8 @@ function TalentPageContent() {
       </div>
 
       {/* Quick Navigation */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-6 sm:mb-8">
-        <Link href="/candidates" className="w-full sm:w-auto">
-          <Button variant="outline" className="w-full sm:w-auto">
-            <Users className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">Todos los Candidatos</span>
-            <span className="sm:hidden">Candidatos</span>
-          </Button>
-        </Link>
-        <Link href="/jobs" className="w-full sm:w-auto">
-          <Button variant="outline" className="w-full sm:w-auto">
-            <Briefcase className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">
-              {isAdmin ? "Todas las Ofertas" : "Mis Ofertas de Trabajo"}
-            </span>
-            <span className="sm:hidden">
-              {isAdmin ? "Ofertas" : "Mis Trabajos"}
-            </span>
-          </Button>
-        </Link>
-        {isCompany && (
+      {isCompany && (
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-6 sm:mb-8">
           <Link href="/analytics" className="w-full sm:w-auto">
             <Button variant="outline" className="w-full sm:w-auto">
               <BarChart3 className="h-4 w-4 mr-2" />
@@ -91,8 +73,8 @@ function TalentPageContent() {
               <span className="sm:hidden">Analytics</span>
             </Button>
           </Link>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Youth Application Browser */}
       <YouthApplicationBrowser companyId={isAdmin ? undefined : company?.id} />

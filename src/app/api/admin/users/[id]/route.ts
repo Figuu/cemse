@@ -200,9 +200,18 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    // Check if user exists
+    
+    // Check if user exists and get related data
     const existingUser = await prisma.user.findUnique({
-      where: { id }
+      where: { id },
+      include: {
+        profile: true,
+        createdCompanies: true,
+        createdInstitutions: true,
+        createdResources: true,
+        createdNews: true,
+        businessPlans: true
+      }
     });
 
     if (!existingUser) {
@@ -217,13 +226,20 @@ export async function DELETE(
       );
     }
 
-    // Delete user (profile will be deleted automatically due to cascade)
-    await prisma.user.delete({
-      where: { id }
+    // Use transaction to ensure all related data is deleted properly
+    await prisma.$transaction(async (tx) => {
+      // Delete user (this will cascade delete profile and all related data due to onDelete: Cascade rules)
+      await tx.user.delete({
+        where: { id }
+      });
+
+      // Log what was deleted for audit purposes
+      console.log(`Deleted user: ${existingUser.email} (${existingUser.role})`);
+      console.log(`Related data deleted: ${existingUser.createdCompanies.length} companies, ${existingUser.createdInstitutions.length} institutions, ${existingUser.createdResources.length} resources, ${existingUser.createdNews.length} news articles, ${existingUser.businessPlans.length} business plans`);
     });
 
     return NextResponse.json({
-      message: "User deleted successfully"
+      message: "User and all related data deleted successfully"
     });
   } catch (error) {
     console.error('Error deleting user:', error);

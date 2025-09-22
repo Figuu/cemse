@@ -192,22 +192,76 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    // Check if company exists
+    
+    // Check if company exists and get related data
     const existingCompany = await prisma.company.findUnique({
-      where: { id }
+      where: { id },
+      include: {
+        jobOffers: {
+          include: {
+            applications: true,
+            jobQuestions: true
+          }
+        },
+        youthApplicationInterests: true,
+        employees: true,
+        creator: true
+      }
     });
 
     if (!existingCompany) {
       return NextResponse.json({ error: "Company not found" }, { status: 404 });
     }
 
-    // Delete company (related data will be handled by cascade rules)
-    await prisma.company.delete({
-      where: { id }
+    // Use transaction to ensure all related data is deleted properly
+    await prisma.$transaction(async (tx) => {
+      // Delete all job offers and their related data
+      for (const jobOffer of existingCompany.jobOffers) {
+        // Delete job question answers first
+        for (const application of jobOffer.applications) {
+          await tx.jobQuestionAnswer.deleteMany({
+            where: { applicationId: application.id }
+          });
+        }
+        
+        // Delete job applications
+        await tx.jobApplication.deleteMany({
+          where: { jobOfferId: jobOffer.id }
+        });
+        
+        // Delete job questions
+        await tx.jobQuestion.deleteMany({
+          where: { jobOfferId: jobOffer.id }
+        });
+        
+        // Delete the job offer
+        await tx.jobOffer.delete({
+          where: { id: jobOffer.id }
+        });
+      }
+
+      // Delete youth application company interests
+      await tx.youthApplicationCompanyInterest.deleteMany({
+        where: { companyId: id }
+      });
+
+      // Delete company employees
+      await tx.companyEmployee.deleteMany({
+        where: { companyId: id }
+      });
+
+      // Finally, delete the company itself
+      await tx.company.delete({
+        where: { id }
+      });
+
+      // Log what was deleted for audit purposes
+      console.log(`Deleted company: ${existingCompany.name}`);
+      console.log(`Related data deleted: ${existingCompany.jobOffers.length} job offers, ${existingCompany.youthApplicationInterests.length} youth application interests, ${existingCompany.employees.length} employees`);
     });
 
     return NextResponse.json({
-      message: "Company deleted successfully"
+      message: "Company and all related data deleted successfully"
     });
   } catch (error) {
     console.error('Error deleting company:', error);

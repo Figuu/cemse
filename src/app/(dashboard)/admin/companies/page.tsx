@@ -28,7 +28,9 @@ import {
   CheckCircle,
   RefreshCw,
   Copy,
-  Check
+  Check,
+  Filter,
+  X
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -290,6 +292,13 @@ function CompaniesManagement() {
   const [isCredentialsModalOpen, setIsCredentialsModalOpen] = useState(false);
   const [createdCompany, setCreatedCompany] = useState<CreatedCompany | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  
+  // Filter states
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [sizeFilter, setSizeFilter] = useState<string>("all");
+  const [municipalityFilter, setMunicipalityFilter] = useState<string>("all");
+  const [showFilters, setShowFilters] = useState(false);
+  
   const queryClient = useQueryClient();
 
   // Fetch companies
@@ -416,11 +425,38 @@ function CompaniesManagement() {
     }
   });
 
-  const filteredCompanies = companies.filter((company: Company) =>
-    company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    company.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    company.businessSector?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Fetch municipality institutions for the filter
+  const { data: municipalityInstitutions = [] } = useQuery({
+    queryKey: ['municipality-institutions-companies-filter'],
+    queryFn: async () => {
+      const response = await fetch('/api/admin/institutions');
+      if (!response.ok) throw new Error('Failed to fetch institutions');
+      const institutions = await response.json();
+      // Filter only municipality type institutions
+      return institutions.filter((institution: any) => institution.institutionType === 'MUNICIPALITY');
+    }
+  });
+
+  const filteredCompanies = companies.filter((company: Company) => {
+    // Search filter
+    const matchesSearch = company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      company.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      company.businessSector?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    // Status filter
+    const matchesStatus = statusFilter === "all" || 
+      (statusFilter === "active" && company.isActive) ||
+      (statusFilter === "inactive" && !company.isActive);
+
+    // Size filter
+    const matchesSize = sizeFilter === "all" || company.companySize === sizeFilter;
+
+    // Municipality filter (based on associated institution)
+    const matchesMunicipality = municipalityFilter === "all" || 
+      (company.institution?.name === municipalityFilter);
+
+    return matchesSearch && matchesStatus && matchesSize && matchesMunicipality;
+  });
 
   // Helper function to get associated municipality
   const getAssociatedMunicipality = (company: Company): Municipality | null => {
@@ -1033,17 +1069,95 @@ function CompaniesManagement() {
         </Dialog>
       </div>
 
-      {/* Search */}
-      <div className="flex items-center space-x-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar empresas..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 text-sm sm:text-base"
-          />
+      {/* Search and Filters */}
+      <div className="space-y-4">
+        <div className="flex items-center space-x-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar empresas..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 text-sm sm:text-base"
+            />
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => setShowFilters(!showFilters)}
+            className="h-10 px-3"
+          >
+            <Filter className="h-4 w-4 mr-2" />
+            Filtros
+          </Button>
         </div>
+
+        {/* Filter Panel */}
+        {showFilters && (
+          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-medium">Filtros</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setStatusFilter("all");
+                  setSizeFilter("all");
+                  setMunicipalityFilter("all");
+                }}
+                className="h-8 px-2 text-xs"
+              >
+                Limpiar
+              </Button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Estado</Label>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="Seleccionar estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="active">Activas</SelectItem>
+                    <SelectItem value="inactive">Inactivas</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Tamaño</Label>
+                <Select value={sizeFilter} onValueChange={setSizeFilter}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="Seleccionar tamaño" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="MICRO">Micro (1-10 empleados)</SelectItem>
+                    <SelectItem value="PEQUENA">Pequeña (11-50 empleados)</SelectItem>
+                    <SelectItem value="MEDIANA">Mediana (51-200 empleados)</SelectItem>
+                    <SelectItem value="GRANDE">Grande (200+ empleados)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Municipio</Label>
+                <Select value={municipalityFilter} onValueChange={setMunicipalityFilter}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="Seleccionar municipio" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    {municipalityInstitutions.map((institution: any) => (
+                      <SelectItem key={institution.id} value={institution.name}>
+                        {institution.name}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="Otro">Otro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Companies List */}

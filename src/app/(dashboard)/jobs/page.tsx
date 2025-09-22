@@ -16,6 +16,7 @@ import { RoleGuard } from "@/components/auth/RoleGuard";
 import { useJobs } from "@/hooks/useJobs";
 import { useJobApplicationStatus } from "@/hooks/useJobApplicationStatus";
 import { JobPosting } from "@/types/company";
+import { useQuery } from "@tanstack/react-query";
 import { 
   Search, 
   Filter, 
@@ -42,14 +43,27 @@ function JobsPageContent() {
   
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFilters, setSelectedFilters] = useState({
-    location: "",
-    type: "",
-    experience: "",
-    salary: "",
-    remote: "",
+    location: "all",
+    type: "all",
+    experience: "all",
+    salary: "all",
+    remote: "all",
     skills: [] as string[],
   });
+  const [selectedMunicipality, setSelectedMunicipality] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
+
+  // Fetch municipality institutions for the filter
+  const { data: municipalityInstitutions = [] } = useQuery({
+    queryKey: ['municipality-institutions-jobs'],
+    queryFn: async () => {
+      const response = await fetch('/api/admin/institutions');
+      if (!response.ok) throw new Error('Failed to fetch institutions');
+      const institutions = await response.json();
+      // Filter only municipality type institutions
+      return institutions.filter((institution: any) => institution.institutionType === 'MUNICIPALITY');
+    }
+  });
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);
   const [selectedJob, setSelectedJob] = useState<JobPosting | null>(null);
@@ -95,8 +109,11 @@ function JobsPageContent() {
   };
 
 
-  // Filtering is now handled by the API, so we just use the jobs directly
-  const filteredJobs = jobs;
+  // Filter jobs by municipality (based on company's associated institution)
+  const filteredJobs = jobs.filter(job => {
+    if (selectedMunicipality === "all") return true;
+    return job.company?.institution?.name === selectedMunicipality;
+  });
 
 
   const handleBookmark = async (jobId: string) => {
@@ -145,13 +162,14 @@ function JobsPageContent() {
 
   const clearFilters = () => {
     setSelectedFilters({
-      location: "",
-      type: "",
-      experience: "",
-      salary: "",
-      remote: "",
+      location: "all",
+      type: "all",
+      experience: "all",
+      salary: "all",
+      remote: "all",
       skills: [],
     });
+    setSelectedMunicipality("all");
     setSearchTerm("");
   };
 
@@ -352,6 +370,9 @@ function JobsPageContent() {
         {showFilters && (
           <JobFilters
             filters={selectedFilters}
+            selectedMunicipality={selectedMunicipality}
+            onMunicipalityChange={setSelectedMunicipality}
+            municipalityInstitutions={municipalityInstitutions}
             onFiltersChange={setSelectedFilters}
             onClearFilters={clearFilters}
           />

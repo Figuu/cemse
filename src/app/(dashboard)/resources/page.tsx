@@ -34,6 +34,7 @@ import { useResources } from "@/hooks/useResources";
 import { ResourceForm } from "@/components/resources/ResourceForm";
 import { ResourceDetailsModal } from "@/components/resources/ResourceDetailsModal";
 import { RoleGuard } from "@/components/auth/RoleGuard";
+import { useQuery } from "@tanstack/react-query";
 
 function ResourcesPageContent() {
   const { data: session, status: sessionStatus } = useSession();
@@ -41,7 +42,20 @@ function ResourcesPageContent() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedType, setSelectedType] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
+  const [selectedMunicipality, setSelectedMunicipality] = useState("all");
   const [showForm, setShowForm] = useState(false);
+
+  // Fetch municipality institutions for the filter
+  const { data: municipalityInstitutions = [] } = useQuery({
+    queryKey: ['municipality-institutions-resources'],
+    queryFn: async () => {
+      const response = await fetch('/api/admin/institutions');
+      if (!response.ok) throw new Error('Failed to fetch institutions');
+      const institutions = await response.json();
+      // Filter only municipality type institutions
+      return institutions.filter((institution: any) => institution.institutionType === 'MUNICIPALITY');
+    }
+  });
   const [editingResource, setEditingResource] = useState<any>(null);
   const [selectedResource, setSelectedResource] = useState<any>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
@@ -82,35 +96,6 @@ function ResourcesPageContent() {
     );
   }
 
-  const categories = [
-    { id: "all", name: "Todos", count: resources.length },
-    { id: "Tecnología", name: "Tecnología", count: resources.filter(r => r.category === "Tecnología").length },
-    { id: "Marketing", name: "Marketing", count: resources.filter(r => r.category === "Marketing").length },
-    { id: "Empleo", name: "Empleo", count: resources.filter(r => r.category === "Empleo").length },
-    { id: "Emprendimiento", name: "Emprendimiento", count: resources.filter(r => r.category === "Emprendimiento").length },
-    { id: "Educación", name: "Educación", count: resources.filter(r => r.category === "Educación").length },
-    { id: "Salud", name: "Salud", count: resources.filter(r => r.category === "Salud").length },
-    { id: "Finanzas", name: "Finanzas", count: resources.filter(r => r.category === "Finanzas").length },
-    { id: "Recursos Humanos", name: "Recursos Humanos", count: resources.filter(r => r.category === "Recursos Humanos").length },
-    { id: "Otros", name: "Otros", count: resources.filter(r => r.category === "Otros").length }
-  ];
-
-  const types = [
-    { id: "all", name: "Todos", count: resources.length },
-    { id: "PDF", name: "PDF", count: resources.filter(r => r.type === "PDF").length },
-    { id: "Video", name: "Video", count: resources.filter(r => r.type === "Video").length },
-    { id: "Image", name: "Imagen", count: resources.filter(r => r.type === "Image").length },
-    { id: "ZIP", name: "ZIP", count: resources.filter(r => r.type === "ZIP").length },
-    { id: "DOC", name: "Documento", count: resources.filter(r => r.type === "DOC").length },
-    { id: "URL", name: "Enlace", count: resources.filter(r => r.type === "URL").length }
-  ];
-
-  const statuses = [
-    { id: "all", name: "Todos", count: resources.length },
-    { id: "PUBLISHED", name: "Publicados", count: resources.filter(r => r.status === "PUBLISHED").length },
-    { id: "DRAFT", name: "Borradores", count: resources.filter(r => r.status === "DRAFT").length },
-    { id: "ARCHIVED", name: "Archivados", count: resources.filter(r => r.status === "ARCHIVED").length }
-  ];
 
   const getTypeIcon = (type: string) => {
     switch (type) {
@@ -183,6 +168,42 @@ function ResourcesPageContent() {
     setSelectedResource(resource);
     setShowDetailsModal(true);
   };
+
+  // Filter resources by municipality (based on creator's associated institution)
+  const filteredResources = resources.filter(resource => {
+    if (selectedMunicipality === "all") return true;
+    return resource.createdBy?.profile?.institution?.name === selectedMunicipality;
+  });
+
+  const categories = [
+    { id: "all", name: "Todos", count: filteredResources.length },
+    { id: "Tecnología", name: "Tecnología", count: filteredResources.filter(r => r.category === "Tecnología").length },
+    { id: "Marketing", name: "Marketing", count: filteredResources.filter(r => r.category === "Marketing").length },
+    { id: "Empleo", name: "Empleo", count: filteredResources.filter(r => r.category === "Empleo").length },
+    { id: "Emprendimiento", name: "Emprendimiento", count: filteredResources.filter(r => r.category === "Emprendimiento").length },
+    { id: "Educación", name: "Educación", count: filteredResources.filter(r => r.category === "Educación").length },
+    { id: "Salud", name: "Salud", count: filteredResources.filter(r => r.category === "Salud").length },
+    { id: "Finanzas", name: "Finanzas", count: filteredResources.filter(r => r.category === "Finanzas").length },
+    { id: "Recursos Humanos", name: "Recursos Humanos", count: filteredResources.filter(r => r.category === "Recursos Humanos").length },
+    { id: "Otros", name: "Otros", count: filteredResources.filter(r => r.category === "Otros").length }
+  ];
+
+  const types = [
+    { id: "all", name: "Todos", count: filteredResources.length },
+    { id: "PDF", name: "PDF", count: filteredResources.filter(r => r.type === "PDF").length },
+    { id: "Video", name: "Video", count: filteredResources.filter(r => r.type === "Video").length },
+    { id: "Image", name: "Imagen", count: filteredResources.filter(r => r.type === "Image").length },
+    { id: "ZIP", name: "ZIP", count: filteredResources.filter(r => r.type === "ZIP").length },
+    { id: "DOC", name: "Documento", count: filteredResources.filter(r => r.type === "DOC").length },
+    { id: "URL", name: "Enlace", count: filteredResources.filter(r => r.type === "URL").length }
+  ];
+
+  const statuses = [
+    { id: "all", name: "Todos", count: filteredResources.length },
+    { id: "PUBLISHED", name: "Publicados", count: filteredResources.filter(r => r.status === "PUBLISHED").length },
+    { id: "DRAFT", name: "Borradores", count: filteredResources.filter(r => r.status === "DRAFT").length },
+    { id: "ARCHIVED", name: "Archivados", count: filteredResources.filter(r => r.status === "ARCHIVED").length }
+  ];
 
   const handleEditResource = (resource: any) => {
     setEditingResource(resource);
@@ -345,6 +366,24 @@ function ResourcesPageContent() {
               </div>
 
               <div className="flex items-center space-x-2 min-w-0 flex-1 sm:flex-none">
+                <Label className="text-xs sm:text-sm whitespace-nowrap">Municipio:</Label>
+                <Select value={selectedMunicipality} onValueChange={setSelectedMunicipality}>
+                  <SelectTrigger className="w-full sm:w-40 text-xs sm:text-sm">
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos los municipios</SelectItem>
+                    {municipalityInstitutions.map((institution: any) => (
+                      <SelectItem key={institution.id} value={institution.name}>
+                        {institution.name}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="Otro">Otro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center space-x-2 min-w-0 flex-1 sm:flex-none">
                 <Label className="text-xs sm:text-sm whitespace-nowrap">Tipo:</Label>
                 <Select value={selectedType} onValueChange={setSelectedType}>
                   <SelectTrigger className="w-full sm:w-40 text-xs sm:text-sm">
@@ -412,7 +451,7 @@ function ResourcesPageContent() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                  {resources.map((resource) => (
+                  {filteredResources.map((resource) => (
                     <Card key={resource.id} className="hover:shadow-md transition-shadow">
                       <CardHeader className="pb-3 p-4 sm:p-6">
                         <div className="flex items-start justify-between gap-3">

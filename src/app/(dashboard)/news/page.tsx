@@ -29,13 +29,27 @@ import { useNews } from "@/hooks/useNews";
 import { NewsForm } from "@/components/news/NewsForm";
 import { NewsDetailsModal } from "@/components/news/NewsDetailsModal";
 import { useSession } from "next-auth/react";
+import { useQuery } from "@tanstack/react-query";
 
 export default function NewsPage() {
   const { data: session } = useSession();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
+  const [selectedMunicipality, setSelectedMunicipality] = useState("all");
   const [showForm, setShowForm] = useState(false);
+
+  // Fetch municipality institutions for the filter
+  const { data: municipalityInstitutions = [] } = useQuery({
+    queryKey: ['municipality-institutions-news'],
+    queryFn: async () => {
+      const response = await fetch('/api/admin/institutions');
+      if (!response.ok) throw new Error('Failed to fetch institutions');
+      const institutions = await response.json();
+      // Filter only municipality type institutions
+      return institutions.filter((institution: any) => institution.institutionType === 'MUNICIPALITY');
+    }
+  });
   const [editingNews, setEditingNews] = useState<any>(null);
   const [selectedNews, setSelectedNews] = useState<any>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
@@ -64,21 +78,6 @@ export default function NewsPage() {
     authorId: isYouth ? undefined : session?.user?.id, // Youth sees all, others see their own
   });
 
-  const categories = [
-    { id: "all", name: "Todos", count: newsArticles.length },
-    { id: "Empleo", name: "Empleo", count: newsArticles.filter(n => n.category === "Empleo").length },
-    { id: "Educación", name: "Educación", count: newsArticles.filter(n => n.category === "Educación").length },
-    { id: "Emprendimiento", name: "Emprendimiento", count: newsArticles.filter(n => n.category === "Emprendimiento").length },
-    { id: "Tecnología", name: "Tecnología", count: newsArticles.filter(n => n.category === "Tecnología").length },
-    { id: "Política", name: "Política", count: newsArticles.filter(n => n.category === "Política").length },
-    { id: "Salud", name: "Salud", count: newsArticles.filter(n => n.category === "Salud").length },
-    { id: "Deportes", name: "Deportes", count: newsArticles.filter(n => n.category === "Deportes").length },
-    { id: "Cultura", name: "Cultura", count: newsArticles.filter(n => n.category === "Cultura").length },
-    { id: "Medio Ambiente", name: "Medio Ambiente", count: newsArticles.filter(n => n.category === "Medio Ambiente").length },
-    { id: "Internacional", name: "Internacional", count: newsArticles.filter(n => n.category === "Internacional").length },
-    { id: "Local", name: "Local", count: newsArticles.filter(n => n.category === "Local").length },
-    { id: "Otros", name: "Otros", count: newsArticles.filter(n => n.category === "Otros").length }
-  ];
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -168,6 +167,28 @@ export default function NewsPage() {
     setShowDetailsModal(false);
     setSelectedNews(null);
   };
+
+  // Filter news by municipality (based on author's associated institution)
+  const filteredNews = newsArticles.filter(news => {
+    if (selectedMunicipality === "all") return true;
+    return news.author?.profile?.institution?.name === selectedMunicipality;
+  });
+
+  const categories = [
+    { id: "all", name: "Todos", count: filteredNews.length },
+    { id: "Empleo", name: "Empleo", count: filteredNews.filter(n => n.category === "Empleo").length },
+    { id: "Educación", name: "Educación", count: filteredNews.filter(n => n.category === "Educación").length },
+    { id: "Emprendimiento", name: "Emprendimiento", count: filteredNews.filter(n => n.category === "Emprendimiento").length },
+    { id: "Tecnología", name: "Tecnología", count: filteredNews.filter(n => n.category === "Tecnología").length },
+    { id: "Política", name: "Política", count: filteredNews.filter(n => n.category === "Política").length },
+    { id: "Salud", name: "Salud", count: filteredNews.filter(n => n.category === "Salud").length },
+    { id: "Deportes", name: "Deportes", count: filteredNews.filter(n => n.category === "Deportes").length },
+    { id: "Cultura", name: "Cultura", count: filteredNews.filter(n => n.category === "Cultura").length },
+    { id: "Medio Ambiente", name: "Medio Ambiente", count: filteredNews.filter(n => n.category === "Medio Ambiente").length },
+    { id: "Internacional", name: "Internacional", count: filteredNews.filter(n => n.category === "Internacional").length },
+    { id: "Local", name: "Local", count: filteredNews.filter(n => n.category === "Local").length },
+    { id: "Otros", name: "Otros", count: filteredNews.filter(n => n.category === "Otros").length }
+  ];
 
   if (isLoading) {
     return (
@@ -291,6 +312,20 @@ export default function NewsPage() {
                   className="pl-10 w-64"
                 />
               </div>
+              <Select value={selectedMunicipality} onValueChange={setSelectedMunicipality}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Municipio" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  {municipalityInstitutions.map((institution: any) => (
+                    <SelectItem key={institution.id} value={institution.name}>
+                      {institution.name}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="Otro">Otro</SelectItem>
+                </SelectContent>
+              </Select>
               {canManageNews && (
                 <Select value={selectedStatus} onValueChange={setSelectedStatus}>
                   <SelectTrigger className="w-40">
@@ -339,7 +374,7 @@ export default function NewsPage() {
                     </CardContent>
                   </Card>
                 ) : (
-                  newsArticles.map((article) => (
+                  filteredNews.map((article) => (
                     <Card key={article.id} className="hover:shadow-md transition-shadow">
                       <CardContent className="p-6">
                         <div className="flex space-x-4">

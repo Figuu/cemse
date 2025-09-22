@@ -27,7 +27,9 @@ import {
   CheckCircle,
   RefreshCw,
   Copy,
-  Check
+  Check,
+  Filter,
+  X
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -270,6 +272,13 @@ function InstitutionsManagement() {
   const [isCredentialsModalOpen, setIsCredentialsModalOpen] = useState(false);
   const [createdInstitution, setCreatedInstitution] = useState<CreatedInstitution | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  
+  // Filter states
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [municipalityFilter, setMunicipalityFilter] = useState<string>("all");
+  const [showFilters, setShowFilters] = useState(false);
+  
   const queryClient = useQueryClient();
   const { data: session } = useSession();
 
@@ -399,11 +408,35 @@ function InstitutionsManagement() {
     }
   });
 
-  const filteredInstitutions = institutions.filter((institution: Institution) =>
-    institution.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    institution.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    institution.department.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Fetch municipality institutions for the filter
+  const { data: municipalityInstitutions = [] } = useQuery({
+    queryKey: ['municipality-institutions-for-filter'],
+    queryFn: async () => {
+      // Filter only municipality type institutions from the current institutions data
+      return institutions.filter((institution: Institution) => institution.institutionType === 'MUNICIPALITY');
+    },
+    enabled: institutions.length > 0
+  });
+
+  const filteredInstitutions = institutions.filter((institution: Institution) => {
+    // Search filter
+    const matchesSearch = institution.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      institution.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      institution.department.toLowerCase().includes(searchTerm.toLowerCase());
+
+    // Status filter
+    const matchesStatus = statusFilter === "all" || 
+      (statusFilter === "active" && institution.isActive) ||
+      (statusFilter === "inactive" && !institution.isActive);
+
+    // Type filter
+    const matchesType = typeFilter === "all" || institution.institutionType === typeFilter;
+
+    // Municipality filter
+    const matchesMunicipality = municipalityFilter === "all" || institution.name === municipalityFilter;
+
+    return matchesSearch && matchesStatus && matchesType && matchesMunicipality;
+  });
 
   // Helper function to get associated municipality
   const getAssociatedMunicipality = (institution: Institution): Municipality | null => {
@@ -813,10 +846,10 @@ function InstitutionsManagement() {
           if (!open) setCreateErrors({});
         }}>
           <DialogTrigger asChild>
-            <Button onClick={openCreateDialog} className="w-full sm:w-auto">
+            <Button onClick={openCreateDialog} className="w-full sm:w-auto h-10 sm:h-9">
               <Plus className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline">Nueva Institución</span>
-              <span className="sm:hidden">Nueva</span>
+              <span className="sm:hidden">Nueva Institución</span>
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -1152,17 +1185,95 @@ function InstitutionsManagement() {
         </Dialog>
       </div>
 
-      {/* Search */}
-      <div className="flex items-center space-x-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar instituciones..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 text-sm sm:text-base"
-          />
+      {/* Search and Filters */}
+      <div className="space-y-4">
+        <div className="flex items-center space-x-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar instituciones..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 text-sm sm:text-base"
+            />
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => setShowFilters(!showFilters)}
+            className="h-10 px-3"
+          >
+            <Filter className="h-4 w-4 mr-2" />
+            Filtros
+          </Button>
         </div>
+
+        {/* Filter Panel */}
+        {showFilters && (
+          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-medium">Filtros</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setStatusFilter("all");
+                  setTypeFilter("all");
+                  setMunicipalityFilter("all");
+                }}
+                className="h-8 px-2 text-xs"
+              >
+                Limpiar
+              </Button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Estado</Label>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="Seleccionar estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="active">Activos</SelectItem>
+                    <SelectItem value="inactive">Inactivos</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Tipo</Label>
+                <Select value={typeFilter} onValueChange={setTypeFilter}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="Seleccionar tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="MUNICIPALITY">Municipalidad</SelectItem>
+                    <SelectItem value="UNIVERSITY">Universidad</SelectItem>
+                    <SelectItem value="NGO">ONG</SelectItem>
+                    <SelectItem value="OTHER">Otro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Municipio</Label>
+                <Select value={municipalityFilter} onValueChange={setMunicipalityFilter}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="Seleccionar municipio" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    {municipalityInstitutions.map((institution: Institution) => (
+                      <SelectItem key={institution.id} value={institution.name}>
+                        {institution.name}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="Otro">Otro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Institutions List */}
@@ -1172,8 +1283,8 @@ function InstitutionsManagement() {
             <CardContent className="p-4 sm:p-6">
               <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
                 <div className="flex items-start space-x-3 sm:space-x-4">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600" />
+                  <div className="w-12 h-12 sm:w-12 sm:h-12 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Building2 className="h-6 w-6 sm:h-6 sm:w-6 text-purple-600" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="font-semibold text-sm sm:text-base truncate">{institution.name}</h4>
@@ -1199,21 +1310,21 @@ function InstitutionsManagement() {
                         </div>
                       )}
                     </div>
-                    <div className="flex flex-wrap items-center gap-1 sm:gap-2 mt-2">
-                      <Badge variant={institution.isActive ? "default" : "secondary"} className="text-xs">
+                    <div className="flex flex-wrap items-center gap-2 mt-3">
+                      <Badge variant={institution.isActive ? "default" : "secondary"} className="text-xs px-2 py-1">
                         {institution.isActive ? "Activo" : "Inactivo"}
                       </Badge>
-                      <Badge className={`${getInstitutionTypeColor(institution.institutionType)} text-xs`}>
+                      <Badge className={`${getInstitutionTypeColor(institution.institutionType)} text-xs px-2 py-1`}>
                         {getInstitutionTypeText(institution.institutionType)}
                       </Badge>
                       {institution.population && (
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-xs px-2 py-1">
                           <Users className="h-3 w-3 mr-1" />
                           {institution.population.toLocaleString()} hab.
                         </Badge>
                       )}
                       {getAssociatedMunicipality(institution) && (
-                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-xs">
+                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-xs px-2 py-1">
                           <MapPin className="h-3 w-3 mr-1" />
                           <span className="truncate max-w-20 sm:max-w-none">{getAssociatedMunicipality(institution)?.name}</span>
                         </Badge>
@@ -1221,7 +1332,7 @@ function InstitutionsManagement() {
                     </div>
                   </div>
                 </div>
-                <div className="flex flex-col space-y-2 sm:space-y-0 sm:items-end">
+                <div className="flex flex-col space-y-3 sm:space-y-0 sm:items-end">
                   <div className="text-xs sm:text-sm text-muted-foreground">
                     <div className="flex items-center space-x-1">
                       <Calendar className="h-3 w-3" />
@@ -1232,14 +1343,16 @@ function InstitutionsManagement() {
                       <p className="text-xs mt-1 truncate">Dir: {institution.mayorName}</p>
                     )}
                   </div>
-                  <div className="flex space-x-1 sm:space-x-2">
-                    <Button variant="outline" size="sm" onClick={() => openEditDialog(institution)} className="h-8 w-8 sm:h-9 sm:w-auto sm:px-3">
-                      <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <div className="flex space-x-2 sm:space-x-3">
+                    <Button variant="outline" size="sm" onClick={() => openEditDialog(institution)} className="flex-1 sm:flex-none h-10 sm:h-9 sm:w-auto sm:px-3">
+                      <Edit className="h-4 w-4 sm:h-4 sm:w-4" />
                       <span className="hidden sm:inline ml-1">Editar</span>
+                      <span className="sm:hidden ml-2">Editar</span>
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => handleDeleteInstitution(institution)} className="h-8 w-8 sm:h-9 sm:w-auto sm:px-3">
-                      <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <Button variant="outline" size="sm" onClick={() => handleDeleteInstitution(institution)} className="flex-1 sm:flex-none h-10 sm:h-9 sm:w-auto sm:px-3">
+                      <Trash2 className="h-4 w-4 sm:h-4 sm:w-4" />
                       <span className="hidden sm:inline ml-1">Eliminar</span>
+                      <span className="sm:hidden ml-2">Eliminar</span>
                     </Button>
                   </div>
                 </div>

@@ -17,6 +17,13 @@ export interface Company {
   foundedYear?: number;
   isVerified: boolean;
   isActive: boolean;
+  institutionId?: string;
+  institution?: {
+    id: string;
+    name: string;
+    institutionType: string;
+    region?: string;
+  };
   socialMedia?: Record<string, string>;
   benefits: string[];
   culture?: string;

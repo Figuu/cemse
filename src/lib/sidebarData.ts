@@ -444,7 +444,7 @@ export const superAdminSidebarData: SidebarData = {
           icon: Briefcase,
         },
         {
-          title: "Candidatos",
+          title: "Descubre Talento",
           url: "/talent",
           icon: Users,
         },
