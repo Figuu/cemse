@@ -80,7 +80,17 @@ log "User: $APP_USER"
 # 1. SYSTEM UPDATE AND BASIC TOOLS
 # =============================================================================
 log "📦 Updating system packages..."
-sudo apt update && sudo apt upgrade -y
+
+# Update and upgrade with error handling
+log "📋 Updating package lists..."
+sudo apt update || warn "Package update had some issues, continuing..."
+
+log "⬆️ Upgrading packages..."
+sudo apt upgrade -y || {
+    warn "Some packages failed to upgrade, fixing and continuing..."
+    sudo apt --fix-broken install -y
+    sudo apt upgrade -y || warn "Some packages still failing, continuing with setup..."
+}
 
 log "🔧 Installing basic development tools..."
 sudo apt install -y \
@@ -114,8 +124,10 @@ sudo apt install -y \
     tk-dev \
     libxml2-dev \
     libxmlsec1-dev \
-    libffi-dev \
-    liblzma-dev
+    liblzma-dev || {
+    warn "Some packages failed to install, fixing and continuing..."
+    sudo apt --fix-broken install -y
+}
 
 # =============================================================================
 # 2. NODE.JS AND PNPM INSTALLATION
