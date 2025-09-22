@@ -41,9 +41,7 @@ interface CourseModule {
   description: string | null;
   orderIndex: number;
   estimatedDuration: number;
-  isLocked: boolean;
   prerequisites: string[];
-  hasCertificate: boolean;
   lessons: Array<{
     id: string;
     title: string;
