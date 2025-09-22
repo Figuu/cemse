@@ -30,7 +30,7 @@ import {
 } from "lucide-react";
 import { BusinessPlanBuilder } from "@/components/entrepreneurship/BusinessPlanBuilder";
 import FinancialCalculator from "@/components/entrepreneurship/FinancialCalculator";
-import BusinessModelCanvas from "@/components/entrepreneurship/BusinessModelCanvas";
+import BusinessModelCanvasModal from "@/components/entrepreneurship/BusinessModelCanvasModal";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useEntrepreneurshipNews, useLatestNews } from "@/hooks/useEntrepreneurshipNews";
@@ -38,47 +38,6 @@ import { useEntrepreneurshipResources, useFeaturedResources } from "@/hooks/useE
 import { useMyEntrepreneurships } from "@/hooks/useEntrepreneurships";
 import { useBusinessPlans } from "@/hooks/useBusinessPlans";
 
-// Memoized Business Model Canvas Modal to prevent re-renders
-const BusinessModelCanvasModal = memo(({ 
-  businessPlan, 
-  onSave, 
-  onClose 
-}: { 
-  businessPlan: any; 
-  onSave: (data: any) => void; 
-  onClose: () => void; 
-}) => {
-  const handleSave = useCallback((data: any) => {
-    onSave(data);
-  }, [onSave]);
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-6xl max-h-[90vh] overflow-y-auto">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Business Model Canvas</CardTitle>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-            >
-              ✕
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <BusinessModelCanvas
-            businessPlan={businessPlan}
-            onSave={handleSave}
-          />
-        </CardContent>
-      </Card>
-    </div>
-  );
-});
-
-BusinessModelCanvasModal.displayName = 'BusinessModelCanvasModal';
 
 export default function EntrepreneurshipPage() {
   const [activeTab, setActiveTab] = useState("overview");
@@ -746,13 +705,12 @@ export default function EntrepreneurshipPage() {
       )}
 
       {/* Business Model Canvas Modal */}
-      <div className={showBusinessModelCanvas ? "block" : "hidden"}>
-        <BusinessModelCanvasModal
-          businessPlan={currentBusinessPlan}
-          onSave={handleCanvasSave}
-          onClose={handleCanvasClose}
-        />
-      </div>
+      <BusinessModelCanvasModal
+        businessPlan={currentBusinessPlan}
+        onSave={handleCanvasSave}
+        onClose={handleCanvasClose}
+        isOpen={showBusinessModelCanvas}
+      />
     </div>
   );
 }

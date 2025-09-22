@@ -129,24 +129,38 @@ const BusinessModelCanvas: React.FC<BusinessModelCanvasProps> = ({
     field: keyof CanvasData;
     placeholder: string;
     className?: string;
-  }> = ({ title, icon, field, placeholder, className = "" }) => (
-    <Card className={`h-full ${className}`}>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium flex items-center gap-2">
-          {icon}
-          {title}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="pt-0">
-        <Textarea
-          value={canvasData[field]}
-          onChange={(e) => handleInputChange(field, e.target.value)}
-          placeholder={placeholder}
-          className="min-h-[120px] resize-none text-xs"
-        />
-      </CardContent>
-    </Card>
-  );
+  }> = ({ title, icon, field, placeholder, className = "" }) => {
+    const [localValue, setLocalValue] = useState(canvasData[field]);
+    
+    // Update local value when canvasData changes (from external sources)
+    useEffect(() => {
+      setLocalValue(canvasData[field]);
+    }, [canvasData[field]]);
+    
+    const handleBlur = useCallback(() => {
+      handleInputChange(field, localValue);
+    }, [field, localValue]);
+
+    return (
+      <Card className={`h-full ${className}`}>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            {icon}
+            {title}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <Textarea
+            value={localValue}
+            onChange={(e) => setLocalValue(e.target.value)}
+            onBlur={handleBlur}
+            placeholder={placeholder}
+            className="min-h-[120px] resize-none text-xs"
+          />
+        </CardContent>
+      </Card>
+    );
+  };
 
   return (
     <div className="space-y-6">
