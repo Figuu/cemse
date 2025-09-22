@@ -25,7 +25,10 @@ import {
   Globe,
   Briefcase,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  RefreshCw,
+  Copy,
+  Check
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -90,6 +93,19 @@ interface CompanyFormData {
   foundedYear: string;
   institutionId: string;
   isActive: string;
+}
+
+interface PasswordRequirements {
+  minLength: boolean;
+  hasLowercase: boolean;
+  hasUppercase: boolean;
+  hasNumber: boolean;
+}
+
+interface CreatedCompany {
+  name: string;
+  email: string;
+  password: string;
 }
 
 // Validation utility functions
@@ -158,6 +174,96 @@ const validateFoundedYear = (year: string): { isValid: boolean; message: string 
   return { isValid: true, message: "" };
 };
 
+// Password requirements checking
+const checkPasswordRequirements = (password: string): PasswordRequirements => {
+  return {
+    minLength: password.length >= 8,
+    hasLowercase: /[a-z]/.test(password),
+    hasUppercase: /[A-Z]/.test(password),
+    hasNumber: /\d/.test(password)
+  };
+};
+
+// Generate secure password
+const generateSecurePassword = (): string => {
+  const lowercase = 'abcdefghijklmnopqrstuvwxyz';
+  const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const numbers = '0123456789';
+  const symbols = '!@#$%^&*';
+  
+  let password = '';
+  
+  // Ensure at least one character from each category
+  password += lowercase[Math.floor(Math.random() * lowercase.length)];
+  password += uppercase[Math.floor(Math.random() * uppercase.length)];
+  password += numbers[Math.floor(Math.random() * numbers.length)];
+  password += symbols[Math.floor(Math.random() * symbols.length)];
+  
+  // Fill the rest randomly
+  const allChars = lowercase + uppercase + numbers + symbols;
+  for (let i = 4; i < 12; i++) {
+    password += allChars[Math.floor(Math.random() * allChars.length)];
+  }
+  
+  // Shuffle the password
+  return password.split('').sort(() => Math.random() - 0.5).join('');
+};
+
+// Password requirements component
+const PasswordRequirements = ({ password }: { password: string }) => {
+  const requirements = checkPasswordRequirements(password);
+  
+  if (!password) return null;
+  
+  return (
+    <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-md">
+      <p className="text-xs font-medium text-gray-700 mb-2">Requisitos de contraseña:</p>
+      <div className="space-y-1">
+        <div className="flex items-center space-x-2">
+          {requirements.minLength ? (
+            <CheckCircle className="h-3 w-3 text-green-600" />
+          ) : (
+            <AlertCircle className="h-3 w-3 text-gray-400" />
+          )}
+          <span className={`text-xs ${requirements.minLength ? 'text-green-600' : 'text-gray-500'}`}>
+            Mínimo 8 caracteres
+          </span>
+        </div>
+        <div className="flex items-center space-x-2">
+          {requirements.hasLowercase ? (
+            <CheckCircle className="h-3 w-3 text-green-600" />
+          ) : (
+            <AlertCircle className="h-3 w-3 text-gray-400" />
+          )}
+          <span className={`text-xs ${requirements.hasLowercase ? 'text-green-600' : 'text-gray-500'}`}>
+            Al menos una letra minúscula
+          </span>
+        </div>
+        <div className="flex items-center space-x-2">
+          {requirements.hasUppercase ? (
+            <CheckCircle className="h-3 w-3 text-green-600" />
+          ) : (
+            <AlertCircle className="h-3 w-3 text-gray-400" />
+          )}
+          <span className={`text-xs ${requirements.hasUppercase ? 'text-green-600' : 'text-gray-500'}`}>
+            Al menos una letra mayúscula
+          </span>
+        </div>
+        <div className="flex items-center space-x-2">
+          {requirements.hasNumber ? (
+            <CheckCircle className="h-3 w-3 text-green-600" />
+          ) : (
+            <AlertCircle className="h-3 w-3 text-gray-400" />
+          )}
+          <span className={`text-xs ${requirements.hasNumber ? 'text-green-600' : 'text-gray-500'}`}>
+            Al menos un número
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Error display component
 const ErrorMessage = ({ error }: { error?: string }) => {
   if (!error) return null;
@@ -180,6 +286,10 @@ function CompaniesManagement() {
   const [editErrors, setEditErrors] = useState<FormErrors>({});
   const [isValidating, setIsValidating] = useState(false);
   const [showCreatePassword, setShowCreatePassword] = useState(false);
+  const [createPassword, setCreatePassword] = useState("");
+  const [isCredentialsModalOpen, setIsCredentialsModalOpen] = useState(false);
+  const [createdCompany, setCreatedCompany] = useState<CreatedCompany | null>(null);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   // Fetch companies
@@ -219,10 +329,19 @@ function CompaniesManagement() {
       }
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['admin-companies'] });
       setIsCreateDialogOpen(false);
       setCreateErrors({});
+      
+      // Show credentials modal
+      setCreatedCompany({
+        name: data.company.name,
+        email: data.company.email,
+        password: createPassword
+      });
+      setIsCredentialsModalOpen(true);
+      
       toast.success('Empresa creada exitosamente');
     },
     onError: (error) => {
@@ -323,7 +442,7 @@ function CompaniesManagement() {
   };
 
   // Validation functions
-  const validateCreateForm = (formData: CompanyFormData): FormErrors => {
+  const validateCreateForm = (formData: CompanyFormData, institutionId?: string): FormErrors => {
     const errors: FormErrors = {};
 
     // Required fields
@@ -368,10 +487,15 @@ function CompaniesManagement() {
       }
     }
 
+    // Municipality association validation
+    if (!institutionId || institutionId === 'none') {
+      errors.general = "El municipio asociado es requerido";
+    }
+
     return errors;
   };
 
-  const validateEditForm = (formData: CompanyFormData): FormErrors => {
+  const validateEditForm = (formData: CompanyFormData, institutionId?: string): FormErrors => {
     const errors: FormErrors = {};
 
     // Required fields
@@ -407,6 +531,11 @@ function CompaniesManagement() {
       }
     }
 
+    // Municipality association validation
+    if (!institutionId || institutionId === 'none') {
+      errors.general = "El municipio asociado es requerido";
+    }
+
     return errors;
   };
 
@@ -417,7 +546,7 @@ function CompaniesManagement() {
     const formDataObj: CompanyFormData = {
       name: formData.get('name') as string || '',
       email: formData.get('email') as string || '',
-      password: formData.get('password') as string || '',
+      password: createPassword,
       description: formData.get('description') as string || '',
       taxId: formData.get('taxId') as string || '',
       legalRepresentative: formData.get('legalRepresentative') as string || '',
@@ -431,7 +560,8 @@ function CompaniesManagement() {
       isActive: 'true'
     };
 
-    const errors = validateCreateForm(formDataObj);
+    const institutionId = formData.get('institutionId') as string;
+    const errors = validateCreateForm(formDataObj, institutionId);
     
     if (Object.keys(errors).length > 0) {
       setCreateErrors(errors);
@@ -452,7 +582,7 @@ function CompaniesManagement() {
       phone: formDataObj.phone || undefined,
       address: formDataObj.address || undefined,
       foundedYear: formDataObj.foundedYear ? parseInt(formDataObj.foundedYear) : undefined,
-      institutionId: formDataObj.institutionId && formDataObj.institutionId !== 'none' ? formDataObj.institutionId : undefined
+      institutionId: institutionId && institutionId !== 'none' ? institutionId : undefined
     };
 
     createCompanyMutation.mutate(companyData);
@@ -482,7 +612,8 @@ function CompaniesManagement() {
       isActive: formData.get('isActive') as string || 'true'
     };
 
-    const errors = validateEditForm(formDataObj);
+    const institutionId = formData.get('institutionId') as string;
+    const errors = validateEditForm(formDataObj, institutionId);
     
     if (Object.keys(errors).length > 0) {
       setEditErrors(errors);
@@ -502,7 +633,7 @@ function CompaniesManagement() {
       phone: formDataObj.phone || undefined,
       address: formDataObj.address || undefined,
       foundedYear: formDataObj.foundedYear ? parseInt(formDataObj.foundedYear) : undefined,
-      institutionId: formDataObj.institutionId && formDataObj.institutionId !== 'none' ? formDataObj.institutionId : undefined,
+      institutionId: institutionId && institutionId !== 'none' ? institutionId : undefined,
       isActive: formDataObj.isActive === 'true'
     };
 
@@ -529,7 +660,23 @@ function CompaniesManagement() {
 
   const openCreateDialog = () => {
     setCreateErrors({});
+    setCreatePassword("");
     setIsCreateDialogOpen(true);
+  };
+
+  const copyToClipboard = async (text: string, field: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
+  };
+
+  const generatePassword = () => {
+    const newPassword = generateSecurePassword();
+    setCreatePassword(newPassword);
   };
 
   const formatDate = (dateString: string) => {
@@ -674,32 +821,49 @@ function CompaniesManagement() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm">Contraseña *</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password" className="text-sm">Contraseña *</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={generatePassword}
+                    className="h-7 px-2 text-xs"
+                  >
+                    <RefreshCw className="h-3 w-3 mr-1" />
+                    Generar
+                  </Button>
+                </div>
                 <div className="relative">
                   <Input 
                     id="password" 
                     name="password" 
                     type={showCreatePassword ? "text" : "password"}
+                    value={createPassword}
+                    onChange={(e) => setCreatePassword(e.target.value)}
                     required 
                     minLength={8}
                     maxLength={100}
                     pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$"
-                    className={createErrors.password ? "border-red-500 pr-10" : "pr-10"}
+                    className={`text-sm ${createErrors.password ? "border-red-500 pr-20" : "pr-20"}`}
                   />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                    onClick={() => setShowCreatePassword(!showCreatePassword)}
-                  >
-                    {showCreatePassword ? (
-                      <EyeOff className="h-4 w-4 text-gray-400" />
-                    ) : (
-                      <Eye className="h-4 w-4 text-gray-400" />
-                    )}
-                  </Button>
+                  <div className="absolute right-0 top-0 h-full flex items-center">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-full px-2 hover:bg-transparent"
+                      onClick={() => setShowCreatePassword(!showCreatePassword)}
+                    >
+                      {showCreatePassword ? (
+                        <EyeOff className="h-4 w-4 text-gray-400" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-gray-400" />
+                      )}
+                    </Button>
+                  </div>
                 </div>
+                <PasswordRequirements password={createPassword} />
                 <ErrorMessage error={createErrors.password} />
               </div>
               <div className="space-y-2">
@@ -826,13 +990,12 @@ function CompaniesManagement() {
                   <ErrorMessage error={createErrors.foundedYear} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="institutionId" className="text-sm">Municipio Asociado</Label>
-                  <Select name="institutionId">
+                  <Label htmlFor="institutionId" className="text-sm">Municipio Asociado *</Label>
+                  <Select name="institutionId" required>
                     <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar municipio (opcional)" />
+                      <SelectValue placeholder="Seleccionar municipio" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">Sin municipio</SelectItem>
                       {institutions.map((institution: any) => (
                         <SelectItem key={institution.id} value={institution.id}>
                           {institution.name}
@@ -840,6 +1003,9 @@ function CompaniesManagement() {
                       ))}
                     </SelectContent>
                   </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Selecciona el municipio donde se encuentra esta empresa. Esto establecerá la región y departamento.
+                  </p>
                 </div>
               </div>
               <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0">
@@ -1169,13 +1335,12 @@ function CompaniesManagement() {
                   <ErrorMessage error={editErrors.foundedYear} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-institutionId" className="text-sm">Municipio Asociado</Label>
-                  <Select name="institutionId" defaultValue={selectedCompany.institutionId || "none"}>
+                  <Label htmlFor="edit-institutionId" className="text-sm">Municipio Asociado *</Label>
+                  <Select name="institutionId" defaultValue={selectedCompany.institutionId} required>
                     <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar municipio (opcional)" />
+                      <SelectValue placeholder="Seleccionar municipio" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">Sin municipio</SelectItem>
                       {institutions.map((institution: any) => (
                         <SelectItem key={institution.id} value={institution.id}>
                           {institution.name}
@@ -1183,6 +1348,9 @@ function CompaniesManagement() {
                       ))}
                     </SelectContent>
                   </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Selecciona el municipio donde se encuentra esta empresa. Esto establecerá la región y departamento.
+                  </p>
                 </div>
               </div>
               <div className="space-y-2">
@@ -1244,6 +1412,87 @@ function CompaniesManagement() {
             </Button>
             <Button variant="destructive" onClick={confirmDelete} disabled={deleteCompanyMutation.isPending}>
               {deleteCompanyMutation.isPending ? 'Eliminando...' : 'Eliminar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Credentials Confirmation Modal */}
+      <Dialog open={isCredentialsModalOpen} onOpenChange={setIsCredentialsModalOpen}>
+        <DialogContent className="max-w-[95vw] sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-lg sm:text-xl flex items-center space-x-2">
+              <CheckCircle className="h-5 w-5 text-green-600" />
+              <span>Empresa Creada</span>
+            </DialogTitle>
+            <DialogDescription className="text-sm">
+              La empresa ha sido creada exitosamente. Guarda estas credenciales de forma segura.
+            </DialogDescription>
+          </DialogHeader>
+          {createdCompany && (
+            <div className="space-y-4">
+              <div className="p-4 bg-green-50 border border-green-200 rounded-md">
+                <h4 className="font-medium text-green-800 mb-2">{createdCompany.name}</h4>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="text-xs text-green-600 font-medium">Email:</p>
+                      <p className="text-sm text-green-800 font-mono break-all">{createdCompany.email}</p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => copyToClipboard(createdCompany.email, 'email')}
+                      className="ml-2 h-8 w-8 p-0"
+                    >
+                      {copiedField === 'email' ? (
+                        <Check className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="text-xs text-green-600 font-medium">Contraseña:</p>
+                      <p className="text-sm text-green-800 font-mono break-all">{createdCompany.password}</p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => copyToClipboard(createdCompany.password, 'password')}
+                      className="ml-2 h-8 w-8 p-0"
+                    >
+                      {copiedField === 'password' ? (
+                        <Check className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                <div className="flex items-start space-x-2">
+                  <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+                  <div className="text-xs text-yellow-800">
+                    <p className="font-medium mb-1">Importante:</p>
+                    <p>Guarda estas credenciales en un lugar seguro. No podrás ver la contraseña nuevamente.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              onClick={() => {
+                setIsCredentialsModalOpen(false);
+                setCreatedCompany(null);
+                setCopiedField(null);
+              }}
+              className="w-full sm:w-auto"
+            >
+              Entendido
             </Button>
           </DialogFooter>
         </DialogContent>

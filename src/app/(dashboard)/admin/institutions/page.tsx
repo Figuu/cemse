@@ -24,7 +24,10 @@ import {
   Users,
   Globe,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  RefreshCw,
+  Copy,
+  Check
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -71,6 +74,20 @@ interface FormErrors {
   mayorPhone?: string;
   customType?: string;
   general?: string;
+}
+
+interface PasswordRequirements {
+  length: boolean;
+  lowercase: boolean;
+  uppercase: boolean;
+  number: boolean;
+}
+
+interface CreatedInstitution {
+  id: string;
+  email: string;
+  password: string;
+  name: string;
 }
 
 interface InstitutionFormData {
@@ -131,6 +148,39 @@ const validatePassword = (password: string): { isValid: boolean; message: string
   return { isValid: true, message: "" };
 };
 
+const checkPasswordRequirements = (password: string): PasswordRequirements => {
+  return {
+    length: password.length >= 8,
+    lowercase: /(?=.*[a-z])/.test(password),
+    uppercase: /(?=.*[A-Z])/.test(password),
+    number: /(?=.*\d)/.test(password)
+  };
+};
+
+const generateSecurePassword = (): string => {
+  const lowercase = 'abcdefghijklmnopqrstuvwxyz';
+  const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const numbers = '0123456789';
+  const symbols = '!@#$%^&*()_+-=[]{}|;:,.<>?';
+  
+  let password = '';
+  
+  // Ensure at least one character from each required type
+  password += lowercase[Math.floor(Math.random() * lowercase.length)];
+  password += uppercase[Math.floor(Math.random() * uppercase.length)];
+  password += numbers[Math.floor(Math.random() * numbers.length)];
+  password += symbols[Math.floor(Math.random() * symbols.length)];
+  
+  // Fill the rest with random characters
+  const allChars = lowercase + uppercase + numbers + symbols;
+  for (let i = 4; i < 12; i++) {
+    password += allChars[Math.floor(Math.random() * allChars.length)];
+  }
+  
+  // Shuffle the password
+  return password.split('').sort(() => Math.random() - 0.5).join('');
+};
+
 const validatePopulation = (population: string): boolean => {
   if (!population) return true; // Optional field
   const num = parseInt(population);
@@ -148,6 +198,61 @@ const ErrorMessage = ({ error }: { error?: string }) => {
   );
 };
 
+// Password requirements component
+const PasswordRequirements = ({ password }: { password: string }) => {
+  const requirements = checkPasswordRequirements(password);
+  
+  if (!password) return null;
+  
+  return (
+    <div className="mt-2 p-3 bg-gray-50 rounded-md">
+      <p className="text-xs font-medium text-gray-700 mb-2">Requisitos de contraseña:</p>
+      <div className="space-y-1">
+        <div className="flex items-center space-x-2 text-xs">
+          {requirements.length ? (
+            <CheckCircle className="h-3 w-3 text-green-600" />
+          ) : (
+            <AlertCircle className="h-3 w-3 text-gray-400" />
+          )}
+          <span className={requirements.length ? "text-green-600" : "text-gray-500"}>
+            Al menos 8 caracteres
+          </span>
+        </div>
+        <div className="flex items-center space-x-2 text-xs">
+          {requirements.lowercase ? (
+            <CheckCircle className="h-3 w-3 text-green-600" />
+          ) : (
+            <AlertCircle className="h-3 w-3 text-gray-400" />
+          )}
+          <span className={requirements.lowercase ? "text-green-600" : "text-gray-500"}>
+            Una letra minúscula
+          </span>
+        </div>
+        <div className="flex items-center space-x-2 text-xs">
+          {requirements.uppercase ? (
+            <CheckCircle className="h-3 w-3 text-green-600" />
+          ) : (
+            <AlertCircle className="h-3 w-3 text-gray-400" />
+          )}
+          <span className={requirements.uppercase ? "text-green-600" : "text-gray-500"}>
+            Una letra mayúscula
+          </span>
+        </div>
+        <div className="flex items-center space-x-2 text-xs">
+          {requirements.number ? (
+            <CheckCircle className="h-3 w-3 text-green-600" />
+          ) : (
+            <AlertCircle className="h-3 w-3 text-gray-400" />
+          )}
+          <span className={requirements.number ? "text-green-600" : "text-gray-500"}>
+            Un número
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 function InstitutionsManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -159,6 +264,12 @@ function InstitutionsManagement() {
   const [editErrors, setEditErrors] = useState<FormErrors>({});
   const [isValidating, setIsValidating] = useState(false);
   const [showCreatePassword, setShowCreatePassword] = useState(false);
+  const [createPassword, setCreatePassword] = useState("");
+  const [createInstitutionType, setCreateInstitutionType] = useState("");
+  const [editInstitutionType, setEditInstitutionType] = useState("");
+  const [isCredentialsModalOpen, setIsCredentialsModalOpen] = useState(false);
+  const [createdInstitution, setCreatedInstitution] = useState<CreatedInstitution | null>(null);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const { data: session } = useSession();
 
@@ -201,10 +312,23 @@ function InstitutionsManagement() {
       }
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['admin-institutions'] });
       setIsCreateDialogOpen(false);
       setCreateErrors({});
+      setCreatePassword("");
+      
+      // Show credentials modal with the created institution data
+      if (data.institution) {
+        setCreatedInstitution({
+          id: data.institution.id,
+          email: data.institution.email,
+          password: data.institution.password || createPassword,
+          name: data.institution.name
+        });
+        setIsCredentialsModalOpen(true);
+      }
+      
       toast.success('Institución creada exitosamente');
     },
     onError: (error) => {
@@ -296,7 +420,7 @@ function InstitutionsManagement() {
   };
 
   // Validation functions
-  const validateCreateForm = (formData: InstitutionFormData): FormErrors => {
+  const validateCreateForm = (formData: InstitutionFormData, associatedMunicipality?: string): FormErrors => {
     const errors: FormErrors = {};
 
     // Required fields
@@ -357,10 +481,15 @@ function InstitutionsManagement() {
       errors.customType = "El tipo personalizado es requerido cuando se selecciona 'Otro'";
     }
 
+    // Municipality association validation for non-municipality institutions
+    if (formData.institutionType && formData.institutionType !== "MUNICIPALITY" && !associatedMunicipality) {
+      errors.general = "El municipio asociado es requerido para este tipo de institución";
+    }
+
     return errors;
   };
 
-  const validateEditForm = (formData: InstitutionFormData): FormErrors => {
+  const validateEditForm = (formData: InstitutionFormData, associatedMunicipality?: string): FormErrors => {
     const errors: FormErrors = {};
 
     // Required fields
@@ -412,6 +541,11 @@ function InstitutionsManagement() {
       errors.customType = "El tipo personalizado es requerido cuando se selecciona 'Otro'";
     }
 
+    // Municipality association validation for non-municipality institutions
+    if (formData.institutionType && formData.institutionType !== "MUNICIPALITY" && !associatedMunicipality) {
+      errors.general = "El municipio asociado es requerido para este tipo de institución";
+    }
+
     return errors;
   };
 
@@ -421,12 +555,12 @@ function InstitutionsManagement() {
 
     // Get municipality association
     const associatedMunicipality = formData.get('associatedMunicipality') as string;
-    const selectedMunicipality = municipalities.find((m: Municipality) => m.department === associatedMunicipality);
+    const selectedMunicipality = municipalities.find((m: Municipality) => m.id === associatedMunicipality);
 
     const formDataObj: InstitutionFormData = {
       name: formData.get('name') as string || '',
       email: formData.get('email') as string || '',
-      password: formData.get('password') as string || '',
+      password: createPassword || formData.get('password') as string || '',
       phone: formData.get('phone') as string || '',
       address: formData.get('address') as string || '',
       website: formData.get('website') as string || '',
@@ -443,7 +577,7 @@ function InstitutionsManagement() {
       isActive: 'true'
     };
 
-    const errors = validateCreateForm(formDataObj);
+    const errors = validateCreateForm(formDataObj, associatedMunicipality);
     
     if (Object.keys(errors).length > 0) {
       setCreateErrors(errors);
@@ -482,7 +616,7 @@ function InstitutionsManagement() {
 
     // Get municipality association
     const associatedMunicipality = formData.get('associatedMunicipality') as string;
-    const selectedMunicipality = municipalities.find((m: Municipality) => m.department === associatedMunicipality);
+    const selectedMunicipality = municipalities.find((m: Municipality) => m.id === associatedMunicipality);
 
     const formDataObj: InstitutionFormData = {
       name: formData.get('name') as string || '',
@@ -504,7 +638,7 @@ function InstitutionsManagement() {
       isActive: formData.get('isActive') as string || 'true'
     };
 
-    const errors = validateEditForm(formDataObj);
+    const errors = validateEditForm(formDataObj, associatedMunicipality);
     
     if (Object.keys(errors).length > 0) {
       setEditErrors(errors);
@@ -548,13 +682,37 @@ function InstitutionsManagement() {
 
   const openEditDialog = (institution: Institution) => {
     setSelectedInstitution(institution);
+    setEditInstitutionType(institution.institutionType);
     setEditErrors({});
     setIsEditDialogOpen(true);
   };
 
   const openCreateDialog = () => {
     setCreateErrors({});
+    setCreatePassword("");
+    setCreateInstitutionType("");
     setIsCreateDialogOpen(true);
+  };
+
+  const copyToClipboard = async (text: string, field: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedField(field);
+      toast.success(`${field === 'email' ? 'Email' : 'Contraseña'} copiado al portapapeles`);
+      setTimeout(() => setCopiedField(null), 2000);
+    } catch (err) {
+      toast.error('Error al copiar al portapapeles');
+    }
+  };
+
+  const generatePassword = () => {
+    const newPassword = generateSecurePassword();
+    setCreatePassword(newPassword);
+    // Update the form field
+    const passwordInput = document.getElementById('password') as HTMLInputElement;
+    if (passwordInput) {
+      passwordInput.value = newPassword;
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -601,17 +759,17 @@ function InstitutionsManagement() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Gestión de Instituciones</h1>
-            <p className="text-muted-foreground">Administra las instituciones del sistema</p>
+      <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
+        <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+          <div className="space-y-1">
+            <h1 className="text-xl sm:text-2xl font-bold">Gestión de Instituciones</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">Administra las instituciones del sistema</p>
           </div>
         </div>
-        <div className="grid grid-cols-1 gap-4">
+        <div className="space-y-3 sm:space-y-4">
           {Array.from({ length: 3 }).map((_, i) => (
             <Card key={i} className="animate-pulse">
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <div className="space-y-3">
                   <div className="h-4 bg-muted rounded w-3/4"></div>
                   <div className="h-4 bg-muted rounded w-1/2"></div>
@@ -626,16 +784,16 @@ function InstitutionsManagement() {
 
   if (error) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Gestión de Instituciones</h1>
-            <p className="text-muted-foreground">Administra las instituciones del sistema</p>
+      <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
+        <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+          <div className="space-y-1">
+            <h1 className="text-xl sm:text-2xl font-bold">Gestión de Instituciones</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">Administra las instituciones del sistema</p>
           </div>
         </div>
         <Card>
-          <CardContent className="p-6 text-center">
-            <p className="text-destructive">Error al cargar las instituciones: {(error as Error).message}</p>
+          <CardContent className="p-4 sm:p-6 text-center">
+            <p className="text-sm sm:text-base text-destructive">Error al cargar las instituciones: {(error as Error).message}</p>
           </CardContent>
         </Card>
       </div>
@@ -643,27 +801,28 @@ function InstitutionsManagement() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Gestión de Instituciones</h1>
-          <p className="text-muted-foreground">Administra las instituciones del sistema</p>
+      <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+        <div className="space-y-1">
+          <h1 className="text-xl sm:text-2xl font-bold">Gestión de Instituciones</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">Administra las instituciones del sistema</p>
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={(open) => {
           setIsCreateDialogOpen(open);
           if (!open) setCreateErrors({});
         }}>
           <DialogTrigger asChild>
-            <Button onClick={openCreateDialog}>
+            <Button onClick={openCreateDialog} className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
-              Nueva Institución
+              <span className="hidden sm:inline">Nueva Institución</span>
+              <span className="sm:hidden">Nueva</span>
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Crear Nueva Institución</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-lg sm:text-xl">Crear Nueva Institución</DialogTitle>
+              <DialogDescription className="text-sm">
                 Crea una nueva institución con credenciales básicas
               </DialogDescription>
             </DialogHeader>
@@ -676,63 +835,80 @@ function InstitutionsManagement() {
                   </div>
                 </div>
               )}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Nombre de la Institución *</Label>
+                  <Label htmlFor="name" className="text-sm">Nombre de la Institución *</Label>
                   <Input 
                     id="name" 
                     name="name" 
                     required 
                     maxLength={100}
-                    className={createErrors.name ? "border-red-500" : ""}
+                    className={`text-sm ${createErrors.name ? "border-red-500" : ""}`}
                   />
                   <ErrorMessage error={createErrors.name} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email *</Label>
+                  <Label htmlFor="email" className="text-sm">Email *</Label>
                   <Input 
                     id="email" 
                     name="email" 
                     type="email" 
                     required 
                     maxLength={100}
-                    className={createErrors.email ? "border-red-500" : ""}
+                    className={`text-sm ${createErrors.email ? "border-red-500" : ""}`}
                   />
                   <ErrorMessage error={createErrors.email} />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="password">Contraseña *</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password" className="text-sm">Contraseña *</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={generatePassword}
+                      className="h-7 px-2 text-xs"
+                    >
+                      <RefreshCw className="h-3 w-3 mr-1" />
+                      Generar
+                    </Button>
+                  </div>
                   <div className="relative">
                     <Input 
                       id="password" 
                       name="password" 
                       type={showCreatePassword ? "text" : "password"}
+                      value={createPassword}
+                      onChange={(e) => setCreatePassword(e.target.value)}
                       required 
                       minLength={8}
                       maxLength={100}
                       pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$"
-                      className={createErrors.password ? "border-red-500 pr-10" : "pr-10"}
+                      className={`text-sm ${createErrors.password ? "border-red-500 pr-20" : "pr-20"}`}
                     />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() => setShowCreatePassword(!showCreatePassword)}
-                    >
-                      {showCreatePassword ? (
-                        <EyeOff className="h-4 w-4 text-gray-400" />
-                      ) : (
-                        <Eye className="h-4 w-4 text-gray-400" />
-                      )}
-                    </Button>
+                    <div className="absolute right-0 top-0 h-full flex items-center">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-full px-2 hover:bg-transparent"
+                        onClick={() => setShowCreatePassword(!showCreatePassword)}
+                      >
+                        {showCreatePassword ? (
+                          <EyeOff className="h-4 w-4 text-gray-400" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-gray-400" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
+                  <PasswordRequirements password={createPassword} />
                   <ErrorMessage error={createErrors.password} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Teléfono</Label>
+                  <Label htmlFor="phone" className="text-sm">Teléfono</Label>
                   <Input 
                     id="phone" 
                     name="phone" 
@@ -745,79 +921,32 @@ function InstitutionsManagement() {
                         e.preventDefault();
                       }
                     }}
-                    className={createErrors.phone ? "border-red-500" : ""}
+                    className={`text-sm ${createErrors.phone ? "border-red-500" : ""}`}
                   />
                   <ErrorMessage error={createErrors.phone} />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="address">Dirección</Label>
+                <Label htmlFor="address" className="text-sm">Dirección</Label>
                 <Input 
                   id="address" 
                   name="address" 
                   maxLength={200}
+                  className="text-sm"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              
+              {/* Institution Type - Moved up for conditional logic */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="website">Sitio Web</Label>
-                  <Input 
-                    id="website" 
-                    name="website" 
-                    type="url" 
-                    maxLength={200}
-                    pattern="^https?://.+"
-                    placeholder="https://example.com"
-                    className={createErrors.website ? "border-red-500" : ""}
-                  />
-                  <ErrorMessage error={createErrors.website} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="department">Departamento *</Label>
-                  <Input 
-                    id="department" 
-                    name="department" 
-                    required 
-                    maxLength={50}
-                    className={createErrors.department ? "border-red-500" : ""}
-                  />
-                  <ErrorMessage error={createErrors.department} />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="region">Región</Label>
-                  <Input 
-                    id="region" 
-                    name="region" 
-                    maxLength={50}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="population">Población</Label>
-                  <Input 
-                    id="population" 
-                    name="population" 
-                    type="number" 
-                    min="0"
-                    max="999999999"
-                    step="1"
-                    placeholder="0"
-                    onKeyPress={(e) => {
-                      if (!/[0-9]/.test(e.key)) {
-                        e.preventDefault();
-                      }
-                    }}
-                    className={createErrors.population ? "border-red-500" : ""}
-                  />
-                  <ErrorMessage error={createErrors.population} />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="institutionType">Tipo de Institución *</Label>
-                  <Select name="institutionType" required>
-                    <SelectTrigger className={createErrors.general ? "border-red-500" : ""}>
+                  <Label htmlFor="institutionType" className="text-sm">Tipo de Institución *</Label>
+                  <Select 
+                    name="institutionType" 
+                    required
+                    value={createInstitutionType}
+                    onValueChange={setCreateInstitutionType}
+                  >
+                    <SelectTrigger className={`text-sm ${createErrors.general ? "border-red-500" : ""}`}>
                       <SelectValue placeholder="Seleccionar tipo" />
                     </SelectTrigger>
                     <SelectContent>
@@ -829,80 +958,161 @@ function InstitutionsManagement() {
                     </SelectContent>
                   </Select>
                 </div>
+                {createInstitutionType === "OTHER" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="customType" className="text-sm">Tipo Personalizado *</Label>
+                    <Input 
+                      id="customType" 
+                      name="customType" 
+                      placeholder="Especificar tipo personalizado" 
+                      maxLength={50}
+                      className={`text-sm ${createErrors.customType ? "border-red-500" : ""}`}
+                    />
+                    <ErrorMessage error={createErrors.customType} />
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="customType">Tipo Personalizado</Label>
+                  <Label htmlFor="website" className="text-sm">Sitio Web</Label>
                   <Input 
-                    id="customType" 
-                    name="customType" 
-                    placeholder="Si seleccionaste 'Otro'" 
-                    maxLength={50}
-                    className={createErrors.customType ? "border-red-500" : ""}
+                    id="website" 
+                    name="website" 
+                    type="url" 
+                    maxLength={200}
+                    pattern="^https?://.+"
+                    placeholder="https://example.com"
+                    className={`text-sm ${createErrors.website ? "border-red-500" : ""}`}
                   />
-                  <ErrorMessage error={createErrors.customType} />
+                  <ErrorMessage error={createErrors.website} />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="department" className="text-sm">Departamento *</Label>
+                  <Input 
+                    id="department" 
+                    name="department" 
+                    required 
+                    maxLength={50}
+                    className={`text-sm ${createErrors.department ? "border-red-500" : ""}`}
+                  />
+                  <ErrorMessage error={createErrors.department} />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="region" className="text-sm">Región</Label>
+                  <Input 
+                    id="region" 
+                    name="region" 
+                    maxLength={50}
+                    className="text-sm"
+                  />
+                </div>
+                {/* Population field - only for municipalities */}
+                {createInstitutionType === "MUNICIPALITY" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="population" className="text-sm">Población</Label>
+                    <Input 
+                      id="population" 
+                      name="population" 
+                      type="number" 
+                      min="0"
+                      max="999999999"
+                      step="1"
+                      placeholder="0"
+                      onKeyPress={(e) => {
+                        if (!/[0-9]/.test(e.key)) {
+                          e.preventDefault();
+                        }
+                      }}
+                      className={`text-sm ${createErrors.population ? "border-red-500" : ""}`}
+                    />
+                    <ErrorMessage error={createErrors.population} />
+                  </div>
+                )}
               </div>
               
               {/* Municipality Association - Only show for non-municipality institutions */}
-              <div className="space-y-2" id="municipality-association">
-                <Label htmlFor="associatedMunicipality">Municipio Asociado</Label>
-                <Select name="associatedMunicipality">
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar municipio (opcional)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {municipalities.map((municipality: Municipality) => (
-                      <SelectItem key={municipality.id} value={municipality.department}>
-                        {municipality.name} - {municipality.department}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  Selecciona un municipio para asociar esta institución. Esto establecerá la misma región/departamento.
-                </p>
-              </div>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="mayorName">Nombre del Alcalde/Director</Label>
-                  <Input 
-                    id="mayorName" 
-                    name="mayorName" 
-                    maxLength={100}
-                  />
+              {createInstitutionType && createInstitutionType !== "MUNICIPALITY" && (
+                <div className="space-y-2" id="municipality-association">
+                  <Label htmlFor="associatedMunicipality" className="text-sm">Municipio Asociado *</Label>
+                  <Select name="associatedMunicipality" required>
+                    <SelectTrigger className="text-sm">
+                      <SelectValue placeholder="Seleccionar municipio" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {municipalities.map((municipality: Municipality) => (
+                        <SelectItem key={municipality.id} value={municipality.id}>
+                          {municipality.name} - {municipality.department}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Selecciona el municipio donde se encuentra esta institución. Esto establecerá la región y departamento.
+                  </p>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="mayorEmail">Email del Alcalde/Director</Label>
-                  <Input 
-                    id="mayorEmail" 
-                    name="mayorEmail" 
-                    type="email" 
-                    maxLength={100}
-                    className={createErrors.mayorEmail ? "border-red-500" : ""}
-                  />
-                  <ErrorMessage error={createErrors.mayorEmail} />
+              )}
+              
+              {/* Leadership fields - conditional labels based on institution type */}
+              {createInstitutionType && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="mayorName" className="text-sm">
+                      {createInstitutionType === "MUNICIPALITY" 
+                        ? "Nombre del Alcalde" 
+                        : "Nombre del Director/Responsable"}
+                    </Label>
+                    <Input 
+                      id="mayorName" 
+                      name="mayorName" 
+                      maxLength={100}
+                      className="text-sm"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="mayorEmail" className="text-sm">
+                      {createInstitutionType === "MUNICIPALITY" 
+                        ? "Email del Alcalde" 
+                        : "Email del Director/Responsable"}
+                    </Label>
+                    <Input 
+                      id="mayorEmail" 
+                      name="mayorEmail" 
+                      type="email" 
+                      maxLength={100}
+                      className={`text-sm ${createErrors.mayorEmail ? "border-red-500" : ""}`}
+                    />
+                    <ErrorMessage error={createErrors.mayorEmail} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="mayorPhone" className="text-sm">
+                      {createInstitutionType === "MUNICIPALITY" 
+                        ? "Teléfono del Alcalde" 
+                        : "Teléfono del Director/Responsable"}
+                    </Label>
+                    <Input 
+                      id="mayorPhone" 
+                      name="mayorPhone" 
+                      type="tel"
+                      maxLength={20}
+                      pattern="^[\+]?[0-9\s\-\(\)]{7,15}$"
+                      placeholder="+1234567890"
+                      onKeyPress={(e) => {
+                        if (!/[0-9\s\-\(\)\+]/.test(e.key)) {
+                          e.preventDefault();
+                        }
+                      }}
+                      className={`text-sm ${createErrors.mayorPhone ? "border-red-500" : ""}`}
+                    />
+                    <ErrorMessage error={createErrors.mayorPhone} />
+                  </div>
                 </div>
+              )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="mayorPhone">Teléfono del Alcalde/Director</Label>
-                  <Input 
-                    id="mayorPhone" 
-                    name="mayorPhone" 
-                    type="tel"
-                    maxLength={20}
-                    pattern="^[\+]?[0-9\s\-\(\)]{7,15}$"
-                    placeholder="+1234567890"
-                    onKeyPress={(e) => {
-                      if (!/[0-9\s\-\(\)\+]/.test(e.key)) {
-                        e.preventDefault();
-                      }
-                    }}
-                    className={createErrors.mayorPhone ? "border-red-500" : ""}
-                  />
-                  <ErrorMessage error={createErrors.mayorPhone} />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="primaryColor">Color Primario</Label>
+                  <Label htmlFor="primaryColor" className="text-sm">Color Primario</Label>
                   <Input 
                     id="primaryColor" 
                     name="primaryColor" 
@@ -912,7 +1122,7 @@ function InstitutionsManagement() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="secondaryColor">Color Secundario</Label>
+                  <Label htmlFor="secondaryColor" className="text-sm">Color Secundario</Label>
                   <Input 
                     id="secondaryColor" 
                     name="secondaryColor" 
@@ -922,16 +1132,17 @@ function InstitutionsManagement() {
                   />
                 </div>
               </div>
-              <DialogFooter>
+              <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
                 <Button type="button" variant="outline" onClick={() => {
                   setIsCreateDialogOpen(false);
                   setCreateErrors({});
-                }}>
+                }} className="w-full sm:w-auto">
                   Cancelar
                 </Button>
                 <Button 
                   type="submit" 
                   disabled={createInstitutionMutation.isPending || isValidating}
+                  className="w-full sm:w-auto"
                 >
                   {createInstitutionMutation.isPending || isValidating ? 'Creando...' : 'Crear Institución'}
                 </Button>
@@ -946,86 +1157,91 @@ function InstitutionsManagement() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar por nombre, email o departamento..."
+            placeholder="Buscar instituciones..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className="pl-10 text-sm sm:text-base"
           />
         </div>
       </div>
 
       {/* Institutions List */}
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         {filteredInstitutions.map((institution: Institution) => (
           <Card key={institution.id}>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                    <Building2 className="h-6 w-6 text-purple-600" />
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+                <div className="flex items-start space-x-3 sm:space-x-4">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600" />
                   </div>
-                  <div className="flex-1">
-                    <h4 className="font-semibold">{institution.name}</h4>
-                    <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-semibold text-sm sm:text-base truncate">{institution.name}</h4>
+                    <div className="flex flex-col space-y-1 sm:flex-row sm:items-center sm:space-x-4 sm:space-y-0 text-xs sm:text-sm text-muted-foreground mt-1">
                       <div className="flex items-center space-x-1">
-                        <Mail className="h-3 w-3" />
-                        <span>{institution.email}</span>
+                        <Mail className="h-3 w-3 flex-shrink-0" />
+                        <span className="truncate">{institution.email}</span>
                       </div>
                       {institution.phone && (
                         <div className="flex items-center space-x-1">
-                          <Phone className="h-3 w-3" />
-                          <span>{institution.phone}</span>
+                          <Phone className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate">{institution.phone}</span>
                         </div>
                       )}
                       <div className="flex items-center space-x-1">
-                        <MapPin className="h-3 w-3" />
-                        <span>{institution.department}</span>
+                        <MapPin className="h-3 w-3 flex-shrink-0" />
+                        <span className="truncate">{institution.department}</span>
                       </div>
                       {institution.website && (
                         <div className="flex items-center space-x-1">
-                          <Globe className="h-3 w-3" />
-                          <span className="truncate max-w-32">{institution.website}</span>
+                          <Globe className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate max-w-24 sm:max-w-32">{institution.website}</span>
                         </div>
                       )}
                     </div>
-                    <div className="flex items-center space-x-2 mt-2">
-                      <Badge variant={institution.isActive ? "default" : "secondary"}>
+                    <div className="flex flex-wrap items-center gap-1 sm:gap-2 mt-2">
+                      <Badge variant={institution.isActive ? "default" : "secondary"} className="text-xs">
                         {institution.isActive ? "Activo" : "Inactivo"}
                       </Badge>
-                      <Badge className={getInstitutionTypeColor(institution.institutionType)}>
+                      <Badge className={`${getInstitutionTypeColor(institution.institutionType)} text-xs`}>
                         {getInstitutionTypeText(institution.institutionType)}
                       </Badge>
                       {institution.population && (
-                        <Badge variant="outline">
+                        <Badge variant="outline" className="text-xs">
                           <Users className="h-3 w-3 mr-1" />
                           {institution.population.toLocaleString()} hab.
                         </Badge>
                       )}
                       {getAssociatedMunicipality(institution) && (
-                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-xs">
                           <MapPin className="h-3 w-3 mr-1" />
-                          {getAssociatedMunicipality(institution)?.name}
+                          <span className="truncate max-w-20 sm:max-w-none">{getAssociatedMunicipality(institution)?.name}</span>
                         </Badge>
                       )}
                     </div>
                   </div>
                 </div>
-                <div className="text-right text-sm text-muted-foreground">
-                  <div className="flex items-center space-x-1">
-                    <Calendar className="h-3 w-3" />
-                    <span>Registrado: {formatDate(institution.createdAt)}</span>
+                <div className="flex flex-col space-y-2 sm:space-y-0 sm:items-end">
+                  <div className="text-xs sm:text-sm text-muted-foreground">
+                    <div className="flex items-center space-x-1">
+                      <Calendar className="h-3 w-3" />
+                      <span className="hidden sm:inline">Registrado: {formatDate(institution.createdAt)}</span>
+                      <span className="sm:hidden">{formatDate(institution.createdAt)}</span>
+                    </div>
+                    {institution.mayorName && (
+                      <p className="text-xs mt-1 truncate">Dir: {institution.mayorName}</p>
+                    )}
                   </div>
-                  {institution.mayorName && (
-                    <p className="text-xs mt-1">Dir: {institution.mayorName}</p>
-                  )}
-                </div>
-                <div className="flex space-x-2">
-                  <Button variant="outline" size="sm" onClick={() => openEditDialog(institution)}>
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleDeleteInstitution(institution)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex space-x-1 sm:space-x-2">
+                    <Button variant="outline" size="sm" onClick={() => openEditDialog(institution)} className="h-8 w-8 sm:h-9 sm:w-auto sm:px-3">
+                      <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <span className="hidden sm:inline ml-1">Editar</span>
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => handleDeleteInstitution(institution)} className="h-8 w-8 sm:h-9 sm:w-auto sm:px-3">
+                      <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <span className="hidden sm:inline ml-1">Eliminar</span>
+                    </Button>
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -1035,10 +1251,10 @@ function InstitutionsManagement() {
 
       {filteredInstitutions.length === 0 && (
         <Card>
-          <CardContent className="p-12 text-center">
-            <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No se encontraron instituciones</h3>
-            <p className="text-muted-foreground">
+          <CardContent className="p-8 sm:p-12 text-center">
+            <Building2 className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-base sm:text-lg font-semibold mb-2">No se encontraron instituciones</h3>
+            <p className="text-sm sm:text-base text-muted-foreground">
               {searchTerm ? 'No hay instituciones que coincidan con tu búsqueda.' : 'No hay instituciones registradas.'}
             </p>
           </CardContent>
@@ -1053,10 +1269,10 @@ function InstitutionsManagement() {
           setSelectedInstitution(null);
         }
       }}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Editar Institución</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-lg sm:text-xl">Editar Institución</DialogTitle>
+            <DialogDescription className="text-sm">
               Modifica la información de la institución
             </DialogDescription>
           </DialogHeader>
@@ -1070,21 +1286,21 @@ function InstitutionsManagement() {
                   </div>
                 </div>
               )}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="edit-name">Nombre de la Institución *</Label>
+                  <Label htmlFor="edit-name" className="text-sm">Nombre de la Institución *</Label>
                   <Input 
                     id="edit-name" 
                     name="name" 
                     defaultValue={selectedInstitution.name}
                     required 
                     maxLength={100}
-                    className={editErrors.name ? "border-red-500" : ""}
+                    className={`text-sm ${editErrors.name ? "border-red-500" : ""}`}
                   />
                   <ErrorMessage error={editErrors.name} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-email">Email *</Label>
+                  <Label htmlFor="edit-email" className="text-sm">Email *</Label>
                   <Input 
                     id="edit-email" 
                     name="email" 
@@ -1092,7 +1308,7 @@ function InstitutionsManagement() {
                     defaultValue={selectedInstitution.email}
                     required 
                     maxLength={100}
-                    className={editErrors.email ? "border-red-500" : ""}
+                    className={`text-sm ${editErrors.email ? "border-red-500" : ""}`}
                   />
                   <ErrorMessage error={editErrors.email} />
                 </div>
@@ -1167,23 +1383,31 @@ function InstitutionsManagement() {
                     maxLength={50}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-population">Población</Label>
-                  <Input 
-                    id="edit-population" 
-                    name="population" 
-                    type="number" 
-                    defaultValue={selectedInstitution.population}
-                    min="1"
-                    className={editErrors.population ? "border-red-500" : ""}
-                  />
-                  <ErrorMessage error={editErrors.population} />
-                </div>
+                {/* Population field - only for municipalities */}
+                {editInstitutionType === "MUNICIPALITY" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-population">Población</Label>
+                    <Input 
+                      id="edit-population" 
+                      name="population" 
+                      type="number" 
+                      defaultValue={selectedInstitution.population}
+                      min="1"
+                      className={editErrors.population ? "border-red-500" : ""}
+                    />
+                    <ErrorMessage error={editErrors.population} />
+                  </div>
+                )}
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="edit-institutionType">Tipo de Institución *</Label>
-                  <Select name="institutionType" defaultValue={selectedInstitution.institutionType} required>
+                  <Select 
+                    name="institutionType" 
+                    value={editInstitutionType}
+                    onValueChange={setEditInstitutionType}
+                    required
+                  >
                     <SelectTrigger className={editErrors.general ? "border-red-500" : ""}>
                       <SelectValue />
                     </SelectTrigger>
@@ -1196,73 +1420,93 @@ function InstitutionsManagement() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-customType">Tipo Personalizado</Label>
-                  <Input 
-                    id="edit-customType" 
-                    name="customType" 
-                    defaultValue={selectedInstitution.customType}
-                    placeholder="Si seleccionaste 'Otro'" 
-                    maxLength={50}
-                    className={editErrors.customType ? "border-red-500" : ""}
-                  />
-                  <ErrorMessage error={editErrors.customType} />
-                </div>
+                {editInstitutionType === "OTHER" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-customType">Tipo Personalizado *</Label>
+                    <Input 
+                      id="edit-customType" 
+                      name="customType" 
+                      defaultValue={selectedInstitution.customType}
+                      placeholder="Especificar tipo personalizado" 
+                      maxLength={50}
+                      className={editErrors.customType ? "border-red-500" : ""}
+                    />
+                    <ErrorMessage error={editErrors.customType} />
+                  </div>
+                )}
               </div>
               
               {/* Municipality Association - Only show for non-municipality institutions */}
-              <div className="space-y-2" id="edit-municipality-association">
-                <Label htmlFor="edit-associatedMunicipality">Municipio Asociado</Label>
-                <Select name="associatedMunicipality" defaultValue={getAssociatedMunicipality(selectedInstitution)?.department}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar municipio (opcional)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {municipalities.map((municipality: Municipality) => (
-                      <SelectItem key={municipality.id} value={municipality.department}>
-                        {municipality.name} - {municipality.department}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  Selecciona un municipio para asociar esta institución. Esto establecerá la misma región/departamento.
-                </p>
-              </div>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-mayorName">Nombre del Alcalde/Director</Label>
-                  <Input 
-                    id="edit-mayorName" 
-                    name="mayorName" 
-                    defaultValue={selectedInstitution.mayorName}
-                    maxLength={100}
-                  />
+              {editInstitutionType && editInstitutionType !== "MUNICIPALITY" && (
+                <div className="space-y-2" id="edit-municipality-association">
+                  <Label htmlFor="edit-associatedMunicipality">Municipio Asociado *</Label>
+                  <Select name="associatedMunicipality" defaultValue={getAssociatedMunicipality(selectedInstitution)?.id} required>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar municipio" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {municipalities.map((municipality: Municipality) => (
+                        <SelectItem key={municipality.id} value={municipality.id}>
+                          {municipality.name} - {municipality.department}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Selecciona el municipio donde se encuentra esta institución. Esto establecerá la región y departamento.
+                  </p>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-mayorEmail">Email del Alcalde/Director</Label>
-                  <Input 
-                    id="edit-mayorEmail" 
-                    name="mayorEmail" 
-                    type="email" 
-                    defaultValue={selectedInstitution.mayorEmail}
-                    maxLength={100}
-                    className={editErrors.mayorEmail ? "border-red-500" : ""}
-                  />
-                  <ErrorMessage error={editErrors.mayorEmail} />
+              )}
+              
+              {/* Leadership fields - conditional labels based on institution type */}
+              {editInstitutionType && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-mayorName">
+                      {editInstitutionType === "MUNICIPALITY" 
+                        ? "Nombre del Alcalde" 
+                        : "Nombre del Director/Responsable"}
+                    </Label>
+                    <Input 
+                      id="edit-mayorName" 
+                      name="mayorName" 
+                      defaultValue={selectedInstitution.mayorName}
+                      maxLength={100}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-mayorEmail">
+                      {editInstitutionType === "MUNICIPALITY" 
+                        ? "Email del Alcalde" 
+                        : "Email del Director/Responsable"}
+                    </Label>
+                    <Input 
+                      id="edit-mayorEmail" 
+                      name="mayorEmail" 
+                      type="email" 
+                      defaultValue={selectedInstitution.mayorEmail}
+                      maxLength={100}
+                      className={editErrors.mayorEmail ? "border-red-500" : ""}
+                    />
+                    <ErrorMessage error={editErrors.mayorEmail} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-mayorPhone">
+                      {editInstitutionType === "MUNICIPALITY" 
+                        ? "Teléfono del Alcalde" 
+                        : "Teléfono del Director/Responsable"}
+                    </Label>
+                    <Input 
+                      id="edit-mayorPhone" 
+                      name="mayorPhone" 
+                      defaultValue={selectedInstitution.mayorPhone}
+                      maxLength={20}
+                      className={editErrors.mayorPhone ? "border-red-500" : ""}
+                    />
+                    <ErrorMessage error={editErrors.mayorPhone} />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-mayorPhone">Teléfono del Alcalde/Director</Label>
-                  <Input 
-                    id="edit-mayorPhone" 
-                    name="mayorPhone" 
-                    defaultValue={selectedInstitution.mayorPhone}
-                    maxLength={20}
-                    className={editErrors.mayorPhone ? "border-red-500" : ""}
-                  />
-                  <ErrorMessage error={editErrors.mayorPhone} />
-                </div>
-              </div>
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="edit-primaryColor">Color Primario</Label>
@@ -1283,16 +1527,17 @@ function InstitutionsManagement() {
                   />
                 </div>
               </div>
-              <DialogFooter>
+              <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
                 <Button type="button" variant="outline" onClick={() => {
                   setIsEditDialogOpen(false);
                   setEditErrors({});
-                }}>
+                }} className="w-full sm:w-auto">
                   Cancelar
                 </Button>
                 <Button 
                   type="submit" 
                   disabled={updateInstitutionMutation.isPending || isValidating}
+                  className="w-full sm:w-auto"
                 >
                   {updateInstitutionMutation.isPending || isValidating ? 'Actualizando...' : 'Actualizar Institución'}
                 </Button>
@@ -1304,26 +1549,107 @@ function InstitutionsManagement() {
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-[95vw] sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Confirmar Eliminación</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-lg sm:text-xl">Confirmar Eliminación</DialogTitle>
+            <DialogDescription className="text-sm">
               ¿Estás seguro de que quieres eliminar esta institución? Esta acción no se puede deshacer.
             </DialogDescription>
           </DialogHeader>
           {institutionToDelete && (
             <div className="py-4">
-              <p className="font-medium">{institutionToDelete.name}</p>
-              <p className="text-sm text-muted-foreground">{institutionToDelete.email}</p>
-              <p className="text-sm text-muted-foreground">{institutionToDelete.department}</p>
+              <p className="font-medium text-sm sm:text-base">{institutionToDelete.name}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">{institutionToDelete.email}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">{institutionToDelete.department}</p>
+            </div>
+          )}
+          <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} className="w-full sm:w-auto">
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={confirmDelete} disabled={deleteInstitutionMutation.isPending} className="w-full sm:w-auto">
+              {deleteInstitutionMutation.isPending ? 'Eliminando...' : 'Eliminar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Credentials Confirmation Modal */}
+      <Dialog open={isCredentialsModalOpen} onOpenChange={setIsCredentialsModalOpen}>
+        <DialogContent className="max-w-[95vw] sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-lg sm:text-xl flex items-center space-x-2">
+              <CheckCircle className="h-5 w-5 text-green-600" />
+              <span>Institución Creada</span>
+            </DialogTitle>
+            <DialogDescription className="text-sm">
+              La institución ha sido creada exitosamente. Guarda estas credenciales de forma segura.
+            </DialogDescription>
+          </DialogHeader>
+          {createdInstitution && (
+            <div className="space-y-4">
+              <div className="p-4 bg-green-50 border border-green-200 rounded-md">
+                <h4 className="font-medium text-green-800 mb-2">{createdInstitution.name}</h4>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="text-xs text-green-600 font-medium">Email:</p>
+                      <p className="text-sm text-green-800 font-mono break-all">{createdInstitution.email}</p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => copyToClipboard(createdInstitution.email, 'email')}
+                      className="ml-2 h-8 w-8 p-0"
+                    >
+                      {copiedField === 'email' ? (
+                        <Check className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="text-xs text-green-600 font-medium">Contraseña:</p>
+                      <p className="text-sm text-green-800 font-mono break-all">{createdInstitution.password}</p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => copyToClipboard(createdInstitution.password, 'password')}
+                      className="ml-2 h-8 w-8 p-0"
+                    >
+                      {copiedField === 'password' ? (
+                        <Check className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                <div className="flex items-start space-x-2">
+                  <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+                  <div className="text-xs text-yellow-800">
+                    <p className="font-medium mb-1">Importante:</p>
+                    <p>Guarda estas credenciales en un lugar seguro. No podrás ver la contraseña nuevamente.</p>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button variant="destructive" onClick={confirmDelete} disabled={deleteInstitutionMutation.isPending}>
-              {deleteInstitutionMutation.isPending ? 'Eliminando...' : 'Eliminar'}
+            <Button 
+              onClick={() => {
+                setIsCredentialsModalOpen(false);
+                setCreatedInstitution(null);
+                setCopiedField(null);
+              }}
+              className="w-full sm:w-auto"
+            >
+              Entendido
             </Button>
           </DialogFooter>
         </DialogContent>

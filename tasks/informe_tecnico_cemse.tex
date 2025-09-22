@@ -1,0 +1,283 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{url}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+
+% Configuración de página
+\geometry{margin=2.5cm}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{Informe Técnico - CEMSE}
+\fancyhead[R]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% Configuración de títulos
+\titleformat{\section}{\Large\bfseries\color{blue!70!black}}{\thesection}{1em}{}
+\titleformat{\subsection}{\large\bfseries\color{blue!50!black}}{\thesubsection}{1em}{}
+
+\begin{document}
+
+% Portada
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+
+    {\Huge\bfseries Informe Técnico\\[0.5cm]}
+    {\LARGE Plataforma Educativa CEMSE\\[2cm]}
+
+    \begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,width=0.8\textwidth]
+        \centering
+        \large
+        \textbf{Sistema Integral de Gestión Educativa}\\
+        Cursos, Instituciones y Empleo Juvenil
+    \end{tcolorbox}
+
+    \vfill
+
+    {\large Versión: 0.1.0\\[0.5cm]}
+    {\large Fecha: \today}
+
+\end{titlepage}
+
+\newpage
+\tableofcontents
+\newpage
+
+\section{Resumen Ejecutivo}
+
+CEMSE es una plataforma educativa integral desarrollada con tecnologías modernas que conecta instituciones educativas, empresas y jóvenes estudiantes. El sistema facilita la gestión de cursos, búsqueda de empleo, desarrollo de emprendimiento y administración institucional a través de una interfaz web unificada.
+
+\section{Arquitectura del Sistema}
+
+\subsection{Stack Tecnológico}
+
+El sistema está construido sobre las siguientes tecnologías principales:
+
+\begin{itemize}
+    \item \textbf{Frontend:} Next.js 15 con React 19 y TypeScript
+    \item \textbf{Base de Datos:} PostgreSQL con Prisma ORM
+    \item \textbf{Caché:} Redis para sesiones y optimización
+    \item \textbf{Almacenamiento:} MinIO para archivos y contenido multimedia
+    \item \textbf{Autenticación:} NextAuth.js con control de acceso basado en roles
+    \item \textbf{Contenedorización:} Docker y Docker Compose
+    \item \textbf{Estilos:} Tailwind CSS con componentes Radix UI
+\end{itemize}
+
+\subsection{Estructura del Proyecto}
+
+\begin{verbatim}
+src/
+├── app/                    # Rutas de Next.js App Router
+│   ├── (auth)/            # Páginas de autenticación
+│   ├── (dashboard)/       # Páginas del panel principal
+│   └── api/               # Endpoints de API
+├── components/            # Componentes React reutilizables
+├── hooks/                 # Hooks personalizados de React
+├── lib/                   # Utilidades y servicios
+└── types/                 # Definiciones de tipos TypeScript
+\end{verbatim}
+
+\section{Módulos Principales}
+
+\subsection{Sistema de Roles}
+
+La plataforma maneja cuatro tipos de usuarios principales:
+
+\begin{enumerate}
+    \item \textbf{YOUTH (Jóvenes):} Estudiantes que buscan formación y empleo
+    \item \textbf{COMPANIES (Empresas):} Organizaciones que publican ofertas laborales
+    \item \textbf{INSTITUTION (Instituciones):} Centros educativos que ofrecen cursos
+    \item \textbf{SUPERADMIN (Administradores):} Gestión global del sistema
+\end{enumerate}
+
+\subsection{Gestión de Cursos}
+
+\begin{itemize}
+    \item Creación y administración de contenido educativo
+    \item Sistema de categorías y etiquetas
+    \item Seguimiento de progreso estudiantil
+    \item Generación de certificados
+    \item Herramientas de evaluación (quizzes)
+    \item Foros de discusión
+\end{itemize}
+
+\subsection{Portal de Empleo}
+
+\begin{itemize}
+    \item Publicación de ofertas laborales
+    \item Sistema de aplicaciones y candidaturas
+    \item Filtros avanzados de búsqueda
+    \item Gestión de perfiles profesionales
+    \item Seguimiento de aplicaciones
+    \item Programación de entrevistas
+\end{itemize}
+
+\subsection{Emprendimiento}
+
+\begin{itemize}
+    \item Red social para emprendedores
+    \item Calculadoras de negocio
+    \item Sistema de conexiones y networking
+    \item Analíticas de emprendimiento
+    \item Recursos y noticias especializadas
+\end{itemize}
+
+\subsection{Administración Institucional}
+
+\begin{itemize}
+    \item Dashboard específico por institución
+    \item Gestión de programas académicos
+    \item Administración de estudiantes y docentes
+    \item Reportes y analíticas educativas
+    \item Gestión de inscripciones
+\end{itemize}
+
+\subsection{Sistema de Archivos}
+
+\begin{itemize}
+    \item Carga de archivos multimedia
+    \item Gestión de documentos PDF
+    \item Almacenamiento seguro con MinIO
+    \item Sistema de thumbnails automático
+    \item Carga chunked para archivos grandes
+\end{itemize}
+
+\section{Funcionalidades Clave}
+
+\subsection{Autenticación y Seguridad}
+
+\begin{itemize}
+    \item Sistema de login/registro seguro
+    \item Recuperación de contraseñas
+    \item Control de acceso basado en roles
+    \item Sesiones seguras con NextAuth.js
+\end{itemize}
+
+\subsection{Búsqueda Global}
+
+\begin{itemize}
+    \item Motor de búsqueda unificado
+    \item Sugerencias automáticas
+    \item Búsquedas populares
+    \item Filtros contextuales
+\end{itemize}
+
+\subsection{Analíticas y Reportes}
+
+\begin{itemize}
+    \item Dashboard de métricas generales
+    \item Analíticas de uso por módulo
+    \item Gráficos de engagement
+    \item Reportes de rendimiento
+    \item Métricas demográficas
+\end{itemize}
+
+\subsection{Comunicación}
+
+\begin{itemize}
+    \item Sistema de mensajería interna
+    \item Chat para entrevistas laborales
+    \item Notificaciones en tiempo real
+    \item Gestión de contenido y noticias
+\end{itemize}
+
+\section{Configuración y Despliegue}
+
+\subsection{Desarrollo}
+
+Para ejecutar el proyecto en desarrollo:
+
+\begin{verbatim}
+# Instalar dependencias
+pnpm install
+
+# Configurar variables de entorno
+cp env.template .env
+
+# Iniciar servicios de infraestructura
+pnpm run docker:up
+
+# Iniciar aplicación
+pnpm run dev
+\end{verbatim}
+
+\subsection{Producción}
+
+El sistema utiliza Docker Compose para despliegue en producción con:
+
+\begin{itemize}
+    \item Contenedores separados para cada servicio
+    \item Configuración de variables de entorno específicas
+    \item Balanceador de carga y SSL configurables
+    \item Backups automatizados de base de datos
+\end{itemize}
+
+\section{Puntos de Acceso}
+
+\subsection{Desarrollo}
+\begin{itemize}
+    \item \textbf{Aplicación:} http://localhost:3000
+    \item \textbf{Consola MinIO:} http://localhost:9001
+    \item \textbf{Prisma Studio:} http://localhost:5555
+\end{itemize}
+
+\subsection{Producción}
+\begin{itemize}
+    \item \textbf{Aplicación:} https://dominio-produccion.com
+    \item \textbf{Consola MinIO:} https://dominio-produccion.com:9001
+\end{itemize}
+
+\section{Testing y Calidad}
+
+El proyecto incluye:
+
+\begin{itemize}
+    \item Tests unitarios con Jest
+    \item Testing de componentes React
+    \item Configuración de ESLint y Prettier
+    \item Validación de tipos con TypeScript
+    \item Cobertura de código automatizada
+\end{itemize}
+
+\section{Conclusiones}
+
+CEMSE representa una solución integral para el ecosistema educativo, combinando formación académica, búsqueda de empleo y desarrollo emprendedor en una sola plataforma. Su arquitectura moderna y escalable permite adaptarse a las necesidades cambiantes del sector educativo y laboral.
+
+La plataforma facilita la conexión entre todos los actores del ecosistema educativo-laboral, proporcionando herramientas especializadas para cada tipo de usuario mientras mantiene una experiencia coherente y profesional.
+
+\newpage
+\section{Anexos}
+
+\subsection{A. Capturas de Pantalla de Módulos Principales}
+
+\textit{Nota: Las capturas de pantalla de los diferentes módulos de la aplicación se incluirán en esta sección para proporcionar una referencia visual de las funcionalidades principales:}
+
+\begin{itemize}
+    \item Dashboard principal por tipo de usuario
+    \item Módulo de gestión de cursos
+    \item Portal de empleo y aplicaciones
+    \item Sistema de emprendimiento
+    \item Panel de administración institucional
+    \item Herramientas de analíticas
+    \item Gestión de archivos y contenido
+\end{itemize}
+
+\subsection{B. Diagramas de Arquitectura}
+
+\textit{Esta sección puede incluir diagramas detallados de:}
+
+\begin{itemize}
+    \item Arquitectura de componentes
+    \item Flujo de datos
+    \item Modelo de base de datos
+    \item Infraestructura de despliegue
+\end{itemize}
+
+\end{document}
