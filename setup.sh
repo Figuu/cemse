@@ -256,23 +256,38 @@ sudo firewall-cmd --reload
 log "✅ Firewall configured"
 
 # =============================================================================
-# 11. CREATE APPLICATION DIRECTORIES
+# 11. CLONE REPOSITORY TO /opt/cemse
 # =============================================================================
-log "📁 Creating application directories..."
+log "📥 Cloning repository..."
 
-# Create app directory
-sudo mkdir -p /opt/cemse
-sudo chown $USER:$USER /opt/cemse
+# Configuration
+GIT_REPO="https://github.com/figuu/cemse.git"
+
+# Remove directory if it exists to avoid conflicts
+if [ -d "/opt/cemse" ]; then
+    warn "Directory /opt/cemse already exists, removing it..."
+    sudo rm -rf /opt/cemse
+fi
+
+# Clone directly to /opt/cemse (git will create the directory)
+cd /opt
+sudo git clone $GIT_REPO cemse
+
+# Set proper ownership
+sudo chown -R $USER:$USER /opt/cemse
+
+# Create additional directories
+log "📁 Creating additional directories..."
 
 # Create logs directory
 sudo mkdir -p /var/log/cemse
 sudo chown $USER:$USER /var/log/cemse
 
-# Create uploads directory
+# Create uploads directory if it doesn't exist
 sudo mkdir -p /opt/cemse/public/uploads
 sudo chown -R $USER:$USER /opt/cemse/public
 
-log "✅ Application directories created"
+log "✅ Repository cloned and directories created"
 
 # =============================================================================
 # 12. ENVIRONMENT CONFIGURATION
@@ -321,8 +336,8 @@ sudo tee /etc/systemd/system/cemse.service > /dev/null << EOF
 [Unit]
 Description=CEMSE Next.js Application
 After=network.target
-Requires=docker.service
-After=docker.service
+Requires=cemse-backend.service
+After=cemse-backend.service
 
 [Service]
 Type=simple
@@ -331,7 +346,6 @@ Group=$USER
 WorkingDirectory=/opt/cemse
 Environment=NODE_ENV=production
 Environment=PATH=/usr/local/bin:/usr/bin:/bin:\$HOME/.local/share/pnpm:\$HOME/.nvm/versions/node/v20.*/bin
-ExecStartPre=/usr/local/bin/docker-compose up -d
 ExecStart=/usr/bin/pnpm start
 ExecStop=/bin/kill -TERM \$MAINPID
 TimeoutStartSec=60
@@ -685,7 +699,39 @@ chmod +x /opt/cemse/health-check.sh
 log "✅ Deployment helper scripts created"
 
 # =============================================================================
-# 19. FINAL INSTRUCTIONS
+# 19. FINAL SETUP
+# =============================================================================
+log "🎯 Final setup steps..."
+
+# Start backend services first
+log "🐳 Starting backend services..."
+sudo systemctl start cemse-backend
+sleep 10
+
+# Install dependencies
+log "📦 Installing application dependencies..."
+cd /opt/cemse
+pnpm install
+
+# Generate Prisma client
+log "🔧 Generating Prisma client..."
+pnpm prisma generate
+
+# Run database migrations and seed
+log "🗄️ Setting up database..."
+pnpm prisma migrate deploy
+
+log "🌱 Seeding database..."
+pnpm prisma db seed
+
+# Build the application
+log "🏗️ Building application..."
+pnpm build
+
+success "Application built and ready"
+
+# =============================================================================
+# 20. FINAL INSTRUCTIONS
 # =============================================================================
 log "🎉 Amazon Linux 2023 EC2 setup completed successfully!"
 
@@ -697,26 +743,22 @@ echo "========================================="
 echo ""
 echo "📋 Next Steps:"
 echo ""
-echo "1. Clone your repository:"
-echo "   cd /opt/cemse"
-echo "   git clone https://github.com/figuu/cemse.git ."
+echo "1. Configure your environment (optional):"
+echo "   nano /opt/cemse/.env"
 echo ""
-echo "2. Copy and configure environment variables:"
-echo "   cp .env.example .env"
-echo "   nano .env  # Edit with your actual values"
+echo "2. Start the Next.js application:"
+echo "   sudo systemctl start cemse"
+echo "   # Backend services are already running"
 echo ""
-echo "3. Update Nginx configuration for your subdomain (optional):"
-echo "   sudo nano /etc/nginx/conf.d/cemse.conf"
-echo "   # Already configured for cemse.boring.lat subdomain"
+echo "3. Check everything is working:"
+echo "   cd /opt/cemse && ./manage.sh status"
+echo "   # Application should be accessible at http://$(curl -s http://checkip.amazonaws.com):3000"
 echo ""
-echo "4. Restart Nginx:"
-echo "   sudo systemctl restart nginx"
+echo "4. Configure domain (optional):"
+echo "   cd /opt/cemse && ./manage.sh domain your-domain.com"
 echo ""
-echo "5. Deploy the application:"
-echo "   ./deploy.sh"
-echo ""
-echo "6. Configure SSL certificate for your subdomain:"
-echo "   sudo certbot --nginx -d cemse.boring.lat"
+echo "5. Setup SSL certificate (optional):"
+echo "   cd /opt/cemse && ./manage.sh ssl"
 echo ""
 echo "7. After SSL setup, update Nginx config for HTTPS redirect:"
 echo "   sudo nano /etc/nginx/conf.d/cemse.conf"

@@ -60,28 +60,35 @@ get_server_ip() {
 # Function to start services
 start_services() {
     log "🚀 Starting CEMSE services..."
+
+    # Check if app directory exists
+    if [ ! -d "$APP_PATH" ]; then
+        error "App directory $APP_PATH not found"
+        exit 1
+    fi
+
     cd "$APP_PATH"
 
     # Start backend services (Docker)
     log "Starting backend services..."
-    if systemctl is-active --quiet cemse-backend 2>/dev/null; then
+    if systemctl is-active --quiet "$APP_NAME-backend" 2>/dev/null; then
         success "Backend services already running"
     else
-        sudo systemctl start cemse-backend || docker-compose up -d
+        sudo systemctl start "$APP_NAME-backend" || docker-compose up -d
     fi
 
     # Start Next.js app
     log "Starting Next.js application..."
-    if systemctl is-active --quiet cemse 2>/dev/null; then
+    if systemctl is-active --quiet "$APP_NAME" 2>/dev/null; then
         success "CEMSE app already running"
     else
-        sudo systemctl start cemse
+        sudo systemctl start "$APP_NAME"
     fi
 
     sleep 5
 
     # Check status
-    if docker-compose ps | grep -q "Up" && systemctl is-active --quiet cemse 2>/dev/null; then
+    if docker-compose ps | grep -q "Up" && systemctl is-active --quiet "$APP_NAME" 2>/dev/null; then
         success "All services started successfully"
         show_service_status
     else
@@ -94,15 +101,19 @@ start_services() {
 # Function to stop services
 stop_services() {
     log "🛑 Stopping CEMSE services..."
-    cd "$APP_PATH"
+
+    # Check if app directory exists for docker-compose
+    if [ -d "$APP_PATH" ]; then
+        cd "$APP_PATH"
+    fi
 
     # Stop Next.js app
     log "Stopping Next.js application..."
-    sudo systemctl stop cemse || true
+    sudo systemctl stop "$APP_NAME" || true
 
     # Stop backend services
     log "Stopping backend services..."
-    sudo systemctl stop cemse-backend || docker-compose down
+    sudo systemctl stop "$APP_NAME-backend" || docker-compose down
 
     success "All services stopped"
 }
@@ -110,22 +121,29 @@ stop_services() {
 # Function to restart services
 restart_services() {
     log "🔄 Restarting CEMSE services..."
+
+    # Check if app directory exists
+    if [ ! -d "$APP_PATH" ]; then
+        error "App directory $APP_PATH not found"
+        exit 1
+    fi
+
     cd "$APP_PATH"
 
     # Restart backend services
     log "Restarting backend services..."
-    sudo systemctl restart cemse-backend || {
+    sudo systemctl restart "$APP_NAME-backend" || {
         docker-compose down
         docker-compose up -d
     }
 
     # Restart Next.js app
     log "Restarting Next.js application..."
-    sudo systemctl restart cemse
+    sudo systemctl restart "$APP_NAME"
 
     sleep 5
 
-    if docker-compose ps | grep -q "Up" && systemctl is-active --quiet cemse 2>/dev/null; then
+    if docker-compose ps | grep -q "Up" && systemctl is-active --quiet "$APP_NAME" 2>/dev/null; then
         success "All services restarted successfully"
         show_service_status
     else
@@ -160,17 +178,23 @@ show_status() {
     echo ""
 
     # Service status
-    info "Systemd Service:"
+    info "Systemd Services:"
     if systemctl is-active --quiet "$APP_NAME" 2>/dev/null; then
-        success "Service $APP_NAME is running"
+        success "CEMSE app ($APP_NAME): Running"
     else
-        warn "Service $APP_NAME is not running"
+        warn "CEMSE app ($APP_NAME): Not running"
+    fi
+
+    if systemctl is-active --quiet "$APP_NAME-backend" 2>/dev/null; then
+        success "Backend services ($APP_NAME-backend): Running"
+    else
+        warn "Backend services ($APP_NAME-backend): Not running"
     fi
 
     if systemctl is-active --quiet nginx 2>/dev/null; then
-        success "Nginx is running"
+        success "Nginx: Running"
     else
-        warn "Nginx is not running"
+        warn "Nginx: Not running"
     fi
     echo ""
 
@@ -423,13 +447,13 @@ health_check() {
 show_service_status() {
     echo ""
     info "🔧 Service Status:"
-    if systemctl is-active --quiet cemse 2>/dev/null; then
+    if systemctl is-active --quiet "$APP_NAME" 2>/dev/null; then
         success "CEMSE app: Running"
     else
         warn "CEMSE app: Not running"
     fi
 
-    if systemctl is-active --quiet cemse-backend 2>/dev/null; then
+    if systemctl is-active --quiet "$APP_NAME-backend" 2>/dev/null; then
         success "Backend services: Running"
     else
         warn "Backend services: Not running"
@@ -443,8 +467,12 @@ show_service_status() {
 
     echo ""
     info "🐳 Docker Containers:"
-    cd "$APP_PATH"
-    docker-compose ps
+    if [ -d "$APP_PATH" ]; then
+        cd "$APP_PATH"
+        docker-compose ps
+    else
+        warn "App directory $APP_PATH not found"
+    fi
 }
 
 # Main function

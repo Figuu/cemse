@@ -258,64 +258,35 @@ sudo ufw allow from 127.0.0.1 to any port 9001
 success "Firewall configured"
 
 # =============================================================================
-# 11. CREATE APPLICATION DIRECTORIES
+# 11. CLONE REPOSITORY TO /opt/cemse
 # =============================================================================
-log "📁 Creating application directories..."
+log "📥 Cloning repository..."
 
-# Create app directory
-sudo mkdir -p $APP_PATH
-sudo chown $USER:$USER $APP_PATH
+# Remove directory if it exists to avoid conflicts
+if [ -d "$APP_PATH" ]; then
+    warn "Directory $APP_PATH already exists, removing it..."
+    sudo rm -rf $APP_PATH
+fi
+
+# Clone directly to /opt/cemse (git will create the directory)
+cd /opt
+sudo git clone $GIT_REPO cemse
+
+# Set proper ownership
+sudo chown -R $USER:$USER $APP_PATH
+
+# Create additional directories
+log "📁 Creating additional directories..."
 
 # Create logs directory
 sudo mkdir -p /var/log/$APP_NAME
 sudo chown $USER:$USER /var/log/$APP_NAME
 
-# Create uploads directory
+# Create uploads directory if it doesn't exist
 sudo mkdir -p $APP_PATH/public/uploads
 sudo chown -R $USER:$USER $APP_PATH/public
 
-success "Application directories created"
-
-# =============================================================================
-# 12. CLONE REPOSITORY
-# =============================================================================
-log "📥 Cloning repository..."
-
-# Check if directory exists and is not empty
-if [ -d "$APP_PATH" ] && [ "$(ls -A $APP_PATH 2>/dev/null)" ]; then
-    warn "Directory $APP_PATH already exists and is not empty"
-    
-    # Check if it's already a git repository
-    if [ -d "$APP_PATH/.git" ]; then
-        warn "Git repository already exists, pulling latest changes..."
-        cd $APP_PATH
-        git pull
-    else
-        warn "Directory exists but is not a git repository"
-        read -p "Do you want to remove the existing directory and clone fresh? (y/N): " -n 1 -r
-        echo
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
-            warn "Removing existing directory..."
-            sudo rm -rf $APP_PATH
-            sudo mkdir -p $APP_PATH
-            sudo chown $USER:$USER $APP_PATH
-            cd $APP_PATH
-            git clone $GIT_REPO .
-        else
-            error "Cannot proceed without a clean directory. Please remove $APP_PATH manually or choose 'y' to remove it automatically."
-            exit 1
-        fi
-    fi
-else
-    # Directory doesn't exist or is empty, clone fresh
-    cd $APP_PATH
-    git clone $GIT_REPO .
-fi
-
-# Set proper ownership
-sudo chown -R $USER:$USER $APP_PATH
-
-success "Repository cloned/updated"
+success "Repository cloned and directories created"
 
 # =============================================================================
 # 13. ENVIRONMENT CONFIGURATION
@@ -457,8 +428,8 @@ sudo tee /etc/systemd/system/$APP_NAME.service > /dev/null << EOF
 [Unit]
 Description=$APP_NAME Next.js Application
 After=network.target
-Requires=docker.service
-After=docker.service
+Requires=$APP_NAME-backend.service
+After=$APP_NAME-backend.service
 
 [Service]
 Type=simple
@@ -467,7 +438,6 @@ Group=$USER
 WorkingDirectory=$APP_PATH
 Environment=NODE_ENV=production
 Environment=PATH=/usr/local/bin:/usr/bin:/bin:\$HOME/.local/share/pnpm:\$HOME/.nvm/versions/node/v20.*/bin
-ExecStartPre=/usr/local/bin/docker-compose up -d
 ExecStart=/usr/bin/pnpm start
 ExecStop=/bin/kill -TERM \$MAINPID
 TimeoutStartSec=60
@@ -713,6 +683,11 @@ success "System optimizations applied"
 # =============================================================================
 log "🎯 Final setup steps..."
 
+# Start backend services first
+log "🐳 Starting backend services..."
+sudo systemctl start $APP_NAME-backend
+sleep 10
+
 # Install dependencies
 log "📦 Installing application dependencies..."
 cd $APP_PATH
@@ -722,21 +697,18 @@ pnpm install
 log "🔧 Generating Prisma client..."
 pnpm prisma generate
 
-# Run database migrations and seed (if database is available)
+# Run database migrations and seed
 log "🗄️ Setting up database..."
-if docker-compose ps db | grep -q "Up" 2>/dev/null; then
-    log "Database container is running, running migrations..."
-    pnpm prisma migrate deploy
-    
-    log "Seeding database..."
-    pnpm prisma db seed
-    success "Database setup completed"
-else
-    warn "Database container not running, skipping database setup"
-    info "Database will be set up when you run the deployment script"
-fi
+pnpm prisma migrate deploy
 
-success "Application dependencies installed"
+log "🌱 Seeding database..."
+pnpm prisma db seed
+
+# Build the application
+log "🏗️ Building application..."
+pnpm build
+
+success "Application built and ready"
 
 # =============================================================================
 # 20. COMPLETION MESSAGE
@@ -751,21 +723,22 @@ success "Setup completed successfully!"
 echo ""
 info "📋 Next Steps:"
 echo ""
-echo "1. Configure your environment:"
+echo "1. Configure your environment (optional):"
 echo "   nano $APP_PATH/.env"
 echo ""
-echo "2. Update domain DNS records:"
-echo "   Point $APP_DOMAIN A record to: $(curl -s http://checkip.amazonaws.com)"
-echo "   Point www.$APP_DOMAIN A record to: $(curl -s http://checkip.amazonaws.com)"
+echo "2. Start the Next.js application:"
+echo "   sudo systemctl start $APP_NAME"
+echo "   # Backend services are already running"
 echo ""
-echo "3. Deploy the application:"
-echo "   $APP_NAME-manage deploy"
+echo "3. Check everything is working:"
+echo "   ./manage.sh status"
+echo "   # Application should be accessible at http://$(curl -s http://checkip.amazonaws.com):3000"
 echo ""
-echo "4. Setup SSL certificate:"
-echo "   $APP_NAME-manage ssl"
+echo "4. Configure domain (optional):"
+echo "   ./manage.sh domain your-domain.com"
 echo ""
-echo "5. Enable auto-start:"
-echo "   sudo systemctl enable $APP_NAME"
+echo "5. Setup SSL certificate (optional):"
+echo "   ./manage.sh ssl"
 echo ""
 info "🔧 Management Commands:"
 echo "   - Deploy: $APP_NAME-manage deploy"
