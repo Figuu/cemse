@@ -62,15 +62,31 @@ start_services() {
     log "🚀 Starting CEMSE services..."
     cd "$APP_PATH"
 
-    docker-compose up -d
-    sleep 10
-
-    if docker-compose ps | grep -q "Up"; then
-        success "Services started successfully"
-        docker-compose ps
+    # Start backend services (Docker)
+    log "Starting backend services..."
+    if systemctl is-active --quiet cemse-backend 2>/dev/null; then
+        success "Backend services already running"
     else
-        error "Failed to start some services"
-        docker-compose ps
+        sudo systemctl start cemse-backend || docker-compose up -d
+    fi
+
+    # Start Next.js app
+    log "Starting Next.js application..."
+    if systemctl is-active --quiet cemse 2>/dev/null; then
+        success "CEMSE app already running"
+    else
+        sudo systemctl start cemse
+    fi
+
+    sleep 5
+
+    # Check status
+    if docker-compose ps | grep -q "Up" && systemctl is-active --quiet cemse 2>/dev/null; then
+        success "All services started successfully"
+        show_service_status
+    else
+        error "Some services failed to start"
+        show_service_status
         exit 1
     fi
 }
@@ -80,8 +96,15 @@ stop_services() {
     log "🛑 Stopping CEMSE services..."
     cd "$APP_PATH"
 
-    docker-compose down
-    success "Services stopped"
+    # Stop Next.js app
+    log "Stopping Next.js application..."
+    sudo systemctl stop cemse || true
+
+    # Stop backend services
+    log "Stopping backend services..."
+    sudo systemctl stop cemse-backend || docker-compose down
+
+    success "All services stopped"
 }
 
 # Function to restart services
@@ -89,16 +112,25 @@ restart_services() {
     log "🔄 Restarting CEMSE services..."
     cd "$APP_PATH"
 
-    docker-compose down
-    docker-compose up -d --build
-    sleep 10
+    # Restart backend services
+    log "Restarting backend services..."
+    sudo systemctl restart cemse-backend || {
+        docker-compose down
+        docker-compose up -d
+    }
 
-    if docker-compose ps | grep -q "Up"; then
-        success "Services restarted successfully"
-        docker-compose ps
+    # Restart Next.js app
+    log "Restarting Next.js application..."
+    sudo systemctl restart cemse
+
+    sleep 5
+
+    if docker-compose ps | grep -q "Up" && systemctl is-active --quiet cemse 2>/dev/null; then
+        success "All services restarted successfully"
+        show_service_status
     else
-        error "Failed to restart some services"
-        docker-compose ps
+        error "Some services failed to restart"
+        show_service_status
         exit 1
     fi
 }
@@ -166,62 +198,13 @@ show_logs() {
 # Function to deploy application
 deploy_app() {
     log "🚀 Deploying CEMSE application..."
-    cd "$APP_PATH"
 
-    # Check system resources
-    local memory_gb=$(free -g | awk '/^Mem:/{print $2}')
-    if [ $memory_gb -lt 2 ]; then
-        warn "Low memory detected (${memory_gb}GB). Creating swap if needed..."
-        if ! swapon --show | grep -q '/swapfile'; then
-            sudo fallocate -l 2G /swapfile || true
-            sudo chmod 600 /swapfile || true
-            sudo mkswap /swapfile || true
-            sudo swapon /swapfile || true
-            echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab || true
-        fi
-    fi
-
-    # Pull latest changes if git repo
-    if [ -d ".git" ]; then
-        log "📥 Pulling latest changes..."
-        git pull
-    fi
-
-    # Install dependencies
-    log "📦 Installing dependencies..."
-    export NODE_OPTIONS="--max-old-space-size=2048"
-    pnpm install --frozen-lockfile --prefer-offline || pnpm install --frozen-lockfile
-
-    # Generate Prisma client
-    log "🔧 Generating Prisma client..."
-    pnpm prisma generate
-
-    # Run migrations if database is available
-    if docker-compose ps db | grep -q "Up"; then
-        log "🗄️ Running database migrations..."
-        pnpm prisma migrate deploy
+    # Use the dedicated update script
+    if [ -f "$APP_PATH/update.sh" ]; then
+        "$APP_PATH/update.sh"
     else
-        warn "Database not available, skipping migrations"
-    fi
-
-    # Build application
-    log "🏗️ Building application..."
-    pnpm build
-
-    # Restart services
-    restart_services
-
-    # Verify deployment
-    sleep 10
-    if curl -f -s "http://localhost:$APP_PORT/api/health" > /dev/null 2>&1; then
-        success "Deployment completed successfully!"
-        echo ""
-        info "🌐 Application accessible at:"
-        echo "   - Local: http://localhost:$APP_PORT"
-        echo "   - External: http://$(get_server_ip):$APP_PORT"
-        echo ""
-    else
-        warn "Deployment completed but health check failed"
+        error "Update script not found at $APP_PATH/update.sh"
+        exit 1
     fi
 }
 
@@ -434,6 +417,34 @@ health_check() {
         warn "Issues found: ${issues[*]}"
         return 1
     fi
+}
+
+# Function to show service status
+show_service_status() {
+    echo ""
+    info "🔧 Service Status:"
+    if systemctl is-active --quiet cemse 2>/dev/null; then
+        success "CEMSE app: Running"
+    else
+        warn "CEMSE app: Not running"
+    fi
+
+    if systemctl is-active --quiet cemse-backend 2>/dev/null; then
+        success "Backend services: Running"
+    else
+        warn "Backend services: Not running"
+    fi
+
+    if systemctl is-active --quiet nginx 2>/dev/null; then
+        success "Nginx: Running"
+    else
+        warn "Nginx: Not running"
+    fi
+
+    echo ""
+    info "🐳 Docker Containers:"
+    cd "$APP_PATH"
+    docker-compose ps
 }
 
 # Main function

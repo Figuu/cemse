@@ -4,7 +4,7 @@ services:
   # PostgreSQL Database
   db:
     image: postgres:15-alpine
-    restart: always
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
@@ -26,7 +26,7 @@ services:
   # Redis for caching
   redis:
     image: redis:7-alpine
-    restart: always
+    restart: unless-stopped
     ports:
       - "${REDIS_PORT:-6379}:6379"
     volumes:
@@ -42,7 +42,7 @@ services:
   # MinIO Object Storage
   minio:
     image: minio/minio:latest
-    restart: always
+    restart: unless-stopped
     ports:
       - "${MINIO_PORT:-9000}:9000"
       - "${MINIO_CONSOLE_PORT:-9001}:9001"
@@ -112,48 +112,6 @@ services:
     networks:
       - cemse-network
 
-  # CEMSE Next.js Application
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: cemse-app
-    restart: unless-stopped
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
-      prisma-client:
-        condition: service_completed_successfully
-    environment:
-      NODE_ENV: ${NODE_ENV:-production}
-      PORT: 3000
-      DATABASE_URL: "postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-cemse_dev}"
-      DIRECT_URL: "postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-cemse_dev}"
-      REDIS_URL: "redis://redis:6379"
-      MINIO_ENDPOINT: minio
-      MINIO_PORT: 9000
-      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
-      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
-      MINIO_USE_SSL: false
-      MINIO_BASE_URL: "http://minio:9000"
-      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
-      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-here}
-    ports:
-      - "${APP_PORT:-3000}:3000"
-    volumes:
-      - ./public/uploads:/app/public/uploads
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    networks:
-      - cemse-network
 
   # Prisma Client Service
   prisma-client:

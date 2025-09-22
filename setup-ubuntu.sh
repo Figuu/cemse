@@ -461,18 +461,42 @@ Requires=docker.service
 After=docker.service
 
 [Service]
-Type=forking
+Type=simple
 User=$USER
 Group=$USER
 WorkingDirectory=$APP_PATH
 Environment=NODE_ENV=production
+Environment=PATH=/usr/local/bin:/usr/bin:/bin:\$HOME/.local/share/pnpm:\$HOME/.nvm/versions/node/v20.*/bin
+ExecStartPre=/usr/local/bin/docker-compose up -d
+ExecStart=/usr/bin/pnpm start
+ExecStop=/bin/kill -TERM \$MAINPID
+TimeoutStartSec=60
+TimeoutStopSec=30
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Create backend startup service
+sudo tee /etc/systemd/system/$APP_NAME-backend.service > /dev/null << EOF
+[Unit]
+Description=$APP_NAME Backend Services (Docker)
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+User=$USER
+Group=$USER
+WorkingDirectory=$APP_PATH
 ExecStart=/usr/local/bin/docker-compose up -d
 ExecStop=/usr/local/bin/docker-compose down
-ExecReload=/usr/local/bin/docker-compose restart
-TimeoutStartSec=300
-TimeoutStopSec=120
-Restart=always
-RestartSec=30
+TimeoutStartSec=60
 
 [Install]
 WantedBy=multi-user.target
@@ -481,7 +505,11 @@ EOF
 # Reload systemd
 sudo systemctl daemon-reload
 
-success "Systemd service created"
+# Enable services to start on boot
+sudo systemctl enable $APP_NAME-backend
+sudo systemctl enable $APP_NAME
+
+success "Systemd services created and enabled for auto-start"
 
 # =============================================================================
 # 16. LOG ROTATION CONFIGURATION

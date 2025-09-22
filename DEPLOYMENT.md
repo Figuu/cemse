@@ -4,86 +4,106 @@
 
 ### ✅ Issues Fixed
 
-- **Container shutdown**: Added proper app service to docker-compose.yml with health checks
-- **Missing cemse service**: App now runs in Docker container with restart policies
-- **Shell script chaos**: Consolidated 10+ scripts into one `manage.sh` script
-- **Deployment complexity**: Simplified to 3 essential scripts
+- **Container shutdown**: Docker now only runs backend services (DB, Redis, MinIO) with auto-restart
+- **Missing cemse service**: Fixed systemd service to run `pnpm start` directly on host
+- **Shell script chaos**: Consolidated 10+ scripts into simplified management scripts
+- **Update complexity**: ONE command now handles: git pull + migrations + restart
 
 ### 🛠️ Essential Scripts (Keep Only These)
 
-1. **`setup-ubuntu.sh`** - Complete Ubuntu 24.04 LTS setup
-2. **`setup.sh`** - Complete Amazon Linux 2023 setup
-3. **`manage.sh`** - ⭐ **NEW** - Unified management script
+1. **`setup-ubuntu.sh`** or **`setup.sh`** - Initial server setup (run once)
+2. **`update.sh`** - ⭐ **Your main update command**
+3. **`manage.sh`** - Service management (start/stop/status)
+
+### 🚀 **Architecture Overview**
+
+- **Docker containers** = Backend only (PostgreSQL, Redis, MinIO)
+- **pnpm start** = Next.js app runs directly on host
+- **cemse.service** = systemd keeps `pnpm start` running automatically
+- **cemse-backend.service** = systemd keeps Docker containers running
 
 ### ❌ Deleted/Deprecated Scripts
 - `backup.sh` → Use `./manage.sh backup`
 - `configure-domain.sh` → Use `./manage.sh domain <name>`
-- `deploy.sh` → Use `./manage.sh deploy`
-- `fix-nginx.sh` → Issues fixed in setup scripts
-- `fix-setup.sh` → Issues resolved
+- `deploy.sh` → Use `./update.sh`
+- `fix-nginx.sh`, `fix-setup.sh` → Issues resolved
 - `health-check.sh` → Use `./manage.sh health`
 - `setup-ssl.sh` → Use `./manage.sh ssl`
-- `setup-nginx-production.sh` → Integrated in setup
 
 ## 🚀 Quick Start
 
 ### 1. Initial Server Setup
 
 ```bash
-# Copy the setup script to your server
-scp setup-ubuntu.sh ubuntu@your-server-ip:/home/ubuntu/
-
-# SSH into your server
-ssh ubuntu@your-server-ip
-
-# Make the script executable and run it
-chmod +x setup-ubuntu.sh
+# For Ubuntu 24.04 LTS (Recommended)
 ./setup-ubuntu.sh
+
+# For Amazon Linux 2023
+./setup.sh
 ```
 
-The setup script will:
-- Install all required dependencies (Node.js, Docker, Nginx, etc.)
-- Clone your repository to `/opt/cemse`
-- Configure systemd services
-- Set up Nginx reverse proxy
-- Configure firewall
-- Create management scripts
-
-### 2. Configure Environment
+### 2. **ONE Command for Updates** ⭐
 
 ```bash
-# Edit the environment file
-nano /opt/cemse/.env
-
-# Update with your actual values:
-# - Database credentials
-# - MinIO credentials
-# - JWT secrets
-# - Supabase keys (if using)
+# This replaces ALL your manual steps:
+./update.sh
 ```
 
-### 3. Deploy Application
+**What it does automatically:**
+- `git pull`
+- `pnpm install` (if package.json changed)
+- `pnpm prisma generate`
+- `pnpm prisma migrate deploy`
+- Restart Docker backend services
+- Restart cemse service (`pnpm start`)
+- Verify everything is working
+
+### 3. Service Management
 
 ```bash
-# Run the deployment script
-cd /opt/cemse
-./deploy.sh
+# Check if everything is running
+./manage.sh status
+
+# Start services
+./manage.sh start
+
+# Restart if needed
+./manage.sh restart
+
+# View logs
+./manage.sh logs
 ```
 
-### 4. Configure Domain (Optional)
+### 4. Domain & SSL (Optional)
 
 ```bash
 # Configure your domain
-./configure-domain.sh your-domain.com
+./manage.sh domain your-domain.com
 
-# Follow the DNS instructions provided
+# Setup SSL certificate (after DNS propagation)
+./manage.sh ssl
 ```
 
-### 5. Setup SSL Certificate
+### 5. NPM Commands
+
+Alternative commands using npm/pnpm:
 
 ```bash
-# After DNS propagation, setup SSL
-sudo ./setup-ssl.sh
+# Main update command
+pnpm run update           # Same as ./update.sh
+
+# Docker operations (backend only)
+pnpm run docker:up        # Start backend containers
+pnpm run docker:down      # Stop backend containers
+pnpm run docker:logs      # View backend logs
+pnpm run docker:status    # Check backend status
+
+# Management operations
+pnpm run manage:status    # Check all service status
+pnpm run manage:restart   # Restart all services
+pnpm run manage:logs      # View application logs
+pnpm run manage:backup    # Create backup
+pnpm run manage:health    # Health check
 ```
 
 ## 🔧 Management Commands

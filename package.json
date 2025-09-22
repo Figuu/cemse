@@ -31,6 +31,7 @@
     "docker:status": "docker-compose ps",
     "docker:studio": "docker-compose up prisma-studio -d",
     "dev:app": "tsx server.ts",
+    "update": "./update.sh",
     "manage:start": "./manage.sh start",
     "manage:stop": "./manage.sh stop",
     "manage:restart": "./manage.sh restart",
