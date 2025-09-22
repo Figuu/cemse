@@ -33,6 +33,7 @@ async function main() {
   console.log('✅ Usuario administrador creado:', admin.email);
 
   // Create sample institution
+  /*
   const institutionPassword = await bcrypt.hash('12345678', 12);
   const institution = await prisma.user.upsert({
     where: { email: 'insti@demo.com' },
@@ -286,7 +287,9 @@ async function main() {
   console.log('✅ Artículo de noticias creado:', newsArticle.title);
 
   console.log('🎉 Seed completado exitosamente!');
+  */
 }
+
 
 main()
   .catch((e) => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import PDFExportButton from './PDFExportButton';
+import FinancialCalculator from './FinancialCalculator';
 import { 
   FileText, 
   Save, 
@@ -23,9 +25,11 @@ import {
   DollarSign,
   TrendingUp,
   Calendar,
-  AlertTriangle
+  AlertTriangle,
+  Grid3X3
 } from "lucide-react";
 import { BusinessPlanData, BusinessPlanService } from "@/lib/businessPlanService";
+import { useSession } from "next-auth/react";
 
 interface BusinessPlanBuilderProps {
   businessPlanId?: string;
@@ -38,6 +42,7 @@ export function BusinessPlanBuilder({
   onSave, 
   className 
 }: BusinessPlanBuilderProps) {
+  const { data: session, status } = useSession();
   const [plan, setPlan] = useState<BusinessPlanData>({
     userId: "",
     title: "",
@@ -59,11 +64,58 @@ export function BusinessPlanBuilder({
     competitiveAdvantage: "",
     marketingStrategy: "",
     operationsPlan: "",
+    
+    // Triple Impact Assessment
+    tripleImpactAssessment: {
+      problemSolved: "",
+      beneficiaries: "",
+      resourcesUsed: "",
+      communityInvolvement: "",
+      longTermImpact: "",
+    },
+    
+    // Business Model Canvas
+    businessModelCanvas: {
+      keyPartners: "",
+      keyActivities: "",
+      valuePropositions: "",
+      customerRelationships: "",
+      customerSegments: "",
+      keyResources: "",
+      channels: "",
+      costStructure: "",
+      revenueStreams: "",
+    },
+    
+    // Enhanced Financial Projections
     financialProjections: {
+      startupCosts: 0,
+      monthlyRevenue: 0,
+      monthlyExpenses: 0,
+      breakEvenMonth: 0,
+      revenueStreams: [],
+      // New financial calculator fields
+      initialInvestment: 0,
+      monthlyOperatingCosts: 0,
+      revenueProjection: 0,
+      breakEvenPoint: 0,
+      estimatedROI: 0,
       year1: { revenue: 0, expenses: 0, profit: 0, cashFlow: 0, customers: 0, growthRate: 0 },
       year2: { revenue: 0, expenses: 0, profit: 0, cashFlow: 0, customers: 0, growthRate: 0 },
       year3: { revenue: 0, expenses: 0, profit: 0, cashFlow: 0, customers: 0, growthRate: 0 }
     },
+    
+    // Additional fields from simulator
+    executiveSummary: "",
+    businessDescription: "",
+    marketAnalysis: "",
+    competitiveAnalysis: "",
+    operationalPlan: "",
+    managementTeam: "",
+    riskAnalysis: "",
+    appendices: "",
+    
+    // Legacy fields
     team: [],
     milestones: [],
     risks: []
@@ -73,22 +125,64 @@ export function BusinessPlanBuilder({
   const [isSaving, setIsSaving] = useState(false);
   const [completion, setCompletion] = useState(0);
 
-  const loadBusinessPlan = async () => {
+  const loadBusinessPlan = useCallback(async () => {
     if (!businessPlanId) return;
 
     setIsLoading(true);
     try {
       const response = await fetch(`/api/business-plans/${businessPlanId}`);
+      
       if (response.ok) {
         const data = await response.json();
-        setPlan(data.businessPlan);
+        console.log("API response data:", data);
+        console.log("Business plan object:", data.businessPlan);
+        
+        // The business plan data is already transformed and flattened by the service
+        const businessPlanData = data.businessPlan || {};
+        
+        // Ensure all required fields are present with proper defaults
+        const fullPlanData = {
+          userId: businessPlanData.userId || "",
+          title: businessPlanData.title || "",
+          description: businessPlanData.description || "",
+          industry: businessPlanData.industry || "",
+          stage: businessPlanData.stage || "idea",
+          fundingGoal: businessPlanData.fundingGoal || 0,
+          currentFunding: businessPlanData.currentFunding || 0,
+          teamSize: businessPlanData.teamSize || 1,
+          marketSize: businessPlanData.marketSize || 0,
+          targetMarket: businessPlanData.targetMarket || "",
+          problemStatement: businessPlanData.problemStatement || "",
+          solution: businessPlanData.solution || "",
+          valueProposition: businessPlanData.valueProposition || "",
+          businessModel: businessPlanData.businessModel || "",
+          revenueStreams: businessPlanData.revenueStreams || [],
+          costStructure: businessPlanData.costStructure || [],
+          keyMetrics: businessPlanData.keyMetrics || [],
+          competitiveAdvantage: businessPlanData.competitiveAdvantage || "",
+          marketingStrategy: businessPlanData.marketingStrategy || "",
+          operationsPlan: businessPlanData.operationsPlan || "",
+          riskAssessment: businessPlanData.riskAssessment || "",
+          team: businessPlanData.team || [],
+          milestones: businessPlanData.milestones || [],
+          risks: businessPlanData.risks || [],
+          financialProjections: businessPlanData.financialProjections || {},
+          tripleImpactAssessment: businessPlanData.tripleImpactAssessment || {},
+          businessModelCanvas: businessPlanData.businessModelCanvas || {},
+        };
+        
+        setPlan(fullPlanData);
+      } else {
+        console.error("Failed to load business plan. Status:", response.status);
+        const errorData = await response.json();
+        console.error("Error data:", errorData);
       }
     } catch (error) {
       console.error("Error loading business plan:", error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [businessPlanId]);
 
   // Load business plan if ID provided
   useEffect(() => {
@@ -104,20 +198,52 @@ export function BusinessPlanBuilder({
   }, [plan]);
 
   const handleSave = async () => {
+    if (status === "loading") {
+      console.log("Session is loading, please wait...");
+      return;
+    }
+
+    if (!session) {
+      console.error("User not authenticated. Please log in to save business plans.");
+      return;
+    }
+
     setIsSaving(true);
     try {
       const url = businessPlanId ? `/api/business-plans/${businessPlanId}` : "/api/business-plans";
       const method = businessPlanId ? "PUT" : "POST";
 
+      // Ensure the plan has the correct userId (user ID)
+      const planToSave = {
+        ...plan,
+        userId: session.user.id
+      };
+
+      console.log(`Making ${method} request to ${url}`, { 
+        session: !!session, 
+        userId: session?.user?.id,
+        planTitle: planToSave.title
+      });
+
       const response = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(plan)
+        body: JSON.stringify(planToSave)
       });
+
+      console.log(`Response status: ${response.status}`);
 
       if (response.ok) {
         const data = await response.json();
         onSave?.(data.businessPlan);
+        console.log("Business plan saved successfully:", data);
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Failed to save business plan:", {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData
+        });
       }
     } catch (error) {
       console.error("Error saving business plan:", error);
@@ -126,7 +252,8 @@ export function BusinessPlanBuilder({
     }
   };
 
-  const handleInputChange = (field: keyof BusinessPlanData, value: string | number | string[] | BusinessPlanData['financialProjections'] | BusinessPlanData['team'] | BusinessPlanData['milestones'] | BusinessPlanData['risks']) => {
+
+  const handleInputChange = (field: keyof BusinessPlanData, value: any) => {
     setPlan(prev => ({ ...prev, [field]: value }));
   };
 
@@ -134,7 +261,7 @@ export function BusinessPlanBuilder({
     if (!item.trim()) return;
     setPlan(prev => ({
       ...prev,
-      [field]: [...(prev[field] as string[]), item]
+      [field]: [...((prev[field] as string[]) || []), item]
     }));
   };
 
@@ -156,6 +283,7 @@ export function BusinessPlanBuilder({
       </Card>
     );
   }
+
 
   return (
     <div className={className}>
@@ -185,10 +313,7 @@ export function BusinessPlanBuilder({
                 <Save className="h-4 w-4 mr-2" />
                 {isSaving ? "Guardando..." : "Guardar"}
               </Button>
-              <Button variant="outline" onClick={handleSave}>
-                <Download className="h-4 w-4 mr-2" />
-                Exportar
-              </Button>
+              <PDFExportButton businessPlan={plan} />
             </div>
           </div>
         </CardHeader>
@@ -196,10 +321,12 @@ export function BusinessPlanBuilder({
 
       {/* Business Plan Form */}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-8">
           <TabsTrigger value="overview">Resumen</TabsTrigger>
+          <TabsTrigger value="impact">Impacto</TabsTrigger>
           <TabsTrigger value="market">Mercado</TabsTrigger>
           <TabsTrigger value="business">Negocio</TabsTrigger>
+          <TabsTrigger value="canvas">Canvas</TabsTrigger>
           <TabsTrigger value="financial">Financiero</TabsTrigger>
           <TabsTrigger value="team">Equipo</TabsTrigger>
           <TabsTrigger value="execution">Ejecución</TabsTrigger>
@@ -256,6 +383,17 @@ export function BusinessPlanBuilder({
                 />
               </div>
 
+              <div>
+                <Label htmlFor="executiveSummary">Resumen Ejecutivo</Label>
+                <Textarea
+                  id="executiveSummary"
+                  value={plan.executiveSummary}
+                  onChange={(e) => handleInputChange("executiveSummary", e.target.value)}
+                  placeholder="Resumen ejecutivo de tu plan de negocio"
+                  rows={4}
+                />
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <Label htmlFor="stage">Etapa</Label>
@@ -279,8 +417,8 @@ export function BusinessPlanBuilder({
                   <Input
                     id="teamSize"
                     type="number"
-                    value={plan.teamSize}
-                    onChange={(e) => handleInputChange("teamSize", parseInt(e.target.value))}
+                    value={plan.teamSize || ""}
+                    onChange={(e) => handleInputChange("teamSize", parseInt(e.target.value) || 1)}
                     placeholder="Número de personas"
                   />
                 </div>
@@ -289,11 +427,97 @@ export function BusinessPlanBuilder({
                   <Input
                     id="marketSize"
                     type="number"
-                    value={plan.marketSize}
-                    onChange={(e) => handleInputChange("marketSize", parseInt(e.target.value))}
+                    value={plan.marketSize || ""}
+                    onChange={(e) => handleInputChange("marketSize", parseInt(e.target.value) || 0)}
                     placeholder="Tamaño del mercado"
                   />
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Triple Impact Assessment Tab */}
+        <TabsContent value="impact" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Target className="h-5 w-5" />
+                Evaluación de Triple Impacto
+              </CardTitle>
+              <CardDescription>
+                Define el impacto social, económico y ambiental de tu negocio
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <Label htmlFor="problemSolved">Problema Resuelto</Label>
+                <Textarea
+                  id="problemSolved"
+                  value={plan.tripleImpactAssessment.problemSolved}
+                  onChange={(e) => handleInputChange("tripleImpactAssessment", {
+                    ...plan.tripleImpactAssessment,
+                    problemSolved: e.target.value
+                  })}
+                  placeholder="¿Qué problema específico resuelve tu negocio en la sociedad?"
+                  rows={3}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="beneficiaries">Beneficiarios</Label>
+                <Textarea
+                  id="beneficiaries"
+                  value={plan.tripleImpactAssessment.beneficiaries}
+                  onChange={(e) => handleInputChange("tripleImpactAssessment", {
+                    ...plan.tripleImpactAssessment,
+                    beneficiaries: e.target.value
+                  })}
+                  placeholder="¿Quiénes son los beneficiarios directos e indirectos de tu solución?"
+                  rows={3}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="resourcesUsed">Recursos Utilizados</Label>
+                <Textarea
+                  id="resourcesUsed"
+                  value={plan.tripleImpactAssessment.resourcesUsed}
+                  onChange={(e) => handleInputChange("tripleImpactAssessment", {
+                    ...plan.tripleImpactAssessment,
+                    resourcesUsed: e.target.value
+                  })}
+                  placeholder="¿Qué recursos naturales, humanos o tecnológicos utiliza tu negocio?"
+                  rows={3}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="communityInvolvement">Involucramiento Comunitario</Label>
+                <Textarea
+                  id="communityInvolvement"
+                  value={plan.tripleImpactAssessment.communityInvolvement}
+                  onChange={(e) => handleInputChange("tripleImpactAssessment", {
+                    ...plan.tripleImpactAssessment,
+                    communityInvolvement: e.target.value
+                  })}
+                  placeholder="¿Cómo involucra tu negocio a la comunidad local?"
+                  rows={3}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="longTermImpact">Impacto a Largo Plazo</Label>
+                <Textarea
+                  id="longTermImpact"
+                  value={plan.tripleImpactAssessment.longTermImpact}
+                  onChange={(e) => handleInputChange("tripleImpactAssessment", {
+                    ...plan.tripleImpactAssessment,
+                    longTermImpact: e.target.value
+                  })}
+                  placeholder="¿Cuál será el impacto transformador de tu negocio en 5-10 años?"
+                  rows={3}
+                />
               </div>
             </CardContent>
           </Card>
@@ -360,6 +584,28 @@ export function BusinessPlanBuilder({
                   rows={3}
                 />
               </div>
+
+              <div>
+                <Label htmlFor="marketAnalysis">Análisis de Mercado</Label>
+                <Textarea
+                  id="marketAnalysis"
+                  value={plan.marketAnalysis}
+                  onChange={(e) => handleInputChange("marketAnalysis", e.target.value)}
+                  placeholder="Análisis detallado del mercado objetivo"
+                  rows={4}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="competitiveAnalysis">Análisis Competitivo</Label>
+                <Textarea
+                  id="competitiveAnalysis"
+                  value={plan.competitiveAnalysis}
+                  onChange={(e) => handleInputChange("competitiveAnalysis", e.target.value)}
+                  placeholder="Análisis de la competencia"
+                  rows={4}
+                />
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -385,7 +631,7 @@ export function BusinessPlanBuilder({
               <div>
                 <Label>Fuentes de Ingresos</Label>
                 <div className="space-y-2">
-                  {plan.revenueStreams.map((stream, index) => (
+                  {(plan.revenueStreams || []).map((stream, index) => (
                     <div key={index} className="flex items-center space-x-2">
                       <Input value={stream} readOnly />
                       <Button
@@ -427,7 +673,7 @@ export function BusinessPlanBuilder({
               <div>
                 <Label>Estructura de Costos</Label>
                 <div className="space-y-2">
-                  {plan.costStructure.map((cost, index) => (
+                  {(plan.costStructure || []).map((cost, index) => (
                     <div key={index} className="flex items-center space-x-2">
                       <Input value={cost} readOnly />
                       <Button
@@ -487,38 +733,209 @@ export function BusinessPlanBuilder({
                   rows={3}
                 />
               </div>
+
+              <div>
+                <Label htmlFor="operationalPlan">Plan Operacional Detallado</Label>
+                <Textarea
+                  id="operationalPlan"
+                  value={plan.operationalPlan}
+                  onChange={(e) => handleInputChange("operationalPlan", e.target.value)}
+                  placeholder="Plan operacional detallado de tu negocio"
+                  rows={4}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="managementTeam">Equipo de Gestión</Label>
+                <Textarea
+                  id="managementTeam"
+                  value={plan.managementTeam}
+                  onChange={(e) => handleInputChange("managementTeam", e.target.value)}
+                  placeholder="Descripción del equipo de gestión y liderazgo"
+                  rows={4}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Business Model Canvas Tab */}
+        <TabsContent value="canvas" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Grid3X3 className="h-5 w-5" />
+                Business Model Canvas
+              </CardTitle>
+              <CardDescription>
+                Define los 9 bloques fundamentales de tu modelo de negocio
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="keyPartners">Socios Clave</Label>
+                    <Textarea
+                      id="keyPartners"
+                      value={plan.businessModelCanvas.keyPartners}
+                      onChange={(e) => handleInputChange("businessModelCanvas", {
+                        ...plan.businessModelCanvas,
+                        keyPartners: e.target.value
+                      })}
+                      placeholder="¿Quiénes son tus socios estratégicos?"
+                      rows={3}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="keyActivities">Actividades Clave</Label>
+                    <Textarea
+                      id="keyActivities"
+                      value={plan.businessModelCanvas.keyActivities}
+                      onChange={(e) => handleInputChange("businessModelCanvas", {
+                        ...plan.businessModelCanvas,
+                        keyActivities: e.target.value
+                      })}
+                      placeholder="¿Qué actividades principales realiza tu negocio?"
+                      rows={3}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="valuePropositions">Propuestas de Valor</Label>
+                    <Textarea
+                      id="valuePropositions"
+                      value={plan.businessModelCanvas.valuePropositions}
+                      onChange={(e) => handleInputChange("businessModelCanvas", {
+                        ...plan.businessModelCanvas,
+                        valuePropositions: e.target.value
+                      })}
+                      placeholder="¿Qué valor único ofreces a tus clientes?"
+                      rows={3}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="customerRelationships">Relaciones con Clientes</Label>
+                    <Textarea
+                      id="customerRelationships"
+                      value={plan.businessModelCanvas.customerRelationships}
+                      onChange={(e) => handleInputChange("businessModelCanvas", {
+                        ...plan.businessModelCanvas,
+                        customerRelationships: e.target.value
+                      })}
+                      placeholder="¿Qué tipo de relación estableces con tus clientes?"
+                      rows={3}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="customerSegments">Segmentos de Clientes</Label>
+                    <Textarea
+                      id="customerSegments"
+                      value={plan.businessModelCanvas.customerSegments}
+                      onChange={(e) => handleInputChange("businessModelCanvas", {
+                        ...plan.businessModelCanvas,
+                        customerSegments: e.target.value
+                      })}
+                      placeholder="¿A quién te diriges? ¿Cuáles son tus segmentos de clientes?"
+                      rows={3}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="keyResources">Recursos Clave</Label>
+                    <Textarea
+                      id="keyResources"
+                      value={plan.businessModelCanvas.keyResources}
+                      onChange={(e) => handleInputChange("businessModelCanvas", {
+                        ...plan.businessModelCanvas,
+                        keyResources: e.target.value
+                      })}
+                      placeholder="¿Qué recursos necesitas para crear valor?"
+                      rows={3}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="channels">Canales</Label>
+                    <Textarea
+                      id="channels"
+                      value={plan.businessModelCanvas.channels}
+                      onChange={(e) => handleInputChange("businessModelCanvas", {
+                        ...plan.businessModelCanvas,
+                        channels: e.target.value
+                      })}
+                      placeholder="¿Cómo llegas a tus clientes?"
+                      rows={3}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="costStructure">Estructura de Costos</Label>
+                    <Textarea
+                      id="costStructure"
+                      value={plan.businessModelCanvas.costStructure}
+                      onChange={(e) => handleInputChange("businessModelCanvas", {
+                        ...plan.businessModelCanvas,
+                        costStructure: e.target.value
+                      })}
+                      placeholder="¿Cuáles son los costos más importantes de tu negocio?"
+                      rows={3}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="revenueStreams">Fuentes de Ingresos</Label>
+                    <Textarea
+                      id="revenueStreams"
+                      value={plan.businessModelCanvas.revenueStreams}
+                      onChange={(e) => handleInputChange("businessModelCanvas", {
+                        ...plan.businessModelCanvas,
+                        revenueStreams: e.target.value
+                      })}
+                      placeholder="¿Cómo genera ingresos tu negocio?"
+                      rows={3}
+                    />
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
 
         {/* Financial Tab */}
         <TabsContent value="financial" className="space-y-6">
+          {/* Basic Financial Information */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <DollarSign className="h-5 w-5" />
-                Proyecciones Financieras
+                Información Financiera Básica
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="fundingGoal">Meta de Financiamiento (USD)</Label>
+                  <Label htmlFor="fundingGoal">Meta de Financiamiento (BOB)</Label>
                   <Input
                     id="fundingGoal"
                     type="number"
-                    value={plan.fundingGoal}
-                    onChange={(e) => handleInputChange("fundingGoal", parseInt(e.target.value))}
+                    value={plan.fundingGoal || ""}
+                    onChange={(e) => handleInputChange("fundingGoal", parseInt(e.target.value) || 0)}
                     placeholder="Cantidad que necesitas"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="currentFunding">Financiamiento Actual (USD)</Label>
+                  <Label htmlFor="currentFunding">Financiamiento Actual (BOB)</Label>
                   <Input
                     id="currentFunding"
                     type="number"
-                    value={plan.currentFunding}
-                    onChange={(e) => handleInputChange("currentFunding", parseInt(e.target.value))}
+                    value={plan.currentFunding || ""}
+                    onChange={(e) => handleInputChange("currentFunding", parseInt(e.target.value) || 0)}
                     placeholder="Cantidad que tienes"
                   />
                 </div>
@@ -527,7 +944,7 @@ export function BusinessPlanBuilder({
               <div>
                 <Label>Métricas Clave</Label>
                 <div className="space-y-2">
-                  {plan.keyMetrics.map((metric, index) => (
+                  {(plan.keyMetrics || []).map((metric, index) => (
                     <div key={index} className="flex items-center space-x-2">
                       <Input value={metric} readOnly />
                       <Button
@@ -567,6 +984,23 @@ export function BusinessPlanBuilder({
               </div>
             </CardContent>
           </Card>
+
+          {/* Financial Calculator */}
+          <FinancialCalculator
+            financialData={{
+              initialInvestment: plan.financialProjections?.initialInvestment || 0,
+              monthlyOperatingCosts: plan.financialProjections?.monthlyOperatingCosts || 0,
+              revenueProjection: plan.financialProjections?.revenueProjection || 0,
+              breakEvenPoint: plan.financialProjections?.breakEvenPoint || 0,
+              estimatedROI: plan.financialProjections?.estimatedROI || 0,
+            }}
+            onUpdate={(data) => {
+              handleInputChange("financialProjections", {
+                ...plan.financialProjections,
+                ...data
+              });
+            }}
+          />
         </TabsContent>
 
         {/* Team Tab */}
@@ -580,7 +1014,7 @@ export function BusinessPlanBuilder({
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-4">
-                {plan.team.map((member, index) => (
+                {(plan.team || []).map((member, index) => (
                   <div key={index} className="p-4 border rounded-lg">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
@@ -680,7 +1114,7 @@ export function BusinessPlanBuilder({
               <div>
                 <Label>Hitos</Label>
                 <div className="space-y-4">
-                  {plan.milestones.map((milestone, index) => (
+                  {(plan.milestones || []).map((milestone, index) => (
                     <div key={index} className="p-4 border rounded-lg">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
@@ -815,6 +1249,26 @@ export function BusinessPlanBuilder({
                     Agregar Hito
                   </Button>
                 </div>
+              </div>
+
+              <div>
+                <Label>Análisis de Riesgos</Label>
+                <Textarea
+                  value={plan.riskAnalysis}
+                  onChange={(e) => handleInputChange("riskAnalysis", e.target.value)}
+                  placeholder="Identifica los principales riesgos del negocio y las estrategias para mitigarlos"
+                  rows={4}
+                />
+              </div>
+
+              <div>
+                <Label>Apéndices</Label>
+                <Textarea
+                  value={plan.appendices}
+                  onChange={(e) => handleInputChange("appendices", e.target.value)}
+                  placeholder="Información adicional, gráficos, tablas, etc."
+                  rows={4}
+                />
               </div>
             </CardContent>
           </Card>

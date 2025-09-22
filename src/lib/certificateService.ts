@@ -1,6 +1,7 @@
 import { pdf } from '@react-pdf/renderer';
+import React from 'react';
 import { CourseCertificateTemplate } from '@/components/certificates/CourseCertificateTemplate';
-import { minioClient } from './minioClientService';
+import { minioService } from './minioService';
 
 export interface CertificateData {
   studentId: string;
@@ -52,6 +53,7 @@ export class CertificateService {
    * Generate PDF blob from certificate template
    */
   private static async generatePDFBlob(data: CertificateData): Promise<Blob> {
+    // Create the certificate document using the template component
     const certificateDoc = CourseCertificateTemplate({
       studentName: data.studentName,
       courseTitle: data.courseTitle,
@@ -60,7 +62,7 @@ export class CertificateService {
       courseDuration: data.courseDuration,
       courseLevel: data.courseLevel,
       institutionName: data.institutionName,
-    });
+    }) as any;
 
     const pdfBlob = await pdf(certificateDoc).toBlob();
     return pdfBlob;
@@ -81,20 +83,16 @@ export class CertificateService {
     // Convert blob to buffer
     const buffer = Buffer.from(await pdfBlob.arrayBuffer());
 
-    // Upload to MinIO
-    await minioClient.putObject(
-      this.BUCKET_NAME,
-      objectName,
+    // Upload to MinIO using the server-side service
+    const result = await minioService.uploadFile(
       buffer,
-      buffer.length,
-      {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${filename}"`,
-      }
+      filename,
+      'application/pdf',
+      this.BUCKET_NAME
     );
 
     // Return the public URL
-    return `${process.env.MINIO_PUBLIC_URL || 'http://localhost:9000'}/${this.BUCKET_NAME}/${objectName}`;
+    return result.url;
   }
 
   /**
@@ -102,25 +100,8 @@ export class CertificateService {
    */
   private static async ensureBucketExists(): Promise<void> {
     try {
-      const exists = await minioClient.bucketExists(this.BUCKET_NAME);
-      if (!exists) {
-        await minioClient.makeBucket(this.BUCKET_NAME, 'us-east-1');
-        
-        // Set bucket policy to allow public read access
-        const policy = {
-          Version: '2012-10-17',
-          Statement: [
-            {
-              Effect: 'Allow',
-              Principal: { AWS: ['*'] },
-              Action: ['s3:GetObject'],
-              Resource: [`arn:aws:s3:::${this.BUCKET_NAME}/*`],
-            },
-          ],
-        };
-        
-        await minioClient.setBucketPolicy(this.BUCKET_NAME, JSON.stringify(policy));
-      }
+      // Initialize buckets (this will create the certificates bucket if it doesn't exist)
+      await minioService.initializeBuckets();
     } catch (error) {
       console.error('Error ensuring bucket exists:', error);
       throw new Error('Failed to create certificates bucket');
@@ -136,12 +117,12 @@ export class CertificateService {
       
       // List objects with the course and student prefix
       const prefix = `${this.CERTIFICATE_PREFIX}${courseId}_${studentId}_`;
-      const objects = await minioClient.listObjects(this.BUCKET_NAME, prefix);
+      const objects = await minioService.listFiles(this.BUCKET_NAME, prefix);
       
       let latestObject: any = null;
       let latestDate = new Date(0);
       
-      for await (const obj of objects) {
+      for (const obj of objects) {
         if (obj.lastModified && obj.lastModified > latestDate) {
           latestDate = obj.lastModified;
           latestObject = obj;
@@ -149,7 +130,7 @@ export class CertificateService {
       }
       
       if (latestObject) {
-        return `${process.env.MINIO_PUBLIC_URL || 'http://localhost:9000'}/${this.BUCKET_NAME}/${latestObject.name}`;
+        return minioService.getPublicUrl(this.BUCKET_NAME, latestObject.name);
       }
       
       return null;
@@ -167,10 +148,10 @@ export class CertificateService {
       await this.ensureBucketExists();
       
       const prefix = `${this.CERTIFICATE_PREFIX}${courseId}_${studentId}_`;
-      const objects = await minioClient.listObjects(this.BUCKET_NAME, prefix);
+      const objects = await minioService.listFiles(this.BUCKET_NAME, prefix);
       
-      for await (const obj of objects) {
-        await minioClient.removeObject(this.BUCKET_NAME, obj.name!);
+      for (const obj of objects) {
+        await minioService.deleteFile(this.BUCKET_NAME, obj.name);
       }
       
       return true;

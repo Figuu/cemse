@@ -92,6 +92,9 @@ interface UseApplicationsReturn {
 interface CreateApplicationData {
   jobId: string;
   coverLetter?: string;
+  notes?: string;
+  cvFile?: string;
+  coverLetterFile?: string;
   resumeUrl?: string;
   additionalDocuments?: string[];
 }

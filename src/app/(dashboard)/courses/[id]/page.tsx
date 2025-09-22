@@ -33,7 +33,8 @@ import {
   BarChart3,
   Headphones,
   Image,
-  Trash2
+  Trash2,
+  Lock
 } from "lucide-react";
 import { RoleGuard } from "@/components/auth/RoleGuard";
 import { useCourses } from "@/hooks/useCourses";

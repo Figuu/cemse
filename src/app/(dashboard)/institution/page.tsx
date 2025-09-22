@@ -20,144 +20,45 @@ import {
   Calendar
 } from "lucide-react";
 import { useState } from "react";
+import { useSession } from "next-auth/react";
+import { useInstitutionStudents, useInstitutionCourses, useInstitutionPrograms, STUDENT_STATUS_LABELS, COURSE_STATUS_LABELS } from "@/hooks/useInstitutionStudents";
+import { useInstitutionAnalytics } from "@/hooks/useInstitutionAnalytics";
 
-interface Course {
-  id: string;
-  title: string;
-  description: string;
-  instructor: string;
-  students: number;
-  status: "active" | "draft" | "completed";
-  startDate: string;
-  endDate: string;
-  progress: number;
-}
-
-interface Student {
-  id: string;
-  name: string;
-  email: string;
-  course: string;
-  progress: number;
-  lastActivity: string;
-  status: "active" | "inactive" | "completed";
-}
-
-interface InstitutionStats {
-  totalStudents: number;
-  activeCourses: number;
-  completedCourses: number;
-  totalResources: number;
-  certificatesIssued: number;
-  averageCompletion: number;
-}
-
-const mockCourses: Course[] = [
-  {
-    id: "1",
-    title: "Programación Web Frontend",
-    description: "Curso completo de desarrollo web frontend con React y TypeScript.",
-    instructor: "Dr. María González",
-    students: 45,
-    status: "active",
-    startDate: "2024-01-15",
-    endDate: "2024-04-15",
-    progress: 75
-  },
-  {
-    id: "2",
-    title: "Marketing Digital Avanzado",
-    description: "Estrategias avanzadas de marketing digital y redes sociales.",
-    instructor: "Lic. Carlos Mendoza",
-    students: 32,
-    status: "active",
-    startDate: "2024-02-01",
-    endDate: "2024-05-01",
-    progress: 45
-  },
-  {
-    id: "3",
-    title: "Gestión de Proyectos",
-    description: "Metodologías ágiles y herramientas de gestión de proyectos.",
-    instructor: "Ing. Ana Rodríguez",
-    students: 28,
-    status: "completed",
-    startDate: "2023-10-01",
-    endDate: "2023-12-15",
-    progress: 100
-  }
-];
-
-const mockStudents: Student[] = [
-  {
-    id: "1",
-    name: "Juan Pérez",
-    email: "juan.perez@email.com",
-    course: "Programación Web Frontend",
-    progress: 85,
-    lastActivity: "2024-01-20",
-    status: "active"
-  },
-  {
-    id: "2",
-    name: "María García",
-    email: "maria.garcia@email.com",
-    course: "Marketing Digital Avanzado",
-    progress: 60,
-    lastActivity: "2024-01-19",
-    status: "active"
-  },
-  {
-    id: "3",
-    name: "Carlos López",
-    email: "carlos.lopez@email.com",
-    course: "Gestión de Proyectos",
-    progress: 100,
-    lastActivity: "2023-12-10",
-    status: "completed"
-  }
-];
-
-const mockStats: InstitutionStats = {
-  totalStudents: 150,
-  activeCourses: 8,
-  completedCourses: 12,
-  totalResources: 45,
-  certificatesIssued: 89,
-  averageCompletion: 78
-};
 
 function InstitutionPageContent() {
   const [activeTab, setActiveTab] = useState<"overview" | "courses" | "students" | "resources" | "analytics">("overview");
+  const { data: session } = useSession();
+  
+  // Get institution ID from session
+  const institutionId = session?.user?.profile?.institutionId;
+  
+  // Fetch real data
+  const { data: studentsData, isLoading: studentsLoading } = useInstitutionStudents(institutionId, { limit: 10 });
+  const { data: coursesData, isLoading: coursesLoading } = useInstitutionCourses(institutionId, { limit: 10 });
+  const { data: programsData, isLoading: programsLoading } = useInstitutionPrograms(institutionId, { limit: 10 });
+  const { data: analytics, isLoading: analyticsLoading } = useInstitutionAnalytics(institutionId);
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "active":
+      case "ACTIVE":
         return "bg-green-100 text-green-800";
-      case "draft":
-        return "bg-yellow-100 text-yellow-800";
-      case "completed":
-        return "bg-blue-100 text-blue-800";
-      case "inactive":
+      case "INACTIVE":
         return "bg-gray-100 text-gray-800";
+      case "COMPLETED":
+        return "bg-blue-100 text-blue-800";
+      case "CANCELLED":
+        return "bg-red-100 text-red-800";
+      case "DRAFT":
+        return "bg-yellow-100 text-yellow-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
   };
 
   const getStatusText = (status: string) => {
-    switch (status) {
-      case "active":
-        return "Activo";
-      case "draft":
-        return "Borrador";
-      case "completed":
-        return "Completado";
-      case "inactive":
-        return "Inactivo";
-      default:
-        return status;
-    }
+    return STUDENT_STATUS_LABELS[status as keyof typeof STUDENT_STATUS_LABELS] || 
+           COURSE_STATUS_LABELS[status as keyof typeof COURSE_STATUS_LABELS] || 
+           status;
   };
 
   const formatDate = (dateString: string) => {
@@ -205,15 +106,15 @@ function InstitutionPageContent() {
               <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                 <div className="flex items-center">
                   <MapPin className="h-4 w-4 mr-1" />
-                  La Paz, Bolivia
+                  {analytics?.institution?.region || "Región no especificada"}
                 </div>
                 <div className="flex items-center">
                   <Globe className="h-4 w-4 mr-1" />
-                  www.utb.edu.bo
+                  {analytics?.institution?.department || "Departamento no especificado"}
                 </div>
                 <div className="flex items-center">
                   <Users className="h-4 w-4 mr-1" />
-                  {mockStats.totalStudents} estudiantes
+                  {analytics?.overview?.totalStudents || 0} estudiantes
                 </div>
               </div>
             </div>
@@ -231,7 +132,7 @@ function InstitutionPageContent() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Estudiantes</p>
-                <p className="text-2xl font-bold">{mockStats.totalStudents}</p>
+                <p className="text-2xl font-bold">{analytics?.overview?.totalStudents || 0}</p>
               </div>
               <Users className="h-8 w-8 text-blue-600" />
             </div>
@@ -243,7 +144,7 @@ function InstitutionPageContent() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Cursos Activos</p>
-                <p className="text-2xl font-bold">{mockStats.activeCourses}</p>
+                <p className="text-2xl font-bold">{analytics?.overview?.totalCourses || 0}</p>
               </div>
               <GraduationCap className="h-8 w-8 text-green-600" />
             </div>
@@ -254,8 +155,8 @@ function InstitutionPageContent() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Certificados</p>
-                <p className="text-2xl font-bold">{mockStats.certificatesIssued}</p>
+                <p className="text-sm font-medium text-muted-foreground">Programas</p>
+                <p className="text-2xl font-bold">{analytics?.overview?.totalPrograms || 0}</p>
               </div>
               <Award className="h-8 w-8 text-purple-600" />
             </div>
@@ -266,8 +167,8 @@ function InstitutionPageContent() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Recursos</p>
-                <p className="text-2xl font-bold">{mockStats.totalResources}</p>
+                <p className="text-sm font-medium text-muted-foreground">Inscripciones</p>
+                <p className="text-2xl font-bold">{analytics?.overview?.totalEnrollments || 0}</p>
               </div>
               <BookOpen className="h-8 w-8 text-orange-600" />
             </div>
@@ -317,31 +218,38 @@ function InstitutionPageContent() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {mockCourses.slice(0, 3).map((course) => (
-                    <div key={course.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex-1">
-                        <h4 className="font-medium">{course.title}</h4>
-                        <p className="text-sm text-muted-foreground">{course.instructor}</p>
-                        <div className="flex items-center space-x-2 mt-1">
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div 
-                              className="bg-blue-500 h-2 rounded-full transition-all"
-                              style={{ width: `${course.progress}%` }}
-                            />
+                  {coursesLoading ? (
+                    <div className="text-center py-4">Cargando cursos...</div>
+                  ) : coursesData?.courses?.slice(0, 3).map((course) => {
+                    const enrollmentProgress = Math.round((course._count?.enrollments || 0) / Math.max(course.maxStudents || 1, 1) * 100);
+                    return (
+                      <div key={course.id} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex-1">
+                          <h4 className="font-medium">{course.name}</h4>
+                          <p className="text-sm text-muted-foreground">{course.instructor?.instructor?.firstName} {course.instructor?.instructor?.lastName}</p>
+                          <div className="flex items-center space-x-2 mt-1">
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div 
+                                className="bg-blue-500 h-2 rounded-full transition-all"
+                                style={{ width: `${enrollmentProgress}%` }}
+                              />
+                            </div>
+                            <span className="text-xs text-muted-foreground">
+                              {enrollmentProgress}%
+                            </span>
                           </div>
-                          <span className="text-xs text-muted-foreground">{course.progress}%</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Badge className={getStatusColor(course.status)}>
+                            {getStatusText(course.status)}
+                          </Badge>
+                          <span className="text-sm text-muted-foreground">
+                            {course.currentStudents} estudiantes
+                          </span>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Badge className={getStatusColor(course.status)}>
-                          {getStatusText(course.status)}
-                        </Badge>
-                        <span className="text-sm text-muted-foreground">
-                          {course.students} estudiantes
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  }) || []}
                 </div>
               </CardContent>
             </Card>
@@ -394,58 +302,69 @@ function InstitutionPageContent() {
           </div>
           
           <div className="space-y-4">
-            {mockCourses.map((course) => (
-              <Card key={course.id}>
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <h4 className="text-lg font-semibold">{course.title}</h4>
-                        <Badge className={getStatusColor(course.status)}>
-                          {getStatusText(course.status)}
-                        </Badge>
+            {coursesLoading ? (
+              <div className="text-center py-8">Cargando cursos...</div>
+            ) : coursesData?.courses?.map((course) => {
+              const enrollmentProgress = Math.round((course._count?.enrollments || 0) / Math.max(course.maxStudents || 1, 1) * 100);
+              return (
+                <Card key={course.id}>
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <h4 className="text-lg font-semibold">{course.name}</h4>
+                          <Badge className={getStatusColor(course.status)}>
+                            {getStatusText(course.status)}
+                          </Badge>
+                        </div>
+                        <p className="text-muted-foreground mb-3">{course.description}</p>
+                        <p className="text-sm text-muted-foreground mb-3">
+                          Instructor: {course.instructor?.instructor?.firstName} {course.instructor?.instructor?.lastName} • {course.currentStudents} estudiantes
+                        </p>
+                        <div className="flex items-center space-x-6 text-sm text-muted-foreground mb-3">
+                          {course.startDate && (
+                            <div className="flex items-center">
+                              <Calendar className="h-4 w-4 mr-1" />
+                              Inicio: {formatDate(course.startDate)}
+                            </div>
+                          )}
+                          {course.endDate && (
+                            <div className="flex items-center">
+                              <Calendar className="h-4 w-4 mr-1" />
+                              Fin: {formatDate(course.endDate)}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div 
+                              className="bg-blue-500 h-2 rounded-full transition-all"
+                              style={{ width: `${enrollmentProgress}%` }}
+                            />
+                          </div>
+                          <span className="text-sm text-muted-foreground">
+                            {enrollmentProgress}%
+                          </span>
+                        </div>
                       </div>
-                      <p className="text-muted-foreground mb-3">{course.description}</p>
-                      <p className="text-sm text-muted-foreground mb-3">
-                        Instructor: {course.instructor} • {course.students} estudiantes
-                      </p>
-                      <div className="flex items-center space-x-6 text-sm text-muted-foreground mb-3">
-                        <div className="flex items-center">
-                          <Calendar className="h-4 w-4 mr-1" />
-                          Inicio: {formatDate(course.startDate)}
-                        </div>
-                        <div className="flex items-center">
-                          <Calendar className="h-4 w-4 mr-1" />
-                          Fin: {formatDate(course.endDate)}
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div 
-                            className="bg-blue-500 h-2 rounded-full transition-all"
-                            style={{ width: `${course.progress}%` }}
-                          />
-                        </div>
-                        <span className="text-sm text-muted-foreground">{course.progress}%</span>
+                      <div className="flex space-x-2">
+                        <Button variant="outline" size="sm">
+                          <Users className="h-4 w-4 mr-2" />
+                          Estudiantes
+                        </Button>
+                        <Button variant="outline" size="sm">
+                          <FileText className="h-4 w-4 mr-2" />
+                          Contenido
+                        </Button>
+                        <Button variant="outline" size="sm">
+                          <Settings className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
-                    <div className="flex space-x-2">
-                      <Button variant="outline" size="sm">
-                        <Users className="h-4 w-4 mr-2" />
-                        Estudiantes
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <FileText className="h-4 w-4 mr-2" />
-                        Contenido
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <Settings className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              );
+            }) || []}
           </div>
         </div>
       )}
@@ -461,43 +380,52 @@ function InstitutionPageContent() {
           </div>
           
           <div className="space-y-4">
-            {mockStudents.map((student) => (
-              <Card key={student.id}>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
-                        <Users className="h-5 w-5 text-muted-foreground" />
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-semibold">{student.name}</h4>
-                        <p className="text-sm text-muted-foreground">{student.email}</p>
-                        <p className="text-sm text-muted-foreground">{student.course}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-4">
-                      <div className="text-right">
-                        <div className="flex items-center space-x-2">
-                          <div className="w-20 bg-gray-200 rounded-full h-2">
-                            <div 
-                              className="bg-blue-500 h-2 rounded-full transition-all"
-                              style={{ width: `${student.progress}%` }}
-                            />
-                          </div>
-                          <span className="text-sm text-muted-foreground">{student.progress}%</span>
+            {studentsLoading ? (
+              <div className="text-center py-8">Cargando estudiantes...</div>
+            ) : studentsData?.students?.map((student) => {
+              const completionProgress = Math.round((student.enrollments?.filter(e => e.status === "COMPLETED").length || 0) / Math.max(student.enrollments?.length || 1, 1) * 100);
+              return (
+                <Card key={student.id}>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
+                          <Users className="h-5 w-5 text-muted-foreground" />
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Última actividad: {formatDate(student.lastActivity)}
-                        </p>
+                        <div className="flex-1">
+                          <h4 className="font-semibold">{student.student?.firstName} {student.student?.lastName}</h4>
+                          <p className="text-sm text-muted-foreground">{student.student?.email}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {student.program?.name || "Sin programa asignado"}
+                          </p>
+                        </div>
                       </div>
-                      <Badge className={getStatusColor(student.status)}>
-                        {getStatusText(student.status)}
-                      </Badge>
+                      <div className="flex items-center space-x-4">
+                        <div className="text-right">
+                          <div className="flex items-center space-x-2">
+                            <div className="w-20 bg-gray-200 rounded-full h-2">
+                              <div 
+                                className="bg-blue-500 h-2 rounded-full transition-all"
+                                style={{ width: `${completionProgress}%` }}
+                              />
+                            </div>
+                            <span className="text-sm text-muted-foreground">
+                              {completionProgress}%
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Inscrito: {formatDate(student.enrollmentDate)}
+                          </p>
+                        </div>
+                        <Badge className={getStatusColor(student.status)}>
+                          {getStatusText(student.status)}
+                        </Badge>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              );
+            }) || []}
           </div>
         </div>
       )}

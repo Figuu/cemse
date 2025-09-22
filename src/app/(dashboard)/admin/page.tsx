@@ -224,11 +224,11 @@ function AdminPageContent() {
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <Shield className={`h-8 w-8 ${stats ? getHealthColor(stats.systemHealth) : 'text-gray-400'}`} />
+              <Shield className={`h-8 w-8 ${stats?.systemHealth ? getHealthColor(stats.systemHealth) : 'text-gray-400'}`} />
               <div>
                 <h3 className="text-lg font-semibold">Estado del Sistema</h3>
-                <p className={`text-sm ${stats ? getHealthColor(stats.systemHealth) : 'text-gray-400'}`}>
-                  {stats ? getHealthText(stats.systemHealth) : 'Cargando...'}
+                <p className={`text-sm ${stats?.systemHealth ? getHealthColor(stats.systemHealth) : 'text-gray-400'}`}>
+                  {stats?.systemHealth ? getHealthText(stats.systemHealth) : 'Cargando...'}
                 </p>
               </div>
             </div>

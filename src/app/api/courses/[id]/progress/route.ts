@@ -241,6 +241,15 @@ export async function PATCH(
             lessons: true,
           },
         },
+        instructor: {
+          include: {
+            user: {
+              include: {
+                profile: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -291,10 +300,16 @@ export async function PATCH(
             
             const certificateData = {
               studentId: session.user.id,
-              studentName: studentProfile?.fullName || session.user.name || 'Estudiante',
+              studentName: studentProfile?.firstName && studentProfile?.lastName
+                ? `${studentProfile.firstName} ${studentProfile.lastName}`
+                : session.user.name || 'Estudiante',
               courseId: courseId,
               courseTitle: course.title,
-              instructorName: instructorProfile?.fullName || course.instructor?.name || 'Instructor',
+              instructorName: instructorProfile?.firstName && instructorProfile?.lastName
+                ? `${instructorProfile.firstName} ${instructorProfile.lastName}`
+                : course.instructor?.user?.profile?.firstName && course.instructor?.user?.profile?.lastName
+                ? `${course.instructor.user.profile.firstName} ${course.instructor.user.profile.lastName}`
+                : 'Instructor',
               completionDate: new Date().toISOString(),
               courseDuration: `${Math.floor(course.duration / 60)}h ${course.duration % 60}m`,
               courseLevel: course.level,

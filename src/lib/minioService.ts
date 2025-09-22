@@ -17,7 +17,8 @@ const BUCKETS = {
   IMAGES: 'images',
   VIDEOS: 'videos',
   AUDIO: 'audio',
-  TEMP: 'temp'
+  TEMP: 'temp',
+  CERTIFICATES: 'certificates'
 } as const;
 
 // File type to bucket mapping

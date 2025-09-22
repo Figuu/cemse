@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { CertificateService } from "@/lib/certificateService";
+import { prisma } from "@/lib/prisma";
 
 export async function GET(
   request: NextRequest,
@@ -16,16 +17,25 @@ export async function GET(
 
     const { id: certificateId } = await params;
 
-    // Verify certificate and get download URL
-    const verification = await CertificateService.verifyCertificate(certificateId);
+    // Find certificate in database
+    const certificate = await prisma.certificate.findUnique({
+      where: { id: certificateId },
+      include: {
+        student: {
+          include: {
+            user: true,
+          },
+        },
+        course: true,
+      },
+    });
     
-    if (!verification.isValid || !verification.certificate) {
+    if (!certificate) {
       return NextResponse.json({ error: "Certificate not found" }, { status: 404 });
     }
 
     // Check if user is the certificate owner or has admin access
-    // Note: This would need to be implemented based on the actual certificate verification structure
-    const isOwner = false; // TODO: Implement proper ownership check
+    const isOwner = certificate.student.userId === session.user.id;
     const isAdmin = ["SUPERADMIN", "INSTRUCTOR"].includes(session.user.role);
 
     if (!isOwner && !isAdmin) {
@@ -33,7 +43,7 @@ export async function GET(
     }
 
     // Get certificate download URL
-    const downloadUrl = await CertificateService.getCertificateDownloadUrl(certificateId);
+    const downloadUrl = await CertificateService.getCertificateUrl(certificate.courseId, certificate.studentId);
     
     if (!downloadUrl) {
       return NextResponse.json({ error: "Certificate file not found" }, { status: 404 });

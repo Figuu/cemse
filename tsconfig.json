@@ -5,8 +5,8 @@
     "allowJs": true,
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
-    "typeRoots": ["./node_modules/@types"],
-    "types": ["node", "react", "react-dom", "next"],
+    "typeRoots": ["./node_modules/@types", "./types"],
+    "types": ["node", "react", "react-dom", "next", "jest", "@testing-library/jest-dom"],
     "strict": false,
     "noImplicitAny": false,
     "noEmit": true,
@@ -26,6 +26,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "types/**/*.d.ts"],
   "exclude": ["node_modules"]
 }

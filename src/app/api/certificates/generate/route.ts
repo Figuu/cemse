@@ -23,19 +23,80 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Either courseId or moduleId is required" }, { status: 400 });
     }
 
-    let certificateUrl: string | null = null;
+    let certificateResult: any = null;
 
     if (courseId) {
+      // Get course and student data for certificate generation
+      const course = await prisma.course.findUnique({
+        where: { id: courseId },
+        include: {
+          instructor: {
+            include: {
+              user: {
+                include: {
+                  profile: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      const student = await prisma.profile.findUnique({
+        where: { userId: studentId },
+      });
+
+      if (!course || !student) {
+        return NextResponse.json({ 
+          error: "Course or student not found" 
+        }, { status: 404 });
+      }
+
+      // Check if student has completed the course
+      const enrollment = await prisma.courseEnrollment.findUnique({
+        where: {
+          studentId_courseId: {
+            studentId: studentId,
+            courseId: courseId,
+          },
+        },
+      });
+
+      if (!enrollment || enrollment.progress.toNumber() < 100) {
+        return NextResponse.json({ 
+          error: "Student has not completed the course" 
+        }, { status: 400 });
+      }
+
+      // Construct certificate data
+      const certificateData = {
+        studentId: studentId,
+        studentName: `${student.firstName || ''} ${student.lastName || ''}`.trim() || 'Estudiante',
+        courseId: courseId,
+        courseTitle: course.title,
+        instructorName: course.instructor?.user?.profile?.firstName && course.instructor?.user?.profile?.lastName
+          ? `${course.instructor.user.profile.firstName} ${course.instructor.user.profile.lastName}`
+          : course.instructor?.user?.firstName && course.instructor?.user?.lastName
+          ? `${course.instructor.user.firstName} ${course.instructor.user.lastName}`
+          : 'Instructor',
+        completionDate: enrollment.completedAt?.toISOString() || new Date().toISOString(),
+        courseDuration: `${Math.floor(course.duration / 60)}h ${course.duration % 60}m`,
+        courseLevel: course.level,
+        institutionName: 'CEMSE - Centro de Emprendimiento y Desarrollo Sostenible',
+      };
+
       // Generate course certificate
-      certificateUrl = await CertificateService.generateCourseCertificate(studentId, courseId);
+      certificateResult = await CertificateService.generateCourseCertificate(certificateData);
     } else if (moduleId) {
-      // Generate module certificate
-      certificateUrl = await CertificateService.generateModuleCertificate(studentId, moduleId);
+      // For now, module certificates are not implemented
+      return NextResponse.json({ 
+        error: "Module certificates are not yet implemented" 
+      }, { status: 501 });
     }
 
-    if (!certificateUrl) {
+    if (!certificateResult || !certificateResult.success) {
       return NextResponse.json({ 
-        error: "Failed to generate certificate. Student may not have completed the course/module." 
+        error: certificateResult?.error || "Failed to generate certificate" 
       }, { status: 400 });
     }
 
@@ -94,7 +155,7 @@ export async function POST(request: NextRequest) {
       certificate: {
         id: certificate.id,
         type: courseId ? "course" : "module",
-        certificateUrl: certificate.fileUrl,
+        certificateUrl: certificateResult.certificateUrl,
         issuedAt: certificate.issuedAt.toISOString(),
         student: {
           id: certificate.student.userId,

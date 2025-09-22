@@ -92,7 +92,9 @@ export function CertificateDownload({
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
             <div className="flex items-center">
               <AlertCircle className="h-4 w-4 text-red-500 mr-2" />
-              <span className="text-sm text-red-700">{error}</span>
+              <span className="text-sm text-red-700">
+                {error instanceof Error ? error.message : String(error)}
+              </span>
             </div>
           </div>
         )}

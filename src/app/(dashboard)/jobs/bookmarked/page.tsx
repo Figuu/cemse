@@ -12,222 +12,41 @@ import {
   List,
   Trash2,
 } from "lucide-react";
+import { useBookmarkedJobs } from "@/hooks/useBookmarkedJobs";
 
-interface Job {
-  id: string;
-  title: string;
-  company: {
-    name: string;
-    logo: string;
-    location: string;
-  };
-  location: string;
-  type: "full-time" | "part-time" | "contract" | "internship";
-  salary: {
-    min: number;
-    max: number;
-    currency: string;
-  };
-  description: string;
-  requirements: string[];
-  benefits: string[];
-  postedAt: Date;
-  deadline: Date;
-  isBookmarked: boolean;
-  isApplied: boolean;
-  experience: string;
-  education: string;
-  skills: string[];
-  remote: boolean;
-  urgent: boolean;
-  bookmarkedAt: Date;
-}
 
 export default function BookmarkedJobsPage() {
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Mock data - in real app, this would come from an API
-  useEffect(() => {
-    const mockJobs: Job[] = [
-      {
-        id: "1",
-        title: "Desarrollador Frontend React",
-        company: {
-          name: "TechCorp México",
-          logo: "/logos/techcorp.png",
-          location: "Ciudad de México"
-        },
-        location: "Ciudad de México",
-        type: "full-time",
-        salary: {
-          min: 25000,
-          max: 40000,
-          currency: "MXN"
-        },
-        description: "Buscamos un desarrollador frontend con experiencia en React para unirse a nuestro equipo de desarrollo.",
-        requirements: [
-          "3+ años de experiencia con React",
-          "Conocimiento de TypeScript",
-          "Experiencia con Redux o Context API",
-          "Conocimiento de HTML5, CSS3 y JavaScript ES6+"
-        ],
-        benefits: [
-          "Seguro médico",
-          "Vales de despensa",
-          "Horario flexible",
-          "Trabajo remoto"
-        ],
-        postedAt: new Date("2024-01-15"),
-        deadline: new Date("2024-02-15"),
-        isBookmarked: true,
-        isApplied: false,
-        experience: "3-5 años",
-        education: "Licenciatura",
-        skills: ["React", "TypeScript", "JavaScript", "CSS"],
-        remote: true,
-        urgent: false,
-        bookmarkedAt: new Date("2024-01-16")
-      },
-      {
-        id: "2",
-        title: "Diseñador UX/UI",
-        company: {
-          name: "DesignStudio",
-          logo: "/logos/designstudio.png",
-          location: "Guadalajara"
-        },
-        location: "Guadalajara",
-        type: "full-time",
-        salary: {
-          min: 20000,
-          max: 35000,
-          currency: "MXN"
-        },
-        description: "Estamos buscando un diseñador UX/UI creativo y apasionado para diseñar experiencias digitales excepcionales.",
-        requirements: [
-          "Portafolio sólido en diseño UX/UI",
-          "Experiencia con Figma o Sketch",
-          "Conocimiento de principios de UX",
-          "Experiencia trabajando con equipos de desarrollo"
-        ],
-        benefits: [
-          "Seguro médico",
-          "Bonos por desempeño",
-          "Capacitación continua",
-          "Ambiente creativo"
-        ],
-        postedAt: new Date("2024-01-14"),
-        deadline: new Date("2024-02-10"),
-        isBookmarked: true,
-        isApplied: true,
-        experience: "2-4 años",
-        education: "Licenciatura",
-        skills: ["Figma", "Sketch", "Adobe Creative Suite", "Prototyping"],
-        remote: false,
-        urgent: true,
-        bookmarkedAt: new Date("2024-01-15")
-      },
-      {
-        id: "3",
-        title: "Marketing Digital Specialist",
-        company: {
-          name: "Growth Agency",
-          logo: "/logos/growth.png",
-          location: "Monterrey"
-        },
-        location: "Monterrey",
-        type: "contract",
-        salary: {
-          min: 18000,
-          max: 28000,
-          currency: "MXN"
-        },
-        description: "Especialista en marketing digital para gestionar campañas en redes sociales y Google Ads.",
-        requirements: [
-          "Experiencia en Google Ads y Facebook Ads",
-          "Conocimiento de Google Analytics",
-          "Experiencia en gestión de redes sociales",
-          "Habilidades de copywriting"
-        ],
-        benefits: [
-          "Trabajo remoto",
-          "Horario flexible",
-          "Proyectos diversos"
-        ],
-        postedAt: new Date("2024-01-13"),
-        deadline: new Date("2024-02-05"),
-        isBookmarked: true,
-        isApplied: false,
-        experience: "1-3 años",
-        education: "Técnico",
-        skills: ["Google Ads", "Facebook Ads", "Analytics", "Social Media"],
-        remote: true,
-        urgent: false,
-        bookmarkedAt: new Date("2024-01-14")
-      }
-    ];
+  // Fetch real data from API
+  const { data: bookmarkedJobsData, isLoading } = useBookmarkedJobs({
+    search: searchTerm,
+    sortBy: sortBy === "newest" ? "createdAt" : sortBy === "oldest" ? "createdAt" : sortBy,
+    sortOrder: sortBy === "newest" ? "desc" : sortBy === "oldest" ? "asc" : "desc",
+    limit: 50
+  });
 
-    setTimeout(() => {
-      setJobs(mockJobs);
-      setFilteredJobs(mockJobs);
-      setIsLoading(false);
-    }, 1000);
-  }, []);
-
-  // Filter and search logic
-  useEffect(() => {
-    let filtered = jobs;
-
-    // Search term filter
-    if (searchTerm) {
-      filtered = filtered.filter(job =>
-        job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        job.company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        job.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        job.skills.some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase()))
-      );
-    }
-
-    // Sort
-    filtered.sort((a, b) => {
-      switch (sortBy) {
-        case "newest":
-          return b.bookmarkedAt.getTime() - a.bookmarkedAt.getTime();
-        case "oldest":
-          return a.bookmarkedAt.getTime() - b.bookmarkedAt.getTime();
-        case "deadline":
-          return a.deadline.getTime() - b.deadline.getTime();
-        case "salary-high":
-          return b.salary.max - a.salary.max;
-        case "salary-low":
-          return a.salary.min - b.salary.min;
-        case "title":
-          return a.title.localeCompare(b.title);
-        default:
-          return 0;
-      }
-    });
-
-    setFilteredJobs(filtered);
-  }, [jobs, searchTerm, sortBy]);
+  const jobs = bookmarkedJobsData?.jobs || [];
+  const filteredJobs = jobs; // API already handles filtering
 
   const handleBookmark = (jobId: string) => {
-    setJobs(prev => prev.filter(job => job.id !== jobId));
+    // This would call the API to remove bookmark
+    // For now, just a placeholder
+    console.log("Remove bookmark for job:", jobId);
   };
 
   const handleApply = (jobId: string) => {
-    setJobs(prev => prev.map(job =>
-      job.id === jobId ? { ...job, isApplied: true } : job
-    ));
+    // This would call the API to apply to job
+    // For now, just a placeholder
+    console.log("Apply to job:", jobId);
   };
 
   const clearAllBookmarks = () => {
-    setJobs([]);
+    // This would call the API to clear all bookmarks
+    // For now, just a placeholder
+    console.log("Clear all bookmarks");
   };
 
   if (isLoading) {
@@ -343,114 +162,15 @@ export default function BookmarkedJobsPage() {
             ? "grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3"
             : "space-y-3 sm:space-y-4"
         }>
-          {filteredJobs.map(job => {
-            const jobPosting = {
-              id: job.id,
-              title: job.title,
-              description: job.description || "",
-              requirements: job.requirements || [],
-              responsibilities: [],
-              benefits: job.benefits || [],
-              location: job.location,
-              city: job.location,
-              state: "",
-              country: "",
-              remoteWork: job.remote,
-              hybridWork: false,
-              officeWork: !job.remote,
-              employmentType: job.type.toUpperCase() as any,
-              experienceLevel: "MID_LEVEL" as any,
-              salaryMin: job.salary.min,
-              salaryMax: job.salary.max,
-              currency: job.salary.currency,
-              isActive: true,
-              isFeatured: false,
-              isUrgent: false,
-              applicationDeadline: job.deadline.toISOString(),
-              startDate: undefined,
-              totalViews: 0,
-              totalApplications: 0,
-              totalLikes: 0,
-              totalShares: 0,
-              tags: [],
-              skills: job.skills || [],
-              department: undefined,
-              reportingTo: undefined,
-              companyId: "company-" + job.id,
-              company: {
-                id: "company-" + job.id,
-                name: job.company.name,
-                logo: job.company.logo,
-                location: job.company.location,
-                description: "",
-                website: "",
-                industry: "",
-                size: "MEDIUM" as any,
-                foundedYear: 2020,
-                isVerified: true,
-                isActive: true,
-                socialMedia: {},
-                benefits: [],
-                culture: "",
-                mission: "",
-                vision: "",
-                values: [],
-                technologies: [],
-                languages: [],
-                remoteWork: false,
-                hybridWork: false,
-                officeWork: true,
-                totalEmployees: 0,
-                totalJobs: 0,
-                totalApplications: 0,
-                averageRating: 0,
-                totalReviews: 0,
-                views: 0,
-                followers: 0,
-                isPublic: true,
-                isFeatured: false,
-                ownerId: "",
-                owner: {
-                  id: "",
-                  email: "",
-                  profile: {
-                    firstName: "",
-                    lastName: "",
-                    avatarUrl: ""
-                  }
-                },
-                jobs: [],
-                reviews: [],
-                followersList: [],
-                createdAt: "",
-                updatedAt: "",
-                _count: {
-                  jobs: 0,
-                  reviews: 0,
-                  followersList: 0,
-                  applications: 0
-                }
-              },
-              applications: [],
-              likes: [],
-              shares: [],
-              createdAt: job.postedAt.toISOString(),
-              updatedAt: job.postedAt.toISOString(),
-              _count: {
-                applications: 0
-              }
-            };
-            
-            return (
-              <JobCard
-                key={job.id}
-                job={jobPosting}
-                currentUserId="current-user" // This would come from session in real app
-                onBookmark={handleBookmark}
-                onApply={handleApply}
-              />
-            );
-          })}
+          {filteredJobs.map(job => (
+            <JobCard
+              key={job.id}
+              job={job}
+              currentUserId="current-user" // This would come from session in real app
+              onBookmark={handleBookmark}
+              onApply={handleApply}
+            />
+          ))}
         </div>
       )}
     </div>

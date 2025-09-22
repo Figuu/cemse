@@ -1,626 +1,351 @@
 "use client";
 
-import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import { 
   Calculator, 
   DollarSign, 
   TrendingUp, 
-  Users, 
-  Target,
-  BarChart3,
+  Target, 
   PieChart,
-  LineChart
-} from "lucide-react";
-import { FinancialCalculatorService } from "@/lib/financialCalculatorService";
+  AlertCircle,
+  CheckCircle
+} from 'lucide-react';
 
 interface FinancialCalculatorProps {
-  className?: string;
+  financialData: {
+    initialInvestment: number;
+    monthlyOperatingCosts: number;
+    revenueProjection: number;
+    breakEvenPoint: number;
+    estimatedROI: number;
+  };
+  onUpdate: (data: any) => void;
 }
 
-export function FinancialCalculator({ className }: FinancialCalculatorProps) {
-  const [activeTab, setActiveTab] = useState("metrics");
-  const [results, setResults] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(false);
-
-  // Financial Metrics Inputs
-  const [financialInputs, setFinancialInputs] = useState({
-    revenue: 0,
-    costOfGoodsSold: 0,
-    operatingExpenses: 0,
-    otherExpenses: 0,
-    cashOnHand: 0,
-    monthlyExpenses: 0,
-    customers: 0,
-    acquisitionCost: 0,
-    averageOrderValue: 0,
-    purchaseFrequency: 0,
-    churnRate: 0,
-    growthRate: 0
+const FinancialCalculator: React.FC<FinancialCalculatorProps> = ({ 
+  financialData, 
+  onUpdate 
+}) => {
+  const [inputs, setInputs] = useState({
+    initialInvestment: financialData.initialInvestment || 0,
+    monthlyOperatingCosts: financialData.monthlyOperatingCosts || 0,
+    revenueProjection: financialData.revenueProjection || 0,
   });
 
-  // Investment Metrics Inputs
-  const [investmentInputs, setInvestmentInputs] = useState({
-    currentValuation: 0,
-    investmentAmount: 0,
-    expectedExitValuation: 0,
-    expectedExitYears: 0
+  const [calculations, setCalculations] = useState({
+    breakEvenPoint: 0,
+    estimatedROI: 0,
+    monthlyProfit: 0,
+    annualProfit: 0,
+    paybackPeriod: 0,
   });
 
-  // Loan Metrics Inputs
-  const [loanInputs, setLoanInputs] = useState({
-    principal: 0,
-    annualInterestRate: 0,
-    termYears: 0
-  });
+  // Calculate financial metrics
+  useEffect(() => {
+    const { initialInvestment, monthlyOperatingCosts, revenueProjection } = inputs;
+    
+    if (monthlyOperatingCosts > 0 && revenueProjection > 0) {
+      const monthlyProfit = revenueProjection - monthlyOperatingCosts;
+      const annualProfit = monthlyProfit * 12;
+      const breakEvenPoint = initialInvestment / (monthlyProfit > 0 ? monthlyProfit : 1);
+      const estimatedROI = initialInvestment > 0 ? (annualProfit / initialInvestment) * 100 : 0;
+      const paybackPeriod = monthlyProfit > 0 ? initialInvestment / monthlyProfit : 0;
 
-  // Break Even Inputs
-  const [breakEvenInputs, setBreakEvenInputs] = useState({
-    fixedCosts: 0,
-    variableCostPerUnit: 0,
-    pricePerUnit: 0
-  });
+      const newCalculations = {
+        breakEvenPoint: Math.ceil(breakEvenPoint),
+        estimatedROI: Math.round(estimatedROI * 100) / 100,
+        monthlyProfit,
+        annualProfit,
+        paybackPeriod: Math.ceil(paybackPeriod),
+      };
 
-  const calculateFinancialMetrics = async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch("/api/financial-calculator", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "financial_metrics",
-          inputs: financialInputs
-        })
+      setCalculations(newCalculations);
+
+      // Update parent component
+      onUpdate({
+        ...inputs,
+        breakEvenPoint: newCalculations.breakEvenPoint,
+        estimatedROI: newCalculations.estimatedROI,
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        setResults(data.result);
-      }
-    } catch (error) {
-      console.error("Error calculating financial metrics:", error);
-    } finally {
-      setIsLoading(false);
     }
+  }, [inputs, onUpdate]);
+
+  const handleInputChange = (field: string, value: string) => {
+    const numValue = parseFloat(value) || 0;
+    setInputs(prev => ({
+      ...prev,
+      [field]: numValue
+    }));
   };
 
-  const calculateInvestmentMetrics = async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch("/api/financial-calculator", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "investment_metrics",
-          inputs: investmentInputs
-        })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setResults(data.result);
-      }
-    } catch (error) {
-      console.error("Error calculating investment metrics:", error);
-    } finally {
-      setIsLoading(false);
-    }
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('es-BO', {
+      style: 'currency',
+      currency: 'BOB',
+    }).format(amount);
   };
 
-  const calculateLoanMetrics = async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch("/api/financial-calculator", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "loan_metrics",
-          inputs: loanInputs
-        })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setResults(data.result);
-      }
-    } catch (error) {
-      console.error("Error calculating loan metrics:", error);
-    } finally {
-      setIsLoading(false);
-    }
+  const getROIColor = (roi: number) => {
+    if (roi > 20) return 'text-green-600';
+    if (roi > 10) return 'text-yellow-600';
+    return 'text-red-600';
   };
 
-  const calculateBreakEven = async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch("/api/financial-calculator", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "break_even",
-          inputs: breakEvenInputs
-        })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setResults(data.result);
-      }
-    } catch (error) {
-      console.error("Error calculating break even:", error);
-    } finally {
-      setIsLoading(false);
-    }
+  const getROIBadge = (roi: number) => {
+    if (roi > 20) return 'default';
+    if (roi > 10) return 'secondary';
+    return 'destructive';
   };
 
   return (
-    <div className={className}>
+    <div className="space-y-6">
+      {/* Input Section */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center">
-            <Calculator className="h-5 w-5 mr-2" />
-            Calculadora Financiera
+          <CardTitle className="flex items-center gap-2">
+            <Calculator className="h-5 w-5" />
+            Calculadora de Costos
           </CardTitle>
-          <CardDescription>
-            Calcula métricas financieras, inversiones, préstamos y más
-          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="initialInvestment">Inversión Inicial Requerida</Label>
+              <Input
+                id="initialInvestment"
+                type="number"
+                value={inputs.initialInvestment}
+                onChange={(e) => handleInputChange('initialInvestment', e.target.value)}
+                placeholder="0"
+                className="mt-1"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Capital inicial para comenzar
+              </p>
+            </div>
+
+            <div>
+              <Label htmlFor="monthlyOperatingCosts">Costos Operativos Mensuales</Label>
+              <Input
+                id="monthlyOperatingCosts"
+                type="number"
+                value={inputs.monthlyOperatingCosts}
+                onChange={(e) => handleInputChange('monthlyOperatingCosts', e.target.value)}
+                placeholder="0"
+                className="mt-1"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Gastos fijos mensuales
+              </p>
+            </div>
+
+            <div>
+              <Label htmlFor="revenueProjection">Proyección de Ingresos</Label>
+              <Input
+                id="revenueProjection"
+                type="number"
+                value={inputs.revenueProjection}
+                onChange={(e) => handleInputChange('revenueProjection', e.target.value)}
+                placeholder="0"
+                className="mt-1"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Ingresos mensuales esperados
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Results Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Key Metrics */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Métricas Clave
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium">Punto de Equilibrio:</span>
+              <Badge variant="outline" className="text-lg font-bold">
+                {calculations.breakEvenPoint} meses
+              </Badge>
+            </div>
+
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium">ROI Estimado:</span>
+              <Badge variant={getROIBadge(calculations.estimatedROI)} className="text-lg font-bold">
+                {calculations.estimatedROI.toFixed(1)}%
+              </Badge>
+            </div>
+
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium">Utilidad Mensual:</span>
+              <span className={`text-lg font-bold ${calculations.monthlyProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {formatCurrency(calculations.monthlyProfit)}
+              </span>
+            </div>
+
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium">Utilidad Anual:</span>
+              <span className={`text-lg font-bold ${calculations.annualProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {formatCurrency(calculations.annualProfit)}
+              </span>
+            </div>
+
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium">Período de Recuperación:</span>
+              <Badge variant="outline" className="text-lg font-bold">
+                {calculations.paybackPeriod} meses
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Financial Health */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <PieChart className="h-5 w-5" />
+              Salud Financiera
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* ROI Assessment */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                {calculations.estimatedROI > 15 ? (
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                ) : (
+                  <AlertCircle className="h-4 w-4 text-yellow-600" />
+                )}
+                <span className="text-sm font-medium">ROI</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {calculations.estimatedROI > 20 
+                  ? "Excelente retorno de inversión"
+                  : calculations.estimatedROI > 10
+                  ? "Buen retorno de inversión"
+                  : "ROI bajo, considera optimizar costos"
+                }
+              </p>
+            </div>
+
+            {/* Break-even Assessment */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                {calculations.breakEvenPoint <= 12 ? (
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                ) : (
+                  <AlertCircle className="h-4 w-4 text-yellow-600" />
+                )}
+                <span className="text-sm font-medium">Punto de Equilibrio</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {calculations.breakEvenPoint <= 12
+                  ? "Equilibrio alcanzable en menos de un año"
+                  : "Equilibrio tardará más de un año"
+                }
+              </p>
+            </div>
+
+            {/* Profitability Assessment */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                {calculations.monthlyProfit > 0 ? (
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                ) : (
+                  <AlertCircle className="h-4 w-4 text-red-600" />
+                )}
+                <span className="text-sm font-medium">Rentabilidad</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {calculations.monthlyProfit > 0
+                  ? "El negocio es rentable mensualmente"
+                  : "El negocio no es rentable mensualmente"
+                }
+              </p>
+            </div>
+
+            <Separator />
+
+            {/* Summary */}
+            <div className="space-y-2">
+              <h4 className="text-sm font-semibold">Resumen</h4>
+              <p className="text-xs text-muted-foreground">
+                {calculations.estimatedROI > 15 && calculations.breakEvenPoint <= 12 && calculations.monthlyProfit > 0
+                  ? "✅ Excelente viabilidad financiera"
+                  : calculations.estimatedROI > 10 && calculations.monthlyProfit > 0
+                  ? "⚠️ Viabilidad financiera moderada"
+                  : "❌ Revisar modelo de negocio"
+                }
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Detailed Breakdown */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Target className="h-5 w-5" />
+            Desglose Detallado
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="metrics">Métricas</TabsTrigger>
-              <TabsTrigger value="investment">Inversión</TabsTrigger>
-              <TabsTrigger value="loan">Préstamo</TabsTrigger>
-              <TabsTrigger value="breakeven">Punto de Equilibrio</TabsTrigger>
-            </TabsList>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-3">
+              <h4 className="font-semibold text-sm">Costos</h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span>Inversión inicial:</span>
+                  <span className="font-medium">{formatCurrency(inputs.initialInvestment)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Costos mensuales:</span>
+                  <span className="font-medium">{formatCurrency(inputs.monthlyOperatingCosts)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Costos anuales:</span>
+                  <span className="font-medium">{formatCurrency(inputs.monthlyOperatingCosts * 12)}</span>
+                </div>
+              </div>
+            </div>
 
-            {/* Financial Metrics Tab */}
-            <TabsContent value="metrics" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <BarChart3 className="h-5 w-5 mr-2" />
-                    Métricas Financieras
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="revenue">Ingresos Anuales (USD)</Label>
-                      <Input
-                        id="revenue"
-                        type="number"
-                        value={financialInputs.revenue}
-                        onChange={(e) => setFinancialInputs(prev => ({ ...prev, revenue: parseFloat(e.target.value) || 0 }))}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="costOfGoodsSold">Costo de Bienes Vendidos (USD)</Label>
-                      <Input
-                        id="costOfGoodsSold"
-                        type="number"
-                        value={financialInputs.costOfGoodsSold}
-                        onChange={(e) => setFinancialInputs(prev => ({ ...prev, costOfGoodsSold: parseFloat(e.target.value) || 0 }))}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="operatingExpenses">Gastos Operativos (USD)</Label>
-                      <Input
-                        id="operatingExpenses"
-                        type="number"
-                        value={financialInputs.operatingExpenses}
-                        onChange={(e) => setFinancialInputs(prev => ({ ...prev, operatingExpenses: parseFloat(e.target.value) || 0 }))}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="otherExpenses">Otros Gastos (USD)</Label>
-                      <Input
-                        id="otherExpenses"
-                        type="number"
-                        value={financialInputs.otherExpenses}
-                        onChange={(e) => setFinancialInputs(prev => ({ ...prev, otherExpenses: parseFloat(e.target.value) || 0 }))}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="cashOnHand">Efectivo Disponible (USD)</Label>
-                      <Input
-                        id="cashOnHand"
-                        type="number"
-                        value={financialInputs.cashOnHand}
-                        onChange={(e) => setFinancialInputs(prev => ({ ...prev, cashOnHand: parseFloat(e.target.value) || 0 }))}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="monthlyExpenses">Gastos Mensuales (USD)</Label>
-                      <Input
-                        id="monthlyExpenses"
-                        type="number"
-                        value={financialInputs.monthlyExpenses}
-                        onChange={(e) => setFinancialInputs(prev => ({ ...prev, monthlyExpenses: parseFloat(e.target.value) || 0 }))}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="customers">Número de Clientes</Label>
-                      <Input
-                        id="customers"
-                        type="number"
-                        value={financialInputs.customers}
-                        onChange={(e) => setFinancialInputs(prev => ({ ...prev, customers: parseInt(e.target.value) || 0 }))}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="acquisitionCost">Costo de Adquisición por Cliente (USD)</Label>
-                      <Input
-                        id="acquisitionCost"
-                        type="number"
-                        value={financialInputs.acquisitionCost}
-                        onChange={(e) => setFinancialInputs(prev => ({ ...prev, acquisitionCost: parseFloat(e.target.value) || 0 }))}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="averageOrderValue">Valor Promedio de Pedido (USD)</Label>
-                      <Input
-                        id="averageOrderValue"
-                        type="number"
-                        value={financialInputs.averageOrderValue}
-                        onChange={(e) => setFinancialInputs(prev => ({ ...prev, averageOrderValue: parseFloat(e.target.value) || 0 }))}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="purchaseFrequency">Frecuencia de Compra (veces/año)</Label>
-                      <Input
-                        id="purchaseFrequency"
-                        type="number"
-                        value={financialInputs.purchaseFrequency}
-                        onChange={(e) => setFinancialInputs(prev => ({ ...prev, purchaseFrequency: parseFloat(e.target.value) || 0 }))}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="churnRate">Tasa de Abandono (decimal)</Label>
-                      <Input
-                        id="churnRate"
-                        type="number"
-                        step="0.01"
-                        value={financialInputs.churnRate}
-                        onChange={(e) => setFinancialInputs(prev => ({ ...prev, churnRate: parseFloat(e.target.value) || 0 }))}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="growthRate">Tasa de Crecimiento (decimal)</Label>
-                      <Input
-                        id="growthRate"
-                        type="number"
-                        step="0.01"
-                        value={financialInputs.growthRate}
-                        onChange={(e) => setFinancialInputs(prev => ({ ...prev, growthRate: parseFloat(e.target.value) || 0 }))}
-                      />
-                    </div>
-                  </div>
-
-                  <Button onClick={calculateFinancialMetrics} disabled={isLoading} className="w-full">
-                    {isLoading ? "Calculando..." : "Calcular Métricas"}
-                  </Button>
-
-                  {results && (
-                    <Card className="mt-6">
-                      <CardHeader>
-                        <CardTitle>Resultados</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <div className="flex justify-between">
-                              <span>Ingresos:</span>
-                              <span className="font-medium">{FinancialCalculatorService.formatCurrency(results.revenue)}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Gastos:</span>
-                              <span className="font-medium">{FinancialCalculatorService.formatCurrency(results.expenses)}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Ganancia Bruta:</span>
-                              <span className="font-medium">{FinancialCalculatorService.formatCurrency(results.grossProfit)}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Ganancia Neta:</span>
-                              <span className="font-medium">{FinancialCalculatorService.formatCurrency(results.netProfit)}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Margen de Ganancia:</span>
-                              <span className="font-medium">{FinancialCalculatorService.formatPercentage(results.profitMargin)}</span>
-                            </div>
-                          </div>
-                          <div className="space-y-2">
-                            <div className="flex justify-between">
-                              <span>Flujo de Efectivo:</span>
-                              <span className="font-medium">{FinancialCalculatorService.formatCurrency(results.cashFlow)}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Tasa de Quema:</span>
-                              <span className="font-medium">{FinancialCalculatorService.formatCurrency(results.burnRate)}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Runway (meses):</span>
-                              <span className="font-medium">{results.runway.toFixed(1)}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>CAC:</span>
-                              <span className="font-medium">{FinancialCalculatorService.formatCurrency(results.customerAcquisitionCost)}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>LTV:</span>
-                              <span className="font-medium">{FinancialCalculatorService.formatCurrency(results.customerLifetimeValue)}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>LTV/CAC Ratio:</span>
-                              <span className="font-medium">{results.ltvCacRatio.toFixed(2)}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Investment Metrics Tab */}
-            <TabsContent value="investment" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <TrendingUp className="h-5 w-5 mr-2" />
-                    Métricas de Inversión
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="currentValuation">Valoración Actual (USD)</Label>
-                      <Input
-                        id="currentValuation"
-                        type="number"
-                        value={investmentInputs.currentValuation}
-                        onChange={(e) => setInvestmentInputs(prev => ({ ...prev, currentValuation: parseFloat(e.target.value) || 0 }))}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="investmentAmount">Cantidad de Inversión (USD)</Label>
-                      <Input
-                        id="investmentAmount"
-                        type="number"
-                        value={investmentInputs.investmentAmount}
-                        onChange={(e) => setInvestmentInputs(prev => ({ ...prev, investmentAmount: parseFloat(e.target.value) || 0 }))}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="expectedExitValuation">Valoración de Salida Esperada (USD)</Label>
-                      <Input
-                        id="expectedExitValuation"
-                        type="number"
-                        value={investmentInputs.expectedExitValuation}
-                        onChange={(e) => setInvestmentInputs(prev => ({ ...prev, expectedExitValuation: parseFloat(e.target.value) || 0 }))}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="expectedExitYears">Años hasta la Salida</Label>
-                      <Input
-                        id="expectedExitYears"
-                        type="number"
-                        value={investmentInputs.expectedExitYears}
-                        onChange={(e) => setInvestmentInputs(prev => ({ ...prev, expectedExitYears: parseInt(e.target.value) || 0 }))}
-                      />
-                    </div>
-                  </div>
-
-                  <Button onClick={calculateInvestmentMetrics} disabled={isLoading} className="w-full">
-                    {isLoading ? "Calculando..." : "Calcular Inversión"}
-                  </Button>
-
-                  {results && (
-                    <Card className="mt-6">
-                      <CardHeader>
-                        <CardTitle>Resultados de Inversión</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <div className="flex justify-between">
-                              <span>Valoración Pre-Money:</span>
-                              <span className="font-medium">{FinancialCalculatorService.formatCurrency(results.preMoneyValuation)}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Valoración Post-Money:</span>
-                              <span className="font-medium">{FinancialCalculatorService.formatCurrency(results.postMoneyValuation)}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Porcentaje de Propiedad:</span>
-                              <span className="font-medium">{FinancialCalculatorService.formatPercentage(results.ownershipPercentage)}</span>
-                            </div>
-                          </div>
-                          <div className="space-y-2">
-                            <div className="flex justify-between">
-                              <span>Múltiplo de Retorno:</span>
-                              <span className="font-medium">{results.returnMultiple.toFixed(2)}x</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>TIR:</span>
-                              <span className="font-medium">{FinancialCalculatorService.formatPercentage(results.irr)}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Equity Ofrecido:</span>
-                              <span className="font-medium">{FinancialCalculatorService.formatPercentage(results.equityOffered)}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Loan Metrics Tab */}
-            <TabsContent value="loan" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <DollarSign className="h-5 w-5 mr-2" />
-                    Métricas de Préstamo
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <Label htmlFor="principal">Principal (USD)</Label>
-                      <Input
-                        id="principal"
-                        type="number"
-                        value={loanInputs.principal}
-                        onChange={(e) => setLoanInputs(prev => ({ ...prev, principal: parseFloat(e.target.value) || 0 }))}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="annualInterestRate">Tasa de Interés Anual (%)</Label>
-                      <Input
-                        id="annualInterestRate"
-                        type="number"
-                        step="0.01"
-                        value={loanInputs.annualInterestRate}
-                        onChange={(e) => setLoanInputs(prev => ({ ...prev, annualInterestRate: parseFloat(e.target.value) || 0 }))}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="termYears">Plazo (años)</Label>
-                      <Input
-                        id="termYears"
-                        type="number"
-                        value={loanInputs.termYears}
-                        onChange={(e) => setLoanInputs(prev => ({ ...prev, termYears: parseInt(e.target.value) || 0 }))}
-                      />
-                    </div>
-                  </div>
-
-                  <Button onClick={calculateLoanMetrics} disabled={isLoading} className="w-full">
-                    {isLoading ? "Calculando..." : "Calcular Préstamo"}
-                  </Button>
-
-                  {results && (
-                    <Card className="mt-6">
-                      <CardHeader>
-                        <CardTitle>Resultados del Préstamo</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <div className="flex justify-between">
-                              <span>Pago Mensual:</span>
-                              <span className="font-medium">{FinancialCalculatorService.formatCurrency(results.monthlyPayment)}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Total de Intereses:</span>
-                              <span className="font-medium">{FinancialCalculatorService.formatCurrency(results.totalInterest)}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Total a Pagar:</span>
-                              <span className="font-medium">{FinancialCalculatorService.formatCurrency(results.totalPayment)}</span>
-                            </div>
-                          </div>
-                          <div className="space-y-2">
-                            <div className="flex justify-between">
-                              <span>Plazo (meses):</span>
-                              <span className="font-medium">{results.termMonths}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Tasa Efectiva:</span>
-                              <span className="font-medium">{FinancialCalculatorService.formatPercentage(results.effectiveRate)}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Break Even Tab */}
-            <TabsContent value="breakeven" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Target className="h-5 w-5 mr-2" />
-                    Punto de Equilibrio
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <Label htmlFor="fixedCosts">Costos Fijos (USD)</Label>
-                      <Input
-                        id="fixedCosts"
-                        type="number"
-                        value={breakEvenInputs.fixedCosts}
-                        onChange={(e) => setBreakEvenInputs(prev => ({ ...prev, fixedCosts: parseFloat(e.target.value) || 0 }))}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="variableCostPerUnit">Costo Variable por Unidad (USD)</Label>
-                      <Input
-                        id="variableCostPerUnit"
-                        type="number"
-                        value={breakEvenInputs.variableCostPerUnit}
-                        onChange={(e) => setBreakEvenInputs(prev => ({ ...prev, variableCostPerUnit: parseFloat(e.target.value) || 0 }))}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="pricePerUnit">Precio por Unidad (USD)</Label>
-                      <Input
-                        id="pricePerUnit"
-                        type="number"
-                        value={breakEvenInputs.pricePerUnit}
-                        onChange={(e) => setBreakEvenInputs(prev => ({ ...prev, pricePerUnit: parseFloat(e.target.value) || 0 }))}
-                      />
-                    </div>
-                  </div>
-
-                  <Button onClick={calculateBreakEven} disabled={isLoading} className="w-full">
-                    {isLoading ? "Calculando..." : "Calcular Punto de Equilibrio"}
-                  </Button>
-
-                  {results && (
-                    <Card className="mt-6">
-                      <CardHeader>
-                        <CardTitle>Resultados del Punto de Equilibrio</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div className="text-center">
-                            <div className="text-2xl font-bold text-blue-600">{results.units}</div>
-                            <div className="text-sm text-muted-foreground">Unidades</div>
-                          </div>
-                          <div className="text-center">
-                            <div className="text-2xl font-bold text-green-600">{FinancialCalculatorService.formatCurrency(results.revenue)}</div>
-                            <div className="text-sm text-muted-foreground">Ingresos</div>
-                          </div>
-                          <div className="text-center">
-                            <div className="text-2xl font-bold text-purple-600">{results.months}</div>
-                            <div className="text-sm text-muted-foreground">Meses</div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+            <div className="space-y-3">
+              <h4 className="font-semibold text-sm">Ingresos</h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span>Ingresos mensuales:</span>
+                  <span className="font-medium">{formatCurrency(inputs.revenueProjection)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Ingresos anuales:</span>
+                  <span className="font-medium">{formatCurrency(inputs.revenueProjection * 12)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Margen mensual:</span>
+                  <span className={`font-medium ${calculations.monthlyProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {formatCurrency(calculations.monthlyProfit)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
   );
-}
+};
+
+export default FinancialCalculator;

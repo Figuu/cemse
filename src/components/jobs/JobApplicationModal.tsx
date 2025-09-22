@@ -71,7 +71,7 @@ export function JobApplicationModal({
 
   const { uploadFile: uploadCvFile, isUploading: isUploadingCv, error: cvUploadError } = useFileUpload();
   const { uploadFile: uploadCoverLetterFile, isUploading: isUploadingCoverLetter, error: coverLetterUploadError } = useFileUpload();
-  const { createApplication } = useApplications();
+  const { createApplication, isLoading: isCreatingApplication } = useApplications();
 
   const {
     register,
@@ -458,17 +458,17 @@ export function JobApplicationModal({
                     type="button" 
                     variant="outline" 
                     onClick={handleClose}
-                    disabled={createApplication.isPending}
+                    disabled={isCreatingApplication}
                     className="w-full sm:w-auto"
                   >
                     Cancelar
                   </Button>
                   <Button 
                     type="submit" 
-                    disabled={createApplication.isPending}
+                    disabled={isCreatingApplication}
                     className="w-full sm:w-auto"
                   >
-                    {createApplication.isPending ? (
+                    {isCreatingApplication ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                         Enviando Aplicación...

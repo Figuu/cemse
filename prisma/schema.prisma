@@ -27,6 +27,7 @@ model User {
   createdInstitutions   Institution[]  @relation("InstitutionCreator")
   createdResources      Resource[]     @relation("ResourceCreator")
   createdNews           NewsArticle[]  @relation("NewsCreator")
+  businessPlans         BusinessPlan[]
 
   @@index([role])
   @@index([isActive])
@@ -376,7 +377,6 @@ model Entrepreneurship {
   updatedAt     DateTime      @updatedAt
   
   // Relations
-  businessPlan  BusinessPlan?
   owner         Profile       @relation(fields: [ownerId], references: [userId])
 
   @@index([ownerId])
@@ -923,17 +923,26 @@ model YouthApplicationCompanyInterest {
 // Entrepreneurship Models
 model BusinessPlan {
   id                String   @id @default(cuid())
-  entrepreneurshipId String  @unique
+  userId            String
   content           Json
   status            String   @default("draft")
   marketAnalysis    Json?
+  
+  // New structured fields for better querying
+  tripleImpactAssessment Json?
+  businessModelCanvas    Json?
+  financialProjections   Json?
+  completionPercentage   Int      @default(0)
+  
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   
   // Relations
-  entrepreneurship  Entrepreneurship @relation(fields: [entrepreneurshipId], references: [id])
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  @@index([entrepreneurshipId])
+  @@index([userId])
+  @@index([completionPercentage])
+  @@index([status])
   @@map("business_plans")
 }
 

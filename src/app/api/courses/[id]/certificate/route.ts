@@ -30,14 +30,18 @@ export async function POST(
           include: {
             instructor: {
               include: {
-                profile: true,
+                user: {
+                  include: {
+                    profile: true,
+                  },
+                },
               },
             },
           },
         },
         student: {
           include: {
-            profile: true,
+            user: true,
           },
         },
       },
@@ -48,10 +52,10 @@ export async function POST(
     }
 
     // Check if course is completed
-    if (enrollment.progress < 100) {
+    if (enrollment.progress.toNumber() < 100) {
       return NextResponse.json({ 
         error: "Course not completed yet", 
-        progress: enrollment.progress 
+        progress: enrollment.progress.toNumber() 
       }, { status: 400 });
     }
 
@@ -77,14 +81,24 @@ export async function POST(
     }
 
     // Generate certificate
+    const studentName = enrollment.student.firstName && enrollment.student.lastName 
+      ? `${enrollment.student.firstName} ${enrollment.student.lastName}`
+      : enrollment.student.user?.firstName && enrollment.student.user?.lastName
+      ? `${enrollment.student.user.firstName} ${enrollment.student.user.lastName}`
+      : session.user.name || 'Estudiante';
+      
+    const instructorName = enrollment.course.instructor?.user?.profile?.firstName && enrollment.course.instructor?.user?.profile?.lastName
+      ? `${enrollment.course.instructor.user.profile.firstName} ${enrollment.course.instructor.user.profile.lastName}`
+      : enrollment.course.instructor?.user?.firstName && enrollment.course.instructor?.user?.lastName
+      ? `${enrollment.course.instructor.user.firstName} ${enrollment.course.instructor.user.lastName}`
+      : 'Instructor';
+
     const certificateData = {
       studentId: session.user.id,
-      studentName: enrollment.student.profile?.fullName || session.user.name || 'Estudiante',
+      studentName: studentName,
       courseId: courseId,
       courseTitle: enrollment.course.title,
-      instructorName: enrollment.course.instructor?.profile?.fullName || 
-                     enrollment.course.instructor?.name || 
-                     'Instructor',
+      instructorName: instructorName,
       completionDate: enrollment.completedAt?.toISOString() || new Date().toISOString(),
       courseDuration: `${Math.floor(enrollment.course.duration / 60)}h ${enrollment.course.duration % 60}m`,
       courseLevel: enrollment.course.level,
@@ -153,7 +167,7 @@ export async function GET(
     return NextResponse.json({
       hasCertificate: !!certificateUrl,
       certificateUrl: certificateUrl,
-      isCompleted: enrollment.progress >= 100,
+      isCompleted: enrollment.progress.toNumber() >= 100,
       hasCertification: enrollment.course.certification,
     });
 

@@ -15,7 +15,7 @@ export async function GET() {
     if (session.user.role !== "SUPERADMIN") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
-
+    
     // Get system statistics
     const [
       totalUsers,
@@ -60,19 +60,8 @@ export async function GET() {
       })
     ]);
 
-    // Calculate system health based on various factors
-    let systemHealth: "excellent" | "good" | "warning" | "critical" = "good";
-    
-    const userActivityRate = activeUsers / totalUsers;
-    if (userActivityRate > 0.8) {
-      systemHealth = "excellent";
-    } else if (userActivityRate > 0.6) {
-      systemHealth = "good";
-    } else if (userActivityRate > 0.4) {
-      systemHealth = "warning";
-    } else {
-      systemHealth = "critical";
-    }
+    // Calculate simple user activity rate
+    const userActivityRate = totalUsers > 0 ? Math.round((activeUsers / totalUsers) * 100) : 0;
 
     const stats = {
       totalUsers,
@@ -81,8 +70,7 @@ export async function GET() {
       totalInstitutions,
       totalCourses,
       totalJobs,
-      systemHealth,
-      userActivityRate: Math.round(userActivityRate * 100),
+      userActivityRate,
     };
 
     // Transform recent users

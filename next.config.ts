@@ -32,6 +32,20 @@ const nextConfig: NextConfig = {
         path: false,
       };
     }
+
+    // Configure react-pdf
+    config.resolve = config.resolve || {};
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@react-pdf/renderer': '@react-pdf/renderer',
+    };
+
+    // Add canvas support for react-pdf
+    config.externals = config.externals || [];
+    if (isServer) {
+      config.externals.push('canvas');
+    }
+
     return config;
   },
   images: {

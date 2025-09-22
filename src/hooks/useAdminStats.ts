@@ -20,8 +20,8 @@ interface SystemStats {
   totalInstitutions: number;
   totalCourses: number;
   totalJobs: number;
-  systemHealth: "excellent" | "good" | "warning" | "critical";
   userActivityRate: number;
+  systemHealth: "excellent" | "good" | "warning" | "critical";
 }
 
 interface RecentActivity {
