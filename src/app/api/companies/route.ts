@@ -61,25 +61,20 @@ export async function GET(request: NextRequest) {
       where.OR = [
         { name: { contains: search, mode: "insensitive" } },
         { description: { contains: search, mode: "insensitive" } },
-        { industry: { contains: search, mode: "insensitive" } },
+        { businessSector: { contains: search, mode: "insensitive" } },
       ];
     }
 
     if (industry) {
-      where.industry = { contains: industry, mode: "insensitive" };
+      where.businessSector = { contains: industry, mode: "insensitive" };
     }
 
     if (size) {
-      where.size = size;
+      where.companySize = size;
     }
 
     if (location) {
-      where.OR = [
-        { location: { contains: location, mode: "insensitive" } },
-        { city: { contains: location, mode: "insensitive" } },
-        { state: { contains: location, mode: "insensitive" } },
-        { country: { contains: location, mode: "insensitive" } },
-      ];
+      where.address = { contains: location, mode: "insensitive" };
     }
 
     if (isVerified !== null) {
@@ -124,10 +119,51 @@ export async function GET(request: NextRequest) {
       prisma.company.count({ where }),
     ]);
 
+    // Transform the data to match the expected Company interface
+    const transformedCompanies = companies.map(company => ({
+      ...company,
+      // Map database fields to interface fields
+      logo: company.logoUrl,
+      industry: company.businessSector,
+      size: company.companySize,
+      location: company.address,
+      isVerified: false, // Default value since not in schema
+      socialMedia: {},
+      benefits: [],
+      culture: undefined,
+      mission: undefined,
+      vision: undefined,
+      values: [],
+      technologies: [],
+      languages: [],
+      remoteWork: false,
+      hybridWork: false,
+      officeWork: true,
+      totalEmployees: company._count.employees,
+      totalJobs: company._count.jobOffers,
+      totalApplications: 0, // Would need to calculate from job applications
+      averageRating: 0, // Would need to calculate from reviews
+      totalReviews: 0, // Would need to calculate from reviews
+      views: 0, // Would need to track views
+      followers: 0, // Would need to track followers
+      isPublic: true,
+      isFeatured: false,
+      owner: company.creator,
+      jobs: [],
+      reviews: [],
+      followersList: [],
+      _count: {
+        jobs: company._count.jobOffers,
+        reviews: 0,
+        followersList: 0,
+        applications: 0,
+      },
+    }));
+
     const totalPages = Math.ceil(total / limit);
 
     return NextResponse.json({
-      companies,
+      companies: transformedCompanies,
       pagination: {
         page,
         limit,

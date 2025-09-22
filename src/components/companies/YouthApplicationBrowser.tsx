@@ -68,7 +68,7 @@ interface YouthApplication {
 }
 
 interface YouthApplicationBrowserProps {
-  companyId: string;
+  companyId?: string;
 }
 
 export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserProps) {

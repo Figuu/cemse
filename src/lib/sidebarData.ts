@@ -315,14 +315,9 @@ export const municipalitySidebarData: SidebarData = {
       title: "Personal",
       items: [
         {
-          title: "Mi Institución",
-          url: "/institution",
+          title: "Mi Perfil",
+          url: "/profile",
           icon: Building2,
-        },
-        {
-          title: "Configuración",
-          url: "/settings",
-          icon: Settings,
         },
       ],
     },
@@ -445,12 +440,12 @@ export const superAdminSidebarData: SidebarData = {
       items: [
         {
           title: "Gestión de Empleos",
-          url: "/admin/jobs",
+          url: "/jobs",
           icon: Briefcase,
         },
         {
           title: "Candidatos",
-          url: "/admin/job-applications",
+          url: "/talent",
           icon: Users,
         },
       ],
@@ -460,7 +455,7 @@ export const superAdminSidebarData: SidebarData = {
       items: [
         {
           title: "Gestión de Recursos",
-          url: "/admin/entrepreneurship",
+          url: "/resources",
           icon: Lightbulb,
         },
       ],
@@ -478,11 +473,6 @@ export const superAdminSidebarData: SidebarData = {
     {
       title: "Personal",
       items: [
-        {
-          title: "Mi Institución",
-          url: "/institution",
-          icon: Building2,
-        },
         {
           title: "Mi Perfil",
           url: "/profile",

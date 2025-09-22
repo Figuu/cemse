@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
     };
 
     // For institution users, filter by their institution's courses
+    // SUPERADMIN can see all courses
     if (session.user.role === "INSTITUTION") {
       const userInstitution = await prisma.institution.findFirst({
         where: { createdBy: session.user.id },
@@ -43,6 +44,7 @@ export async function GET(request: NextRequest) {
         where.id = "non-existent";
       }
     }
+    // SUPERADMIN, YOUTH, and COMPANIES can see all courses (no additional filtering)
 
     if (search) {
       where.OR = [
@@ -145,8 +147,8 @@ export async function GET(request: NextRequest) {
       const isCompleted = !!enrollment?.completedAt;
       const lastAccessed = null; // lastAccessedAt not available in CourseEnrollment
       
-      // Check if user owns this course (for institutions)
-      const isOwner = session.user.role === "INSTITUTION";
+      // Check if user owns this course (for institutions) or is super admin
+      const isOwner = session.user.role === "INSTITUTION" || session.user.role === "SUPERADMIN";
 
       return {
         id: course.id,
@@ -209,16 +211,16 @@ export async function GET(request: NextRequest) {
     // Filter by enrollment status if specified
     let filteredCourses = transformedCourses;
     if (isEnrolled === "true") {
-      if (session.user.role === "INSTITUTION") {
-        // For institutions, "enrolled" means all their courses (they already filtered by institution)
+      if (session.user.role === "INSTITUTION" || session.user.role === "SUPERADMIN") {
+        // For institutions and super admins, "enrolled" means all their courses
         filteredCourses = transformedCourses;
       } else {
         // For students, "enrolled" means courses they're enrolled in
         filteredCourses = transformedCourses.filter(course => course.isEnrolled);
       }
     } else if (isEnrolled === "false") {
-      if (session.user.role === "INSTITUTION") {
-        // For institutions, "not enrolled" means no courses (they only see their own)
+      if (session.user.role === "INSTITUTION" || session.user.role === "SUPERADMIN") {
+        // For institutions and super admins, "not enrolled" means no courses (they only see their own/all)
         filteredCourses = [];
       } else {
         // For students, "not enrolled" means courses they're not enrolled in

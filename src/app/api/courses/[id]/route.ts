@@ -66,6 +66,9 @@ export async function GET(
       if (!userInstitution || course.institutionId !== userInstitution.id) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
+    } else if (session.user.role !== "SUPERADMIN" && session.user.role !== "YOUTH" && session.user.role !== "COMPANIES") {
+      // Allow SUPERADMIN, YOUTH, and COMPANIES to view all courses
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     return NextResponse.json({

@@ -80,10 +80,81 @@ export async function GET(
       );
     }
 
-    // View count functionality not implemented in schema
-    // Would need to add viewsCount field to Company model
+    // Transform the data to match the expected Company interface
+    const transformedCompany = {
+      ...company,
+      // Map database fields to interface fields
+      logo: company.logoUrl,
+      industry: company.businessSector,
+      size: company.companySize,
+      location: company.address,
+      isVerified: false, // Default value since not in schema
+      socialMedia: {},
+      benefits: [],
+      culture: undefined,
+      mission: undefined,
+      vision: undefined,
+      values: [],
+      technologies: [],
+      languages: [],
+      remoteWork: false,
+      hybridWork: false,
+      officeWork: true,
+      totalEmployees: company._count.employees,
+      totalJobs: company._count.jobOffers,
+      totalApplications: 0, // Would need to calculate from job applications
+      averageRating: 0, // Would need to calculate from reviews
+      totalReviews: 0, // Would need to calculate from reviews
+      views: 0, // Would need to track views
+      followers: 0, // Would need to track followers
+      isPublic: true,
+      isFeatured: false,
+      owner: company.creator,
+      jobs: company.jobOffers.map(job => ({
+        ...job,
+        // Map job fields to match JobPosting interface
+        description: "",
+        requirements: [],
+        responsibilities: [],
+        benefits: [],
+        city: job.location,
+        state: undefined,
+        country: undefined,
+        remoteWork: false,
+        hybridWork: false,
+        officeWork: true,
+        employmentType: job.contractType,
+        currency: job.salaryCurrency || "USD",
+        isActive: true,
+        isUrgent: false,
+        applicationDeadline: undefined,
+        startDate: undefined,
+        totalViews: 0,
+        totalLikes: 0,
+        totalShares: 0,
+        tags: [],
+        skills: [],
+        department: undefined,
+        reportingTo: undefined,
+        company: undefined, // Avoid circular reference
+        applications: [],
+        likes: [],
+        shares: [],
+        isApplied: false,
+        application: undefined,
+        viewsCount: 0,
+      })),
+      reviews: [],
+      followersList: [],
+      _count: {
+        jobs: company._count.jobOffers,
+        reviews: 0,
+        followersList: 0,
+        applications: 0,
+      },
+    };
 
-    return NextResponse.json(company);
+    return NextResponse.json(transformedCompany);
   } catch (error) {
     console.error("Error fetching company:", error);
     return NextResponse.json(

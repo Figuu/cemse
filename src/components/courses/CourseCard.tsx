@@ -345,8 +345,8 @@ export function CourseCard({
 
                   <div className="flex space-x-2">
                     {/* Show different actions based on user role and course ownership */}
-                    {(session?.user?.role === "INSTITUTION" || session?.user?.role === "SUPERADMIN") && course.isOwner ? (
-                      // Institution or Super Admin viewing their own course
+                    {(session?.user?.role === "INSTITUTION" && course.isOwner) || session?.user?.role === "SUPERADMIN" ? (
+                      // Institution viewing their own course OR Super Admin viewing any course
                       <>
                         <Button
                           size="sm"
@@ -382,8 +382,8 @@ export function CourseCard({
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </>
-                    ) : (session?.user?.role === "INSTITUTION" || session?.user?.role === "SUPERADMIN") ? (
-                      // Institution or Super Admin viewing someone else's course
+                    ) : session?.user?.role === "INSTITUTION" && !course.isOwner ? (
+                      // Institution viewing someone else's course
                       <Button
                         size="sm"
                         onClick={() => onView(course.id)}
@@ -609,8 +609,8 @@ export function CourseCard({
 
             <div className="flex space-x-2">
               {/* Show different actions based on user role and course ownership */}
-              {(session?.user?.role === "INSTITUTION" || session?.user?.role === "SUPERADMIN") && course.isOwner ? (
-                // Institution or Super Admin viewing their own course
+              {(session?.user?.role === "INSTITUTION" && course.isOwner) || session?.user?.role === "SUPERADMIN" ? (
+                // Institution viewing their own course OR Super Admin viewing any course
                 <>
                   <Button
                     size="sm"
@@ -646,8 +646,8 @@ export function CourseCard({
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </>
-              ) : (session?.user?.role === "INSTITUTION" || session?.user?.role === "SUPERADMIN") ? (
-                // Institution or Super Admin viewing someone else's course
+              ) : session?.user?.role === "INSTITUTION" && !course.isOwner ? (
+                // Institution viewing someone else's course
                 <Button
                   size="sm"
                   onClick={() => onView(course.id)}

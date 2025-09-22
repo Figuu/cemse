@@ -89,34 +89,36 @@ export default function DashboardPage() {
   };
 
   const getRoleStats = (role: string) => {
+    // Return empty stats - real data should come from role-specific dashboard components
+    // This function is kept for fallback purposes only
     switch (role) {
       case "YOUTH":
         return [
-          { title: "Cursos Completados", value: "3", icon: CheckCircle, change: { value: 15, type: "increase" as const } },
-          { title: "Certificados", value: "2", icon: Award, change: { value: 10, type: "increase" as const } },
-          { title: "Aplicaciones Enviadas", value: "5", icon: Briefcase, change: { value: 25, type: "increase" as const } },
-          { title: "Horas de Estudio", value: "24", icon: Clock, description: "Este mes" },
+          { title: "Cursos Completados", value: "0", icon: CheckCircle, change: { value: 0, type: "neutral" as const } },
+          { title: "Certificados", value: "0", icon: Award, change: { value: 0, type: "neutral" as const } },
+          { title: "Aplicaciones Enviadas", value: "0", icon: Briefcase, change: { value: 0, type: "neutral" as const } },
+          { title: "Horas de Estudio", value: "0", icon: Clock, description: "Total" },
         ];
       case "COMPANIES":
         return [
-          { title: "Ofertas Activas", value: "2", icon: Briefcase, change: { value: 0, type: "neutral" as const } },
-          { title: "Aplicaciones Recibidas", value: "15", icon: Users, change: { value: 20, type: "increase" as const } },
-          { title: "Candidatos Contratados", value: "3", icon: CheckCircle, change: { value: 5, type: "increase" as const } },
-          { title: "Vistas de Perfil", value: "120", icon: TrendingUp, change: { value: 8, type: "increase" as const } },
+          { title: "Ofertas Activas", value: "0", icon: Briefcase, change: { value: 0, type: "neutral" as const } },
+          { title: "Aplicaciones Recibidas", value: "0", icon: Users, change: { value: 0, type: "neutral" as const } },
+          { title: "Candidatos Contratados", value: "0", icon: CheckCircle, change: { value: 0, type: "neutral" as const } },
+          { title: "Vistas de Perfil", value: "0", icon: TrendingUp, change: { value: 0, type: "neutral" as const } },
         ];
       case "INSTITUTION":
         return [
-          { title: "Cursos Activos", value: "8", icon: GraduationCap, change: { value: 12, type: "increase" as const } },
-          { title: "Estudiantes", value: "150", icon: Users, change: { value: 18, type: "increase" as const } },
-          { title: "Recursos Publicados", value: "25", icon: BookOpen, change: { value: 5, type: "increase" as const } },
-          { title: "Certificados Emitidos", value: "45", icon: Award, change: { value: 22, type: "increase" as const } },
+          { title: "Cursos Activos", value: "0", icon: GraduationCap, change: { value: 0, type: "neutral" as const } },
+          { title: "Estudiantes", value: "0", icon: Users, change: { value: 0, type: "neutral" as const } },
+          { title: "Recursos Publicados", value: "0", icon: BookOpen, change: { value: 0, type: "neutral" as const } },
+          { title: "Certificados Emitidos", value: "0", icon: Award, change: { value: 0, type: "neutral" as const } },
         ];
       case "SUPERADMIN":
         return [
-          { title: "Usuarios Totales", value: "1,250", icon: Users, change: { value: 8, type: "increase" as const } },
-          { title: "Cursos Activos", value: "45", icon: GraduationCap, change: { value: 15, type: "increase" as const } },
-          { title: "Ofertas de Trabajo", value: "120", icon: Briefcase, change: { value: 10, type: "increase" as const } },
-          { title: "Instituciones", value: "15", icon: Building2, change: { value: 2, type: "increase" as const } },
+          { title: "Usuarios Totales", value: "0", icon: Users, change: { value: 0, type: "neutral" as const } },
+          { title: "Cursos Activos", value: "0", icon: GraduationCap, change: { value: 0, type: "neutral" as const } },
+          { title: "Ofertas de Trabajo", value: "0", icon: Briefcase, change: { value: 0, type: "neutral" as const } },
+          { title: "Instituciones", value: "0", icon: Building2, change: { value: 0, type: "neutral" as const } },
         ];
       default:
         return [];

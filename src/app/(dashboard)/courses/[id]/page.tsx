@@ -149,7 +149,7 @@ export default function CourseDetailPage() {
 
   // Fetch modules, lessons, and quizzes for management view
   useEffect(() => {
-    if (canManageCourse && courseId) {
+    if ((canManageCourse || isSuperAdmin) && courseId) {
       // Fetch modules
       setIsLoadingModules(true);
       fetch(`/api/courses/${courseId}/modules`)
@@ -219,7 +219,7 @@ export default function CourseDetailPage() {
         })
         .finally(() => setIsLoadingQuizzes(false));
     }
-  }, [canManageCourse, courseId]);
+  }, [canManageCourse, isSuperAdmin, courseId]);
 
   const handlePreviousLesson = () => {
     if (progress && selectedLessonId) {
@@ -356,7 +356,7 @@ export default function CourseDetailPage() {
   }
 
   // For admin users, show a management-focused layout
-  if (canManageCourse) {
+  if (canManageCourse || isSuperAdmin) {
     return (
       <div className="container mx-auto px-4 py-8">
         {/* Management Header */}
@@ -805,7 +805,7 @@ export default function CourseDetailPage() {
             </Button>
             
             {/* Role-based actions */}
-            {canManageCourse ? (
+            {(canManageCourse || isSuperAdmin) ? (
               // Management actions for Institution and SuperAdmin
               <>
                 <Button 
@@ -921,7 +921,7 @@ export default function CourseDetailPage() {
         </div>
 
         {/* Management Content for Institution/SuperAdmin */}
-        {canManageCourse && (
+        {(canManageCourse || isSuperAdmin) && (
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <Card>

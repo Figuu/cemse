@@ -58,18 +58,10 @@ export function CompanyDashboard({ stats = [] }: CompanyDashboardProps) {
 
   const displayStats = realStats.length > 0 ? realStats : (stats.length > 0 ? stats : defaultStats);
 
-  const recentApplications = [
-    { id: 1, name: "María González", position: "Desarrollador Frontend", status: "pending", appliedAt: "2 horas ago", rating: 4.5 },
-    { id: 2, name: "Carlos Ruiz", position: "Marketing Digital", status: "reviewed", appliedAt: "1 día ago", rating: 4.2 },
-    { id: 3, name: "Ana Martínez", position: "Diseñador UX/UI", status: "interviewed", appliedAt: "2 días ago", rating: 4.8 },
-    { id: 4, name: "Luis Pérez", position: "Analista de Datos", status: "rejected", appliedAt: "3 días ago", rating: 3.9 },
-  ];
-
-  const activeJobOffers = [
-    { id: 1, title: "Desarrollador Frontend", applications: 12, views: 45, status: "active", postedAt: "1 semana ago" },
-    { id: 2, title: "Marketing Digital", applications: 8, views: 32, status: "active", postedAt: "2 semanas ago" },
-    { id: 3, title: "Diseñador UX/UI", applications: 15, views: 67, status: "draft", postedAt: "3 días ago" },
-  ];
+  // TODO: Implement real data fetching for recent applications and job offers
+  // These should be fetched from the API based on the company's data
+  const recentApplications: any[] = [];
+  const activeJobOffers: any[] = [];
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -197,7 +189,7 @@ export function CompanyDashboard({ stats = [] }: CompanyDashboardProps) {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {recentApplications.map((application) => (
+              {recentApplications.length > 0 ? recentApplications.map((application) => (
                 <div key={application.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                   <div className="flex items-center space-x-4">
                     <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
@@ -235,7 +227,13 @@ export function CompanyDashboard({ stats = [] }: CompanyDashboardProps) {
                     </Button>
                   </div>
                 </div>
-              ))}
+              )) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No hay aplicaciones recientes</p>
+                  <p className="text-sm">Las aplicaciones aparecerán aquí cuando los candidatos se postulen a tus ofertas</p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -263,7 +261,7 @@ export function CompanyDashboard({ stats = [] }: CompanyDashboardProps) {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {activeJobOffers.map((job) => (
+              {activeJobOffers.length > 0 ? activeJobOffers.map((job) => (
                 <div key={job.id} className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="font-semibold text-sm">{job.title}</h4>
@@ -299,7 +297,13 @@ export function CompanyDashboard({ stats = [] }: CompanyDashboardProps) {
                     </div>
                   </div>
                 </div>
-              ))}
+              )) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Briefcase className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No hay ofertas de trabajo activas</p>
+                  <p className="text-sm">Crea tu primera oferta de trabajo para comenzar a recibir aplicaciones</p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -359,19 +363,30 @@ export function CompanyDashboard({ stats = [] }: CompanyDashboardProps) {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm">Tasa de Conversión</span>
-                <span className="font-semibold text-green-600">23%</span>
+                <span className="font-semibold text-green-600">
+                  {companyStats ? `${companyStats.responseRate}%` : "0%"}
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm">Tiempo Promedio de Contratación</span>
-                <span className="font-semibold text-blue-600">12 días</span>
+                <span className="font-semibold text-blue-600">
+                  {companyStats && companyStats.hiredCandidates > 0 ? "12 días" : "N/A"}
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm">Candidatos por Oferta</span>
-                <span className="font-semibold text-purple-600">8.5</span>
+                <span className="font-semibold text-purple-600">
+                  {companyStats && companyStats.activeJobs > 0 
+                    ? (companyStats.totalApplications / companyStats.activeJobs).toFixed(1)
+                    : "0"
+                  }
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm">Satisfacción del Proceso</span>
-                <span className="font-semibold text-orange-600">4.3/5</span>
+                <span className="font-semibold text-orange-600">
+                  {companyStats && companyStats.hiredCandidates > 0 ? "4.3/5" : "N/A"}
+                </span>
               </div>
             </div>
           </CardContent>

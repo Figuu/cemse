@@ -16,8 +16,9 @@ import {
 import { CandidateCard } from "@/components/candidates/CandidateCard";
 import { CandidateSearchFilters } from "@/components/candidates/CandidateSearchFilters";
 import { useCandidates, CandidateSearchFilters as CandidateFilters } from "@/hooks/useCandidates";
+import { RoleGuard } from "@/components/auth/RoleGuard";
 
-export default function CandidatesPage() {
+function CandidatesPageContent() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState<CandidateFilters>({
     page: 1,
@@ -331,5 +332,13 @@ export default function CandidatesPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CandidatesPage() {
+  return (
+    <RoleGuard allowedRoles={["COMPANIES", "SUPERADMIN"]}>
+      <CandidatesPageContent />
+    </RoleGuard>
   );
 }

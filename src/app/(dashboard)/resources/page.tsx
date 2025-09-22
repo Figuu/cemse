@@ -33,8 +33,9 @@ import {
 import { useResources } from "@/hooks/useResources";
 import { ResourceForm } from "@/components/resources/ResourceForm";
 import { ResourceDetailsModal } from "@/components/resources/ResourceDetailsModal";
+import { RoleGuard } from "@/components/auth/RoleGuard";
 
-export default function ResourcesPage() {
+function ResourcesPageContent() {
   const { data: session, status: sessionStatus } = useSession();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -581,5 +582,13 @@ export default function ResourcesPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function ResourcesPage() {
+  return (
+    <RoleGuard allowedRoles={["YOUTH", "COMPANIES", "INSTITUTION", "SUPERADMIN"]}>
+      <ResourcesPageContent />
+    </RoleGuard>
   );
 }
