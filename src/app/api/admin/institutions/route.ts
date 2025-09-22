@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
           role: 'INSTITUTION',
           isActive: true,
           firstName: mayorName || name.split(' ')[0],
-          lastName: mayorName ? name.split(' ').slice(1).join(' ') : name.split(' ').slice(1).join(' ')
+          lastName: mayorName ? '' : name.split(' ').slice(1).join(' ')
         }
       });
 
@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
         data: {
           userId: user.id,
           firstName: mayorName || name.split(' ')[0],
-          lastName: mayorName ? name.split(' ').slice(1).join(' ') : name.split(' ').slice(1).join(' '),
+          lastName: mayorName ? '' : name.split(' ').slice(1).join(' '),
           phone,
           address,
           city: department,

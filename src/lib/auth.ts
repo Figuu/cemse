@@ -47,7 +47,11 @@ export const authOptions: NextAuthOptions = {
         return {
           id: user.id,
           email: user.email,
-          name: user.profile?.firstName + ' ' + user.profile?.lastName,
+          name: user.profile?.firstName && user.profile?.lastName 
+            ? `${user.profile.firstName} ${user.profile.lastName}`.trim()
+            : user.firstName && user.lastName 
+            ? `${user.firstName} ${user.lastName}`.trim()
+            : user.email,
           role: user.role,
           profile: user.profile,
           institutionType: user.profile?.institution?.institutionType,
