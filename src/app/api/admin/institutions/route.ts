@@ -12,12 +12,23 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check if user is super admin
-    if (session.user.role !== "SUPERADMIN") {
+    // Check if user is super admin or institution
+    if (session.user.role !== "SUPERADMIN" && session.user.role !== "INSTITUTION") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // Build where clause based on user type
+    let whereClause: any = {};
+
+    // If user is INSTITUTION with MUNICIPALITY type, they can only see non-municipality institutions
+    if (session.user.role === "INSTITUTION" && session.user.institutionType === "MUNICIPALITY") {
+      whereClause.institutionType = {
+        not: "MUNICIPALITY"
+      };
+    }
+
     const institutions = await prisma.institution.findMany({
+      where: whereClause,
       orderBy: {
         createdAt: 'desc'
       }
@@ -41,8 +52,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check if user is super admin
-    if (session.user.role !== "SUPERADMIN") {
+    // Check if user is super admin or institution
+    if (session.user.role !== "SUPERADMIN" && session.user.role !== "INSTITUTION") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -71,6 +82,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Name, email, password, department, and institution type are required" },
         { status: 400 }
+      );
+    }
+
+    // If user is INSTITUTION with MUNICIPALITY type, they cannot create other municipalities
+    if (session.user.role === "INSTITUTION" && session.user.institutionType === "MUNICIPALITY" && institutionType === "MUNICIPALITY") {
+      return NextResponse.json(
+        { error: "Municipality users cannot create other municipalities" },
+        { status: 403 }
       );
     }
 

@@ -1079,7 +1079,7 @@ function YouthUsersManagement() {
 
 export default function AdminUsersPage() {
   return (
-    <RoleGuard allowedRoles={["SUPERADMIN"]}>
+    <RoleGuard allowedRoles={["SUPERADMIN", "INSTITUTION"]}>
       <YouthUsersManagement />
     </RoleGuard>
   );

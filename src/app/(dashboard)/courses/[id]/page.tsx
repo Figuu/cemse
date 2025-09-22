@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -221,6 +222,19 @@ export default function CourseDetailPage() {
     }
   }, [canManageCourse, isSuperAdmin, courseId]);
 
+  // Helper function to get current lesson progress
+  const getCurrentLessonProgress = () => {
+    if (!progress || !selectedLessonId) return null;
+
+    for (const moduleData of progress.modules) {
+      const lesson = moduleData.lessons.find(l => l.id === selectedLessonId);
+      if (lesson) {
+        return lesson.progress;
+      }
+    }
+    return null;
+  };
+
   const handlePreviousLesson = () => {
     if (progress && selectedLessonId) {
       // Find current lesson and get previous one
@@ -247,6 +261,15 @@ export default function CourseDetailPage() {
 
   const handleNextLesson = () => {
     if (progress && selectedLessonId) {
+      // For YOUTH users, check if current lesson is completed before allowing progression
+      if (session?.user?.role === "YOUTH") {
+        const currentLessonProgress = getCurrentLessonProgress();
+        if (!currentLessonProgress?.isCompleted) {
+          toast.error("Debes completar la lección actual antes de continuar");
+          return;
+        }
+      }
+
       // Find current lesson and get next one
       for (const moduleData of progress.modules) {
         const lessonIndex = moduleData.lessons.findIndex(l => l.id === selectedLessonId);

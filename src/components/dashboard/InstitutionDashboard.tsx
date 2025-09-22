@@ -46,8 +46,8 @@ export function InstitutionDashboard({ stats = [] }: InstitutionDashboardProps) 
   const realStats = analytics ? [
     { title: "Cursos Activos", value: analytics.overview?.totalCourses?.toString() || "0", icon: GraduationCap, change: { value: 12, type: "increase" as const } },
     { title: "Estudiantes", value: analytics.overview?.totalStudents?.toString() || "0", icon: Users, change: { value: 18, type: "increase" as const } },
-    { title: "Recursos Publicados", value: "25", icon: BookOpen, change: { value: 5, type: "increase" as const } }, // TODO: Add resources count to analytics
-    { title: "Certificados Emitidos", value: "45", icon: Award, change: { value: 22, type: "increase" as const } }, // TODO: Add certificates count to analytics
+    { title: "Recursos Publicados", value: "0", icon: BookOpen, change: { value: 0, type: "neutral" as const } }, // TODO: Add resources count to analytics
+    { title: "Certificados Emitidos", value: "0", icon: Award, change: { value: 0, type: "neutral" as const } }, // TODO: Add certificates count to analytics
   ] : [];
 
   const defaultStats = [
@@ -323,19 +323,36 @@ export function InstitutionDashboard({ stats = [] }: InstitutionDashboardProps) 
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm">Tasa de Completado Promedio</span>
-                <span className="font-semibold text-green-600">73%</span>
+                <span className="font-semibold text-green-600">
+                  {analytics?.academicPerformance?.completionRate 
+                    ? `${Math.round(analytics.academicPerformance.completionRate)}%` 
+                    : "0%"
+                  }
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm">Estudiantes Activos</span>
-                <span className="font-semibold text-blue-600">142</span>
+                <span className="font-semibold text-blue-600">
+                  {analytics?.overview?.totalStudents || "0"}
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm">Certificados Emitidos</span>
-                <span className="font-semibold text-purple-600">89</span>
+                <span className="font-semibold text-purple-600">
+                  {analytics?.academicPerformance?.graduationRate 
+                    ? Math.round(analytics.academicPerformance.graduationRate * (analytics.overview?.totalStudents || 0) / 100)
+                    : "0"
+                  }
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm">Satisfacción Promedio</span>
-                <span className="font-semibold text-orange-600">4.7/5</span>
+                <span className="font-semibold text-orange-600">
+                  {analytics?.academicPerformance?.averageGrade 
+                    ? `${(analytics.academicPerformance.averageGrade / 5 * 5).toFixed(1)}/5`
+                    : "N/A"
+                  }
+                </span>
               </div>
             </div>
           </CardContent>
@@ -350,33 +367,10 @@ export function InstitutionDashboard({ stats = [] }: InstitutionDashboardProps) 
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 rounded-full bg-green-500" />
-                <div className="flex-1">
-                  <p className="text-sm">Nuevo estudiante en Marketing Digital</p>
-                  <p className="text-xs text-muted-foreground">Hace 5 minutos</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 rounded-full bg-blue-500" />
-                <div className="flex-1">
-                  <p className="text-sm">Curso "Finanzas Personales" completado</p>
-                  <p className="text-xs text-muted-foreground">Hace 15 minutos</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 rounded-full bg-purple-500" />
-                <div className="flex-1">
-                  <p className="text-sm">Recurso "Guía de Emprendimiento" publicado</p>
-                  <p className="text-xs text-muted-foreground">Hace 1 hora</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 rounded-full bg-orange-500" />
-                <div className="flex-1">
-                  <p className="text-sm">Certificado emitido para Ana Martínez</p>
-                  <p className="text-xs text-muted-foreground">Hace 2 horas</p>
-                </div>
+              <div className="text-center py-8 text-muted-foreground">
+                <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>No hay actividad reciente</p>
+                <p className="text-sm">La actividad de tu institución aparecerá aquí</p>
               </div>
             </div>
           </CardContent>

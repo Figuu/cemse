@@ -34,6 +34,9 @@ export function InstitutionSection() {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [institution, setInstitution] = useState<any>(null);
+
+  // Check if current user is a municipality user
+  const isMunicipalityUser = session?.user?.role === "INSTITUTION" && session?.user?.institutionType === "MUNICIPALITY";
   
   const [formData, setFormData] = useState<InstitutionFormData>({
     name: "",
@@ -259,7 +262,7 @@ export function InstitutionSection() {
               <SelectValue placeholder="Selecciona el tipo" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="MUNICIPALITY">Municipalidad</SelectItem>
+              {(!isMunicipalityUser || formData.institutionType === "MUNICIPALITY") && <SelectItem value="MUNICIPALITY">Municipalidad</SelectItem>}
               <SelectItem value="NGO">ONG</SelectItem>
               <SelectItem value="TRAINING_CENTER">Centro de Capacitación</SelectItem>
               <SelectItem value="FOUNDATION">Fundación</SelectItem>

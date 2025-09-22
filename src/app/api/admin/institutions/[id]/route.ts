@@ -14,8 +14,8 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check if user is super admin
-    if (session.user.role !== "SUPERADMIN") {
+    // Check if user is super admin or institution
+    if (session.user.role !== "SUPERADMIN" && session.user.role !== "INSTITUTION") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -26,6 +26,11 @@ export async function GET(
 
     if (!institution) {
       return NextResponse.json({ error: "Institution not found" }, { status: 404 });
+    }
+
+    // If user is INSTITUTION with MUNICIPALITY type, they cannot access other municipalities
+    if (session.user.role === "INSTITUTION" && session.user.institutionType === "MUNICIPALITY" && institution.institutionType === "MUNICIPALITY") {
+      return NextResponse.json({ error: "Municipality users cannot access other municipalities" }, { status: 403 });
     }
 
     return NextResponse.json(institution);
@@ -49,8 +54,8 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check if user is super admin
-    if (session.user.role !== "SUPERADMIN") {
+    // Check if user is super admin or institution
+    if (session.user.role !== "SUPERADMIN" && session.user.role !== "INSTITUTION") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -82,6 +87,16 @@ export async function PUT(
 
     if (!existingInstitution) {
       return NextResponse.json({ error: "Institution not found" }, { status: 404 });
+    }
+
+    // If user is INSTITUTION with MUNICIPALITY type, they cannot edit other municipalities
+    if (session.user.role === "INSTITUTION" && session.user.institutionType === "MUNICIPALITY" && existingInstitution.institutionType === "MUNICIPALITY") {
+      return NextResponse.json({ error: "Municipality users cannot edit other municipalities" }, { status: 403 });
+    }
+
+    // If user is INSTITUTION with MUNICIPALITY type, they cannot change institution type to MUNICIPALITY
+    if (session.user.role === "INSTITUTION" && session.user.institutionType === "MUNICIPALITY" && institutionType === "MUNICIPALITY" && institutionType !== existingInstitution.institutionType) {
+      return NextResponse.json({ error: "Municipality users cannot change institution type to municipality" }, { status: 403 });
     }
 
     // Check if email is being changed and if it's already taken
@@ -165,8 +180,8 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check if user is super admin
-    if (session.user.role !== "SUPERADMIN") {
+    // Check if user is super admin or institution
+    if (session.user.role !== "SUPERADMIN" && session.user.role !== "INSTITUTION") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -178,6 +193,11 @@ export async function DELETE(
 
     if (!existingInstitution) {
       return NextResponse.json({ error: "Institution not found" }, { status: 404 });
+    }
+
+    // If user is INSTITUTION with MUNICIPALITY type, they cannot delete other municipalities
+    if (session.user.role === "INSTITUTION" && session.user.institutionType === "MUNICIPALITY" && existingInstitution.institutionType === "MUNICIPALITY") {
+      return NextResponse.json({ error: "Municipality users cannot delete other municipalities" }, { status: 403 });
     }
 
     // Delete institution (related data will be handled by cascade rules)

@@ -17,7 +17,7 @@ export default withAuth(
       "/entrepreneurship": ["YOUTH", "SUPERADMIN"],
       "/company": ["COMPANIES", "SUPERADMIN"],
       "/institution": ["INSTITUTION", "SUPERADMIN"],
-      "/admin": ["SUPERADMIN"],
+      "/admin": ["SUPERADMIN", "INSTITUTION"],
     };
 
     // Check if the current path requires authentication

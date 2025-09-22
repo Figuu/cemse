@@ -1254,7 +1254,7 @@ function CompaniesManagement() {
 
 export default function AdminCompaniesPage() {
   return (
-    <RoleGuard allowedRoles={["SUPERADMIN"]}>
+    <RoleGuard allowedRoles={["SUPERADMIN", "INSTITUTION"]}>
       <CompaniesManagement />
     </RoleGuard>
   );

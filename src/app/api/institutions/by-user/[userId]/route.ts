@@ -28,35 +28,75 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Find the institution created by this user
-    const institution = await prisma.institution.findFirst({
+    // Find the institution associated with this user through their profile or created by them
+    let institution = null;
+
+    // First, try to find institution through user's profile (for INSTITUTION users)
+    const userProfile = await prisma.profile.findFirst({
       where: {
-        createdBy: userId,
-        isActive: true,
+        userId: userId,
       },
       include: {
-        creator: {
-          select: {
-            id: true,
-            email: true,
-            profile: {
+        institution: {
+          include: {
+            creator: {
               select: {
-                firstName: true,
-                lastName: true,
-                avatarUrl: true,
+                id: true,
+                email: true,
+                profile: {
+                  select: {
+                    firstName: true,
+                    lastName: true,
+                    avatarUrl: true,
+                  },
+                },
+              },
+            },
+            _count: {
+              select: {
+                companies: true,
+                profiles: true,
+                courses: true,
               },
             },
           },
         },
-        _count: {
-          select: {
-            companies: true,
-            profiles: true,
-            courses: true,
-          },
-        },
       },
     });
+
+    if (userProfile?.institution) {
+      institution = userProfile.institution;
+    } else {
+      // If no institution found through profile, try to find institution created by this user
+      institution = await prisma.institution.findFirst({
+        where: {
+          createdBy: userId,
+          isActive: true,
+        },
+        include: {
+          creator: {
+            select: {
+              id: true,
+              email: true,
+              profile: {
+                select: {
+                  firstName: true,
+                  lastName: true,
+                  avatarUrl: true,
+                },
+              },
+            },
+          },
+          _count: {
+            select: {
+              companies: true,
+              profiles: true,
+              courses: true,
+            },
+          },
+        },
+      });
+    }
 
     if (!institution) {
       return NextResponse.json(

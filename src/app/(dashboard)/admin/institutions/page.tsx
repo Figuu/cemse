@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useSession } from "next-auth/react";
 
 interface Institution {
   id: string;
@@ -159,6 +160,10 @@ function InstitutionsManagement() {
   const [isValidating, setIsValidating] = useState(false);
   const [showCreatePassword, setShowCreatePassword] = useState(false);
   const queryClient = useQueryClient();
+  const { data: session } = useSession();
+
+  // Check if current user is a municipality user
+  const isMunicipalityUser = session?.user?.role === "INSTITUTION" && session?.user?.institutionType === "MUNICIPALITY";
 
   // Fetch institutions
   const { data: institutions = [], isLoading, error } = useQuery({
@@ -816,7 +821,7 @@ function InstitutionsManagement() {
                       <SelectValue placeholder="Seleccionar tipo" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="MUNICIPALITY">Municipalidad</SelectItem>
+                      {!isMunicipalityUser && <SelectItem value="MUNICIPALITY">Municipalidad</SelectItem>}
                       <SelectItem value="NGO">ONG</SelectItem>
                       <SelectItem value="TRAINING_CENTER">Centro de Capacitación</SelectItem>
                       <SelectItem value="FOUNDATION">Fundación</SelectItem>
@@ -1183,7 +1188,7 @@ function InstitutionsManagement() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="MUNICIPALITY">Municipalidad</SelectItem>
+                      {(!isMunicipalityUser || selectedInstitution.institutionType === "MUNICIPALITY") && <SelectItem value="MUNICIPALITY">Municipalidad</SelectItem>}
                       <SelectItem value="NGO">ONG</SelectItem>
                       <SelectItem value="TRAINING_CENTER">Centro de Capacitación</SelectItem>
                       <SelectItem value="FOUNDATION">Fundación</SelectItem>
@@ -1329,7 +1334,7 @@ function InstitutionsManagement() {
 
 export default function AdminInstitutionsPage() {
   return (
-    <RoleGuard allowedRoles={["SUPERADMIN"]}>
+    <RoleGuard allowedRoles={["SUPERADMIN", "INSTITUTION"]}>
       <InstitutionsManagement />
     </RoleGuard>
   );

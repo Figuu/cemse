@@ -12,8 +12,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check if user is super admin
-    if (session.user.role !== "SUPERADMIN") {
+    // Check if user is super admin or institution
+    if (session.user.role !== "SUPERADMIN" && session.user.role !== "INSTITUTION") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -71,8 +71,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check if user is super admin
-    if (session.user.role !== "SUPERADMIN") {
+    // Check if user is super admin or institution
+    if (session.user.role !== "SUPERADMIN" && session.user.role !== "INSTITUTION") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

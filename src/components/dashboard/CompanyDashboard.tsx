@@ -22,7 +22,8 @@ import {
   Calendar,
   MessageSquare,
   FileText,
-  BarChart3
+  BarChart3,
+  Activity
 } from "lucide-react";
 import Link from "next/link";
 import { useCompanyStats } from "@/hooks/useCompanyStats";
@@ -401,33 +402,10 @@ export function CompanyDashboard({ stats = [] }: CompanyDashboardProps) {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 rounded-full bg-green-500" />
-                <div className="flex-1">
-                  <p className="text-sm">Nueva aplicación para Desarrollador Frontend</p>
-                  <p className="text-xs text-muted-foreground">Hace 10 minutos</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 rounded-full bg-blue-500" />
-                <div className="flex-1">
-                  <p className="text-sm">Oferta "Marketing Digital" actualizada</p>
-                  <p className="text-xs text-muted-foreground">Hace 1 hora</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 rounded-full bg-purple-500" />
-                <div className="flex-1">
-                  <p className="text-sm">Entrevista programada con Ana Martínez</p>
-                  <p className="text-xs text-muted-foreground">Hace 2 horas</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 rounded-full bg-orange-500" />
-                <div className="flex-1">
-                  <p className="text-sm">Candidato Carlos Ruiz contratado</p>
-                  <p className="text-xs text-muted-foreground">Hace 1 día</p>
-                </div>
+              <div className="text-center py-8 text-muted-foreground">
+                <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>No hay actividad reciente</p>
+                <p className="text-sm">La actividad de tu empresa aparecerá aquí</p>
               </div>
             </div>
           </CardContent>

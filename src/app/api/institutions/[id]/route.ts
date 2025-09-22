@@ -65,17 +65,33 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
 
-    // Check if user owns the institution or is admin
+    // Check if user owns the institution or is admin or is associated with the institution
     const institution = await prisma.institution.findUnique({
       where: { id },
-      select: { createdBy: true }
+      select: {
+        createdBy: true,
+        profiles: {
+          select: {
+            userId: true
+          }
+        }
+      }
     });
 
     if (!institution) {
       return NextResponse.json({ error: "Institution not found" }, { status: 404 });
     }
 
-    if (institution.createdBy !== session.user.id && session.user.role !== "SUPERADMIN") {
+    // Check if user can edit this institution:
+    // 1. User is the creator (admin who created it)
+    // 2. User is SUPERADMIN
+    // 3. User is INSTITUTION role and associated with this institution through their profile
+    const isCreator = institution.createdBy === session.user.id;
+    const isAdmin = session.user.role === "SUPERADMIN";
+    const isAssociatedInstitutionUser = session.user.role === "INSTITUTION" &&
+      institution.profiles.some(profile => profile.userId === session.user.id);
+
+    if (!isCreator && !isAdmin && !isAssociatedInstitutionUser) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 

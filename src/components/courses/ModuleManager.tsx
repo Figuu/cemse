@@ -23,15 +23,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { 
+import {
   Plus,
   Edit,
   Trash2,
   GripVertical,
   BookOpen,
-  Clock,
-  Lock,
-  Unlock
+  Clock
 } from "lucide-react";
 
 interface CourseModule {
@@ -40,9 +38,7 @@ interface CourseModule {
   description: string | null;
   orderIndex: number;
   estimatedDuration: number;
-  isLocked: boolean;
   prerequisites: string[];
-  hasCertificate: boolean;
   lessons: Array<{
     id: string;
     title: string;
@@ -67,9 +63,7 @@ export function ModuleManager({ courseId, modules, onModulesChange }: ModuleMana
     title: "",
     description: "",
     estimatedDuration: 0,
-    isLocked: false,
     prerequisites: [] as string[],
-    hasCertificate: true,
   });
 
   const [newPrerequisite, setNewPrerequisite] = useState("");
@@ -79,9 +73,7 @@ export function ModuleManager({ courseId, modules, onModulesChange }: ModuleMana
       title: "",
       description: "",
       estimatedDuration: 0,
-      isLocked: false,
       prerequisites: [],
-      hasCertificate: true,
     });
     setNewPrerequisite("");
   };
@@ -177,9 +169,7 @@ export function ModuleManager({ courseId, modules, onModulesChange }: ModuleMana
       title: module.title,
       description: module.description || "",
       estimatedDuration: module.estimatedDuration,
-      isLocked: module.isLocked,
       prerequisites: module.prerequisites,
-      hasCertificate: module.hasCertificate,
     });
     setIsEditModalOpen(true);
   };
@@ -257,25 +247,6 @@ export function ModuleManager({ courseId, modules, onModulesChange }: ModuleMana
                     placeholder="0"
                   />
                 </div>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="isLocked"
-                    checked={formData.isLocked}
-                    onChange={(e) => setFormData(prev => ({ ...prev, isLocked: e.target.checked }))}
-                  />
-                  <Label htmlFor="isLocked">Módulo Bloqueado</Label>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="hasCertificate"
-                  checked={formData.hasCertificate}
-                  onChange={(e) => setFormData(prev => ({ ...prev, hasCertificate: e.target.checked }))}
-                />
-                <Label htmlFor="hasCertificate">Incluir Certificado</Label>
               </div>
 
               <div>
@@ -364,15 +335,6 @@ export function ModuleManager({ courseId, modules, onModulesChange }: ModuleMana
                           <Clock className="h-4 w-4 mr-1" />
                           {module.estimatedDuration} min
                         </div>
-                        {module.isLocked && (
-                          <div className="flex items-center text-sm text-muted-foreground">
-                            <Lock className="h-4 w-4 mr-1" />
-                            Bloqueado
-                          </div>
-                        )}
-                        {module.hasCertificate && (
-                          <Badge variant="secondary">Certificado</Badge>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -443,25 +405,6 @@ export function ModuleManager({ courseId, modules, onModulesChange }: ModuleMana
                   placeholder="0"
                 />
               </div>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="edit-isLocked"
-                  checked={formData.isLocked}
-                  onChange={(e) => setFormData(prev => ({ ...prev, isLocked: e.target.checked }))}
-                />
-                <Label htmlFor="edit-isLocked">Módulo Bloqueado</Label>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="edit-hasCertificate"
-                checked={formData.hasCertificate}
-                onChange={(e) => setFormData(prev => ({ ...prev, hasCertificate: e.target.checked }))}
-              />
-              <Label htmlFor="edit-hasCertificate">Incluir Certificado</Label>
             </div>
 
             <div>
