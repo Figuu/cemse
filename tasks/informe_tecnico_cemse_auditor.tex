@@ -15,11 +15,7 @@
 
 % Configuración de página
 \geometry{margin=2.5cm}
-\pagestyle{fancy}
-\fancyhf{}
-\fancyhead[L]{Informe Técnico de Auditoría - CEMSE}
-\fancyhead[R]{\thepage}
-\renewcommand{\headrulewidth}{0.4pt}
+\pagestyle{plain}
 
 % Configuración de títulos
 \titleformat{\section}{\Large\bfseries\color{blue!70!black}}{\thesection}{1em}{}
@@ -37,32 +33,18 @@
 
 \begin{document}
 
-% 0. Portada
+% Portada
 \begin{titlepage}
     \centering
-    \vspace*{2cm}
+    \vspace*{4cm}
 
-    {\Huge\bfseries INFORME TÉCNICO DE AUDITORÍA\\[0.5cm]}
-    {\LARGE Plataforma Educativa CEMSE\\[2cm]}
-
-    \begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,width=0.8\textwidth]
-        \centering
-        \large
-        \textbf{Análisis Integral del Repositorio}\\
-        Sistema de Gestión Educativa, Empleo y Emprendimiento
-    \end{tcolorbox}
+    {\Huge\bfseries INFORME TÉCNICO\\[0.5cm]}
+    {\LARGE PLATAFORMA EDUCATIVA CEMSE}
 
     \vfill
 
-    {\large \textbf{Repositorio:} C:\textbackslash Users\textbackslash david\textbackslash projects\textbackslash asd\textbackslash cemse\\[0.3cm]}
-    {\large \textbf{Rama:} master\\[0.3cm]}
-    {\large \textbf{Commit:} 535dba0\\[0.3cm]}
-    {\large \textbf{Fecha de Auditoría:} \today}
-
 \end{titlepage}
 
-\newpage
-\tableofcontents
 \newpage
 
 % 1. Resumen
@@ -736,6 +718,33 @@ pnpm run dev
 \subsection{Introducción al Tour Visual}
 
 Este anexo presenta un recorrido visual completo de la plataforma CEMSE, mostrando las principales funcionalidades y flujos de usuario para cada tipo de actor en el sistema. Las capturas de pantalla fueron tomadas en un entorno de desarrollo local y muestran la interfaz de usuario actual del sistema.
+
+\subsection{Acceso a la Plataforma}
+
+\textbf{URL de la plataforma:} \url{https://cemse.boring.lat}
+
+\textbf{Credenciales de prueba:}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|l|l|l|}
+\hline
+\textbf{Rol} & \textbf{Email} & \textbf{Contraseña} & \textbf{Descripción} \\
+\hline
+SUPERADMIN & admin@demo.com & 12345678 & Administrador del sistema \\
+\hline
+INSTITUTION & insti@demo.com & 12345678 & Fundación CEMSE \\
+\hline
+COMPANIES & comp@demo.com & 12345678 & Tech Solutions Bolivia \\
+\hline
+YOUTH & joven@demo.com & 12345678 & Juan Pérez (estudiante) \\
+\hline
+\end{tabular}
+\caption{Credenciales de acceso para testing (definidas en \texttt{prisma/seed.ts})}
+\label{tab:credentials}
+\end{table}
+
+\textbf{Evidencia:} Las credenciales están definidas en el archivo \texttt{prisma/seed.ts} líneas 10-180, con contraseñas hasheadas usando bcryptjs.
 
 \subsection{Autenticación y Acceso}
 
