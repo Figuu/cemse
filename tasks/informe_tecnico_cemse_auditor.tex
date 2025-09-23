@@ -11,6 +11,7 @@
 \usepackage{tcolorbox}
 \usepackage{listings}
 \usepackage{minted}
+\usepackage{float}
 
 % Configuración de página
 \geometry{margin=2.5cm}
@@ -727,6 +728,262 @@ pnpm run dev
     \item \textbf{Archivos fuente:} ~500 archivos
     \item \textbf{Dependencias:} 93 dependencias principales
     \item \textbf{DevDependencies:} 31 dependencias de desarrollo
+\end{itemize}
+
+% 13. Anexos - Tour Visual de la Aplicación
+\section{Anexos - Tour Visual de la Aplicación}
+
+\subsection{Introducción al Tour Visual}
+
+Este anexo presenta un recorrido visual completo de la plataforma CEMSE, mostrando las principales funcionalidades y flujos de usuario para cada tipo de actor en el sistema. Las capturas de pantalla fueron tomadas en un entorno de desarrollo local y muestran la interfaz de usuario actual del sistema.
+
+\subsection{Autenticación y Acceso}
+
+\subsubsection{Página de Inicio}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{screenshots/auth/landing-page.png}
+    \caption{Página de inicio de la plataforma CEMSE}
+    \label{fig:landing-page}
+\end{figure}
+
+\subsubsection{Inicio de Sesión}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{screenshots/auth/sign-in.png}
+    \caption{Formulario de inicio de sesión}
+    \label{fig:sign-in}
+\end{figure}
+
+\subsubsection{Registro de Usuario}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{screenshots/auth/sign-up.png}
+    \caption{Formulario de registro de nuevos usuarios}
+    \label{fig:sign-up}
+\end{figure}
+
+\subsection{Flujo de Usuario Joven (YOUTH)}
+
+\subsubsection{Dashboard Principal}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{screenshots/youth/dashboard.png}
+    \caption{Dashboard principal para usuarios jóvenes}
+    \label{fig:youth-dashboard}
+\end{figure}
+
+\subsubsection{Búsqueda de Empleos}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{screenshots/youth/jobs-search.png}
+    \caption{Portal de búsqueda de empleos}
+    \label{fig:youth-jobs}
+\end{figure}
+
+\subsubsection{Detalle de Oferta Laboral}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{screenshots/youth/job-detail.png}
+    \caption{Detalle de una oferta laboral específica}
+    \label{fig:youth-job-detail}
+\end{figure}
+
+\subsubsection{Aplicación a Empleo}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{screenshots/youth/job-apply.png}
+    \caption{Formulario de aplicación a empleo}
+    \label{fig:youth-job-apply}
+\end{figure}
+
+\subsubsection{Mis Postulaciones}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{screenshots/youth/my-applications.png}
+    \caption{Panel de seguimiento de postulaciones}
+    \label{fig:youth-applications}
+\end{figure}
+
+\subsubsection{Catálogo de Cursos}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{screenshots/youth/courses.png}
+    \caption{Catálogo de cursos disponibles}
+    \label{fig:youth-courses}
+\end{figure}
+
+\subsubsection{Constructor de CV}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{screenshots/youth/cv-builder.png}
+    \caption{Herramienta de construcción de currículum}
+    \label{fig:youth-cv-builder}
+\end{figure}
+
+\subsubsection{Perfil de Usuario}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{screenshots/youth/profile.png}
+    \caption{Perfil personal del usuario}
+    \label{fig:youth-profile}
+\end{figure}
+
+\subsubsection{Hub de Emprendimiento}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{screenshots/youth/entrepreneurship.png}
+    \caption{Portal de emprendimiento y networking}
+    \label{fig:youth-entrepreneurship}
+\end{figure}
+
+\subsection{Flujo de Usuario Empresa (COMPANIES)}
+
+\subsubsection{Dashboard de Empresa}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{screenshots/companies/dashboard.png}
+    \caption{Dashboard principal para empresas}
+    \label{fig:company-dashboard}
+\end{figure}
+
+\subsubsection{Creación de Oferta Laboral}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{screenshots/companies/create-job.png}
+    \caption{Formulario de creación de oferta laboral}
+    \label{fig:company-create-job}
+\end{figure}
+
+\subsubsection{Gestión de Empleos}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{screenshots/companies/job-management.png}
+    \caption{Panel de gestión de ofertas laborales}
+    \label{fig:company-jobs}
+\end{figure}
+
+\subsubsection{Descubrimiento de Talento}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{screenshots/companies/talent-discovery.png}
+    \caption{Portal de descubrimiento de talento}
+    \label{fig:company-talent}
+\end{figure}
+
+\subsubsection{Perfil de Empresa}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{screenshots/companies/profile.png}
+    \caption{Perfil de la empresa}
+    \label{fig:company-profile}
+\end{figure}
+
+\subsection{Flujo de Usuario Institución (INSTITUTION)}
+
+\subsubsection{Dashboard de Institución}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{screenshots/institutions/dashboard.png}
+    \caption{Dashboard principal para instituciones}
+    \label{fig:institution-dashboard}
+\end{figure}
+
+\subsubsection{Gestión de Usuarios (Municipio)}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{screenshots/institutions/user-management.png}
+    \caption{Panel de gestión de usuarios (vista municipio)}
+    \label{fig:institution-users}
+\end{figure}
+
+\subsubsection{Gestión de Cursos}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{screenshots/institutions/course-management.png}
+    \caption{Panel de gestión de cursos}
+    \label{fig:institution-courses}
+\end{figure}
+
+\subsubsection{Gestión de Estudiantes}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{screenshots/institutions/student-management.png}
+    \caption{Panel de gestión de estudiantes}
+    \label{fig:institution-students}
+\end{figure}
+
+\subsection{Flujo de Super Administrador (SUPERADMIN)}
+
+\subsubsection{Dashboard de Administración}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{screenshots/admin/dashboard.png}
+    \caption{Dashboard de super administrador}
+    \label{fig:admin-dashboard}
+\end{figure}
+
+\subsubsection{Gestión de Usuarios del Sistema}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{screenshots/admin/user-management.png}
+    \caption{Panel de gestión de usuarios del sistema}
+    \label{fig:admin-users}
+\end{figure}
+
+\subsubsection{Gestión de Instituciones}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{screenshots/admin/institution-management.png}
+    \caption{Panel de gestión de instituciones}
+    \label{fig:admin-institutions}
+\end{figure}
+
+\subsubsection{Gestión de Empresas}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{screenshots/admin/company-management.png}
+    \caption{Panel de gestión de empresas}
+    \label{fig:admin-companies}
+\end{figure}
+
+\subsection{Características Adicionales}
+
+\subsubsection{Sistema de Mensajería}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{screenshots/features/messaging.png}
+    \caption{Sistema de mensajería integrado}
+    \label{fig:messaging}
+\end{figure}
+
+\subsubsection{Portal de Noticias}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{screenshots/features/news.png}
+    \caption{Portal de noticias y comunicaciones}
+    \label{fig:news}
+\end{figure}
+
+\subsubsection{Recursos Educativos}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{screenshots/features/resources.png}
+    \caption{Portal de recursos educativos}
+    \label{fig:resources}
+\end{figure}
+
+\subsection{Conclusión del Tour Visual}
+
+Este tour visual demuestra la amplitud y profundidad de la plataforma CEMSE, mostrando interfaces intuitivas y funcionalidades especializadas para cada tipo de usuario. La plataforma integra de manera cohesiva la gestión educativa, el empleo juvenil y el emprendimiento en un ecosistema digital completo.
+
+Las capturas de pantalla evidencian:
+\begin{itemize}
+    \item \textbf{Interfaz moderna:} Diseño responsive con Tailwind CSS
+    \item \textbf{Navegación intuitiva:} Sidebar contextual por rol de usuario
+    \item \textbf{Funcionalidades especializadas:} Herramientas específicas para cada actor
+    \item \textbf{Integración completa:} Flujos conectados entre módulos
+    \item \textbf{Experiencia de usuario:} Interfaces limpias y funcionales
 \end{itemize}
 
 \end{document}
