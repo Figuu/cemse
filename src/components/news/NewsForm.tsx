@@ -26,7 +26,6 @@ interface NewsFormProps {
     status: "PUBLISHED" | "DRAFT" | "ARCHIVED";
     priority: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
     featured: boolean;
-    targetAudience: string[];
     region?: string;
     isEntrepreneurshipRelated: boolean;
   };
@@ -50,15 +49,6 @@ const categories = [
   "Otros"
 ];
 
-const targetAudiences = [
-  "Jóvenes",
-  "Estudiantes",
-  "Emprendedores",
-  "Profesionales",
-  "Empresarios",
-  "Instituciones",
-  "Público General"
-];
 
 export function NewsForm({ initialData, onSubmit, onCancel, isLoading = false }: NewsFormProps) {
   const { uploadFile, isUploading: isFileUploading, progress: uploadProgress, error: uploadError, reset: resetUpload } = useFileUpload();
@@ -76,13 +66,11 @@ export function NewsForm({ initialData, onSubmit, onCancel, isLoading = false }:
     status: initialData?.status || "DRAFT",
     priority: initialData?.priority || "MEDIUM",
     featured: initialData?.featured || false,
-    targetAudience: initialData?.targetAudience || [],
     region: initialData?.region || "",
     isEntrepreneurshipRelated: initialData?.isEntrepreneurshipRelated || false,
   });
 
   const [newTag, setNewTag] = useState("");
-  const [newAudience, setNewAudience] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
 
@@ -110,22 +98,6 @@ export function NewsForm({ initialData, onSubmit, onCancel, isLoading = false }:
     }));
   };
 
-  const handleAddAudience = () => {
-    if (newAudience.trim() && !formData.targetAudience.includes(newAudience.trim())) {
-      setFormData(prev => ({
-        ...prev,
-        targetAudience: [...prev.targetAudience, newAudience.trim()]
-      }));
-      setNewAudience("");
-    }
-  };
-
-  const handleRemoveAudience = (audienceToRemove: string) => {
-    setFormData(prev => ({
-      ...prev,
-      targetAudience: prev.targetAudience.filter(audience => audience !== audienceToRemove)
-    }));
-  };
 
   const handleFileUpload = async (file: File, type: 'image' | 'video') => {
     try {
@@ -394,41 +366,6 @@ export function NewsForm({ initialData, onSubmit, onCancel, isLoading = false }:
             </div>
           </div>
 
-          {/* Target Audience */}
-          <div className="space-y-2">
-            <Label>Audiencia Objetivo</Label>
-            <div className="flex flex-wrap gap-2 mb-2">
-              {formData.targetAudience.map((audience) => (
-                <Badge key={audience} variant="outline" className="flex items-center gap-1">
-                  {audience}
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveAudience(audience)}
-                    className="ml-1 hover:text-red-500"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
-              ))}
-            </div>
-            <div className="flex gap-2">
-              <Select value={newAudience} onValueChange={setNewAudience}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Seleccionar audiencia" />
-                </SelectTrigger>
-                <SelectContent>
-                  {targetAudiences.map((audience) => (
-                    <SelectItem key={audience} value={audience}>
-                      {audience}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button type="button" onClick={handleAddAudience} size="sm">
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
 
           {/* Settings */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

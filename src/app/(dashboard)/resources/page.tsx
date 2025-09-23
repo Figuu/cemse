@@ -28,7 +28,6 @@ import {
   Trash2,
   EyeOff,
   X,
-  Star
 } from "lucide-react";
 import { useResources } from "@/hooks/useResources";
 import { ResourceForm } from "@/components/resources/ResourceForm";
@@ -505,12 +504,6 @@ function ResourcesPageContent() {
                           )}
                           
                           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                            <div className="flex items-center space-x-2">
-                              <Star className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-500 flex-shrink-0" />
-                              <span className="text-xs sm:text-sm text-muted-foreground">
-                                {resource.rating}/5
-                              </span>
-                            </div>
                             <div className="flex flex-col sm:flex-row gap-2">
                               <Button 
                                 variant="outline" 
