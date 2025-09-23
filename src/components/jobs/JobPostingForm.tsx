@@ -36,8 +36,8 @@ const jobFormSchema = z.object({
   location: z.object({
     lat: z.number(),
     lng: z.number(),
-    address: z.string(),
-  }).min(1, "La ubicación es requerida"),
+    address: z.string().min(1, "La dirección es requerida"),
+  }),
   remoteWork: z.boolean(),
   hybridWork: z.boolean(),
   officeWork: z.boolean(),
