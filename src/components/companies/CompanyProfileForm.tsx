@@ -29,8 +29,20 @@ import { Company, CompanySize, CompanySizeLabels } from "@/types/company";
 const companyFormSchema = z.object({
   name: z.string().min(1, "El nombre de la empresa es requerido"),
   description: z.string().optional(),
-  website: z.string().url().optional().or(z.literal("")),
-  logo: z.string().url().optional().or(z.literal("")),
+  website: z.string().optional().refine((val) => {
+    if (!val || val === "") return true; // Allow empty strings
+    // Allow relative URLs (starting with /) or absolute URLs (starting with http/https)
+    return val.startsWith("/") || val.startsWith("http://") || val.startsWith("https://");
+  }, {
+    message: "Debe ser una URL válida (relativa o absoluta) o estar vacío"
+  }).or(z.literal("")),
+  logo: z.string().optional().refine((val) => {
+    if (!val || val === "") return true; // Allow empty strings
+    // Allow relative URLs (starting with /) or absolute URLs (starting with http/https)
+    return val.startsWith("/") || val.startsWith("http://") || val.startsWith("https://");
+  }, {
+    message: "Debe ser una URL válida (relativa o absoluta) o estar vacío"
+  }).or(z.literal("")),
   industry: z.string().optional(),
   size: z.nativeEnum(CompanySize).optional(),
   location: z.string().optional(),

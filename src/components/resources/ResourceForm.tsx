@@ -238,7 +238,6 @@ export function ResourceForm({ initialData, onSubmit, onCancel, isLoading = fals
                   value={formData.externalUrl}
                   onChange={(e) => handleInputChange("externalUrl", e.target.value)}
                   placeholder="https://ejemplo.com/recurso"
-                  type="url"
                 />
               </div>
             ) : (

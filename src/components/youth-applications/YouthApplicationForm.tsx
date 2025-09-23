@@ -24,13 +24,22 @@ import {
 import { CreateYouthApplicationData } from "@/types/youth-application";
 import { useFileUpload } from "@/hooks/useFileUpload";
 
+// Custom URL validation that accepts both relative and absolute URLs
+const urlOrEmptyString = z.string().optional().refine((val) => {
+  if (!val || val === "") return true; // Allow empty strings
+  // Allow relative URLs (starting with /) or absolute URLs (starting with http/https)
+  return val.startsWith("/") || val.startsWith("http://") || val.startsWith("https://");
+}, {
+  message: "Debe ser una URL válida (relativa o absoluta) o estar vacío"
+}).or(z.literal(""));
+
 const youthApplicationFormSchema = z.object({
   title: z.string().min(1, "El título es requerido").max(100, "El título es muy largo"),
   description: z.string().min(1, "La descripción es requerida").max(2000, "La descripción es muy larga"),
   cvFile: z.string().optional(),
   coverLetterFile: z.string().optional(),
-  cvUrl: z.string().url("URL inválida").optional().or(z.literal("")),
-  coverLetterUrl: z.string().url("URL inválida").optional().or(z.literal("")),
+  cvUrl: urlOrEmptyString,
+  coverLetterUrl: urlOrEmptyString,
   isPublic: z.boolean(),
 });
 

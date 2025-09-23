@@ -35,7 +35,13 @@ const createEntrepreneurshipSchema = z.object({
   category: z.string().min(1, "La categoría es requerida"),
   subcategory: z.string().optional(),
   businessStage: z.enum(["IDEA", "STARTUP", "GROWING", "ESTABLISHED"]),
-  website: z.string().url("URL inválida").optional().or(z.literal("")),
+  website: z.string().optional().refine((val) => {
+    if (!val || val === "") return true; // Allow empty strings
+    // Allow relative URLs (starting with /) or absolute URLs (starting with http/https)
+    return val.startsWith("/") || val.startsWith("http://") || val.startsWith("https://");
+  }, {
+    message: "Debe ser una URL válida (relativa o absoluta) o estar vacío"
+  }).or(z.literal("")),
   email: z.string().email("Email inválido").optional().or(z.literal("")),
   phone: z.string().optional(),
   address: z.string().optional(),

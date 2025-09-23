@@ -4,11 +4,20 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
+// Custom URL validation that accepts both relative and absolute URLs
+const urlOrEmptyString = z.string().optional().refine((val) => {
+  if (!val || val === "") return true; // Allow empty strings
+  // Allow relative URLs (starting with /) or absolute URLs (starting with http/https)
+  return val.startsWith("/") || val.startsWith("http://") || val.startsWith("https://");
+}, {
+  message: "Must be a valid URL (relative or absolute) or be empty"
+}).or(z.literal(""));
+
 const createCompanySchema = z.object({
   name: z.string().min(1, "Company name is required"),
   description: z.string().optional(),
-  website: z.string().url().optional().or(z.literal("")),
-  logo: z.string().url().optional().or(z.literal("")),
+  website: urlOrEmptyString,
+  logo: urlOrEmptyString,
   industry: z.string().optional(),
   size: z.enum(["STARTUP", "SMALL", "MEDIUM", "LARGE", "ENTERPRISE"]).optional(),
   location: z.string().optional(),

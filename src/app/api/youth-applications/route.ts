@@ -4,13 +4,22 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
+// Custom URL validation that accepts both relative and absolute URLs
+const urlOrEmptyString = z.string().optional().refine((val) => {
+  if (!val || val === "") return true; // Allow empty strings
+  // Allow relative URLs (starting with /) or absolute URLs (starting with http/https)
+  return val.startsWith("/") || val.startsWith("http://") || val.startsWith("https://");
+}, {
+  message: "Must be a valid URL (relative or absolute) or be empty"
+}).or(z.literal(""));
+
 const createYouthApplicationSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().min(1, "Description is required"),
   cvFile: z.string().optional(),
   coverLetterFile: z.string().optional(),
-  cvUrl: z.string().url().optional().or(z.literal("")),
-  coverLetterUrl: z.string().url().optional().or(z.literal("")),
+  cvUrl: urlOrEmptyString,
+  coverLetterUrl: urlOrEmptyString,
   isPublic: z.boolean().default(true),
 });
 

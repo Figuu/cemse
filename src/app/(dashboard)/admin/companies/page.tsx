@@ -118,12 +118,8 @@ const validateEmail = (email: string): boolean => {
 
 const validateURL = (url: string): boolean => {
   if (!url) return true; // Optional field
-  try {
-    new URL(url);
-    return true;
-  } catch {
-    return false;
-  }
+  // Allow relative URLs (starting with /) or absolute URLs (starting with http/https)
+  return url.startsWith("/") || url.startsWith("http://") || url.startsWith("https://");
 };
 
 const validatePhone = (phone: string): boolean => {
@@ -971,7 +967,6 @@ function CompaniesManagement() {
                   <Input 
                     id="website" 
                     name="website" 
-                    type="url" 
                     maxLength={200}
                     className={`text-sm ${createErrors.website ? "border-red-500" : ""}`}
                   />
@@ -1405,7 +1400,6 @@ function CompaniesManagement() {
                   <Input 
                     id="edit-website" 
                     name="website" 
-                    type="url" 
                     defaultValue={selectedCompany.website}
                     maxLength={200}
                     className={`text-sm ${editErrors.website ? "border-red-500" : ""}`}
