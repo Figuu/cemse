@@ -10,10 +10,11 @@ const createJobSchema = z.object({
   requirements: z.array(z.string()).default([]),
   responsibilities: z.array(z.string()).default([]),
   benefits: z.array(z.string()).default([]),
-  location: z.string().min(1, "Location is required"),
-  city: z.string().optional(),
-  state: z.string().optional(),
-  country: z.string().optional(),
+  location: z.object({
+    lat: z.number(),
+    lng: z.number(),
+    address: z.string(),
+  }),
   remoteWork: z.boolean().default(false),
   hybridWork: z.boolean().default(false),
   officeWork: z.boolean().default(true),
@@ -187,11 +188,10 @@ export async function POST(
         requirements: validatedData.requirements.join('\n'),
         responsibilities: validatedData.responsibilities,
         benefits: validatedData.benefits.join('\n'),
-        location: validatedData.location,
-        city: validatedData.city,
-        state: validatedData.state,
-        country: validatedData.country,
-        municipality: validatedData.location, // Use location as municipality for now
+        location: validatedData.location.address,
+        latitude: validatedData.location.lat,
+        longitude: validatedData.location.lng,
+        municipality: validatedData.location.address, // Use address as municipality for now
         department: validatedData.department || "Cochabamba",
         contractType: validatedData.employmentType as any,
         workSchedule: "Full Time", // Default value

@@ -90,7 +90,17 @@ export async function GET(
       data: { viewsCount: { increment: 1 } },
     });
 
-    return NextResponse.json(job);
+    // Transform location data to new format
+    const transformedJob = {
+      ...job,
+      location: job.latitude && job.longitude ? {
+        lat: job.latitude,
+        lng: job.longitude,
+        address: job.location,
+      } : job.location, // Fallback to string format for backward compatibility
+    };
+
+    return NextResponse.json(transformedJob);
   } catch (error) {
     console.error("Error fetching job:", error);
     return NextResponse.json(

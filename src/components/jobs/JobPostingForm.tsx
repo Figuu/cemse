@@ -25,6 +25,7 @@ import {
   Target
 } from "lucide-react";
 import { JobPosting, EmploymentType, ExperienceLevel, EmploymentTypeLabels, ExperienceLevelLabels } from "@/types/company";
+import { MapLocationPicker } from "@/components/ui/MapLocationPicker";
 
 const jobFormSchema = z.object({
   title: z.string().min(1, "El título del trabajo es requerido"),
@@ -32,10 +33,11 @@ const jobFormSchema = z.object({
   requirements: z.array(z.string()),
   responsibilities: z.array(z.string()),
   benefits: z.array(z.string()),
-  location: z.string().min(1, "La ubicación es requerida"),
-  city: z.string().optional(),
-  state: z.string().optional(),
-  country: z.string().optional(),
+  location: z.object({
+    lat: z.number(),
+    lng: z.number(),
+    address: z.string(),
+  }).min(1, "La ubicación es requerida"),
   remoteWork: z.boolean(),
   hybridWork: z.boolean(),
   officeWork: z.boolean(),
@@ -99,10 +101,21 @@ export function JobPostingForm({
         if (typeof benefits === 'string') return benefits.split('\n').filter(b => b.trim());
         return [];
       })(),
-      location: job.location,
-      city: job.city || "",
-      state: job.state || "",
-      country: job.country || "",
+      location: (() => {
+        // Handle both old string format and new object format
+        if (typeof job.location === 'string') {
+          return {
+            lat: -16.5000, // Default to La Paz
+            lng: -68.1500,
+            address: job.location,
+          };
+        }
+        return job.location || {
+          lat: -16.5000,
+          lng: -68.1500,
+          address: "La Paz, Bolivia",
+        };
+      })(),
       remoteWork: (job as any).remoteWork || false,
       hybridWork: (job as any).hybridWork || false,
       officeWork: (job as any).officeWork || true,
@@ -138,10 +151,11 @@ export function JobPostingForm({
       requirements: [],
       responsibilities: [],
       benefits: [],
-      location: "",
-      city: "",
-      state: "",
-      country: "",
+      location: {
+        lat: -16.5000,
+        lng: -68.1500,
+        address: "La Paz, Bolivia",
+      },
       remoteWork: false,
       hybridWork: false,
       officeWork: true,
@@ -323,47 +337,15 @@ export function JobPostingForm({
             Ubicación
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="location">Ubicación Principal *</Label>
-            <Input
-              id="location"
-              {...register("location")}
-              placeholder="Ej: La Paz, Bolivia"
-            />
-            {errors.location && (
-              <p className="text-sm text-red-500">{errors.location.message}</p>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="city">Ciudad</Label>
-              <Input
-                id="city"
-                {...register("city")}
-                placeholder="Ej: La Paz"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="state">Estado/Departamento</Label>
-              <Input
-                id="state"
-                {...register("state")}
-                placeholder="Ej: La Paz"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="country">País</Label>
-              <Input
-                id="country"
-                {...register("country")}
-                placeholder="Ej: Bolivia"
-              />
-            </div>
-          </div>
+        <CardContent>
+          <MapLocationPicker
+            value={watchedValues.location}
+            onChange={(location) => setValue("location", location)}
+            label="Ubicación Principal"
+            placeholder="Buscar ubicación..."
+            error={errors.location?.message}
+            required
+          />
         </CardContent>
       </Card>
 

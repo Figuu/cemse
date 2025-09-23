@@ -68,7 +68,11 @@ export async function GET(
       requirements: job.requirements ? job.requirements.split('\n').filter(r => r.trim()) : [],
       responsibilities: (job as any).responsibilities || [],
       benefits: job.benefits ? job.benefits.split('\n').filter(b => b.trim()) : [],
-      location: job.location,
+      location: job.latitude && job.longitude ? {
+        lat: job.latitude,
+        lng: job.longitude,
+        address: job.location,
+      } : job.location, // Fallback to string format for backward compatibility
       city: (job as any).city,
       state: (job as any).state,
       country: (job as any).country,

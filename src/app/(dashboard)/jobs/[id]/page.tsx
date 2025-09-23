@@ -25,6 +25,7 @@ import { EmploymentTypeLabels, ExperienceLevelLabels, ApplicationStatusLabels } 
 import Link from "next/link";
 import { safePercentage } from "@/lib/utils";
 import { JobApplicationModal } from "@/components/jobs/JobApplicationModal";
+import { LocationMap } from "@/components/ui/LocationMap";
 
 export default function JobDetailPage() {
   const params = useParams();
@@ -72,6 +73,31 @@ export default function JobDetailPage() {
     } catch (error) {
       console.error("Error deleting job:", error);
     }
+  };
+
+  // Helper function to parse location data
+  const parseLocationData = (location: any) => {
+    if (typeof location === 'string') {
+      // Handle old string format - default to La Paz coordinates
+      return {
+        lat: -16.5000,
+        lng: -68.1500,
+        address: location,
+      };
+    }
+    if (location && typeof location === 'object' && location.lat && location.lng) {
+      return {
+        lat: location.lat,
+        lng: location.lng,
+        address: location.address || `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`,
+      };
+    }
+    // Default fallback
+    return {
+      lat: -16.5000,
+      lng: -68.1500,
+      address: "La Paz, Bolivia",
+    };
   };
 
 
@@ -303,7 +329,9 @@ export default function JobDetailPage() {
               <div className="flex items-center gap-2">
                 <MapPin className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm font-medium">Ubicación:</span>
-                <span className="text-sm text-muted-foreground">{job.location}</span>
+                <span className="text-sm text-muted-foreground">
+                  {parseLocationData(job.location).address}
+                </span>
               </div>
               
               <div className="flex items-center gap-2">
@@ -411,6 +439,15 @@ export default function JobDetailPage() {
            )}
         </CardContent>
       </Card>
+
+      {/* Location Map - Only for Youth Users */}
+      {isYouth && (
+        <LocationMap 
+          location={parseLocationData(job.location)}
+          title="Ubicación del Trabajo"
+          height="h-80"
+        />
+      )}
 
       {/* Quick Actions - Only for Company Users */}
       {isCompanyUser && (

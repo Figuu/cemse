@@ -342,8 +342,8 @@ export const otherInstitutionSidebarData: SidebarData = {
           icon: LayoutDashboard,
         },
         {
-          title: "Estudiantes",
-          url: "/students",
+          title: "Jóvenes",
+          url: "/admin/users",
           icon: Users,
         },
       ],
@@ -378,13 +378,8 @@ export const otherInstitutionSidebarData: SidebarData = {
       items: [
         {
           title: "Mi Institución",
-          url: "/institution",
+          url: "/prifile",
           icon: Building2,
-        },
-        {
-          title: "Configuración",
-          url: "/settings",
-          icon: Settings,
         },
       ],
     },
