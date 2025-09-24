@@ -132,7 +132,7 @@ export function JobPostingForm({
       officeWork: (job as any).officeWork || true,
       employmentType: (job as any).contractType || job.employmentType || "FULL_TIME",
       experienceLevel: job.experienceLevel || "ENTRY_LEVEL",
-      educationRequired: (job as any).educationRequired || job.educationRequired,
+      educationRequired: (job as any).educationRequired,
       salaryMin: (job as any).salaryMin || job.salaryMin,
       salaryMax: (job as any).salaryMax || job.salaryMax,
       currency: (job as any).salaryCurrency || job.currency || "USD",
@@ -453,13 +453,14 @@ export function JobPostingForm({
             <div className="space-y-2">
               <Label htmlFor="educationRequired">Nivel de Educación Requerido</Label>
               <Select
-                value={watchedValues.educationRequired || undefined}
-                onValueChange={(value) => setValue("educationRequired", value as EducationLevel)}
+                value={watchedValues.educationRequired || "NONE"}
+                onValueChange={(value) => setValue("educationRequired", value === "NONE" ? undefined : value as EducationLevel)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecciona el nivel (opcional)" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="NONE">No especificado</SelectItem>
                   {Object.entries(EducationLevelLabels).map(([value, label]) => (
                     <SelectItem key={value} value={value}>
                       {label}
