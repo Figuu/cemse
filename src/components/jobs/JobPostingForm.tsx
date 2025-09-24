@@ -25,7 +25,17 @@ import {
   Target
 } from "lucide-react";
 import { JobPosting, EmploymentType, ExperienceLevel, EmploymentTypeLabels, ExperienceLevelLabels } from "@/types/company";
+import { EducationLevel } from "@/types";
 import { MapLocationPicker } from "@/components/ui/MapLocationPicker";
+
+const EducationLevelLabels: Record<EducationLevel, string> = {
+  PRIMARY: "Primaria",
+  SECONDARY: "Secundaria",
+  TECHNICAL: "Técnico",
+  UNIVERSITY: "Universitario",
+  POSTGRADUATE: "Postgrado",
+  OTHER: "Otro",
+};
 
 const jobFormSchema = z.object({
   title: z.string().min(1, "El título del trabajo es requerido"),
@@ -43,6 +53,7 @@ const jobFormSchema = z.object({
   officeWork: z.boolean(),
   employmentType: z.enum(["FULL_TIME", "PART_TIME", "CONTRACT", "INTERNSHIP", "FREELANCE", "TEMPORARY"]),
   experienceLevel: z.enum(["ENTRY_LEVEL", "MID_LEVEL", "SENIOR_LEVEL", "EXECUTIVE", "INTERN"]),
+  educationRequired: z.enum(["PRIMARY", "SECONDARY", "TECHNICAL", "UNIVERSITY", "POSTGRADUATE", "OTHER"]).optional(),
   salaryMin: z.number().positive().optional(),
   salaryMax: z.number().positive().optional(),
   currency: z.string(),
@@ -121,6 +132,7 @@ export function JobPostingForm({
       officeWork: (job as any).officeWork || true,
       employmentType: (job as any).contractType || job.employmentType || "FULL_TIME",
       experienceLevel: job.experienceLevel || "ENTRY_LEVEL",
+      educationRequired: (job as any).educationRequired || job.educationRequired,
       salaryMin: (job as any).salaryMin || job.salaryMin,
       salaryMax: (job as any).salaryMax || job.salaryMax,
       currency: (job as any).salaryCurrency || job.currency || "USD",
@@ -161,6 +173,7 @@ export function JobPostingForm({
       officeWork: true,
       employmentType: "FULL_TIME" as EmploymentType,
       experienceLevel: "ENTRY_LEVEL" as ExperienceLevel,
+      educationRequired: undefined,
       salaryMin: undefined,
       salaryMax: undefined,
       currency: "USD",
@@ -400,7 +413,7 @@ export function JobPostingForm({
             <div className="space-y-2">
               <Label htmlFor="employmentType">Tipo de Empleo *</Label>
               <Select
-                value={watchedValues.employmentType || ""}
+                value={watchedValues.employmentType || undefined}
                 onValueChange={(value) => setValue("employmentType", value as EmploymentType)}
               >
                 <SelectTrigger>
@@ -419,7 +432,7 @@ export function JobPostingForm({
             <div className="space-y-2">
               <Label htmlFor="experienceLevel">Nivel de Experiencia *</Label>
               <Select
-                value={watchedValues.experienceLevel || ""}
+                value={watchedValues.experienceLevel || undefined}
                 onValueChange={(value) => setValue("experienceLevel", value as ExperienceLevel)}
               >
                 <SelectTrigger>
@@ -427,6 +440,27 @@ export function JobPostingForm({
                 </SelectTrigger>
                 <SelectContent>
                   {Object.entries(ExperienceLevelLabels).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="educationRequired">Nivel de Educación Requerido</Label>
+              <Select
+                value={watchedValues.educationRequired || undefined}
+                onValueChange={(value) => setValue("educationRequired", value as EducationLevel)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona el nivel (opcional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(EducationLevelLabels).map(([value, label]) => (
                     <SelectItem key={value} value={value}>
                       {label}
                     </SelectItem>
@@ -470,7 +504,7 @@ export function JobPostingForm({
                 onValueChange={(value) => setValue("currency", value)}
               >
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Selecciona moneda" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="USD">USD</SelectItem>

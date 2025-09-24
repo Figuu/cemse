@@ -186,7 +186,7 @@ export async function POST(
         title: validatedData.title,
         description: validatedData.description,
         requirements: validatedData.requirements.join('\n'),
-        responsibilities: validatedData.responsibilities,
+        responsibilities: validatedData.responsibilities, // Keep as array
         benefits: validatedData.benefits.join('\n'),
         location: validatedData.location.address,
         latitude: validatedData.location.lat,
