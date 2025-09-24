@@ -40,6 +40,7 @@ function JobsPageContent() {
   const userRole = session?.user?.role;
   const isCompany = userRole === "COMPANIES";
   const isYouth = userRole === "YOUTH";
+  const isAdmin = userRole === "SUPERADMIN" || userRole === "INSTITUTION";
   
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFilters, setSelectedFilters] = useState({
@@ -233,12 +234,14 @@ function JobsPageContent() {
       <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
         <div>
           <h1 className="text-xl font-bold text-foreground sm:text-2xl">
-            {isCompany ? "Gestionar Trabajos" : "Ofertas de Trabajo"}
+            {isCompany ? "Gestionar Trabajos" : isAdmin ? "Administrar Ofertas de Trabajo" : "Ofertas de Trabajo"}
           </h1>
           <p className="text-sm text-muted-foreground sm:text-base">
             {isCompany 
               ? "Administra y publica ofertas de trabajo para tu empresa"
-              : `${filteredJobs.length} ofertas encontradas`
+              : isAdmin 
+                ? "Supervisa y administra todas las ofertas de trabajo del sistema"
+                : `${filteredJobs.length} ofertas encontradas`
             }
           </p>
         </div>
@@ -405,12 +408,14 @@ function JobsPageContent() {
           <CardContent className="text-center py-12">
             <Briefcase className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">
-              {isCompany ? "No tienes trabajos publicados" : "No se encontraron ofertas"}
+              {isCompany ? "No tienes trabajos publicados" : isAdmin ? "No hay ofertas de trabajo" : "No se encontraron ofertas"}
             </h3>
             <p className="mt-1 text-sm text-gray-500">
               {isCompany 
                 ? "Comienza creando tu primer trabajo para atraer candidatos"
-                : "Intenta ajustar tus filtros de búsqueda"
+                : isAdmin
+                  ? "No hay ofertas de trabajo en el sistema en este momento"
+                  : "Intenta ajustar tus filtros de búsqueda"
               }
             </p>
             {isCompany ? (
@@ -442,7 +447,7 @@ function JobsPageContent() {
                   currentUserId={session?.user?.id}
                   onBookmark={handleBookmark}
                   onApply={handleApply}
-                  showActions={!isCompany}
+                  showActions={!isCompany && !isAdmin}
                   hasApplied={applicationStatus.hasApplied}
                   applicationId={applicationStatus.applicationId}
                 />
