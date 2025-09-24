@@ -3,6 +3,8 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import { prisma } from './prisma';
 import bcrypt from 'bcryptjs';
 import { UserRole } from '../types';
+import { loginRateLimiter } from './rate-limiter';
+import { securityLogger } from './security-logger';
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
@@ -13,8 +15,31 @@ export const authOptions: NextAuthOptions = {
         email: { label: 'Email', type: 'email' },
         password: { label: 'Password', type: 'password' },
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         if (!credentials?.email || !credentials?.password) {
+          return null;
+        }
+
+        // Rate limiting para intentos de login
+        const clientIP = req.headers?.['x-forwarded-for'] as string ||
+                        req.headers?.['x-real-ip'] as string ||
+                        'unknown';
+
+        const rateLimitResult = loginRateLimiter.attempt(credentials.email, 'login');
+
+        if (!rateLimitResult.allowed) {
+          securityLogger.logRateLimitExceeded(credentials.email, 'login', clientIP);
+
+          if (rateLimitResult.blocked) {
+            securityLogger.log(
+              'AUTH_ACCOUNT_LOCKED',
+              'high',
+              `Account temporarily locked due to excessive login attempts: ${credentials.email}`,
+              { email: credentials.email, retryAfter: rateLimitResult.retryAfter },
+              { ipAddress: clientIP }
+            );
+          }
+
           return null;
         }
 
@@ -32,6 +57,12 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (!user || !user.isActive) {
+          securityLogger.logLoginAttempt(
+            credentials.email,
+            false,
+            clientIP,
+            { reason: !user ? 'user_not_found' : 'user_inactive' }
+          );
           return null;
         }
 
@@ -41,8 +72,24 @@ export const authOptions: NextAuthOptions = {
         );
 
         if (!isPasswordValid) {
+          securityLogger.logLoginAttempt(
+            user.id,
+            false,
+            clientIP,
+            { reason: 'invalid_password', email: credentials.email }
+          );
           return null;
         }
+
+        // Reset rate limit on successful login
+        loginRateLimiter.reset(credentials.email, 'login');
+
+        securityLogger.logLoginAttempt(
+          user.id,
+          true,
+          clientIP,
+          { email: credentials.email, role: user.role }
+        );
 
         return {
           id: user.id,

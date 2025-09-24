@@ -3,22 +3,56 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { apiRateLimiter } from "@/lib/rate-limiter";
+import { InputValidator } from "@/lib/input-validator";
+import { PasswordValidator } from "@/lib/password-validator";
+import { securityLogger } from "@/lib/security-logger";
 
 export async function GET(request: NextRequest) {
+  const clientIP = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+
   try {
+    // Rate limiting
+    const rateLimitResult = apiRateLimiter.attempt(clientIP, 'admin-users-get');
+    if (!rateLimitResult.allowed) {
+      securityLogger.logRateLimitExceeded(clientIP, 'admin-users-get', clientIP);
+      return NextResponse.json(
+        { error: "Too many requests" },
+        { status: 429, headers: { 'Retry-After': rateLimitResult.retryAfter?.toString() || '300' } }
+      );
+    }
+
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
+      securityLogger.logUnauthorizedAccess('/api/admin/users', undefined, clientIP);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Check if user is super admin or institution
     if (session.user.role !== "SUPERADMIN" && session.user.role !== "INSTITUTION") {
+      securityLogger.logUnauthorizedAccess('/api/admin/users', session.user.id, clientIP, {
+        userRole: session.user.role,
+        requiredRoles: ['SUPERADMIN', 'INSTITUTION']
+      });
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const { searchParams } = new URL(request.url);
     const role = searchParams.get('role');
+
+    // Validar parámetro de rol si está presente
+    if (role) {
+      const validRoles = ['YOUTH', 'COMPANIES', 'INSTITUTION', 'SUPERADMIN'];
+      if (!validRoles.includes(role)) {
+        securityLogger.logSuspiciousActivity(
+          `Invalid role parameter: ${role}`,
+          session.user.id,
+          clientIP
+        );
+        return NextResponse.json({ error: "Invalid role parameter" }, { status: 400 });
+      }
+    }
 
     // Build where clause
     const where: any = {};
@@ -53,9 +87,24 @@ export async function GET(request: NextRequest) {
       profile: user.profile
     }));
 
+    securityLogger.log(
+      'SENSITIVE_DATA_ACCESS',
+      'low',
+      `User list accessed by ${session.user.id}`,
+      { recordCount: transformedUsers.length, roleFilter: role },
+      { userId: session.user.id, ipAddress: clientIP, endpoint: '/api/admin/users' }
+    );
+
     return NextResponse.json(transformedUsers);
   } catch (error) {
-    console.error('Error fetching users:', error);
+    securityLogger.log(
+      'SECURITY_POLICY_VIOLATION',
+      'high',
+      'Error fetching users from admin endpoint',
+      { error: error instanceof Error ? error.message : 'Unknown error' },
+      { userId: undefined, ipAddress: clientIP, endpoint: '/api/admin/users' }
+    );
+
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -64,19 +113,74 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const clientIP = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+
   try {
+    // Rate limiting más estricto para creación de usuarios
+    const rateLimitResult = apiRateLimiter.attempt(clientIP, 'admin-users-post');
+    if (!rateLimitResult.allowed) {
+      securityLogger.logRateLimitExceeded(clientIP, 'admin-users-post', clientIP);
+      return NextResponse.json(
+        { error: "Too many requests" },
+        { status: 429, headers: { 'Retry-After': rateLimitResult.retryAfter?.toString() || '300' } }
+      );
+    }
+
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
+      securityLogger.logUnauthorizedAccess('/api/admin/users', undefined, clientIP);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Check if user is super admin or institution
     if (session.user.role !== "SUPERADMIN" && session.user.role !== "INSTITUTION") {
+      securityLogger.logUnauthorizedAccess('/api/admin/users', session.user.id, clientIP, {
+        userRole: session.user.role,
+        requiredRoles: ['SUPERADMIN', 'INSTITUTION'],
+        action: 'CREATE_USER'
+      });
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const body = await request.json();
+
+    // Validar y sanitizar datos de entrada
+    const validationResult = InputValidator.validateUserData(body);
+    if (!validationResult.isValid) {
+      securityLogger.log(
+        'SECURITY_POLICY_VIOLATION',
+        'medium',
+        'Invalid user data in user creation request',
+        { validationErrors: validationResult.errors },
+        { userId: session.user.id, ipAddress: clientIP, endpoint: '/api/admin/users' }
+      );
+
+      return NextResponse.json(
+        { error: "Validation failed", details: validationResult.errors },
+        { status: 400 }
+      );
+    }
+
+    const sanitizedData = validationResult.sanitizedData;
+
+    // Validar contraseña con criterios robustos
+    const passwordValidation = PasswordValidator.validate(sanitizedData.password);
+    if (!passwordValidation.isValid) {
+      securityLogger.log(
+        'SECURITY_POLICY_VIOLATION',
+        'medium',
+        'Weak password in user creation request',
+        { passwordErrors: passwordValidation.errors, strength: passwordValidation.strength },
+        { userId: session.user.id, ipAddress: clientIP }
+      );
+
+      return NextResponse.json(
+        { error: "Password validation failed", details: passwordValidation.errors },
+        { status: 400 }
+      );
+    }
+
     const {
       email,
       password,
@@ -89,13 +193,33 @@ export async function POST(request: NextRequest) {
       gender,
       educationLevel,
       role = 'YOUTH'
-    } = body;
+    } = sanitizedData;
 
-    // Validate required fields
-    if (!email || !password) {
+    // Validar rol asignado
+    const validRoles = ['YOUTH', 'COMPANIES', 'INSTITUTION'];
+    if (session.user.role === 'INSTITUTION' && role !== 'YOUTH') {
+      securityLogger.logPrivilegeEscalation(
+        session.user.id,
+        role,
+        session.user.role,
+        clientIP
+      );
       return NextResponse.json(
-        { error: "Email and password are required" },
-        { status: 400 }
+        { error: "Insufficient privileges to assign this role" },
+        { status: 403 }
+      );
+    }
+
+    if (!validRoles.includes(role) && session.user.role !== 'SUPERADMIN') {
+      securityLogger.logPrivilegeEscalation(
+        session.user.id,
+        role,
+        session.user.role,
+        clientIP
+      );
+      return NextResponse.json(
+        { error: "Invalid role assignment" },
+        { status: 403 }
       );
     }
 
@@ -147,6 +271,19 @@ export async function POST(request: NextRequest) {
       return { user, profile };
     });
 
+    securityLogger.log(
+      'DATA_MODIFICATION',
+      'medium',
+      `New user created by ${session.user.id}`,
+      {
+        newUserId: result.user.id,
+        newUserEmail: result.user.email,
+        newUserRole: result.user.role,
+        createdBy: session.user.id
+      },
+      { userId: session.user.id, ipAddress: clientIP, endpoint: '/api/admin/users' }
+    );
+
     return NextResponse.json({
       message: "User created successfully",
       user: {
@@ -161,7 +298,14 @@ export async function POST(request: NextRequest) {
       }
     });
   } catch (error) {
-    console.error('Error creating user:', error);
+    securityLogger.log(
+      'SECURITY_POLICY_VIOLATION',
+      'high',
+      'Error creating user in admin endpoint',
+      { error: error instanceof Error ? error.message : 'Unknown error' },
+      { userId: undefined, ipAddress: clientIP, endpoint: '/api/admin/users' }
+    );
+
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
