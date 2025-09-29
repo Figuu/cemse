@@ -11,7 +11,9 @@
       "Bash(pnpm prisma studio:*)",
       "Bash(pnpm run:*)",
       "Bash(dir)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(timeout:*)",
+      "WebFetch(domain:cemse.boring.lat)"
     ],
     "deny": [],
     "ask": []
