@@ -180,7 +180,7 @@ export async function POST(request: NextRequest) {
           name: validatedData.institutionName,
           email: validatedData.email,
           password: hashedPassword,
-          institutionType: validatedData.institutionType,
+          institutionType: validatedData.institutionType as "NGO" | "TRAINING_CENTER" | "FOUNDATION" | "OTHER",
           department: validatedData.department,
           mayorName: `${validatedData.firstName} ${validatedData.lastName}`,
           phone: validatedData.phone,
