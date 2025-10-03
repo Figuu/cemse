@@ -473,13 +473,17 @@ model Company {
   foundedYear               Int?
   logoUrl                   String?
   isActive                  Boolean                           @default(true)
+  approvalStatus            ApprovalStatus                    @default(APPROVED)
+  approvedBy                String?
+  approvedAt                DateTime?
+  rejectionReason           String?
   institutionId             String?
   createdBy                 String
   createdAt                 DateTime                          @default(now())
   updatedAt                 DateTime                          @updatedAt
   password                  String
   ownerId                   String?
-  
+
   // Relations
   creator                   User                              @relation("CompanyCreator", fields: [createdBy], references: [id])
   institution               Institution?                     @relation(fields: [institutionId], references: [id])
@@ -492,6 +496,7 @@ model Company {
   @@index([businessSector])
   @@index([isActive])
   @@index([createdBy])
+  @@index([approvalStatus])
   @@map("companies")
 }
 
@@ -507,6 +512,10 @@ model Institution {
   address         String?
   website         String?
   isActive        Boolean         @default(true)
+  approvalStatus  ApprovalStatus  @default(APPROVED)
+  approvedBy      String?
+  approvedAt      DateTime?
+  rejectionReason String?
   email           String          @unique
   password        String
   phone           String?
@@ -517,7 +526,7 @@ model Institution {
   createdBy       String
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
-  
+
   // Relations
   creator         User            @relation("InstitutionCreator", fields: [createdBy], references: [id])
   companies       Company[]
@@ -529,6 +538,7 @@ model Institution {
   @@index([isActive])
   @@index([createdBy])
   @@index([institutionType])
+  @@index([approvalStatus])
   @@map("institutions")
 }
 
@@ -718,6 +728,12 @@ enum EmployeeStatus {
   ACTIVE
   TERMINATED
   ON_LEAVE
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 // Additional Models for Course System

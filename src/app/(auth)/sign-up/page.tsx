@@ -19,6 +19,15 @@ export default function SignUpPage() {
     firstName: "",
     lastName: "",
     phone: "",
+    // Company fields
+    companyName: "",
+    taxId: "",
+    businessSector: "",
+    companySize: "",
+    // Institution fields
+    institutionName: "",
+    institutionType: "",
+    department: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -63,7 +72,12 @@ export default function SignUpPage() {
       const data = await response.json();
 
       if (data.success) {
-        router.push("/sign-in?message=Cuenta creada exitosamente");
+        // Different messages for different roles
+        if (formData.role === "COMPANIES" || formData.role === "INSTITUTION") {
+          router.push("/sign-in?message=" + encodeURIComponent(data.message || "Solicitud enviada. Espera la aprobación del administrador."));
+        } else {
+          router.push("/sign-in?message=Cuenta creada exitosamente");
+        }
       } else {
         setError(data.error || "Error al crear la cuenta");
       }
@@ -117,30 +131,188 @@ export default function SignUpPage() {
                 </Select>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="firstName">Nombre</Label>
-                  <Input
-                    id="firstName"
-                    name="firstName"
-                    value={formData.firstName}
-                    onChange={handleChange}
-                    placeholder="Tu nombre"
-                    required
-                  />
+              {/* Youth-specific fields */}
+              {formData.role === "YOUTH" && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName">Nombre</Label>
+                    <Input
+                      id="firstName"
+                      name="firstName"
+                      value={formData.firstName}
+                      onChange={handleChange}
+                      placeholder="Tu nombre"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName">Apellido</Label>
+                    <Input
+                      id="lastName"
+                      name="lastName"
+                      value={formData.lastName}
+                      onChange={handleChange}
+                      placeholder="Tu apellido"
+                      required
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lastName">Apellido</Label>
-                  <Input
-                    id="lastName"
-                    name="lastName"
-                    value={formData.lastName}
-                    onChange={handleChange}
-                    placeholder="Tu apellido"
-                    required
-                  />
-                </div>
-              </div>
+              )}
+
+              {/* Company-specific fields */}
+              {formData.role === "COMPANIES" && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="companyName">Nombre de la Empresa</Label>
+                    <Input
+                      id="companyName"
+                      name="companyName"
+                      value={formData.companyName}
+                      onChange={handleChange}
+                      placeholder="Nombre de tu empresa"
+                      required
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="firstName">Nombre del Representante</Label>
+                      <Input
+                        id="firstName"
+                        name="firstName"
+                        value={formData.firstName}
+                        onChange={handleChange}
+                        placeholder="Tu nombre"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="lastName">Apellido del Representante</Label>
+                      <Input
+                        id="lastName"
+                        name="lastName"
+                        value={formData.lastName}
+                        onChange={handleChange}
+                        placeholder="Tu apellido"
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="taxId">NIT</Label>
+                      <Input
+                        id="taxId"
+                        name="taxId"
+                        value={formData.taxId}
+                        onChange={handleChange}
+                        placeholder="NIT de la empresa"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="businessSector">Sector de Negocio</Label>
+                      <Input
+                        id="businessSector"
+                        name="businessSector"
+                        value={formData.businessSector}
+                        onChange={handleChange}
+                        placeholder="Ej: Tecnología, Construcción"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="companySize">Tamaño de Empresa</Label>
+                    <Select
+                      value={formData.companySize}
+                      onValueChange={(value) => setFormData({ ...formData, companySize: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecciona el tamaño" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="MICRO">Micro (1-10 empleados)</SelectItem>
+                        <SelectItem value="SMALL">Pequeña (11-50 empleados)</SelectItem>
+                        <SelectItem value="MEDIUM">Mediana (51-200 empleados)</SelectItem>
+                        <SelectItem value="LARGE">Grande (200+ empleados)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              )}
+
+              {/* Institution-specific fields */}
+              {formData.role === "INSTITUTION" && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="institutionName">Nombre de la Institución</Label>
+                    <Input
+                      id="institutionName"
+                      name="institutionName"
+                      value={formData.institutionName}
+                      onChange={handleChange}
+                      placeholder="Nombre de tu institución"
+                      required
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="firstName">Nombre del Responsable</Label>
+                      <Input
+                        id="firstName"
+                        name="firstName"
+                        value={formData.firstName}
+                        onChange={handleChange}
+                        placeholder="Tu nombre"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="lastName">Apellido del Responsable</Label>
+                      <Input
+                        id="lastName"
+                        name="lastName"
+                        value={formData.lastName}
+                        onChange={handleChange}
+                        placeholder="Tu apellido"
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="institutionType">Tipo de Institución</Label>
+                      <Select
+                        value={formData.institutionType}
+                        onValueChange={(value) => setFormData({ ...formData, institutionType: value })}
+                        required
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecciona el tipo" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="NGO">ONG</SelectItem>
+                          <SelectItem value="TRAINING_CENTER">Centro de Capacitación</SelectItem>
+                          <SelectItem value="FOUNDATION">Fundación</SelectItem>
+                          <SelectItem value="OTHER">Otro</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">
+                        Las municipalidades solo pueden ser creadas por administradores
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="department">Departamento</Label>
+                      <Input
+                        id="department"
+                        name="department"
+                        value={formData.department}
+                        onChange={handleChange}
+                        placeholder="Ej: Cochabamba, La Paz"
+                        required
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="email">Correo electrónico</Label>

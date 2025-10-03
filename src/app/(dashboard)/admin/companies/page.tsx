@@ -9,11 +9,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { RoleGuard } from "@/components/auth/RoleGuard";
-import { 
-  Plus, 
-  Search, 
-  Edit, 
-  Trash2, 
+import {
+  Plus,
+  Search,
+  Edit,
+  Trash2,
   Eye,
   EyeOff,
   Building2,
@@ -30,8 +30,10 @@ import {
   Copy,
   Check,
   Filter,
-  X
+  X,
+  Clock
 } from "lucide-react";
+import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -800,268 +802,276 @@ function CompaniesManagement() {
           <h1 className="text-xl font-bold sm:text-2xl">Gestión de Empresas</h1>
           <p className="text-sm text-muted-foreground sm:text-base">Administra las empresas del sistema</p>
         </div>
-        <Dialog open={isCreateDialogOpen} onOpenChange={(open) => {
-          setIsCreateDialogOpen(open);
-          if (!open) setCreateErrors({});
-        }}>
-          <DialogTrigger asChild>
-            <Button onClick={openCreateDialog} className="w-full sm:w-auto">
-              <Plus className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Nueva Empresa</span>
-              <span className="sm:hidden">Nueva</span>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <Link href="/admin/pending-companies" className="w-full sm:w-auto">
+            <Button variant="outline" className="w-full sm:w-auto">
+              <Clock className="h-4 w-4 mr-2" />
+              Pendientes de Aprobación
             </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="text-lg sm:text-xl">Crear Nueva Empresa</DialogTitle>
-              <DialogDescription className="text-sm">
-                Crea una nueva empresa con credenciales básicas
-              </DialogDescription>
-            </DialogHeader>
-            <form action={handleCreateCompany} className="space-y-4">
-              {createErrors.general && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-                  <div className="flex items-center space-x-2 text-red-800">
-                    <AlertCircle className="h-4 w-4" />
-                    <span className="text-sm font-medium">{createErrors.general}</span>
+          </Link>
+          <Dialog open={isCreateDialogOpen} onOpenChange={(open) => {
+            setIsCreateDialogOpen(open);
+            if (!open) setCreateErrors({});
+          }}>
+            <DialogTrigger asChild>
+              <Button onClick={openCreateDialog} className="w-full sm:w-auto">
+                <Plus className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Nueva Empresa</span>
+                <span className="sm:hidden">Nueva</span>
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="text-lg sm:text-xl">Crear Nueva Empresa</DialogTitle>
+                <DialogDescription className="text-sm">
+                  Crea una nueva empresa con credenciales básicas
+                </DialogDescription>
+              </DialogHeader>
+              <form action={handleCreateCompany} className="space-y-4">
+                {createErrors.general && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                    <div className="flex items-center space-x-2 text-red-800">
+                      <AlertCircle className="h-4 w-4" />
+                      <span className="text-sm font-medium">{createErrors.general}</span>
+                    </div>
+                  </div>
+                )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="text-sm">Nombre de la Empresa *</Label>
+                    <Input 
+                      id="name" 
+                      name="name" 
+                      required 
+                      maxLength={100}
+                      className={`text-sm ${createErrors.name ? "border-red-500" : ""}`}
+                    />
+                    <ErrorMessage error={createErrors.name} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-sm">Email *</Label>
+                    <Input 
+                      id="email" 
+                      name="email" 
+                      type="email" 
+                      required 
+                      maxLength={100}
+                      className={`text-sm ${createErrors.email ? "border-red-500" : ""}`}
+                    />
+                    <ErrorMessage error={createErrors.email} />
                   </div>
                 </div>
-              )}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name" className="text-sm">Nombre de la Empresa *</Label>
-                  <Input 
-                    id="name" 
-                    name="name" 
-                    required 
-                    maxLength={100}
-                    className={`text-sm ${createErrors.name ? "border-red-500" : ""}`}
-                  />
-                  <ErrorMessage error={createErrors.name} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm">Email *</Label>
-                  <Input 
-                    id="email" 
-                    name="email" 
-                    type="email" 
-                    required 
-                    maxLength={100}
-                    className={`text-sm ${createErrors.email ? "border-red-500" : ""}`}
-                  />
-                  <ErrorMessage error={createErrors.email} />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-sm">Contraseña *</Label>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={generatePassword}
-                    className="h-7 px-2 text-xs"
-                  >
-                    <RefreshCw className="h-3 w-3 mr-1" />
-                    Generar
-                  </Button>
-                </div>
-                <div className="relative">
-                  <Input 
-                    id="password" 
-                    name="password" 
-                    type={showCreatePassword ? "text" : "password"}
-                    value={createPassword}
-                    onChange={(e) => setCreatePassword(e.target.value)}
-                    required 
-                    minLength={8}
-                    maxLength={100}
-                    pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$"
-                    className={`text-sm ${createErrors.password ? "border-red-500 pr-20" : "pr-20"}`}
-                  />
-                  <div className="absolute right-0 top-0 h-full flex items-center">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password" className="text-sm">Contraseña *</Label>
                     <Button
                       type="button"
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
-                      className="h-full px-2 hover:bg-transparent"
-                      onClick={() => setShowCreatePassword(!showCreatePassword)}
+                      onClick={generatePassword}
+                      className="h-7 px-2 text-xs"
                     >
-                      {showCreatePassword ? (
-                        <EyeOff className="h-4 w-4 text-gray-400" />
-                      ) : (
-                        <Eye className="h-4 w-4 text-gray-400" />
-                      )}
+                      <RefreshCw className="h-3 w-3 mr-1" />
+                      Generar
                     </Button>
                   </div>
+                  <div className="relative">
+                    <Input 
+                      id="password" 
+                      name="password" 
+                      type={showCreatePassword ? "text" : "password"}
+                      value={createPassword}
+                      onChange={(e) => setCreatePassword(e.target.value)}
+                      required 
+                      minLength={8}
+                      maxLength={100}
+                      pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$"
+                      className={`text-sm ${createErrors.password ? "border-red-500 pr-20" : "pr-20"}`}
+                    />
+                    <div className="absolute right-0 top-0 h-full flex items-center">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-full px-2 hover:bg-transparent"
+                        onClick={() => setShowCreatePassword(!showCreatePassword)}
+                      >
+                        {showCreatePassword ? (
+                          <EyeOff className="h-4 w-4 text-gray-400" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-gray-400" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                  <PasswordRequirements password={createPassword} />
+                  <ErrorMessage error={createErrors.password} />
                 </div>
-                <PasswordRequirements password={createPassword} />
-                <ErrorMessage error={createErrors.password} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description" className="text-sm">Descripción</Label>
-                <Input 
-                  id="description" 
-                  name="description" 
-                  maxLength={500}
-                  className="text-sm"
-                />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="taxId" className="text-sm">NIT/RUC</Label>
+                  <Label htmlFor="description" className="text-sm">Descripción</Label>
                   <Input 
-                    id="taxId" 
-                    name="taxId" 
-                    type="text"
-                    maxLength={15}
-                    pattern="^[0-9]{7,15}$"
-                    placeholder="1234567890"
-                    className={`text-sm ${createErrors.taxId ? "border-red-500" : ""}`}
-                    onKeyPress={(e) => {
-                      if (!/[0-9]/.test(e.key)) {
-                        e.preventDefault();
-                      }
-                    }}
-                  />
-                  <ErrorMessage error={createErrors.taxId} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="legalRepresentative" className="text-sm">Representante Legal</Label>
-                  <Input 
-                    id="legalRepresentative" 
-                    name="legalRepresentative" 
-                    maxLength={100}
+                    id="description" 
+                    name="description" 
+                    maxLength={500}
                     className="text-sm"
                   />
                 </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="businessSector" className="text-sm">Sector de Negocio</Label>
-                  <Input 
-                    id="businessSector" 
-                    name="businessSector" 
-                    maxLength={100}
-                    className="text-sm"
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="taxId" className="text-sm">NIT/RUC</Label>
+                    <Input 
+                      id="taxId" 
+                      name="taxId" 
+                      type="text"
+                      maxLength={15}
+                      pattern="^[0-9]{7,15}$"
+                      placeholder="1234567890"
+                      className={`text-sm ${createErrors.taxId ? "border-red-500" : ""}`}
+                      onKeyPress={(e) => {
+                        if (!/[0-9]/.test(e.key)) {
+                          e.preventDefault();
+                        }
+                      }}
+                    />
+                    <ErrorMessage error={createErrors.taxId} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="legalRepresentative" className="text-sm">Representante Legal</Label>
+                    <Input 
+                      id="legalRepresentative" 
+                      name="legalRepresentative" 
+                      maxLength={100}
+                      className="text-sm"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="businessSector" className="text-sm">Sector de Negocio</Label>
+                    <Input 
+                      id="businessSector" 
+                      name="businessSector" 
+                      maxLength={100}
+                      className="text-sm"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="companySize" className="text-sm">Tamaño de Empresa</Label>
+                    <Select name="companySize">
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccionar tamaño" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="MICRO">Micro</SelectItem>
+                        <SelectItem value="SMALL">Pequeña</SelectItem>
+                        <SelectItem value="MEDIUM">Mediana</SelectItem>
+                        <SelectItem value="LARGE">Grande</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="website" className="text-sm">Sitio Web</Label>
+                    <Input 
+                      id="website" 
+                      name="website" 
+                      maxLength={200}
+                      className={`text-sm ${createErrors.website ? "border-red-500" : ""}`}
+                    />
+                    <ErrorMessage error={createErrors.website} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone" className="text-sm">Teléfono</Label>
+                    <Input 
+                      id="phone" 
+                      name="phone" 
+                      type="tel" 
+                      maxLength={20}
+                      className={`text-sm ${createErrors.phone ? "border-red-500" : ""}`}
+                      pattern="^[\+]?[0-9\s\-\(\)]{7,15}$"
+                      placeholder="+1234567890"
+                      onKeyPress={(e) => {
+                        if (!/[0-9\s\-\(\)\+]/.test(e.key)) {
+                          e.preventDefault();
+                        }
+                      }}
+                    />
+                    <ErrorMessage error={createErrors.phone} />
+                  </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="companySize" className="text-sm">Tamaño de Empresa</Label>
-                  <Select name="companySize">
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar tamaño" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="MICRO">Micro</SelectItem>
-                      <SelectItem value="SMALL">Pequeña</SelectItem>
-                      <SelectItem value="MEDIUM">Mediana</SelectItem>
-                      <SelectItem value="LARGE">Grande</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="website" className="text-sm">Sitio Web</Label>
+                  <Label htmlFor="address" className="text-sm">Dirección</Label>
                   <Input 
-                    id="website" 
-                    name="website" 
+                    id="address" 
+                    name="address" 
                     maxLength={200}
-                    className={`text-sm ${createErrors.website ? "border-red-500" : ""}`}
+                    className="text-sm"
                   />
-                  <ErrorMessage error={createErrors.website} />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-sm">Teléfono</Label>
-                  <Input 
-                    id="phone" 
-                    name="phone" 
-                    type="tel" 
-                    maxLength={20}
-                    className={`text-sm ${createErrors.phone ? "border-red-500" : ""}`}
-                    pattern="^[\+]?[0-9\s\-\(\)]{7,15}$"
-                    placeholder="+1234567890"
-                    onKeyPress={(e) => {
-                      if (!/[0-9\s\-\(\)\+]/.test(e.key)) {
-                        e.preventDefault();
-                      }
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="foundedYear" className="text-sm">Año de Fundación</Label>
+                    <Input 
+                      id="foundedYear" 
+                      name="foundedYear" 
+                      type="number" 
+                      min="1800" 
+                      max={new Date().getFullYear()}
+                      className={`text-sm ${createErrors.foundedYear ? "border-red-500" : ""}`}
+                      step="1"
+                      placeholder="2020"
+                      onKeyPress={(e) => {
+                        if (!/[0-9]/.test(e.key)) {
+                          e.preventDefault();
+                        }
+                      }}
+                    />
+                    <ErrorMessage error={createErrors.foundedYear} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="institutionId" className="text-sm">Municipio Asociado *</Label>
+                    <Select name="institutionId" required>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccionar municipio" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {institutions.map((institution: any) => (
+                          <SelectItem key={institution.id} value={institution.id}>
+                            {institution.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Selecciona el municipio donde se encuentra esta empresa. Esto establecerá la región y departamento.
+                    </p>
+                  </div>
+                </div>
+                <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => {
+                      setIsCreateDialogOpen(false);
+                      setCreateErrors({});
                     }}
-                  />
-                  <ErrorMessage error={createErrors.phone} />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="address" className="text-sm">Dirección</Label>
-                <Input 
-                  id="address" 
-                  name="address" 
-                  maxLength={200}
-                  className="text-sm"
-                />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="foundedYear" className="text-sm">Año de Fundación</Label>
-                  <Input 
-                    id="foundedYear" 
-                    name="foundedYear" 
-                    type="number" 
-                    min="1800" 
-                    max={new Date().getFullYear()}
-                    className={`text-sm ${createErrors.foundedYear ? "border-red-500" : ""}`}
-                    step="1"
-                    placeholder="2020"
-                    onKeyPress={(e) => {
-                      if (!/[0-9]/.test(e.key)) {
-                        e.preventDefault();
-                      }
-                    }}
-                  />
-                  <ErrorMessage error={createErrors.foundedYear} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="institutionId" className="text-sm">Municipio Asociado *</Label>
-                  <Select name="institutionId" required>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar municipio" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {institutions.map((institution: any) => (
-                        <SelectItem key={institution.id} value={institution.id}>
-                          {institution.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">
-                    Selecciona el municipio donde se encuentra esta empresa. Esto establecerá la región y departamento.
-                  </p>
-                </div>
-              </div>
-              <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => {
-                    setIsCreateDialogOpen(false);
-                    setCreateErrors({});
-                  }}
-                  className="w-full sm:w-auto order-2 sm:order-1"
-                >
-                  Cancelar
-                </Button>
-                <Button 
-                  type="submit" 
-                  disabled={createCompanyMutation.isPending || isValidating}
-                  className="w-full sm:w-auto order-1 sm:order-2"
-                >
-                  {createCompanyMutation.isPending || isValidating ? 'Creando...' : 'Crear Empresa'}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+                    className="w-full sm:w-auto order-2 sm:order-1"
+                  >
+                    Cancelar
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    disabled={createCompanyMutation.isPending || isValidating}
+                    className="w-full sm:w-auto order-1 sm:order-2"
+                  >
+                    {createCompanyMutation.isPending || isValidating ? 'Creando...' : 'Crear Empresa'}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* Search and Filters */}

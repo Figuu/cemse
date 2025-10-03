@@ -9,11 +9,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { RoleGuard } from "@/components/auth/RoleGuard";
-import { 
-  Plus, 
-  Search, 
-  Edit, 
-  Trash2, 
+import {
+  Plus,
+  Search,
+  Edit,
+  Trash2,
   Eye,
   EyeOff,
   Building2,
@@ -29,8 +29,10 @@ import {
   Copy,
   Check,
   Filter,
-  X
+  X,
+  Clock
 } from "lucide-react";
+import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
@@ -837,18 +839,25 @@ function InstitutionsManagement() {
           <h1 className="text-xl sm:text-2xl font-bold">Gestión de Instituciones</h1>
           <p className="text-sm sm:text-base text-muted-foreground">Administra las instituciones del sistema</p>
         </div>
-        <Dialog open={isCreateDialogOpen} onOpenChange={(open) => {
-          setIsCreateDialogOpen(open);
-          if (!open) setCreateErrors({});
-        }}>
-          <DialogTrigger asChild>
-            <Button onClick={openCreateDialog} className="w-full sm:w-auto h-10 sm:h-9">
-              <Plus className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Nueva Institución</span>
-              <span className="sm:hidden">Nueva Institución</span>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <Link href="/admin/pending-institutions" className="w-full sm:w-auto">
+            <Button variant="outline" className="w-full sm:w-auto h-10 sm:h-9">
+              <Clock className="h-4 w-4 mr-2" />
+              Pendientes de Aprobación
             </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+          </Link>
+          <Dialog open={isCreateDialogOpen} onOpenChange={(open) => {
+            setIsCreateDialogOpen(open);
+            if (!open) setCreateErrors({});
+          }}>
+            <DialogTrigger asChild>
+              <Button onClick={openCreateDialog} className="w-full sm:w-auto h-10 sm:h-9">
+                <Plus className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Nueva Institución</span>
+                <span className="sm:hidden">Nueva Institución</span>
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-lg sm:text-xl">Crear Nueva Institución</DialogTitle>
               <DialogDescription className="text-sm">
@@ -1760,6 +1769,7 @@ function InstitutionsManagement() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
     </div>
   );
 }
