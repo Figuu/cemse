@@ -74,7 +74,7 @@ start_services() {
     if systemctl is-active --quiet "$APP_NAME-backend" 2>/dev/null; then
         success "Backend services already running"
     else
-        sudo systemctl start "$APP_NAME-backend" || docker-compose up -d
+        sudo systemctl start "$APP_NAME-backend" || sudo docker-compose up -d
     fi
 
     # Start Next.js app
@@ -88,7 +88,7 @@ start_services() {
     sleep 5
 
     # Check status
-    if docker-compose ps | grep -q "Up" && systemctl is-active --quiet "$APP_NAME" 2>/dev/null; then
+    if sudo docker-compose ps | grep -q "Up" && systemctl is-active --quiet "$APP_NAME" 2>/dev/null; then
         success "All services started successfully"
         show_service_status
     else
@@ -113,7 +113,7 @@ stop_services() {
 
     # Stop backend services
     log "Stopping backend services..."
-    sudo systemctl stop "$APP_NAME-backend" || docker-compose down
+    sudo systemctl stop "$APP_NAME-backend" || sudo docker-compose down
 
     success "All services stopped"
 }
@@ -133,8 +133,8 @@ restart_services() {
     # Restart backend services
     log "Restarting backend services..."
     sudo systemctl restart "$APP_NAME-backend" || {
-        docker-compose down
-        docker-compose up -d
+        sudo docker-compose down
+        sudo docker-compose up -d
     }
 
     # Restart Next.js app
@@ -143,7 +143,7 @@ restart_services() {
 
     sleep 5
 
-    if docker-compose ps | grep -q "Up" && systemctl is-active --quiet "$APP_NAME" 2>/dev/null; then
+    if sudo docker-compose ps | grep -q "Up" && systemctl is-active --quiet "$APP_NAME" 2>/dev/null; then
         success "All services restarted successfully"
         show_service_status
     else
@@ -171,7 +171,7 @@ show_status() {
     info "Docker Containers:"
     if command -v docker-compose &> /dev/null; then
         cd "$APP_PATH"
-        docker-compose ps
+        sudo docker-compose ps
     else
         warn "Docker Compose not found"
     fi
@@ -213,9 +213,9 @@ show_logs() {
     cd "$APP_PATH"
 
     if [ "$2" = "follow" ] || [ "$2" = "-f" ]; then
-        docker-compose logs -f
+        sudo docker-compose logs -f
     else
-        docker-compose logs --tail=50
+        sudo docker-compose logs --tail=50
     fi
 }
 
@@ -243,9 +243,9 @@ backup_app() {
     cd "$APP_PATH"
 
     # Backup database
-    if docker-compose ps db | grep -q "Up"; then
+    if sudo docker-compose ps db | grep -q "Up"; then
         log "🗄️ Backing up database..."
-        docker-compose exec -T db pg_dump -U postgres cemse_prod > "$BACKUP_DIR/db_backup_$date.sql" || warn "Database backup failed"
+        sudo docker-compose exec -T db pg_dump -U postgres cemse_prod > "$BACKUP_DIR/db_backup_$date.sql" || warn "Database backup failed"
         gzip "$BACKUP_DIR/db_backup_$date.sql" 2>/dev/null || true
     fi
 
@@ -417,7 +417,7 @@ health_check() {
     # Check Docker containers
     info "🐳 Checking Docker containers..."
     cd "$APP_PATH"
-    if docker-compose ps | grep -q "Up"; then
+    if sudo docker-compose ps | grep -q "Up"; then
         success "Docker containers are running"
     else
         error "Some Docker containers are not running"
@@ -473,7 +473,7 @@ show_service_status() {
     info "🐳 Docker Containers:"
     if [ -d "$APP_PATH" ]; then
         cd "$APP_PATH"
-        docker-compose ps
+        sudo docker-compose ps
     else
         warn "App directory $APP_PATH not found"
     fi
