@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -27,8 +27,9 @@ export async function POST(
       );
     }
 
+    const { id } = await params;
     const institution = await prisma.institution.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!institution) {
@@ -47,7 +48,7 @@ export async function POST(
 
     // Reject the institution
     const updatedInstitution = await prisma.institution.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         approvalStatus: "REJECTED",
         rejectionReason: reason,
