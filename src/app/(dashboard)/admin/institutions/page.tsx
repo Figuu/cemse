@@ -791,7 +791,7 @@ function InstitutionsManagement() {
   if (isLoading) {
     return (
       <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
-        <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+        <div className="space-y-4">
           <div className="space-y-1">
             <h1 className="text-xl sm:text-2xl font-bold">Gestión de Instituciones</h1>
             <p className="text-sm sm:text-base text-muted-foreground">Administra las instituciones del sistema</p>
@@ -816,7 +816,7 @@ function InstitutionsManagement() {
   if (error) {
     return (
       <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
-        <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+        <div className="space-y-4">
           <div className="space-y-1">
             <h1 className="text-xl sm:text-2xl font-bold">Gestión de Instituciones</h1>
             <p className="text-sm sm:text-base text-muted-foreground">Administra las instituciones del sistema</p>
@@ -834,7 +834,7 @@ function InstitutionsManagement() {
   return (
     <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
       {/* Header */}
-      <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+      <div className="space-y-4">
         <div className="space-y-1">
           <h1 className="text-xl sm:text-2xl font-bold">Gestión de Instituciones</h1>
           <p className="text-sm sm:text-base text-muted-foreground">Administra las instituciones del sistema</p>
