@@ -213,15 +213,9 @@ export function AdminDashboard({ stats = [] }: AdminDashboardProps) {
               </Link>
             </Button>
             <Button asChild variant="outline" className="w-full justify-start">
-              <Link href="/admin/courses">
+              <Link href="/courses">
                 <GraduationCap className="h-4 w-4 mr-2" />
                 Gestión de Cursos
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="w-full justify-start">
-              <Link href="/admin/reports">
-                <BarChart3 className="h-4 w-4 mr-2" />
-                Reportes y Análisis
               </Link>
             </Button>
           </CardContent>
