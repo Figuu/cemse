@@ -15,7 +15,7 @@ const registerSchema = z.object({
   companyName: z.string().optional(),
   taxId: z.string().optional(),
   businessSector: z.string().optional(),
-  companySize: z.enum(["MICRO", "SMALL", "MEDIUM", "LARGE"]).optional().nullable(),
+  companySize: z.enum(["MICRO", "SMALL", "MEDIUM", "LARGE"]).optional().nullable().or(z.literal("")),
   // Institution fields
   institutionName: z.string().optional(),
   institutionType: z.string().optional(), // Changed to string to avoid enum validation when empty
@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
           password: hashedPassword,
           taxId: validatedData.taxId,
           businessSector: validatedData.businessSector,
-          companySize: validatedData.companySize,
+          companySize: validatedData.companySize === "" ? null : validatedData.companySize,
           legalRepresentative: `${validatedData.firstName} ${validatedData.lastName}`,
           approvalStatus: "PENDING",
           createdBy: user.id,

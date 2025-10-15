@@ -16,93 +16,120 @@ export const authOptions: NextAuthOptions = {
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials, req) {
+        console.log('🔍 Auth attempt:', { email: credentials?.email, hasPassword: !!credentials?.password });
+        
         if (!credentials?.email || !credentials?.password) {
+          console.log('❌ Missing credentials');
           return null;
         }
 
-        // Rate limiting para intentos de login
-        const clientIP = req.headers?.['x-forwarded-for'] as string ||
-                        req.headers?.['x-real-ip'] as string ||
-                        'unknown';
+        try {
+          // Rate limiting para intentos de login
+          const clientIP = req.headers?.['x-forwarded-for'] as string ||
+                          req.headers?.['x-real-ip'] as string ||
+                          'unknown';
 
-        const rateLimitResult = loginRateLimiter.attempt(credentials.email, 'login');
+          console.log('🔍 Rate limiting check for:', credentials.email);
+          const rateLimitResult = loginRateLimiter.attempt(credentials.email, 'login');
 
-        if (!rateLimitResult.allowed) {
-          securityLogger.logRateLimitExceeded(credentials.email, 'login', clientIP);
+          if (!rateLimitResult.allowed) {
+            console.log('❌ Rate limit exceeded for:', credentials.email);
+            securityLogger.logRateLimitExceeded(credentials.email, 'login', clientIP);
 
-          if (rateLimitResult.blocked) {
-            securityLogger.log(
-              'AUTH_ACCOUNT_LOCKED',
-              'high',
-              `Account temporarily locked due to excessive login attempts: ${credentials.email}`,
-              { email: credentials.email, retryAfter: rateLimitResult.retryAfter },
-              { ipAddress: clientIP }
-            );
+            if (rateLimitResult.blocked) {
+              securityLogger.log(
+                'AUTH_ACCOUNT_LOCKED',
+                'high',
+                `Account temporarily locked due to excessive login attempts: ${credentials.email}`,
+                { email: credentials.email, retryAfter: rateLimitResult.retryAfter },
+                { ipAddress: clientIP }
+              );
+            }
+
+            return null;
           }
 
-          return null;
-        }
-
-        const user = await prisma.user.findUnique({
-          where: {
-            email: credentials.email,
-          },
-          include: {
-            profile: {
-              include: {
-                institution: true,
+          console.log('🔍 Looking for user:', credentials.email);
+          const user = await prisma.user.findUnique({
+            where: {
+              email: credentials.email,
+            },
+            include: {
+              profile: {
+                include: {
+                  institution: true,
+                },
               },
             },
-          },
-        });
+          });
 
-        if (!user || !user.isActive) {
-          securityLogger.logLoginAttempt(
-            credentials.email,
-            false,
-            clientIP,
-            { reason: !user ? 'user_not_found' : 'user_inactive' }
+          console.log('🔍 User found:', { 
+            exists: !!user, 
+            isActive: user?.isActive, 
+            hasProfile: !!user?.profile 
+          });
+
+          if (!user || !user.isActive) {
+            console.log('❌ User not found or inactive:', { 
+              userExists: !!user, 
+              isActive: user?.isActive 
+            });
+            securityLogger.logLoginAttempt(
+              credentials.email,
+              false,
+              clientIP,
+              { reason: !user ? 'user_not_found' : 'user_inactive' }
+            );
+            return null;
+          }
+
+          console.log('🔍 Checking password...');
+          const isPasswordValid = await bcrypt.compare(
+            credentials.password,
+            user.password
           );
-          return null;
-        }
 
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password,
-          user.password
-        );
+          console.log('🔍 Password valid:', isPasswordValid);
 
-        if (!isPasswordValid) {
+          if (!isPasswordValid) {
+            console.log('❌ Invalid password for:', credentials.email);
+            securityLogger.logLoginAttempt(
+              user.id,
+              false,
+              clientIP,
+              { reason: 'invalid_password', email: credentials.email }
+            );
+            return null;
+          }
+
+          // Reset rate limit on successful login
+          loginRateLimiter.reset(credentials.email, 'login');
+
           securityLogger.logLoginAttempt(
             user.id,
-            false,
+            true,
             clientIP,
-            { reason: 'invalid_password', email: credentials.email }
+            { email: credentials.email, role: user.role }
           );
+
+          console.log('✅ Login successful for:', credentials.email);
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.profile?.firstName && user.profile?.lastName 
+              ? `${user.profile.firstName} ${user.profile.lastName}`.trim()
+              : user.firstName && user.lastName 
+              ? `${user.firstName} ${user.lastName}`.trim()
+              : user.email,
+            role: user.role,
+            profile: user.profile,
+            institutionType: user.profile?.institution?.institutionType,
+          };
+        } catch (error) {
+          console.error('❌ Auth error:', error);
           return null;
         }
-
-        // Reset rate limit on successful login
-        loginRateLimiter.reset(credentials.email, 'login');
-
-        securityLogger.logLoginAttempt(
-          user.id,
-          true,
-          clientIP,
-          { email: credentials.email, role: user.role }
-        );
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.profile?.firstName && user.profile?.lastName 
-            ? `${user.profile.firstName} ${user.profile.lastName}`.trim()
-            : user.firstName && user.lastName 
-            ? `${user.firstName} ${user.lastName}`.trim()
-            : user.email,
-          role: user.role,
-          profile: user.profile,
-          institutionType: user.profile?.institution?.institutionType,
-        };
       },
     }),
   ],
