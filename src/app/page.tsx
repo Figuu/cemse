@@ -21,13 +21,22 @@ export default function Home() {
   // Images from /public/images folder
   const images = [
     "/images/1.jpg",
-    "/images/3.jpg", 
-    "/images/4.JPG",
-    "/images/5.jpg",
-    "/images/6.JPG",
-    "/images/7.jpg",
-    "/images/8.jpg",
-    "/images/9.jpg"
+    "/images/(1).jpg",
+    "/images/(2).jpg",
+    "/images/(3).jpg",
+    "/images/(4).jpg",
+    "/images/(5).jpg",
+    "/images/(6).jpg",
+    "/images/(7).jpg",
+    "/images/(8).JPG",
+    "/images/(9).JPG",
+    "/images/(10).jpg",
+    "/images/(11).jpg",
+    "/images/(12).JPG",
+    "/images/(13).JPG",
+    "/images/(14).jpg",
+    "/images/(15).jpg",
+    "/images/(16).jpg"
   ];
 
   // Fetch data for sections
@@ -191,7 +200,7 @@ export default function Home() {
             <div className="text-center lg:text-left">
               <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
                 Plataforma Completa de
-                <span className="text-blue-600"> Educación y Empleo</span>
+                <span className="text-primary"> Educación y Empleo</span>
               </h1>
               <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto lg:mx-0">
                 Conectamos a jóvenes con oportunidades de educación, empleo y emprendimiento 
@@ -270,8 +279,8 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <Card className="text-center">
               <CardHeader>
-                <div className="mx-auto w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
-                  <BookOpen className="w-6 h-6 text-blue-600" />
+                <div className="mx-auto w-12 h-12 bg-secondary rounded-lg flex items-center justify-center mb-4">
+                  <BookOpen className="w-6 h-6 text-primary" />
                 </div>
                 <CardTitle>Educación</CardTitle>
                 <CardDescription>
@@ -290,8 +299,8 @@ export default function Home() {
 
             <Card className="text-center">
               <CardHeader>
-                <div className="mx-auto w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
-                  <Briefcase className="w-6 h-6 text-green-600" />
+                <div className="mx-auto w-12 h-12 bg-green/20 rounded-lg flex items-center justify-center mb-4">
+                  <Briefcase className="w-6 h-6 text-green" />
                 </div>
                 <CardTitle>Empleo</CardTitle>
                 <CardDescription>
@@ -310,8 +319,8 @@ export default function Home() {
 
             <Card className="text-center">
               <CardHeader>
-                <div className="mx-auto w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
-                  <Lightbulb className="w-6 h-6 text-purple-600" />
+                <div className="mx-auto w-12 h-12 bg-orange/20 rounded-lg flex items-center justify-center mb-4">
+                  <Lightbulb className="w-6 h-6 text-orange" />
                 </div>
                 <CardTitle>Emprendimiento</CardTitle>
                 <CardDescription>
@@ -330,8 +339,8 @@ export default function Home() {
 
             <Card className="text-center">
               <CardHeader>
-                <div className="mx-auto w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
-                  <Building2 className="w-6 h-6 text-orange-600" />
+                <div className="mx-auto w-12 h-12 bg-blue-dark/20 rounded-lg flex items-center justify-center mb-4">
+                  <Building2 className="w-6 h-6 text-blue-dark" />
                 </div>
                 <CardTitle>Instituciones</CardTitle>
                 <CardDescription>
@@ -350,8 +359,8 @@ export default function Home() {
 
             <Card className="text-center">
               <CardHeader>
-                <div className="mx-auto w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-4">
-                  <Users className="w-6 h-6 text-red-600" />
+                <div className="mx-auto w-12 h-12 bg-destructive/20 rounded-lg flex items-center justify-center mb-4">
+                  <Users className="w-6 h-6 text-destructive" />
                 </div>
                 <CardTitle>Empresas</CardTitle>
                 <CardDescription>
@@ -370,8 +379,8 @@ export default function Home() {
 
             <Card className="text-center">
               <CardHeader>
-                <div className="mx-auto w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-4">
-                  <GraduationCap className="w-6 h-6 text-indigo-600" />
+                <div className="mx-auto w-12 h-12 bg-secondary rounded-lg flex items-center justify-center mb-4">
+                  <GraduationCap className="w-6 h-6 text-primary" />
                 </div>
                 <CardTitle>Jóvenes</CardTitle>
                 <CardDescription>
@@ -613,8 +622,8 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <Card className="text-center">
               <CardHeader>
-                <div className="mx-auto w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
-                  <Users className="w-6 h-6 text-blue-600" />
+                <div className="mx-auto w-12 h-12 bg-secondary rounded-lg flex items-center justify-center mb-4">
+                  <Users className="w-6 h-6 text-primary" />
                 </div>
                 <CardTitle>Mentoría Personalizada</CardTitle>
                 <CardDescription>
@@ -633,8 +642,8 @@ export default function Home() {
 
             <Card className="text-center">
               <CardHeader>
-                <div className="mx-auto w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
-                  <Lightbulb className="w-6 h-6 text-green-600" />
+                <div className="mx-auto w-12 h-12 bg-green/20 rounded-lg flex items-center justify-center mb-4">
+                  <Lightbulb className="w-6 h-6 text-green" />
                 </div>
                 <CardTitle>Recursos Educativos</CardTitle>
                 <CardDescription>
@@ -653,8 +662,8 @@ export default function Home() {
 
             <Card className="text-center">
               <CardHeader>
-                <div className="mx-auto w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
-                  <GraduationCap className="w-6 h-6 text-purple-600" />
+                <div className="mx-auto w-12 h-12 bg-orange/20 rounded-lg flex items-center justify-center mb-4">
+                  <GraduationCap className="w-6 h-6 text-orange" />
                 </div>
                 <CardTitle>Soporte Técnico</CardTitle>
                 <CardDescription>
@@ -681,12 +690,12 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-blue-600">
+      <section className="py-20 bg-primary">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl font-bold text-white mb-4">
             ¿Listo para comenzar tu viaje?
           </h2>
-          <p className="text-xl text-blue-100 mb-8">
+          <p className="text-xl text-primary-foreground/80 mb-8">
             Únete a miles de jóvenes que ya están construyendo su futuro
           </p>
           <Button size="lg" variant="secondary" asChild>

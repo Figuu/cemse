@@ -46,6 +46,10 @@ export default {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
+        // Colores personalizados de la marca
+        "blue-dark": "hsl(var(--blue-dark))",
+        orange: "hsl(var(--orange))",
+        green: "hsl(var(--green))",
       },
       borderRadius: {
         lg: "var(--radius)",
