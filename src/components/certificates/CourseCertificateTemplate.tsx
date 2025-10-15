@@ -125,7 +125,7 @@ export const CourseCertificateTemplate: React.FC<CourseCertificateTemplateProps>
   completionDate,
   courseDuration,
   courseLevel,
-  institutionName = 'CEMSE - Centro de Emprendimiento y Desarrollo Sostenible',
+  institutionName = 'Emplea y Emprende - Centro de Emprendimiento y Desarrollo Sostenible',
 }) => {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -194,7 +194,7 @@ export const CourseCertificateTemplate: React.FC<CourseCertificateTemplateProps>
             <View style={styles.signatureLine} />
             <Text style={styles.signatureText}>Director Académico</Text>
             <Text style={[styles.signatureText, { marginTop: 5, fontWeight: 'bold' }]}>
-              CEMSE
+              Emplea y Emprende
             </Text>
           </View>
         </View>
@@ -202,7 +202,7 @@ export const CourseCertificateTemplate: React.FC<CourseCertificateTemplateProps>
         {/* Footer */}
         <View style={styles.footer}>
           <Text>
-            Este certificado es válido y puede ser verificado en el sistema de gestión académica de CEMSE.
+            Este certificado es válido y puede ser verificado en el sistema de gestión académica de Emplea y Emprende.
           </Text>
           <Text style={{ marginTop: 5 }}>
             Certificado generado digitalmente • ID: {Date.now().toString(36).toUpperCase()}

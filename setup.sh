@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # =============================================================================
-# AWS EC2 Instance Setup Script for CEMSE Next.js Application (Amazon Linux 2023)
+# AWS EC2 Instance Setup Script for Emplea y Emprende Next.js Application (Amazon Linux 2023)
 # =============================================================================
-# This script prepares an Amazon Linux 2023 EC2 instance for deploying the CEMSE 
+# This script prepares an Amazon Linux 2023 EC2 instance for deploying the Emplea y Emprende 
 # application with all required dependencies and services.
 # =============================================================================
 
@@ -45,7 +45,7 @@ if ! sudo -n true 2>/dev/null; then
     exit 1
 fi
 
-log "🚀 Starting AWS EC2 setup for CEMSE application..."
+log "🚀 Starting AWS EC2 setup for Emplea y Emprende application..."
 
 # =============================================================================
 # 1. SYSTEM UPDATE AND BASIC TOOLS
@@ -256,36 +256,36 @@ sudo firewall-cmd --reload
 log "✅ Firewall configured"
 
 # =============================================================================
-# 11. CLONE REPOSITORY TO /opt/cemse
+# 11. CLONE REPOSITORY TO /opt/emplea-y-emprende
 # =============================================================================
 log "📥 Cloning repository..."
 
 # Configuration
-GIT_REPO="https://github.com/figuu/cemse.git"
+GIT_REPO="https://github.com/figuu/emplea-y-emprende.git"
 
 # Remove directory if it exists to avoid conflicts
-if [ -d "/opt/cemse" ]; then
-    warn "Directory /opt/cemse already exists, removing it..."
-    sudo rm -rf /opt/cemse
+if [ -d "/opt/emplea-y-emprende" ]; then
+    warn "Directory /opt/emplea-y-emprende already exists, removing it..."
+    sudo rm -rf /opt/emplea-y-emprende
 fi
 
-# Clone directly to /opt/cemse (git will create the directory)
+# Clone directly to /opt/emplea-y-emprende (git will create the directory)
 cd /opt
-sudo git clone $GIT_REPO cemse
+sudo git clone $GIT_REPO emplea-y-emprende
 
 # Set proper ownership
-sudo chown -R $USER:$USER /opt/cemse
+sudo chown -R $USER:$USER /opt/emplea-y-emprende
 
 # Create additional directories
 log "📁 Creating additional directories..."
 
 # Create logs directory
-sudo mkdir -p /var/log/cemse
-sudo chown $USER:$USER /var/log/cemse
+sudo mkdir -p /var/log/emplea-y-emprende
+sudo chown $USER:$USER /var/log/emplea-y-emprende
 
 # Create uploads directory if it doesn't exist
-sudo mkdir -p /opt/cemse/public/uploads
-sudo chown -R $USER:$USER /opt/cemse/public
+sudo mkdir -p /opt/emplea-y-emprende/public/uploads
+sudo chown -R $USER:$USER /opt/emplea-y-emprende/public
 
 log "✅ Repository cloned and directories created"
 
@@ -295,15 +295,15 @@ log "✅ Repository cloned and directories created"
 log "⚙️ Setting up environment configuration..."
 
 # Create environment file template
-cat > /opt/cemse/.env.example << EOF
+cat > /opt/emplea-y-emprende/.env.example << EOF
 # Database Configuration
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/cemse_prod"
-DIRECT_URL="postgresql://postgres:postgres@localhost:5432/cemse_prod"
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/emplea-y-emprende_prod"
+DIRECT_URL="postgresql://postgres:postgres@localhost:5432/emplea-y-emprende_prod"
 
 # Application Configuration
 NODE_ENV="production"
 PORT=3000
-NEXT_PUBLIC_APP_URL="https://cemse.boring.lat"
+NEXT_PUBLIC_APP_URL="https://emplea-y-emprende.boring.lat"
 
 # Redis Configuration
 REDIS_URL="redis://localhost:6379"
@@ -330,20 +330,20 @@ log "✅ Environment configuration template created"
 # =============================================================================
 # 13. SYSTEMD SERVICE CONFIGURATION
 # =============================================================================
-log "🔧 Creating systemd service for CEMSE application..."
+log "🔧 Creating systemd service for Emplea y Emprende application..."
 
-sudo tee /etc/systemd/system/cemse.service > /dev/null << EOF
+sudo tee /etc/systemd/system/emplea-y-emprende.service > /dev/null << EOF
 [Unit]
-Description=CEMSE Next.js Application
+Description=Emplea y Emprende Next.js Application
 After=network.target
-Requires=cemse-backend.service
-After=cemse-backend.service
+Requires=emplea-y-emprende-backend.service
+After=emplea-y-emprende-backend.service
 
 [Service]
 Type=simple
 User=$USER
 Group=$USER
-WorkingDirectory=/opt/cemse
+WorkingDirectory=/opt/emplea-y-emprende
 Environment=NODE_ENV=production
 Environment=PATH=/usr/local/bin:/usr/bin:/bin:\$HOME/.local/share/pnpm:\$HOME/.nvm/versions/node/v20.*/bin
 ExecStart=/usr/bin/pnpm start
@@ -360,9 +360,9 @@ WantedBy=multi-user.target
 EOF
 
 # Create backend startup service
-sudo tee /etc/systemd/system/cemse-backend.service > /dev/null << EOF
+sudo tee /etc/systemd/system/emplea-y-emprende-backend.service > /dev/null << EOF
 [Unit]
-Description=CEMSE Backend Services (Docker)
+Description=Emplea y Emprende Backend Services (Docker)
 After=docker.service
 Requires=docker.service
 
@@ -371,7 +371,7 @@ Type=oneshot
 RemainAfterExit=yes
 User=$USER
 Group=$USER
-WorkingDirectory=/opt/cemse
+WorkingDirectory=/opt/emplea-y-emprende
 ExecStart=/usr/local/bin/docker-compose up -d
 ExecStop=/usr/local/bin/docker-compose down
 TimeoutStartSec=60
@@ -384,8 +384,8 @@ EOF
 sudo systemctl daemon-reload
 
 # Enable services to start on boot
-sudo systemctl enable cemse-backend
-sudo systemctl enable cemse
+sudo systemctl enable emplea-y-emprende-backend
+sudo systemctl enable emplea-y-emprende
 
 log "✅ Systemd services created and enabled for auto-start"
 
@@ -394,7 +394,7 @@ log "✅ Systemd services created and enabled for auto-start"
 # =============================================================================
 log "🌐 Creating Nginx reverse proxy configuration..."
 
-sudo tee /etc/nginx/conf.d/cemse.conf > /dev/null << EOF
+sudo tee /etc/nginx/conf.d/emplea-y-emprende.conf > /dev/null << EOF
 server {
     listen 80 default_server;
     server_name _;
@@ -440,8 +440,8 @@ server {
     }
     
     # Logs
-    access_log /var/log/nginx/cemse_access.log;
-    error_log /var/log/nginx/cemse_error.log;
+    access_log /var/log/nginx/emplea-y-emprende_access.log;
+    error_log /var/log/nginx/emplea-y-emprende_error.log;
 }
 
 # HTTPS server block (commented out until SSL certificates are installed)
@@ -450,11 +450,11 @@ server {
 # server {
 #     listen 443 ssl;
 #     http2 on;
-#     server_name cemse.boring.lat;
+#     server_name emplea-y-emprende.boring.lat;
 #     
 #     # SSL configuration (to be configured with certbot)
-#     ssl_certificate /etc/letsencrypt/live/cemse.boring.lat/fullchain.pem;
-#     ssl_certificate_key /etc/letsencrypt/live/cemse.boring.lat/privkey.pem;
+#     ssl_certificate /etc/letsencrypt/live/emplea-y-emprende.boring.lat/fullchain.pem;
+#     ssl_certificate_key /etc/letsencrypt/live/emplea-y-emprende.boring.lat/privkey.pem;
 #     
 #     # Security headers
 #     add_header X-Frame-Options "SAMEORIGIN" always;
@@ -495,8 +495,8 @@ server {
 #     }
 #     
 #     # Logs
-#     access_log /var/log/nginx/cemse_access.log;
-#     error_log /var/log/nginx/cemse_error.log;
+#     access_log /var/log/nginx/emplea-y-emprende_access.log;
+#     error_log /var/log/nginx/emplea-y-emprende_error.log;
 # }
 EOF
 
@@ -516,8 +516,8 @@ log "✅ Nginx reverse proxy configuration created"
 # =============================================================================
 log "📝 Setting up log rotation..."
 
-sudo tee /etc/logrotate.d/cemse > /dev/null << EOF
-/var/log/cemse/*.log {
+sudo tee /etc/logrotate.d/emplea-y-emprende > /dev/null << EOF
+/var/log/emplea-y-emprende/*.log {
     daily
     missingok
     rotate 30
@@ -526,11 +526,11 @@ sudo tee /etc/logrotate.d/cemse > /dev/null << EOF
     notifempty
     create 0644 $USER $USER
     postrotate
-        systemctl reload cemse || true
+        systemctl reload emplea-y-emprende || true
     endscript
 }
 
-/var/log/nginx/cemse_*.log {
+/var/log/nginx/emplea-y-emprende_*.log {
     daily
     missingok
     rotate 52
@@ -573,7 +573,7 @@ echo "root hard nofile 65536" | sudo tee -a /etc/security/limits.conf
 # Set kernel parameters for better performance
 sudo tee -a /etc/sysctl.conf > /dev/null << EOF
 
-# CEMSE Application Optimizations
+# Emplea y Emprende Application Optimizations
 vm.swappiness=1
 net.core.somaxconn=1024
 net.core.netdev_max_backlog=5000
@@ -594,7 +594,7 @@ log "✅ System optimizations applied"
 log "📜 Creating deployment helper scripts..."
 
 # Deployment script
-cat > /opt/cemse/deploy.sh << 'EOF'
+cat > /opt/emplea-y-emprende/deploy.sh << 'EOF'
 #!/bin/bash
 set -e
 
@@ -602,7 +602,7 @@ log() {
     echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1"
 }
 
-log "🚀 Starting CEMSE application deployment..."
+log "🚀 Starting Emplea y Emprende application deployment..."
 
 # Pull latest changes
 if [ -d .git ]; then
@@ -634,14 +634,14 @@ docker-compose up -d --build
 log "✅ Deployment completed successfully!"
 EOF
 
-chmod +x /opt/cemse/deploy.sh
+chmod +x /opt/emplea-y-emprende/deploy.sh
 
 # Backup script
-cat > /opt/cemse/backup.sh << 'EOF'
+cat > /opt/emplea-y-emprende/backup.sh << 'EOF'
 #!/bin/bash
 set -e
 
-BACKUP_DIR="/opt/cemse/backups"
+BACKUP_DIR="/opt/emplea-y-emprende/backups"
 DATE=$(date +%Y%m%d_%H%M%S)
 
 log() {
@@ -655,7 +655,7 @@ mkdir -p $BACKUP_DIR
 
 # Backup database
 log "🗄️ Backing up database..."
-docker-compose exec -T db pg_dump -U postgres cemse_prod > $BACKUP_DIR/db_backup_$DATE.sql
+docker-compose exec -T db pg_dump -U postgres emplea-y-emprende_prod > $BACKUP_DIR/db_backup_$DATE.sql
 
 # Backup uploads
 log "📁 Backing up uploads..."
@@ -674,10 +674,10 @@ find $BACKUP_DIR -name "env_backup_*" -mtime +7 -delete
 log "✅ Backup completed successfully!"
 EOF
 
-chmod +x /opt/cemse/backup.sh
+chmod +x /opt/emplea-y-emprende/backup.sh
 
 # Health check script
-cat > /opt/cemse/health-check.sh << 'EOF'
+cat > /opt/emplea-y-emprende/health-check.sh << 'EOF'
 #!/bin/bash
 
 log() {
@@ -694,7 +694,7 @@ else
 fi
 EOF
 
-chmod +x /opt/cemse/health-check.sh
+chmod +x /opt/emplea-y-emprende/health-check.sh
 
 log "✅ Deployment helper scripts created"
 
@@ -705,12 +705,12 @@ log "🎯 Final setup steps..."
 
 # Start backend services first
 log "🐳 Starting backend services..."
-sudo systemctl start cemse-backend
+sudo systemctl start emplea-y-emprende-backend
 sleep 10
 
 # Install dependencies
 log "📦 Installing application dependencies..."
-cd /opt/cemse
+cd /opt/emplea-y-emprende
 pnpm install
 
 # Generate Prisma client
@@ -737,44 +737,44 @@ log "🎉 Amazon Linux 2023 EC2 setup completed successfully!"
 
 echo ""
 echo "========================================="
-echo "🚀 CEMSE AWS EC2 Setup Complete!"
+echo "🚀 Emplea y Emprende AWS EC2 Setup Complete!"
 echo "🐧 Amazon Linux 2023"
 echo "========================================="
 echo ""
 echo "📋 Next Steps:"
 echo ""
 echo "1. Configure your environment (optional):"
-echo "   nano /opt/cemse/.env"
+echo "   nano /opt/emplea-y-emprende/.env"
 echo ""
 echo "2. Start the Next.js application:"
-echo "   sudo systemctl start cemse"
+echo "   sudo systemctl start emplea-y-emprende"
 echo "   # Backend services are already running"
 echo ""
 echo "3. Check everything is working:"
-echo "   cd /opt/cemse && ./manage.sh status"
+echo "   cd /opt/emplea-y-emprende && ./manage.sh status"
 echo "   # Application should be accessible at http://$(curl -s http://checkip.amazonaws.com):3000"
 echo ""
 echo "4. Configure domain (optional):"
-echo "   cd /opt/cemse && ./manage.sh domain your-domain.com"
+echo "   cd /opt/emplea-y-emprende && ./manage.sh domain your-domain.com"
 echo ""
 echo "5. Setup SSL certificate (optional):"
-echo "   cd /opt/cemse && ./manage.sh ssl"
+echo "   cd /opt/emplea-y-emprende && ./manage.sh ssl"
 echo ""
 echo "7. After SSL setup, update Nginx config for HTTPS redirect:"
-echo "   sudo nano /etc/nginx/conf.d/cemse.conf"
+echo "   sudo nano /etc/nginx/conf.d/emplea-y-emprende.conf"
 echo "   # Uncomment the HTTPS server block"
 echo "   # Change HTTP block to redirect to HTTPS:"
 echo "   # return 301 https://\$server_name\$request_uri;"
 echo ""
 echo "8. Enable automatic startup:"
-echo "   sudo systemctl enable cemse"
+echo "   sudo systemctl enable emplea-y-emprende"
 echo ""
 echo "📊 Useful Commands:"
 echo "   - Deploy: ./deploy.sh"
 echo "   - Backup: ./backup.sh"
 echo "   - Health check: ./health-check.sh"
 echo "   - View logs: docker-compose -f docker-compose.prod.yml logs -f"
-echo "   - System status: sudo systemctl status cemse"
+echo "   - System status: sudo systemctl status emplea-y-emprende"
 echo ""
 echo "🔧 Services Information:"
 echo "   - Application: http://localhost:3000"

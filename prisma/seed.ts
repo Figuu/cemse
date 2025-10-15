@@ -60,13 +60,13 @@ async function main() {
   // const institutionData = await prisma.institution.upsert({
   //   where: {
   //     name_department: {
-  //       name: 'Fundación CEMSE',
+  //       name: 'Fundación Emplea y Emprende',
   //       department: 'Cochabamba'
   //     }
   //   },
   //   update: {},
   //   create: {
-  //     name: 'Fundación CEMSE',
+  //     name: 'Fundación Emplea y Emprende',
   //     department: 'Cochabamba',
   //     region: 'Valle',
   //     email: 'insti@demo.com',
@@ -263,9 +263,9 @@ async function main() {
   //   update: {},
   //   create: {
   //     id: 'sample-news-1',
-  //     title: 'CEMSE lanza nueva plataforma de educación y empleo',
-  //     content: 'La nueva plataforma CEMSE ofrece oportunidades de educación, empleo y emprendimiento para jóvenes bolivianos...',
-  //     summary: 'CEMSE presenta su plataforma integral para el desarrollo juvenil',
+  //     title: 'Emplea y Emprende lanza nueva plataforma de educación y empleo',
+  //     content: 'La nueva plataforma Emplea y Emprende ofrece oportunidades de educación, empleo y emprendimiento para jóvenes bolivianos...',
+  //     summary: 'Emplea y Emprende presenta su plataforma integral para el desarrollo juvenil',
   //     authorId: institution.profile?.userId || '',
   //     authorName: institutionData.name,
   //         authorType: 'INSTITUTION',

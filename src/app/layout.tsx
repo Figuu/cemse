@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Poppins } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/lib/providers";
 
-const inter = Inter({
+const poppins = Poppins({
   subsets: ["latin"],
-  variable: "--font-inter",
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-poppins",
 });
 
 export const metadata: Metadata = {
-  title: "CEMSE - Plataforma Educativa y de Empleo",
+  title: "Emplea y Emprende - Plataforma Educativa y de Empleo",
   description: "Plataforma completa de educación, empleo y emprendimiento para jóvenes",
 };
 
@@ -19,7 +20,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className={inter.variable}>
+    <html lang="es" className={poppins.variable}>
       <body className="font-sans antialiased">
         <Providers>
           {children}

@@ -61,7 +61,7 @@
 \begin{document}
 
 \title{\textbf{Reporte Completo de Testing e Implementación de Seguridad\\
-Plataforma CEMSE según OWASP Top 10 2021}}
+Plataforma Emplea y Emprende según OWASP Top 10 2021}}
 \author{Claude Code - Asistente de Desarrollo\\
 Proyecto: Sistema de Gestión de Empleo y Capacitación}
 \date{\today}
@@ -76,7 +76,7 @@ Proyecto: Sistema de Gestión de Empleo y Capacitación}
 
 \section{Resumen Ejecutivo}
 
-Este documento presenta un análisis completo del proceso de testing e implementación de medidas de seguridad en la plataforma CEMSE (Centro de Empleo y Capacitación), siguiendo las directrices del OWASP Top 10 2021. El proyecto incluyó la creación de una suite de pruebas integral utilizando Jest y React Testing Library, seguido de la implementación de correcciones de seguridad para todas las vulnerabilidades identificadas.
+Este documento presenta un análisis completo del proceso de testing e implementación de medidas de seguridad en la plataforma Emplea y Emprende (Centro de Empleo y Capacitación), siguiendo las directrices del OWASP Top 10 2021. El proyecto incluyó la creación de una suite de pruebas integral utilizando Jest y React Testing Library, seguido de la implementación de correcciones de seguridad para todas las vulnerabilidades identificadas.
 
 \subsection{Resultados Clave}
 \begin{itemize}
@@ -190,7 +190,7 @@ Object.defineProperty(window, 'scrollTo', {
 
 \subsection{Identificación de Vulnerabilidades}
 
-Se realizó un análisis exhaustivo de la aplicación CEMSE identificando las siguientes vulnerabilidades según el OWASP Top 10 2021:
+Se realizó un análisis exhaustivo de la aplicación Emplea y Emprende identificando las siguientes vulnerabilidades según el OWASP Top 10 2021:
 
 \begin{table}[H]
 \centering
@@ -1070,7 +1070,7 @@ Las pruebas se ejecutaron con el siguiente comando:
 \begin{lstlisting}[language=bash, caption=Ejecución de Pruebas de Seguridad]
 npm run test -- __tests__/security/owasp-top10.test.ts __tests__/components/auth/sign-in.test.tsx __tests__/integration/security-integration.test.ts
 
-> cemse@0.1.0 test
+> emplea-y-emprende@0.1.0 test
 > jest __tests__/security/owasp-top10.test.ts __tests__/components/auth/sign-in.test.tsx __tests__/integration/security-integration.test.ts
 
 PASS __tests__/integration/security-integration.test.ts

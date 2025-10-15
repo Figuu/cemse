@@ -62,7 +62,7 @@ export function AdminDashboard({ stats = [] }: AdminDashboardProps) {
               </h1>
               <p className="mt-1 text-sm text-muted-foreground">
                 Bienvenido, {session?.user?.profile?.firstName || 'Administrador'}. 
-                Supervisa y gestiona toda la plataforma CEMSE.
+                Supervisa y gestiona toda la plataforma Emplea y Emprende.
               </p>
             </div>
             <div className="flex items-center space-x-2">

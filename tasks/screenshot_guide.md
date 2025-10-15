@@ -1,4 +1,4 @@
-# Guía Completa de Capturas de Pantalla para CEMSE
+# Guía Completa de Capturas de Pantalla para Emplea y Emprende
 
 ## 📋 Estructura de Directorios Creada
 
@@ -14,7 +14,7 @@ tasks/screenshots/
 
 ## 🎯 Objetivo
 
-Crear un tour visual completo de la plataforma CEMSE que documente todas las funcionalidades principales de cada rol de usuario para incluir en el informe técnico LaTeX.
+Crear un tour visual completo de la plataforma Emplea y Emprende que documente todas las funcionalidades principales de cada rol de usuario para incluir en el informe técnico LaTeX.
 
 ## 📸 Plan de Capturas por Flujo
 
@@ -218,7 +218,7 @@ pnpm run db:seed
 ### Con MiKTeX (Recomendado)
 ```powershell
 cd tasks
-pdflatex informe_tecnico_cemse_auditor.tex
+pdflatex informe_tecnico_emplea_y_emprende_auditor.tex
 ```
 
 ### Paquetes Requeridos
@@ -230,8 +230,8 @@ pdflatex informe_tecnico_cemse_auditor.tex
 ### Estructura Final Esperada
 ```
 tasks/
-├── informe_tecnico_cemse_auditor.tex    # ✅ Actualizado
-├── informe_tecnico_cemse_auditor.pdf    # 📄 Resultado final
+├── informe_tecnico_emplea_y_emprende_auditor.tex    # ✅ Actualizado
+├── informe_tecnico_emplea_y_emprende_auditor.pdf    # 📄 Resultado final
 ├── screenshot_guide.md                  # 📋 Esta guía
 └── screenshots/                         # 📸 Capturas
     ├── auth/ (3 imágenes)
@@ -272,7 +272,7 @@ tasks/
 
 ## 🎯 Resultado Final
 
-Un informe técnico completo con **28 capturas de pantalla** que documenta visualmente toda la funcionalidad de la plataforma CEMSE, organizado por rol de usuario y con evidencia técnica citada para cada funcionalidad mostrada.
+Un informe técnico completo con **28 capturas de pantalla** que documenta visualmente toda la funcionalidad de la plataforma Emplea y Emprende, organizado por rol de usuario y con evidencia técnica citada para cada funcionalidad mostrada.
 
 Este tour visual servirá como:
 - **Documentación técnica** del sistema implementado

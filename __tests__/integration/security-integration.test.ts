@@ -15,7 +15,7 @@ describe('Security Integration Tests', () => {
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict' as const,
         maxAge: 24 * 60 * 60 * 1000, // 24 hours
-        domain: process.env.NODE_ENV === 'production' ? '.cemse.com' : undefined
+        domain: process.env.NODE_ENV === 'production' ? '.empleayemprende.com' : undefined
       }
 
       expect(sessionConfig.httpOnly).toBe(true)
@@ -61,15 +61,15 @@ describe('Security Integration Tests', () => {
     it('should validate request origin', () => {
       const validateOrigin = (origin: string): boolean => {
         const allowedOrigins = [
-          'https://cemse.com',
-          'https://www.cemse.com',
+          'https://empleayemprende.com',
+          'https://www.empleayemprende.com',
           'http://localhost:3000'
         ]
 
         return allowedOrigins.includes(origin)
       }
 
-      expect(validateOrigin('https://cemse.com')).toBe(true)
+      expect(validateOrigin('https://empleayemprende.com')).toBe(true)
       expect(validateOrigin('https://malicious.com')).toBe(false)
       expect(validateOrigin('http://localhost:3000')).toBe(true)
       expect(validateOrigin('')).toBe(false)
@@ -77,7 +77,7 @@ describe('Security Integration Tests', () => {
 
     it('should implement CORS properly', () => {
       const corsConfig = {
-        origin: ['https://cemse.com', 'https://www.cemse.com'],
+        origin: ['https://empleayemprende.com', 'https://www.empleayemprende.com'],
         methods: ['GET', 'POST', 'PUT', 'DELETE'],
         allowedHeaders: ['Content-Type', 'Authorization'],
         credentials: true,

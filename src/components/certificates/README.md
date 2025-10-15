@@ -6,7 +6,7 @@ This directory contains the certificate generation and management system for cou
 
 ### CourseCertificateTemplate.tsx
 - React PDF template for course completion certificates
-- Professional design with CEMSE branding
+- Professional design with Emplea y Emprende branding
 - Includes student name, course details, completion date, and signatures
 - Generates PDF certificates using @react-pdf/renderer
 

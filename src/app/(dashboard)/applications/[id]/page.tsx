@@ -135,7 +135,7 @@ const mockApplication: JobApplication = {
       description: "Tu aplicación fue enviada exitosamente",
       date: "2024-01-15T10:30:00Z",
       status: "completed",
-      details: "Aplicación enviada a través de la plataforma CEMSE"
+      details: "Aplicación enviada a través de la plataforma Emplea y Emprende"
     },
     {
       id: "2",

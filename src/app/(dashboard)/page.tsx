@@ -49,7 +49,7 @@ export default function DashboardPage() {
       case "SUPERADMIN":
         return "Administra toda la plataforma y supervisa el sistema";
       default:
-        return "Bienvenido a CEMSE";
+        return "Bienvenido a Emplea y Emprende";
     }
   };
 
@@ -134,7 +134,7 @@ export default function DashboardPage() {
       <div className="bg-card shadow rounded-lg">
         <div className="px-4 py-5 sm:p-6">
           <h1 className="text-2xl font-bold text-foreground">
-            ¡Bienvenido a CEMSE!
+            ¡Bienvenido a Emplea y Emprende!
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {getRoleDescription(session?.user.role || "")}

@@ -7,15 +7,15 @@ echo "🔧 Corrigiendo configuración CSP de nginx..."
 
 # Crear backup de la configuración actual
 echo "📦 Creando backup de la configuración actual..."
-cp /etc/nginx/sites-available/cemse /etc/nginx/sites-available/cemse.backup.$(date +%Y%m%d_%H%M%S)
+cp /etc/nginx/sites-available/emplea-y-emprende /etc/nginx/sites-available/emplea-y-emprende.backup.$(date +%Y%m%d_%H%M%S)
 
 # Crear nueva configuración con CSP corregida
 echo "✏️  Creando nueva configuración..."
-cat > /etc/nginx/sites-available/cemse << 'EOF'
-# cemse Application Configuration
+cat > /etc/nginx/sites-available/emplea-y-emprende << 'EOF'
+# emplea-y-emprende Application Configuration
 server {
     listen 80;
-    server_name cemse.boring.lat www.cemse.boring.lat;
+    server_name empleayemprende.boring.lat www.empleayemprende.boring.lat;
     
     # Security headers (CSP manejado por Next.js)
     add_header X-Frame-Options "SAMEORIGIN" always;
@@ -64,15 +64,15 @@ server {
     }
     
     # Logs
-    access_log /var/log/nginx/cemse_access.log;
-    error_log /var/log/nginx/cemse_error.log;
+    access_log /var/log/nginx/emplea_y_emprende_access.log;
+    error_log /var/log/nginx/emplea_y_emprende_error.log;
 }
 
 # Redirect www to non-www
 server {
     listen 80;
-    server_name cemse.boring.lat www.cemse.boring.lat;
-    return 301 http://cemse.boring.lat$request_uri;
+    server_name empleayemprende.boring.lat www.empleayemprende.boring.lat;
+    return 301 http://empleayemprende.boring.lat$request_uri;
 }
 EOF
 
@@ -87,6 +87,6 @@ if [ $? -eq 0 ]; then
     echo "📝 Los headers CSP ahora son manejados por Next.js"
 else
     echo "❌ Error en la configuración. Restaurando backup..."
-    cp /etc/nginx/sites-available/cemse.backup.$(date +%Y%m%d_%H%M%S) /etc/nginx/sites-available/cemse
+    cp /etc/nginx/sites-available/emplea-y-emprende.backup.$(date +%Y%m%d_%H%M%S) /etc/nginx/sites-available/emplea-y-emprende
     echo "🔄 Backup restaurado"
 fi

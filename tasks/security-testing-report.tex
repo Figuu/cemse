@@ -17,7 +17,7 @@
 \geometry{a4paper, margin=1in}
 \pagestyle{fancy}
 \fancyhf{}
-\rhead{CEMSE Security Testing Report}
+\rhead{Emplea y Emprende Security Testing Report}
 \lhead{Page \thepage}
 
 % Code listing configuration
@@ -41,7 +41,7 @@
 }
 \lstset{style=mystyle}
 
-\title{\textbf{CEMSE Platform Security Testing Report}\\
+\title{\textbf{Emplea y Emprende Platform Security Testing Report}\\
 \large{Comprehensive Security Test Suite Following OWASP Top 10 Guidelines}}
 \author{Security Testing Team}
 \date{\today}
@@ -51,7 +51,7 @@
 \maketitle
 
 \begin{abstract}
-This report documents the comprehensive security testing implementation for the CEMSE (Centro de Empleabilidad, Micro, Pequeña y Mediana Empresa) platform. The testing suite was developed following OWASP Top 10 2021 security guidelines using Jest and React Testing Library. This document outlines the methodology, implementation details, test results, and recommendations for maintaining robust security posture.
+This report documents the comprehensive security testing implementation for the Emplea y Emprende (Centro de Empleabilidad, Micro, Pequeña y Mediana Empresa) platform. The testing suite was developed following OWASP Top 10 2021 security guidelines using Jest and React Testing Library. This document outlines the methodology, implementation details, test results, and recommendations for maintaining robust security posture.
 \end{abstract}
 
 \tableofcontents
@@ -60,7 +60,7 @@ This report documents the comprehensive security testing implementation for the 
 \section{Executive Summary}
 
 \subsection{Project Overview}
-The CEMSE platform is a Next.js-based web application designed for employment, micro, small, and medium enterprise management. This security testing initiative was undertaken to ensure the platform adheres to industry-standard security practices defined by the Open Web Application Security Project (OWASP).
+The Emplea y Emprende platform is a Next.js-based web application designed for employment, micro, small, and medium enterprise management. This security testing initiative was undertaken to ensure the platform adheres to industry-standard security practices defined by the Open Web Application Security Project (OWASP).
 
 \subsection{Key Findings}
 \begin{itemize}
@@ -345,7 +345,7 @@ describe('Authentication Flow Security', () => {
 describe('API Security Integration', () => {
   it('should implement CORS properly', () => {
     const corsConfig = {
-      origin: ['https://cemse.com', 'https://www.cemse.com'],
+      origin: ['https://empleayemprende.com', 'https://www.empleayemprende.com'],
       methods: ['GET', 'POST', 'PUT', 'DELETE'],
       allowedHeaders: ['Content-Type', 'Authorization'],
       credentials: true,
@@ -593,7 +593,7 @@ The testing suite addresses multiple security standards:
 
 \section{Conclusion}
 
-The implementation of a comprehensive security testing suite for the CEMSE platform represents a significant step forward in ensuring robust application security. The test suite successfully covers all OWASP Top 10 2021 categories and provides a solid foundation for ongoing security validation.
+The implementation of a comprehensive security testing suite for the Emplea y Emprende platform represents a significant step forward in ensuring robust application security. The test suite successfully covers all OWASP Top 10 2021 categories and provides a solid foundation for ongoing security validation.
 
 \subsection{Key Achievements}
 \begin{itemize}
@@ -611,7 +611,7 @@ The implementation of a comprehensive security testing suite for the CEMSE platf
     \item Conduct regular security reviews and updates
 \end{enumerate}
 
-The security testing implementation provides the CEMSE platform with robust protection against common web application vulnerabilities while establishing a framework for continuous security improvement.
+The security testing implementation provides the Emplea y Emprende platform with robust protection against common web application vulnerabilities while establishing a framework for continuous security improvement.
 
 \appendix
 

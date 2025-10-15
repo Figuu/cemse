@@ -5,7 +5,7 @@
 1. **Error de `unsafe-eval`**: Next.js requiere `unsafe-eval` para el hot reload en desarrollo
 2. **Permisos del micrófono**: La configuración `microphone=self` estaba causando violaciones de política
 3. **Conflicto de headers**: Nginx estaba sobrescribiendo los headers de CSP de Next.js con una configuración más restrictiva
-4. **CSP de nginx**: La configuración `/etc/nginx/sites-available/cemse` tenía `"default-src 'self' http: https: data: blob: 'unsafe-inline'"` que bloqueaba `unsafe-eval`
+4. **CSP de nginx**: La configuración `/etc/nginx/sites-available/emplea-y-emprende` tenía `"default-src 'self' http: https: data: blob: 'unsafe-inline'"` que bloqueaba `unsafe-eval`
 
 ## Cambios Realizados
 
@@ -20,7 +20,7 @@
 - **Agregado comentario** explicativo sobre el manejo de CSP
 
 ### 3. Configuración de Nginx en Producción
-- **Identificado el problema**: `/etc/nginx/sites-available/cemse` tenía CSP que sobrescribía Next.js
+- **Identificado el problema**: `/etc/nginx/sites-available/emplea-y-emprende` tenía CSP que sobrescribía Next.js
 - **Creados scripts de corrección**: `fix-nginx-csp.sh` y `fix-nginx-csp-simple.sh`
 
 ## Solución Completa
@@ -37,7 +37,7 @@ sudo bash fix-nginx-csp-simple.sh
 ### Paso 2: Reiniciar la aplicación Next.js
 ```bash
 # Si usas PM2
-pm2 restart cemse
+pm2 restart emplea-y-emprende
 
 # Si usas npm/yarn
 npm run dev  # o npm run build && npm start

@@ -1,11 +1,11 @@
-# CEMSE Deployment Guide
+# Emplea y Emprende Deployment Guide
 
 ## Quick Start for AWS EC2
 
 ### ✅ Issues Fixed
 
 - **Container shutdown**: Docker now only runs backend services (DB, Redis, MinIO) with auto-restart
-- **Missing cemse service**: Fixed systemd service to run `pnpm start` directly on host
+- **Missing emplea-y-emprende service**: Fixed systemd service to run `pnpm start` directly on host
 - **Shell script chaos**: Consolidated 10+ scripts into simplified management scripts
 - **Update complexity**: ONE command now handles: git pull + migrations + restart
 
@@ -19,8 +19,8 @@
 
 - **Docker containers** = Backend only (PostgreSQL, Redis, MinIO)
 - **pnpm start** = Next.js app runs directly on host
-- **cemse.service** = systemd keeps `pnpm start` running automatically
-- **cemse-backend.service** = systemd keeps Docker containers running
+- **emplea-y-emprende.service** = systemd keeps `pnpm start` running automatically
+- **emplea-y-emprende-backend.service** = systemd keeps Docker containers running
 
 ### ❌ Deleted/Deprecated Scripts
 - `backup.sh` → Use `./manage.sh backup`
@@ -55,7 +55,7 @@
 - `pnpm prisma generate`
 - `pnpm prisma migrate deploy`
 - Restart Docker backend services
-- Restart cemse service (`pnpm start`)
+- Restart emplea-y-emprende service (`pnpm start`)
 - Verify everything is working
 
 ### 3. Service Management
@@ -112,19 +112,19 @@ After setup, you can use these management commands:
 
 ```bash
 # Application management
-cemse-manage start      # Start all services
-cemse-manage stop       # Stop all services
-cemse-manage restart    # Restart all services
-cemse-manage status     # Check service status
-cemse-manage logs       # View application logs
-cemse-manage deploy     # Run deployment
-cemse-manage update     # Pull latest code and deploy
-cemse-manage ssl        # Setup SSL certificate
-cemse-manage backup     # Create backup
-cemse-manage health     # Run health check
+emplea-y-emprende-manage start      # Start all services
+emplea-y-emprende-manage stop       # Stop all services
+emplea-y-emprende-manage restart    # Restart all services
+emplea-y-emprende-manage status     # Check service status
+emplea-y-emprende-manage logs       # View application logs
+emplea-y-emprende-manage deploy     # Run deployment
+emplea-y-emprende-manage update     # Pull latest code and deploy
+emplea-y-emprende-manage ssl        # Setup SSL certificate
+emplea-y-emprende-manage backup     # Create backup
+emplea-y-emprende-manage health     # Run health check
 
 # Domain management
-cemse-domain new-domain.com  # Change domain
+emplea-y-emprende-domain new-domain.com  # Change domain
 
 # Manual scripts
 ./backup.sh            # Create backup
@@ -136,7 +136,7 @@ sudo ./setup-ssl.sh    # Setup SSL
 ## 📁 File Structure
 
 ```
-/opt/cemse/
+/opt/emplea-y-emprende/
 ├── deploy.sh              # Deployment script
 ├── configure-domain.sh    # Domain configuration
 ├── setup-ssl.sh          # SSL setup
@@ -174,22 +174,22 @@ sudo ./setup-ssl.sh    # Setup SSL
 ./health-check.sh
 
 # Check specific services
-cemse-manage status
+emplea-y-emprende-manage status
 docker-compose ps
-systemctl status cemse
+systemctl status emplea-y-emprende
 ```
 
 ### Logs
 
 ```bash
 # Application logs
-cemse-manage logs
+emplea-y-emprende-manage logs
 
 # Nginx logs
-sudo tail -f /var/log/nginx/cemse_*.log
+sudo tail -f /var/log/nginx/emplea_y_emprende_*.log
 
 # System logs
-sudo journalctl -u cemse -f
+sudo journalctl -u emplea-y-emprende -f
 ```
 
 ## 💾 Backup & Recovery
@@ -220,7 +220,7 @@ Backups include:
 
 ```bash
 # Pull latest code and deploy
-cemse-manage update
+emplea-y-emprende-manage update
 
 # Or manually
 git pull
@@ -234,7 +234,7 @@ git pull
 sudo apt update && sudo apt upgrade -y
 
 # Restart services if needed
-cemse-manage restart
+emplea-y-emprende-manage restart
 ```
 
 ## 🚨 Troubleshooting
@@ -243,7 +243,7 @@ cemse-manage restart
 
 1. **Application not starting**
    ```bash
-   cemse-manage status
+   emplea-y-emprende-manage status
    docker-compose logs
    ```
 
@@ -268,8 +268,8 @@ cemse-manage restart
 
 ### Log Locations
 
-- Application: `journalctl -u cemse`
-- Nginx: `/var/log/nginx/cemse_*.log`
+- Application: `journalctl -u emplea-y-emprende`
+- Nginx: `/var/log/nginx/emplea_y_emprende_*.log`
 - Docker: `docker-compose logs`
 - System: `/var/log/syslog`
 
@@ -329,7 +329,7 @@ df -h
 free -h
 
 # Service status
-systemctl status cemse nginx docker
+systemctl status emplea-y-emprende nginx docker
 docker-compose ps
 
 # Network
@@ -341,10 +341,10 @@ ufw status
 
 ```bash
 # Recent errors
-journalctl -u cemse --since "1 hour ago" | grep -i error
+journalctl -u emplea-y-emprende --since "1 hour ago" | grep -i error
 
 # Nginx errors
-sudo tail -100 /var/log/nginx/cemse_error.log
+sudo tail -100 /var/log/nginx/emplea_y_emprende_error.log
 
 # Docker logs
 docker-compose logs --tail=100

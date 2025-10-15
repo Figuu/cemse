@@ -61,7 +61,7 @@ export interface SidebarData {
 
 const commonTeams = [
   {
-    name: "CEMSE Platform",
+    name: "Emplea y Emprende Platform",
     logo: Command,
     plan: "Employability & Entrepreneurship",
   },
@@ -390,7 +390,7 @@ export const otherInstitutionSidebarData: SidebarData = {
 export const superAdminSidebarData: SidebarData = {
   user: {
     name: "Super Administrador",
-    email: "admin@cemse.com",
+    email: "admin@empleayemprende.com",
     avatar: "/avatars/admin.jpg",
   },
   teams: commonTeams,

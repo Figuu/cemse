@@ -8,20 +8,20 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-cemse_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-emplea_y_emprende_dev}
       POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-cemse_dev}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-emplea_y_emprende_dev}"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
     networks:
-      - cemse-network
+      - emplea-y-emprende-network
 
   # Redis for caching
   redis:
@@ -37,7 +37,7 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - cemse-network
+      - emplea-y-emprende-network
 
   # MinIO Object Storage
   minio:
@@ -58,7 +58,7 @@ services:
       timeout: 20s
       retries: 3
     networks:
-      - cemse-network
+      - emplea-y-emprende-network
 
   # MinIO Client for bucket initialization
   mc:
@@ -84,7 +84,7 @@ services:
         tail -f /dev/null
       "
     networks:
-      - cemse-network
+      - emplea-y-emprende-network
 
   # MinIO Initialization Service
   minio-init:
@@ -110,7 +110,7 @@ services:
         tail -f /dev/null
       "
     networks:
-      - cemse-network
+      - emplea-y-emprende-network
 
 
   # Prisma Client Service
@@ -121,8 +121,8 @@ services:
     depends_on:
       - db
     environment:
-      DATABASE_URL: "postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-cemse_dev}"
-      DIRECT_URL: "postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-cemse_dev}"
+      DATABASE_URL: "postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-emplea_y_emprende_dev}"
+      DIRECT_URL: "postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-emplea_y_emprende_dev}"
       NODE_ENV: ${NODE_ENV:-development}
     volumes:
       - .:/app
@@ -142,7 +142,7 @@ services:
         tail -f /dev/null
       "
     networks:
-      - cemse-network
+      - emplea-y-emprende-network
 
   # Prisma Studio Service
   prisma-studio:
@@ -153,7 +153,7 @@ services:
       - db
       - prisma-client
     environment:
-      DATABASE_URL: "postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-cemse_dev}"
+      DATABASE_URL: "postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-emplea_y_emprende_dev}"
       NODE_ENV: ${NODE_ENV:-development}
     volumes:
       - .:/app
@@ -168,7 +168,7 @@ services:
     ports:
       - "5555:5555"
     networks:
-      - cemse-network
+      - emplea-y-emprende-network
 
 volumes:
   db_data:
@@ -179,5 +179,5 @@ volumes:
     driver: local
 
 networks:
-  cemse-network:
+  emplea-y-emprende-network:
     driver: bridge

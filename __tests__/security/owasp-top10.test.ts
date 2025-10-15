@@ -805,9 +805,9 @@ describe('OWASP Top 10 2021 Security Tests - Fixed', () => {
 
           // Whitelist allowed domains
           const allowedDomains = [
-            'api.cemse.com',
-            'secure.cemse.com',
-            'cdn.cemse.com'
+            'api.empleayemprende.com',
+            'secure.empleayemprende.com',
+            'cdn.empleayemprende.com'
           ]
 
           if (!allowedDomains.includes(urlObj.hostname)) {
@@ -821,10 +821,10 @@ describe('OWASP Top 10 2021 Security Tests - Fixed', () => {
       }
 
       // Test valid URLs
-      expect(validateURL('https://api.cemse.com/data')).toEqual({ valid: true })
+      expect(validateURL('https://api.empleayemprende.com/data')).toEqual({ valid: true })
 
       // Test invalid URLs
-      expect(validateURL('http://api.cemse.com/data')).toEqual({
+      expect(validateURL('http://api.empleayemprende.com/data')).toEqual({
         valid: false,
         reason: 'Only HTTPS URLs are allowed'
       })

@@ -1,21 +1,21 @@
 #!/bin/bash
 
 # =============================================================================
-# CEMSE Application Setup Script for Ubuntu Server 24.04 LTS
+# Emplea y Emprende Application Setup Script for Ubuntu Server 24.04 LTS
 # =============================================================================
-# This script prepares an Ubuntu Server 24.04 LTS instance for deploying the CEMSE 
+# This script prepares an Ubuntu Server 24.04 LTS instance for deploying the Emplea y Emprende 
 # application with all required dependencies, services, and configurations.
 # =============================================================================
 
 set -e  # Exit on any error
 
 # Configuration variables - CHANGE THESE AS NEEDED
-APP_NAME="cemse"
+APP_NAME="emplea-y-emprende"
 APP_USER="ubuntu"
-APP_DOMAIN="cemse.boring.lat"
+APP_DOMAIN="empleayemprende.boring.lat"
 APP_PATH="/opt/$APP_NAME"
 APP_PORT="3000"
-GIT_REPO="https://github.com/figuu/cemse.git"
+GIT_REPO="https://github.com/figuu/emplea-y-emprende.git"
 
 # Colors for output
 RED='\033[0;31m'
@@ -70,7 +70,7 @@ if ! lsb_release -d | grep -q "Ubuntu 24.04"; then
     fi
 fi
 
-log "🚀 Starting CEMSE application setup for Ubuntu 24.04 LTS..."
+log "🚀 Starting Emplea y Emprende application setup for Ubuntu 24.04 LTS..."
 log "App Name: $APP_NAME"
 log "Domain: $APP_DOMAIN"
 log "Path: $APP_PATH"
@@ -270,7 +270,7 @@ sudo ufw allow from 127.0.0.1 to any port 9001
 success "Firewall configured"
 
 # =============================================================================
-# 11. CLONE REPOSITORY TO /opt/cemse
+# 11. CLONE REPOSITORY TO /opt/emplea-y-emprende
 # =============================================================================
 log "📥 Cloning repository..."
 
@@ -280,9 +280,9 @@ if [ -d "$APP_PATH" ]; then
     sudo rm -rf $APP_PATH
 fi
 
-# Clone directly to /opt/cemse (git will create the directory)
+# Clone directly to /opt/emplea-y-emprende (git will create the directory)
 cd /opt
-sudo git clone $GIT_REPO cemse
+sudo git clone $GIT_REPO emplea-y-emprende
 
 # Set proper ownership
 sudo chown -R $USER:$USER $APP_PATH

@@ -1,10 +1,10 @@
-# CEMSE Task Processing System
+# Emplea y Emprende Task Processing System
 
 ## Overview
-This document tracks the implementation progress of the CEMSE platform based on the tasks defined in `tasks-prd.md`.
+This document tracks the implementation progress of the Emplea y Emprende platform based on the tasks defined in `tasks-prd.md`.
 
 ## Current Status
-- **Project**: CEMSE - Centro de Empleo y Servicios Estudiantiles
+- **Project**: Emplea y Emprende - Centro de Empleo y Servicios Estudiantiles
 - **Framework**: Next.js 15.1.7 with App Router
 - **UI**: React 19.0.0, TailwindCSS 3.4.17, shadcn/ui components
 - **Database**: Prisma 6.4.0 with PostgreSQL

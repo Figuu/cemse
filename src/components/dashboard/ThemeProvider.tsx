@@ -22,7 +22,7 @@ interface ThemeProviderProps {
 export function ThemeProvider({
   children,
   defaultTheme = "system",
-  storageKey = "cemse-theme",
+  storageKey = "emplea-y-emprende-theme",
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(defaultTheme);
   const [actualTheme, setActualTheme] = useState<"light" | "dark">("light");

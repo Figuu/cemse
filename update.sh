@@ -1,19 +1,19 @@
 #!/bin/bash
 
 # =============================================================================
-# CEMSE Simple Update Script
+# Emplea y Emprende Simple Update Script
 # =============================================================================
 # This script handles all update steps in one command:
 # - git pull
 # - prisma migrate & generate
 # - restart docker backend
-# - restart cemse service
+# - restart emplea-y-emprende service
 # =============================================================================
 
 set -e  # Exit on any error
 
 # Configuration
-APP_NAME="cemse"
+APP_NAME="emplea-y-emprende"
 APP_PATH="/opt/$APP_NAME"
 
 # Colors for output
@@ -43,7 +43,7 @@ success() {
 # Function to check if we're in the right directory
 check_directory() {
     if [ ! -f "package.json" ] || [ ! -f "docker-compose.yml" ]; then
-        error "This doesn't look like the CEMSE project directory"
+        error "This doesn't look like the Emplea y Emprende project directory"
         error "Please run this script from $APP_PATH"
         exit 1
     fi
@@ -135,13 +135,13 @@ restart_services() {
     # Wait a moment for containers to be ready
     sleep 5
 
-    # Restart the cemse service (Next.js app)
-    log "Restarting CEMSE service..."
-    if systemctl is-active --quiet cemse 2>/dev/null; then
-        sudo systemctl restart cemse
+    # Restart the emplea-y-emprende service (Next.js app)
+    log "Restarting Emplea y Emprende service..."
+    if systemctl is-active --quiet emplea-y-emprende 2>/dev/null; then
+        sudo systemctl restart emplea-y-emprende
     else
-        warn "CEMSE service not running, starting it..."
-        sudo systemctl start cemse
+        warn "Emplea y Emprende service not running, starting it..."
+        sudo systemctl start emplea-y-emprende
     fi
 
     success "Services restarted"
@@ -159,12 +159,12 @@ verify_update() {
         docker-compose ps
     fi
 
-    # Check cemse service
-    if systemctl is-active --quiet cemse 2>/dev/null; then
-        success "CEMSE service is running"
+    # Check emplea-y-emprende service
+    if systemctl is-active --quiet emplea-y-emprende 2>/dev/null; then
+        success "Emplea y Emprende service is running"
     else
-        error "CEMSE service failed to start"
-        warn "Check logs with: sudo journalctl -u cemse -f"
+        error "Emplea y Emprende service failed to start"
+        warn "Check logs with: sudo journalctl -u emplea-y-emprende -f"
     fi
 
     # Check if app is responding (wait a bit for startup)
@@ -173,7 +173,7 @@ verify_update() {
         success "Application is responding"
     else
         warn "Application health check failed, but this might be temporary"
-        warn "Check status with: sudo systemctl status cemse"
+        warn "Check status with: sudo systemctl status emplea-y-emprende"
     fi
 }
 
@@ -193,10 +193,10 @@ show_status() {
     echo ""
 
     log "🔧 Service Status:"
-    if systemctl is-active --quiet cemse 2>/dev/null; then
-        echo "✅ CEMSE service: Running"
+    if systemctl is-active --quiet emplea-y-emprende 2>/dev/null; then
+        echo "✅ Emplea y Emprende service: Running"
     else
-        echo "❌ CEMSE service: Not running"
+        echo "❌ Emplea y Emprende service: Not running"
     fi
 
     if systemctl is-active --quiet nginx 2>/dev/null; then
@@ -212,9 +212,9 @@ show_status() {
     echo ""
 
     log "📝 Useful Commands:"
-    echo "   - Check logs: sudo journalctl -u cemse -f"
-    echo "   - Check status: sudo systemctl status cemse"
-    echo "   - Manual restart: sudo systemctl restart cemse"
+    echo "   - Check logs: sudo journalctl -u emplea-y-emprende -f"
+    echo "   - Check status: sudo systemctl status emplea-y-emprende"
+    echo "   - Manual restart: sudo systemctl restart emplea-y-emprende"
     echo "   - Docker logs: docker-compose logs -f"
     echo ""
 }
@@ -223,7 +223,7 @@ show_status() {
 main() {
     echo ""
     echo "========================================="
-    echo "🚀 CEMSE Update Script"
+    echo "🚀 Emplea y Emprende Update Script"
     echo "========================================="
     echo ""
 
@@ -247,7 +247,7 @@ main() {
 
 # Show help if requested
 if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
-    echo "CEMSE Update Script"
+    echo "Emplea y Emprende Update Script"
     echo "Usage: $0"
     echo ""
     echo "This script will:"
@@ -256,7 +256,7 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
     echo "  3. Generate Prisma client"
     echo "  4. Run database migrations"
     echo "  5. Restart Docker containers (backend)"
-    echo "  6. Restart CEMSE service (Next.js app)"
+    echo "  6. Restart Emplea y Emprende service (Next.js app)"
     echo "  7. Verify everything is working"
     echo ""
     echo "This replaces the manual process of:"
@@ -265,7 +265,7 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
     echo "  - pnpm prisma generate"
     echo "  - pnpm prisma migrate deploy"
     echo "  - docker-compose restart"
-    echo "  - sudo systemctl restart cemse"
+    echo "  - sudo systemctl restart emplea-y-emprende"
     echo ""
     exit 0
 fi

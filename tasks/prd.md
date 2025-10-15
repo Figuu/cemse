@@ -1,16 +1,16 @@
-# CEMSE - Centro de Emprendimiento y Empleabilidad
+# Emplea y Emprende - Centro de Emprendimiento y Empleabilidad
 ## Product Requirements Document (PRD)
 
 ### 1. Project Overview
 
-**Project Name:** CEMSE - Centro de Emprendimiento y Empleabilidad  
+**Project Name:** Emplea y Emprende - Centro de Emprendimiento y Empleabilidad  
 **Version:** 1.0  
 **Date:** December 2024  
 **Status:** In Development  
 
 ### 2. Executive Summary
 
-CEMSE is a comprehensive platform designed to bridge the gap between students and the job market by providing career guidance, skill development, and job placement services. The platform serves as a centralized hub for students, companies, and educational institutions to connect and collaborate on career development initiatives.
+Emplea y Emprende is a comprehensive platform designed to bridge the gap between students and the job market by providing career guidance, skill development, and job placement services. The platform serves as a centralized hub for students, companies, and educational institutions to connect and collaborate on career development initiatives.
 
 ### 3. Problem Statement
 
@@ -23,7 +23,7 @@ Students often struggle with:
 
 ### 4. Solution Overview
 
-CEMSE provides a multi-sided platform that:
+Emplea y Emprende provides a multi-sided platform that:
 - Connects students with career opportunities
 - Enables companies to find qualified talent
 - Provides educational institutions with tools to track student progress
@@ -353,7 +353,7 @@ CEMSE provides a multi-sided platform that:
 
 ### 17. Conclusion
 
-CEMSE represents a comprehensive solution to the challenges faced by students, companies, and educational institutions in the career development ecosystem. By providing a centralized platform with advanced features and user-friendly design, CEMSE aims to revolutionize how career development is approached and managed.
+Emplea y Emprende represents a comprehensive solution to the challenges faced by students, companies, and educational institutions in the career development ecosystem. By providing a centralized platform with advanced features and user-friendly design, Emplea y Emprende aims to revolutionize how career development is approached and managed.
 
 The platform's success will be measured not only by its technical performance but by its ability to create meaningful connections, facilitate career growth, and contribute to the overall success of its users in the job market.
 

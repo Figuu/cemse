@@ -1,4 +1,4 @@
-# 🎓 CEMSE - Educational Platform
+# 🎓 Emplea y Emprende - Educational Platform
 
 A comprehensive educational platform for courses, institutions, and students built with Next.js, PostgreSQL, Redis, and MinIO.
 
@@ -86,12 +86,12 @@ src/
 ## 🔧 Environment Configuration
 
 ### Development (`env.development`)
-- Database: `cemse_dev`
+- Database: `emplea_y_emprende_dev`
 - MinIO: `minioadmin`/`minioadmin`
 - Includes Prisma Studio
 
 ### Production (`env.production`)
-- Database: `cemse_prod`
+- Database: `emplea_y_emprende_prod`
 - MinIO: Custom secure credentials
 - Excludes Prisma Studio
 

@@ -1,4 +1,4 @@
-"# CEMSE - Complete Educational and Employment Platform System
+"# Emplea y Emprende - Complete Educational and Employment Platform System
 
 ## System Overview
 
@@ -974,20 +974,20 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: cemse_dev
+      POSTGRES_DB: emplea_y_emprende_dev
       POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
     ports:
       - "5432:5432"
     volumes:
       - db_dev_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d cemse_dev"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d emplea_y_emprende_dev"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
     networks:
-      - cemse-dev-network
+      - emplea-y-emprende-dev-network
 
   # Redis for caching
   redis:
@@ -1003,7 +1003,7 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - cemse-dev-network
+      - emplea-y-emprende-dev-network
 
   # MinIO Object Storage
   minio:
@@ -1024,7 +1024,7 @@ services:
       timeout: 20s
       retries: 3
     networks:
-      - cemse-dev-network
+      - emplea-y-emprende-dev-network
 
   # MinIO Client for bucket initialization
   mc:
@@ -1036,21 +1036,21 @@ services:
       MC_HOST_local: http://minioadmin:minioadmin@minio:9000
     command: sh -c "sleep 10 && mc alias set local http://minio:9000 minioadmin minioadmin && mc mb local/videos local/images local/documents local/courses local/lessons local/resources local/cvs local/certificates && mc policy set public local/videos && mc policy set public local/images && mc policy set public local/documents && mc policy set public local/courses && mc policy set public local/lessons && mc policy set public local/resources && mc policy set public local/cvs && mc policy set public local/certificates && echo 'MinIO buckets created successfully' && tail -f /dev/null"
     networks:
-      - cemse-dev-network
+      - emplea-y-emprende-dev-network
 
   # Prisma Studio (Development)
   prisma-studio:
     image: node:20-alpine
     working_dir: /app
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/cemse_dev
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/emplea_y_emprende_dev
     ports:
       - "5555:5555"
     volumes:
       - .:/app
     command: sh -c "npm install -g prisma && prisma studio --hostname 0.0.0.0 --port 5555"
     networks:
-      - cemse-dev-network
+      - emplea-y-emprende-dev-network
     depends_on:
       - db
 
@@ -1063,7 +1063,7 @@ volumes:
     driver: local
 
 networks:
-  cemse-dev-network:
+  emplea-y-emprende-dev-network:
     driver: bridge
 ```
 
@@ -1080,11 +1080,11 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: cemse_prod
+      POSTGRES_DB: emplea_y_emprende_prod
     volumes:
       - db_data:/var/lib/postgresql/data
     networks:
-      - cemse-network
+      - emplea-y-emprende-network
 
   # Next.js Application
   nextjs:
@@ -1096,13 +1096,13 @@ services:
       db:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/cemse_prod
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/emplea_y_emprende_prod
       NODE_ENV: production
       PORT: 3000
     ports:
       - "3000:3000"
     networks:
-      - cemse-network
+      - emplea-y-emprende-network
     command: >
       sh -c "
         npx prisma migrate deploy &&
@@ -1115,7 +1115,7 @@ volumes:
     driver: local
 
 networks:
-  cemse-network:
+  emplea-y-emprende-network:
     driver: bridge
 ```
 
@@ -1313,8 +1313,8 @@ export default {
 
 ```env
 # Database
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/cemse_dev"
-DIRECT_URL="postgresql://postgres:postgres@localhost:5432/cemse_dev"
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/emplea_y_emprende_dev"
+DIRECT_URL="postgresql://postgres:postgres@localhost:5432/emplea_y_emprende_dev"
 
 # Authentication
 NEXTAUTH_SECRET="your-secret-key-here"
