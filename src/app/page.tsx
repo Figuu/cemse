@@ -119,28 +119,28 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-center items-center space-x-6 md:space-x-8">
             <img 
-              src="/logos/1.png" 
-              alt="Partner Logo 1" 
+              src="/logos/gob.png" 
+              alt="Gobierno" 
               className="h-6 md:h-8 w-auto opacity-60 hover:opacity-100 transition-opacity duration-300"
             />
             <img 
-              src="/logos/2.png" 
-              alt="Partner Logo 2" 
+              src="/logos/cocha.png" 
+              alt="Cochabamba" 
               className="h-6 md:h-8 w-auto opacity-60 hover:opacity-100 transition-opacity duration-300"
             />
             <img 
-              src="/logos/3.png" 
-              alt="Partner Logo 3" 
+              src="/logos/sacaba.png" 
+              alt="Sacaba" 
               className="h-6 md:h-8 w-auto opacity-60 hover:opacity-100 transition-opacity duration-300"
             />
             <img 
-              src="/logos/4.png" 
-              alt="Partner Logo 4" 
+              src="/logos/tiquipaya.png" 
+              alt="Tiquipaya" 
               className="h-6 md:h-8 w-auto opacity-60 hover:opacity-100 transition-opacity duration-300"
             />
             <img 
-              src="/logos/5.png" 
-              alt="Partner Logo 5" 
+              src="/logos/quillacollo.png" 
+              alt="Quillacollo" 
               className="h-6 md:h-8 w-auto opacity-60 hover:opacity-100 transition-opacity duration-300"
             />
           </div>
@@ -685,6 +685,54 @@ export default function Home() {
             <Button size="lg" asChild>
               <Link href="/sign-up">Obtener Ayuda</Link>
             </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Partners Section */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Con el apoyo de:
+            </h2>
+          </div>
+          <div className="flex justify-center items-center space-x-6 md:space-x-8 flex-wrap gap-6">
+            <img 
+              src="/logos/cemse.png" 
+              alt="CEMSE" 
+              className="h-8 md:h-10 w-auto opacity-60 hover:opacity-100 transition-opacity duration-300"
+            />
+            <img 
+              src="/logos/kallpa.png" 
+              alt="Kallpa" 
+              className="h-8 md:h-10 w-auto opacity-60 hover:opacity-100 transition-opacity duration-300"
+            />
+            <img 
+              src="/logos/manqa.png" 
+              alt="Manqa" 
+              className="h-8 md:h-10 w-auto opacity-60 hover:opacity-100 transition-opacity duration-300"
+            />
+            <img 
+              src="/logos/childfund.png" 
+              alt="ChildFund" 
+              className="h-8 md:h-10 w-auto opacity-60 hover:opacity-100 transition-opacity duration-300"
+            />
+            <img 
+              src="/logos/bvlgari.png" 
+              alt="Bulgari" 
+              className="h-8 md:h-10 w-auto opacity-60 hover:opacity-100 transition-opacity duration-300"
+            />
+            <img 
+              src="/logos/stc.png" 
+              alt="STC" 
+              className="h-8 md:h-10 w-auto opacity-60 hover:opacity-100 transition-opacity duration-300"
+            />
+            <img 
+              src="/logos/40.png" 
+              alt="40" 
+              className="h-8 md:h-10 w-auto opacity-60 hover:opacity-100 transition-opacity duration-300"
+            />
           </div>
         </div>
       </section>
