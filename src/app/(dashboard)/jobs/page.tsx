@@ -54,7 +54,7 @@ function JobsPageContent() {
   const [selectedMunicipality, setSelectedMunicipality] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
 
-  // Fetch municipality institutions for the filter
+  // Fetch municipality institutions for the filter (only for authorized users)
   const { data: municipalityInstitutions = [] } = useQuery({
     queryKey: ['municipality-institutions-jobs'],
     queryFn: async () => {
@@ -63,7 +63,8 @@ function JobsPageContent() {
       const institutions = await response.json();
       // Filter only municipality type institutions
       return institutions.filter((institution: any) => institution.institutionType === 'MUNICIPALITY');
-    }
+    },
+    enabled: !isYouth // Only fetch for non-youth users
   });
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);

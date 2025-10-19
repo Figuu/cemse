@@ -54,7 +54,7 @@ export function ChunkedFileUpload({
   },
   maxFiles = 5,
   maxSize = 10 * 1024 * 1024, // 10MB
-  chunkSize = 1024 * 1024, // 1MB chunks
+  chunkSize = 512 * 1024, // 512KB chunks (Next.js App Router has 1MB FormData limit)
   category,
   className,
   disabled = false

@@ -86,9 +86,15 @@ importers:
       '@tanstack/react-query-devtools':
         specifier: ^5.87.4
         version: 5.87.4(@tanstack/react-query@5.87.4(react@19.1.1))(react@19.1.1)
+      '@types/busboy':
+        specifier: ^1.5.4
+        version: 1.5.4
       bcryptjs:
         specifier: ^3.0.2
         version: 3.0.2
+      busboy:
+        specifier: ^1.6.0
+        version: 1.6.0
       canvas:
         specifier: ^3.2.0
         version: 3.2.0
@@ -1748,6 +1754,9 @@ packages:
 
   '@types/babel__traverse@7.28.0':
     resolution: {integrity: sha512-8PvcXf70gTDZBgt9ptxJ8elBeBjcLOAcOtoO/mPJjtji1+CdGbHgm77om1GrsPxsiE+uXIpNSK64UYaIwQXd4Q==}
+
+  '@types/busboy@1.5.4':
+    resolution: {integrity: sha512-kG7WrUuAKK0NoyxfQHsVE6j1m01s6kMma64E+OZenQABMQyTJop1DumUWcLwAQ2JzpefU7PDYoRDKl8uZosFjw==}
 
   '@types/cookie@1.0.0':
     resolution: {integrity: sha512-mGFXbkDQJ6kAXByHS7QAggRXgols0mAdP4MuXgloGY1tXokvzaFFM4SMqWvf7AH0oafI7zlFJwoGWzmhDqTZ9w==}
@@ -6567,6 +6576,10 @@ snapshots:
   '@types/babel__traverse@7.28.0':
     dependencies:
       '@babel/types': 7.28.4
+
+  '@types/busboy@1.5.4':
+    dependencies:
+      '@types/node': 20.19.14
 
   '@types/cookie@1.0.0':
     dependencies:

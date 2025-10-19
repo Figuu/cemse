@@ -122,16 +122,6 @@ export function UnifiedCourseManager({
   const [editingQuizQuestions, setEditingQuizQuestions] = useState<string | null>(null);
   const [uploadedFileUrl, setUploadedFileUrl] = useState<string | null>(null);
 
-  // Auto-hide success messages
-  useEffect(() => {
-    if (success) {
-      const timer = setTimeout(() => {
-        setSuccess(null);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [success]);
-
   // Form states
   const [moduleForm, setModuleForm] = useState({
     title: "",
@@ -152,6 +142,31 @@ export function UnifiedCourseManager({
     isRequired: true,
     isPreview: false,
   });
+
+  // Auto-hide success messages
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => {
+        setSuccess(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
+
+  // Sync uploadedFileUrl with lessonForm when upload completes
+  useEffect(() => {
+    if (uploadedFileUrl) {
+      console.log("🔄 [UnifiedCourseManager] Syncing uploadedFileUrl to lessonForm:", uploadedFileUrl, "contentType:", lessonForm.contentType);
+
+      if (lessonForm.contentType === "VIDEO") {
+        setLessonForm(prev => ({ ...prev, videoUrl: uploadedFileUrl }));
+        console.log("✅ [UnifiedCourseManager] Updated lessonForm.videoUrl to:", uploadedFileUrl);
+      } else if (lessonForm.contentType === "AUDIO") {
+        setLessonForm(prev => ({ ...prev, audioUrl: uploadedFileUrl }));
+        console.log("✅ [UnifiedCourseManager] Updated lessonForm.audioUrl to:", uploadedFileUrl);
+      }
+    }
+  }, [uploadedFileUrl, lessonForm.contentType]);
 
   const [quizForm, setQuizForm] = useState({
     title: "",
@@ -912,6 +927,10 @@ export function UnifiedCourseManager({
                     <LessonFileUpload
                       contentType={lessonForm.contentType as "VIDEO" | "AUDIO" | "DOCUMENT" | "TEXT"}
                       onUpload={handleFileUpload}
+                      onUploadComplete={(url) => {
+                        console.log("[UnifiedCourseManager] File upload complete, URL:", url);
+                        setUploadedFileUrl(url);
+                      }}
                       onRemove={() => setUploadedFileUrl(null)}
                       currentUrl={uploadedFileUrl || undefined}
                     />

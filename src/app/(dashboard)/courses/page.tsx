@@ -51,7 +51,7 @@ export default function CoursesPage() {
   const isInstitution = session?.user?.role === "INSTITUTION";
   const isSuperAdmin = session?.user?.role === "SUPERADMIN";
 
-  // Fetch municipality institutions for the filter
+  // Fetch municipality institutions for the filter (only for authorized users)
   const { data: municipalityInstitutions = [] } = useQuery({
     queryKey: ['municipality-institutions-courses'],
     queryFn: async () => {
@@ -60,7 +60,8 @@ export default function CoursesPage() {
       const institutions = await response.json();
       // Filter only municipality type institutions
       return institutions.filter((institution: any) => institution.institutionType === 'MUNICIPALITY');
-    }
+    },
+    enabled: !isYouth // Only fetch for non-youth users
   });
 
   const {

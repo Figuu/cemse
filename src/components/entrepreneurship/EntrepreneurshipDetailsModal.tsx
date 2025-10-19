@@ -120,8 +120,14 @@ export function EntrepreneurshipDetailsModal({
   const isAuthenticated = !!session?.user?.id;
   const isOwnEntrepreneurship = session?.user?.id === entrepreneurship.owner.userId;
 
+  // Debug logs
+  console.log('Debug EntrepreneurshipDetailsModal:');
+  console.log('session?.user?.id:', session?.user?.id);
+  console.log('entrepreneurship.owner.userId:', entrepreneurship.owner.userId);
+  console.log('isOwnEntrepreneurship:', isOwnEntrepreneurship);
+
   // Check connection status
-  const existingConnection = connections.find(conn => 
+  const existingConnection = connections.find(conn =>
     (conn.requesterId === session?.user?.id || conn.addresseeId === session?.user?.id) &&
     (conn.requesterId === entrepreneurship.owner.userId || conn.addresseeId === entrepreneurship.owner.userId)
   );
@@ -141,6 +147,10 @@ export function EntrepreneurshipDetailsModal({
   };
 
   const canConnect = isAuthenticated && !isOwnEntrepreneurship && (!existingConnection || existingConnection.status === "DECLINED");
+  
+  // Debug logs for button logic
+  console.log('canConnect:', canConnect);
+  console.log('existingConnection:', existingConnection);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

@@ -110,6 +110,21 @@ export function LessonManager({ courseId, moduleId, lessons, onLessonsChange, se
     }
   }, [selectedLessonId, lessons]);
 
+  // Sync uploadedFileUrl with formData when upload completes
+  useEffect(() => {
+    if (uploadedFileUrl) {
+      console.log("🔄 Syncing uploadedFileUrl to formData:", uploadedFileUrl, "contentType:", formData.contentType);
+
+      if (formData.contentType === "VIDEO") {
+        setFormData(prev => ({ ...prev, videoUrl: uploadedFileUrl }));
+        console.log("✅ Updated formData.videoUrl to:", uploadedFileUrl);
+      } else if (formData.contentType === "AUDIO") {
+        setFormData(prev => ({ ...prev, audioUrl: uploadedFileUrl }));
+        console.log("✅ Updated formData.audioUrl to:", uploadedFileUrl);
+      }
+    }
+  }, [uploadedFileUrl, formData.contentType]);
+
   const resetForm = () => {
     setFormData({
       title: "",
@@ -197,16 +212,13 @@ export function LessonManager({ courseId, moduleId, lessons, onLessonsChange, se
         audioUrl = uploadedFileUrl || formData.audioUrl || null;
       }
 
-      console.log("Creating lesson with:", {
-        contentType: formData.contentType,
-        uploadedFileUrl,
-        videoUrl,
-        audioUrl,
-        formDataVideoUrl: formData.videoUrl,
-        formDataAudioUrl: formData.audioUrl,
-        isFileUploading,
-        formData
-      });
+      console.log("=== CREATING LESSON DEBUG ===");
+      console.log("1. uploadedFileUrl:", uploadedFileUrl);
+      console.log("2. formData.videoUrl:", formData.videoUrl);
+      console.log("3. formData.audioUrl:", formData.audioUrl);
+      console.log("4. formData.contentType:", formData.contentType);
+      console.log("5. Computed videoUrl:", videoUrl);
+      console.log("6. Computed audioUrl:", audioUrl);
 
       const requestBody = {
         ...formData,
@@ -214,7 +226,8 @@ export function LessonManager({ courseId, moduleId, lessons, onLessonsChange, se
         audioUrl,
       };
 
-      console.log("Sending lesson creation request with body:", requestBody);
+      console.log("7. 🚀 REQUEST BODY:");
+      console.log(JSON.stringify(requestBody, null, 2));
 
       const response = await fetch(`/api/courses/${courseId}/modules/${moduleId}/lessons`, {
         method: "POST",
@@ -460,6 +473,11 @@ export function LessonManager({ courseId, moduleId, lessons, onLessonsChange, se
                   <LessonFileUpload
                     contentType={formData.contentType as "VIDEO" | "AUDIO" | "DOCUMENT" | "TEXT"}
                     onUpload={handleFileUpload}
+                    onUploadComplete={(url) => {
+                      console.log("File upload complete, URL:", url);
+                      setUploadedFileUrl(url);
+                      setIsFileUploading(false);
+                    }}
                     onRemove={() => setUploadedFileUrl(null)}
                     currentUrl={uploadedFileUrl || undefined}
                   />
@@ -715,6 +733,11 @@ export function LessonManager({ courseId, moduleId, lessons, onLessonsChange, se
                 <LessonFileUpload
                   contentType={formData.contentType as "VIDEO" | "AUDIO" | "DOCUMENT" | "TEXT"}
                   onUpload={handleFileUpload}
+                  onUploadComplete={(url) => {
+                    console.log("File upload complete, URL:", url);
+                    setUploadedFileUrl(url);
+                    setIsFileUploading(false);
+                  }}
                   onRemove={() => setUploadedFileUrl(null)}
                   currentUrl={uploadedFileUrl || undefined}
                 />

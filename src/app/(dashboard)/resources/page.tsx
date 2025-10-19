@@ -44,7 +44,10 @@ function ResourcesPageContent() {
   const [selectedMunicipality, setSelectedMunicipality] = useState("all");
   const [showForm, setShowForm] = useState(false);
 
-  // Fetch municipality institutions for the filter
+  // Role-based permissions
+  const isYouth = session?.user?.role === "YOUTH";
+
+  // Fetch municipality institutions for the filter (only for authorized users)
   const { data: municipalityInstitutions = [] } = useQuery({
     queryKey: ['municipality-institutions-resources'],
     queryFn: async () => {
@@ -53,14 +56,12 @@ function ResourcesPageContent() {
       const institutions = await response.json();
       // Filter only municipality type institutions
       return institutions.filter((institution: any) => institution.institutionType === 'MUNICIPALITY');
-    }
+    },
+    enabled: !isYouth // Only fetch for non-youth users
   });
   const [editingResource, setEditingResource] = useState<any>(null);
   const [selectedResource, setSelectedResource] = useState<any>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
-
-  // Role-based permissions
-  const isYouth = session?.user?.role === "YOUTH";
   const isInstitution = session?.user?.role === "INSTITUTION";
   const isSuperAdmin = session?.user?.role === "SUPERADMIN";
   const isCompany = session?.user?.role === "COMPANIES";

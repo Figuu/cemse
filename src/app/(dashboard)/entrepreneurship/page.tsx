@@ -31,10 +31,13 @@ import {
 import { BusinessPlanBuilder } from "@/components/entrepreneurship/BusinessPlanBuilder";
 import FinancialCalculator from "@/components/entrepreneurship/FinancialCalculator";
 import BusinessModelCanvasModal from "@/components/entrepreneurship/BusinessModelCanvasModal";
+import { EntrepreneurshipDetailsModal } from "@/components/entrepreneurship/EntrepreneurshipDetailsModal";
+import { CreateEntrepreneurshipModal } from "@/components/entrepreneurship/CreateEntrepreneurshipModal";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useEntrepreneurshipNews, useLatestNews } from "@/hooks/useEntrepreneurshipNews";
 import { useEntrepreneurshipResources, useFeaturedResources } from "@/hooks/useEntrepreneurshipResources";
+import { useFeaturedEntrepreneurshipResources } from "@/hooks/useResources";
 import { useMyEntrepreneurships } from "@/hooks/useEntrepreneurships";
 import { useBusinessPlans } from "@/hooks/useBusinessPlans";
 
@@ -45,11 +48,14 @@ export default function EntrepreneurshipPage() {
   const [showFinancialCalculator, setShowFinancialCalculator] = useState(false);
   const [showBusinessModelCanvas, setShowBusinessModelCanvas] = useState(false);
   const [selectedBusinessPlanId, setSelectedBusinessPlanId] = useState<string | undefined>();
+  const [showProjectDetails, setShowProjectDetails] = useState(false);
+  const [showEditProject, setShowEditProject] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | undefined>();
   const router = useRouter();
 
   // Fetch data for the dashboard
   const { news: entrepreneurshipNews } = useLatestNews(6);
-  const { resources: featuredResources } = useFeaturedResources();
+  const { resources: featuredResources } = useFeaturedEntrepreneurshipResources(6);
   const { entrepreneurships: myEntrepreneurships } = useMyEntrepreneurships({ limit: 3 });
   const { data: businessPlansData } = useBusinessPlans({ limit: 10 });
 
@@ -60,6 +66,26 @@ export default function EntrepreneurshipPage() {
 
   const handleCanvasClose = useCallback(() => {
     setShowBusinessModelCanvas(false);
+  }, []);
+
+  const handleViewProject = useCallback((projectId: string) => {
+    setSelectedProjectId(projectId);
+    setShowProjectDetails(true);
+  }, []);
+
+  const handleEditProject = useCallback((projectId: string) => {
+    setSelectedProjectId(projectId);
+    setShowEditProject(true);
+  }, []);
+
+  const handleCloseProjectDetails = useCallback(() => {
+    setShowProjectDetails(false);
+    setSelectedProjectId(undefined);
+  }, []);
+
+  const handleCloseEditProject = useCallback(() => {
+    setShowEditProject(false);
+    setSelectedProjectId(undefined);
   }, []);
 
   // Memoize the business plan to prevent unnecessary re-renders
@@ -289,11 +315,11 @@ export default function EntrepreneurshipPage() {
                       <div className="flex items-center space-x-3 text-xs text-muted-foreground">
                         <div className="flex items-center space-x-1">
                           <Eye className="h-3 w-3" />
-                          <span>{resource.views}</span>
+                          <span>{resource.downloads || 0}</span>
                         </div>
                         <div className="flex items-center space-x-1">
                           <Star className="h-3 w-3" />
-                          <span>{resource.likes}</span>
+                          <span>{Math.round(resource.rating || 0)}</span>
                         </div>
                       </div>
                     </div>
@@ -320,11 +346,13 @@ export default function EntrepreneurshipPage() {
                       Gestiona tus emprendimientos activos
                     </CardDescription>
                   </div>
-                  <Button asChild variant="outline" size="sm">
-                    <Link href="/entrepreneurship/my-projects">
-                      Ver todos
-                      <ArrowRight className="h-4 w-4 ml-1" />
-                    </Link>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setActiveTab("projects")}
+                  >
+                    Ver todos
+                    <ArrowRight className="h-4 w-4 ml-1" />
                   </Button>
                 </div>
               </CardHeader>
@@ -535,11 +563,11 @@ export default function EntrepreneurshipPage() {
                       <div className="flex items-center space-x-3 text-xs text-muted-foreground">
                         <div className="flex items-center space-x-1">
                           <Eye className="h-3 w-3" />
-                          <span>{resource.views}</span>
+                          <span>{resource.downloads || 0}</span>
                         </div>
                         <div className="flex items-center space-x-1">
-                          <Heart className="h-3 w-3" />
-                          <span>{resource.likes}</span>
+                          <Star className="h-3 w-3" />
+                          <span>{Math.round(resource.rating || 0)}</span>
                         </div>
                       </div>
                       <Button size="sm" variant="outline">
@@ -608,17 +636,22 @@ export default function EntrepreneurshipPage() {
                   </div>
 
                   <div className="flex space-x-2 mt-4">
-                    <Button asChild size="sm" className="flex-1">
-                      <Link href={`/entrepreneurship/${project.id}`}>
-                        <Eye className="h-4 w-4 mr-1" />
-                        Ver
-                      </Link>
+                    <Button 
+                      size="sm" 
+                      className="flex-1"
+                      onClick={() => handleViewProject(project.id)}
+                    >
+                      <Eye className="h-4 w-4 mr-1" />
+                      Ver
                     </Button>
-                    <Button asChild variant="outline" size="sm" className="flex-1">
-                      <Link href={`/entrepreneurship/${project.id}/edit`}>
-                        <FileText className="h-4 w-4 mr-1" />
-                        Editar
-                      </Link>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1"
+                      onClick={() => handleEditProject(project.id)}
+                    >
+                      <FileText className="h-4 w-4 mr-1" />
+                      Editar
                     </Button>
                   </div>
                 </CardContent>
@@ -711,6 +744,27 @@ export default function EntrepreneurshipPage() {
         onClose={handleCanvasClose}
         isOpen={showBusinessModelCanvas}
       />
+
+      {/* Project Details Modal */}
+      {selectedProjectId && (
+        <EntrepreneurshipDetailsModal
+          entrepreneurshipId={selectedProjectId}
+          isOpen={showProjectDetails}
+          onClose={handleCloseProjectDetails}
+        />
+      )}
+
+      {/* Edit Project Modal */}
+      {showEditProject && (
+        <CreateEntrepreneurshipModal
+          onClose={handleCloseEditProject}
+          onSuccess={() => {
+            handleCloseEditProject();
+            // Refetch projects if needed
+          }}
+          editingEntrepreneurshipId={selectedProjectId}
+        />
+      )}
     </div>
   );
 }

@@ -9,8 +9,8 @@
 set -e  # Exit on any error
 
 # Configuration
-APP_NAME="emplea-y-emprende"
-APP_PATH="/opt/$APP_NAME"
+APP_NAME="cemse"
+APP_PATH="/opt/cemse"
 APP_PORT="3000"
 BACKUP_DIR="$APP_PATH/backups"
 RETENTION_DAYS=30
@@ -360,6 +360,82 @@ setup_ssl() {
     fi
 }
 
+# Function to fix CSP issues
+fix_csp() {
+    log "🔧 Fixing Content Security Policy (CSP) issues..."
+    
+    # Check if nginx configuration exists
+    if [ ! -f "/etc/nginx/sites-enabled/$APP_NAME" ]; then
+        error "Nginx configuration not found at /etc/nginx/sites-enabled/$APP_NAME"
+        exit 1
+    fi
+    
+    # Create backup
+    log "📦 Creating backup of nginx configuration..."
+    sudo cp "/etc/nginx/sites-enabled/$APP_NAME" "/etc/nginx/sites-enabled/$APP_NAME.backup.$(date +%Y%m%d_%H%M%S)"
+    
+    # Check if CSP header exists and is problematic
+    if grep -q "Content-Security-Policy.*default-src.*'self'.*http.*https.*data.*blob.*'unsafe-inline'" "/etc/nginx/sites-enabled/$APP_NAME"; then
+        log "✏️ Found problematic CSP header, removing it..."
+        
+        # Comment out the problematic CSP line
+        sudo sed -i 's/add_header Content-Security-Policy/# add_header Content-Security-Policy/' "/etc/nginx/sites-enabled/$APP_NAME"
+        
+        # Update Referrer-Policy for consistency
+        sudo sed -i 's/add_header Referrer-Policy.*/add_header Referrer-Policy "strict-origin-when-cross-origin" always;/' "/etc/nginx/sites-enabled/$APP_NAME"
+        
+        # Add comment explaining CSP is handled by Next.js
+        sudo sed -i '/# add_header Content-Security-Policy/a\    # Note: CSP is handled by Next.js application headers' "/etc/nginx/sites-enabled/$APP_NAME"
+        
+        log "✅ CSP header removed from nginx configuration"
+    else
+        info "No problematic CSP header found in nginx configuration"
+    fi
+    
+    # Test nginx configuration
+    log "🔍 Testing nginx configuration..."
+    if sudo nginx -t; then
+        success "Nginx configuration is valid"
+        
+        # Reload nginx
+        log "🔄 Reloading nginx..."
+        if sudo systemctl reload nginx; then
+            success "Nginx reloaded successfully"
+            
+            # Restart Next.js app to ensure clean state
+            log "🔄 Restarting Next.js application..."
+            sudo systemctl restart "$APP_NAME"
+            
+            sleep 3
+            
+            if systemctl is-active --quiet "$APP_NAME" 2>/dev/null; then
+                success "Next.js application restarted successfully"
+                echo ""
+                success "🎉 CSP issue fixed!"
+                echo ""
+                info "Changes made:"
+                echo "  - Removed conflicting CSP header from nginx"
+                echo "  - Updated Referrer-Policy for consistency"
+                echo "  - Added explanatory comment"
+                echo "  - Restarted Next.js application"
+                echo ""
+                info "Now only Next.js will handle CSP headers with 'unsafe-eval' enabled for development."
+            else
+                error "Failed to restart Next.js application"
+                exit 1
+            fi
+        else
+            error "Failed to reload nginx"
+            exit 1
+        fi
+    else
+        error "Nginx configuration test failed"
+        log "Restoring backup..."
+        sudo cp "/etc/nginx/sites-enabled/$APP_NAME.backup."* "/etc/nginx/sites-enabled/$APP_NAME"
+        exit 1
+    fi
+}
+
 # Function to show help
 show_help() {
     echo "Emplea y Emprende Application Management Script"
@@ -376,6 +452,7 @@ show_help() {
     echo "  domain <name>   Configure domain name"
     echo "  ssl             Setup SSL certificate"
     echo "  health          Run health check"
+    echo "  fix-csp         Fix Content Security Policy issues"
     echo "  help            Show this help message"
     echo ""
     echo "Examples:"
@@ -383,6 +460,7 @@ show_help() {
     echo "  $0 logs follow"
     echo "  $0 domain myapp.example.com"
     echo "  $0 deploy"
+    echo "  $0 fix-csp"
     echo ""
 }
 
@@ -514,6 +592,9 @@ main() {
             ;;
         health)
             health_check
+            ;;
+        fix-csp)
+            fix_csp
             ;;
         help|--help|-h)
             show_help

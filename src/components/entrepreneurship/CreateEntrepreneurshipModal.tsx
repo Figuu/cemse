@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { X, Upload, Link, Calendar, Users, DollarSign } from "lucide-react";
-import { useEntrepreneurships, CreateEntrepreneurshipData } from "@/hooks/useEntrepreneurships";
+import { useEntrepreneurships, useEntrepreneurship, CreateEntrepreneurshipData } from "@/hooks/useEntrepreneurships";
 import { BusinessStage } from "@prisma/client";
 import { useFileUpload } from "@/hooks/useFileUpload";
 
@@ -60,6 +60,7 @@ type CreateEntrepreneurshipFormData = z.infer<typeof createEntrepreneurshipSchem
 interface CreateEntrepreneurshipModalProps {
   onClose: () => void;
   onSuccess: () => void;
+  editingEntrepreneurshipId?: string;
 }
 
 const businessStages: { value: BusinessStage; label: string }[] = [
@@ -121,7 +122,7 @@ const municipalities = [
   "Tacopaya",
 ];
 
-export function CreateEntrepreneurshipModal({ onClose, onSuccess }: CreateEntrepreneurshipModalProps) {
+export function CreateEntrepreneurshipModal({ onClose, onSuccess, editingEntrepreneurshipId }: CreateEntrepreneurshipModalProps) {
   const [logo, setLogo] = useState<string>("");
   const [bannerImages, setBannerImages] = useState<string[]>([]);
   const [socialMediaLinks, setSocialMediaLinks] = useState<{ platform: string; url: string }[]>([]);
@@ -130,6 +131,11 @@ export function CreateEntrepreneurshipModal({ onClose, onSuccess }: CreateEntrep
 
   const { uploadFile } = useFileUpload();
   const { createEntrepreneurship, isCreating } = useEntrepreneurships();
+  
+  // Load entrepreneurship data when editing
+  const { data: entrepreneurshipData, isLoading: isLoadingData } = useEntrepreneurship(
+    editingEntrepreneurshipId || ""
+  );
 
   const {
     register,
@@ -137,6 +143,7 @@ export function CreateEntrepreneurshipModal({ onClose, onSuccess }: CreateEntrep
     formState: { errors },
     setValue,
     watch,
+    reset,
   } = useForm({
     resolver: zodResolver(createEntrepreneurshipSchema),
     defaultValues: {
@@ -144,6 +151,46 @@ export function CreateEntrepreneurshipModal({ onClose, onSuccess }: CreateEntrep
       isPublic: true,
     },
   });
+
+  // Load data when editing
+  useEffect(() => {
+    if (editingEntrepreneurshipId && entrepreneurshipData) {
+      const data = entrepreneurshipData;
+      reset({
+        name: data.name || "",
+        description: data.description || "",
+        category: data.category || "",
+        subcategory: data.subcategory || "",
+        businessStage: data.businessStage || "IDEA",
+        website: data.website || "",
+        email: data.email || "",
+        phone: data.phone || "",
+        address: data.address || "",
+        municipality: data.municipality || "",
+        department: data.department || "Cochabamba",
+        founded: data.founded ? new Date(data.founded).toISOString().split('T')[0] : "",
+        employees: data.employees?.toString() || "",
+        annualRevenue: data.annualRevenue?.toString() || "",
+        businessModel: data.businessModel || "",
+        targetMarket: data.targetMarket || "",
+        isPublic: data.isPublic ?? true,
+      });
+      
+      // Set images and social media
+      if (data.logo) setLogo(data.logo);
+      if (data.images) setBannerImages(data.images);
+      if (data.socialMedia) {
+        const socialMedia = typeof data.socialMedia === 'string' 
+          ? JSON.parse(data.socialMedia) 
+          : data.socialMedia;
+        const socialArray = Object.entries(socialMedia).map(([platform, url]) => ({
+          platform,
+          url: url as string
+        }));
+        setSocialMediaLinks(socialArray);
+      }
+    }
+  }, [editingEntrepreneurshipId, entrepreneurshipData, reset]);
 
   const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -215,9 +262,14 @@ export function CreateEntrepreneurshipModal({ onClose, onSuccess }: CreateEntrep
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Crear Nuevo Emprendimiento</DialogTitle>
+          <DialogTitle>
+            {editingEntrepreneurshipId ? "Editar Emprendimiento" : "Crear Nuevo Emprendimiento"}
+          </DialogTitle>
           <DialogDescription>
-            Completa la información de tu emprendimiento para conectarte con otros emprendedores
+            {editingEntrepreneurshipId 
+              ? "Actualiza la información de tu emprendimiento"
+              : "Completa la información de tu emprendimiento para conectarte con otros emprendedores"
+            }
           </DialogDescription>
         </DialogHeader>
 
@@ -603,7 +655,10 @@ export function CreateEntrepreneurshipModal({ onClose, onSuccess }: CreateEntrep
               Cancelar
             </Button>
             <Button type="submit" disabled={isCreating}>
-              {isCreating ? "Creando..." : "Crear Emprendimiento"}
+              {isCreating 
+                ? (editingEntrepreneurshipId ? "Actualizando..." : "Creando...") 
+                : (editingEntrepreneurshipId ? "Actualizar Emprendimiento" : "Crear Emprendimiento")
+              }
             </Button>
           </div>
         </form>

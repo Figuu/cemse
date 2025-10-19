@@ -167,3 +167,45 @@ export function useResources(options: UseResourcesOptions = {}) {
     unpublishResource,
   };
 }
+
+export function useFeaturedEntrepreneurshipResources(limit = 6) {
+  const { data: session } = useSession();
+  const [resources, setResources] = useState<Resource[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchFeaturedResources = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const params = new URLSearchParams();
+      params.append("limit", limit.toString());
+      params.append("isEntrepreneurshipRelated", "true");
+      params.append("status", "PUBLISHED");
+
+      const response = await fetch(`/api/resources?${params.toString()}`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to fetch featured resources");
+      }
+      const data = await response.json();
+      setResources(data.resources || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An unknown error occurred");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [limit]);
+
+  useEffect(() => {
+    fetchFeaturedResources();
+  }, [fetchFeaturedResources]);
+
+  return {
+    resources,
+    isLoading,
+    error,
+    refetch: fetchFeaturedResources,
+  };
+}

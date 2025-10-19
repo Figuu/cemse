@@ -53,6 +53,7 @@ export async function GET(request: NextRequest) {
           owner: {
             select: {
               id: true,
+              userId: true,
               firstName: true,
               lastName: true,
               avatarUrl: true,

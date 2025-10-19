@@ -157,6 +157,7 @@ export async function POST(request: NextRequest) {
         owner: {
           select: {
             id: true,
+            userId: true,
             firstName: true,
             lastName: true,
             avatarUrl: true,

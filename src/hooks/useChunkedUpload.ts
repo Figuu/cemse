@@ -22,7 +22,7 @@ interface ChunkedUploadState {
 export function useChunkedUpload(options: ChunkedUploadOptions = {}) {
   const { data: session } = useSession();
   const {
-    chunkSize = 1024 * 1024, // 1MB chunks
+    chunkSize = 512 * 1024, // 512KB chunks (Next.js App Router has 1MB FormData limit)
     maxRetries = 3,
     onProgress,
     onChunkComplete

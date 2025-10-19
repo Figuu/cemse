@@ -21,7 +21,8 @@ import { cn } from "@/lib/utils";
 
 interface LessonFileUploadProps {
   contentType: "VIDEO" | "AUDIO" | "IMAGE" | "TEXT" | "DOCUMENT";
-  onUpload: (file: File) => Promise<string>;
+  onUpload?: (file: File) => Promise<string>; // For small files only
+  onUploadComplete?: (url: string) => void; // Called when upload is complete
   onRemove?: () => void;
   currentUrl?: string;
   className?: string;
@@ -40,6 +41,7 @@ interface UploadedFile {
 export function LessonFileUpload({
   contentType,
   onUpload,
+  onUploadComplete,
   onRemove,
   currentUrl,
   className,
@@ -132,7 +134,7 @@ export function LessonFileUpload({
     const file = acceptedFiles[0];
     const newFile: UploadedFile = {
       file,
-      id: Math.random().toString(36).substr(2, 9),
+      id: Math.random().toString(36).substring(2, 11),
       status: "pending",
       progress: 0
     };
@@ -162,20 +164,19 @@ export function LessonFileUpload({
 
       console.log("File uploaded successfully, URL:", url);
 
-      setUploadedFile(prev => prev ? { 
-        ...prev, 
-        status: "success", 
+      setUploadedFile(prev => prev ? {
+        ...prev,
+        status: "success",
         progress: 100,
-        url 
+        url
       } : null);
 
-      // Call the onUpload prop to notify parent component
-      if (onUpload) {
-        console.log("Calling onUpload callback with file:", uploadedFile.file.name);
-        await onUpload(uploadedFile.file);
-        console.log("onUpload callback completed");
+      // Call onUploadComplete with the URL
+      if (onUploadComplete) {
+        console.log("✅ Calling onUploadComplete with URL:", url);
+        onUploadComplete(url);
       } else {
-        console.log("No onUpload callback provided");
+        console.warn("⚠️ onUploadComplete callback is NOT defined!");
       }
     } catch (error) {
       setUploadedFile(prev => prev ? { 
@@ -189,7 +190,7 @@ export function LessonFileUpload({
   };
 
   const uploadWithProgress = (file: File, onProgress: (progress: number) => void): Promise<string> => {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       // Determine category based on file type
       let category = "other";
       if (file.type.startsWith("video/")) {
@@ -199,56 +200,111 @@ export function LessonFileUpload({
       } else if (file.type.startsWith("image/")) {
         category = "course-thumbnail";
       }
-      
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("category", category);
 
-      const xhr = new XMLHttpRequest();
+      // Use chunked upload for large files (> 10MB)
+      // IMPORTANT: Next.js App Router has a 1MB default limit for FormData
+      const CHUNK_SIZE = 512 * 1024; // 512KB chunks to stay well under Next.js 1MB limit
+      const USE_CHUNKED = file.size > 10 * 1024 * 1024;
 
-      // Track upload progress
-      xhr.upload.addEventListener("progress", (event) => {
-        if (event.lengthComputable) {
-          const progress = Math.round((event.loaded / event.total) * 100);
-          onProgress(progress);
-        }
-      });
+      if (USE_CHUNKED) {
+        try {
+          const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+          const uploadId = `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 
-      // Handle successful upload
-      xhr.addEventListener("load", () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          try {
-            const response = JSON.parse(xhr.responseText);
-            resolve(response.url);
-          } catch (error) {
-            reject(new Error("Invalid response format"));
+          console.log(`Using chunked upload: ${totalChunks} chunks of ~${Math.round(CHUNK_SIZE / 1024 / 1024)}MB`);
+
+          for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+            const start = chunkIndex * CHUNK_SIZE;
+            const end = Math.min(start + CHUNK_SIZE, file.size);
+            const chunk = file.slice(start, end);
+
+            const formData = new FormData();
+            formData.append("file", chunk, file.name);
+            formData.append("category", category);
+            formData.append("uploadId", uploadId);
+            formData.append("chunkIndex", chunkIndex.toString());
+            formData.append("totalChunks", totalChunks.toString());
+            formData.append("originalName", file.name);
+            formData.append("originalSize", file.size.toString());
+
+            const response = await fetch("/api/files/chunked-upload", {
+              method: "POST",
+              body: formData,
+            });
+
+            if (!response.ok) {
+              const error = await response.json();
+              throw new Error(error.error || "Chunk upload failed");
+            }
+
+            const result = await response.json();
+
+            // Update progress
+            const progress = Math.round(((chunkIndex + 1) / totalChunks) * 100);
+            onProgress(progress);
+
+            // If this was the last chunk, return the URL
+            if (result.complete && result.url) {
+              console.log("Chunked upload complete!");
+              resolve(result.url);
+              return;
+            }
           }
-        } else {
-          try {
-            const errorResponse = JSON.parse(xhr.responseText);
-            reject(new Error(errorResponse.error || "Upload failed"));
-          } catch {
-            reject(new Error(`Upload failed with status ${xhr.status}`));
-          }
+        } catch (error) {
+          reject(error);
         }
-      });
+      } else {
+        // Use regular upload for small files
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("category", category);
 
-      // Handle upload errors
-      xhr.addEventListener("error", () => {
-        reject(new Error("Network error during upload"));
-      });
+        const xhr = new XMLHttpRequest();
 
-      // Handle upload timeout
-      xhr.addEventListener("timeout", () => {
-        reject(new Error("Upload timeout"));
-      });
+        // Track upload progress
+        xhr.upload.addEventListener("progress", (event) => {
+          if (event.lengthComputable) {
+            const progress = Math.round((event.loaded / event.total) * 100);
+            onProgress(progress);
+          }
+        });
 
-      // Set timeout (5 minutes for large files)
-      xhr.timeout = 5 * 60 * 1000;
+        // Handle successful upload
+        xhr.addEventListener("load", () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const response = JSON.parse(xhr.responseText);
+              resolve(response.url);
+            } catch (error) {
+              reject(new Error("Invalid response format"));
+            }
+          } else {
+            try {
+              const errorResponse = JSON.parse(xhr.responseText);
+              reject(new Error(errorResponse.error || "Upload failed"));
+            } catch {
+              reject(new Error(`Upload failed with status ${xhr.status}`));
+            }
+          }
+        });
 
-      // Start the upload
-      xhr.open("POST", "/api/files/minio/upload");
-      xhr.send(formData);
+        // Handle upload errors
+        xhr.addEventListener("error", () => {
+          reject(new Error("Network error during upload"));
+        });
+
+        // Handle upload timeout
+        xhr.addEventListener("timeout", () => {
+          reject(new Error("Upload timeout"));
+        });
+
+        // Set timeout (5 minutes for large files)
+        xhr.timeout = 5 * 60 * 1000;
+
+        // Start the upload
+        xhr.open("POST", "/api/files/minio/upload");
+        xhr.send(formData);
+      }
     });
   };
 

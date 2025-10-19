@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get("search");
     const status = searchParams.get("status");
     const authorId = searchParams.get("authorId");
+    const isEntrepreneurshipRelated = searchParams.get("isEntrepreneurshipRelated");
     const limit = parseInt(searchParams.get("limit") || "20");
     const offset = parseInt(searchParams.get("offset") || "0");
 
@@ -43,6 +44,10 @@ export async function GET(request: NextRequest) {
 
     if (authorId) {
       whereClause.createdByUserId = authorId;
+    }
+
+    if (isEntrepreneurshipRelated === "true") {
+      whereClause.isEntrepreneurshipRelated = true;
     }
 
     // Only show published resources to non-admin users

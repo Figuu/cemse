@@ -59,8 +59,8 @@ export function EntrepreneurshipGrid({ filters }: EntrepreneurshipGridProps) {
   // Helper function to get connection status
   const getConnectionStatus = (ownerUserId: string) => {
     if (!session?.user?.id || ownerUserId === session.user.id) return null;
-    
-    return connections.find(conn => 
+
+    return connections.find(conn =>
       (conn.requesterId === session.user.id || conn.addresseeId === session.user.id) &&
       (conn.requesterId === ownerUserId || conn.addresseeId === ownerUserId)
     );

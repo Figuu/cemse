@@ -17,6 +17,7 @@ export async function GET(
         owner: {
           select: {
             id: true,
+            userId: true,
             firstName: true,
             lastName: true,
             avatarUrl: true,
@@ -125,6 +126,7 @@ export async function PUT(
         owner: {
           select: {
             id: true,
+            userId: true,
             firstName: true,
             lastName: true,
             avatarUrl: true,

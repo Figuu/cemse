@@ -32,6 +32,7 @@ export interface Entrepreneurship {
   updatedAt: Date;
   owner: {
     id: string;
+    userId: string;
     firstName: string;
     lastName: string;
     avatarUrl?: string;

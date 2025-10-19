@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
 
   experimental: {
     serverActions: {
-      bodySizeLimit: "10mb",
+      bodySizeLimit: "600mb", // Aumentado para soportar videos grandes
     },
   },
   webpack: (config: Configuration, { isServer }: { isServer: boolean }) => {
