@@ -28,7 +28,7 @@ export default function Home() {
     "/images/(5).jpg",
     "/images/(6).jpg",
     "/images/(7).jpg",
-    "/images/(8).JPG",
+    "/images/(8).jpg",
     "/images/(9).jpg",
     "/images/(10).jpg",
     "/images/(11).jpg",
@@ -115,33 +115,123 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Partner Logos Section */}
-      <section className="py-4 bg-gray-50 border-b">
+      <section className="py-4 sm:py-6 bg-gray-50 border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-center items-center space-x-6 md:space-x-8">
-            <img 
-              src="/logos/gob.png" 
-              alt="Gobierno" 
-              className="h-6 md:h-8 w-auto opacity-60 hover:opacity-100 transition-opacity duration-300"
+          {/* Mobile: Auto-scrolling carousel */}
+          <div className="block sm:hidden">
+            <div className="overflow-hidden">
+              <div className="flex animate-scroll gap-6">
+                <Image
+                  src="/logos/gob.png"
+                  alt="Gobierno"
+                  width={200}
+                  height={200}
+                  className="h-12 w-auto object-contain opacity-70 flex-shrink-0"
+                />
+                <Image
+                  src="/logos/cocha.png"
+                  alt="Cochabamba"
+                  width={200}
+                  height={200}
+                  className="h-12 max-w-[120px] object-contain opacity-70 flex-shrink-0"
+                />
+                <Image
+                  src="/logos/sacaba.png"
+                  alt="Sacaba"
+                  width={200}
+                  height={200}
+                  className="h-12 w-auto object-contain opacity-70 flex-shrink-0"
+                />
+                <Image
+                  src="/logos/tiquipaya.png"
+                  alt="Tiquipaya"
+                  width={200}
+                  height={200}
+                  className="h-12 w-auto object-contain opacity-70 flex-shrink-0"
+                />
+                <Image
+                  src="/logos/quillacollo.png"
+                  alt="Quillacollo"
+                  width={200}
+                  height={200}
+                  className="h-12 w-auto object-contain opacity-70 flex-shrink-0"
+                />
+                {/* Duplicate for seamless loop */}
+                <Image
+                  src="/logos/gob.png"
+                  alt="Gobierno"
+                  width={200}
+                  height={200}
+                  className="h-12 w-auto object-contain opacity-70 flex-shrink-0"
+                />
+                <Image
+                  src="/logos/cocha.png"
+                  alt="Cochabamba"
+                  width={200}
+                  height={200}
+                  className="h-12 max-w-[120px] object-contain opacity-70 flex-shrink-0"
+                />
+                <Image
+                  src="/logos/sacaba.png"
+                  alt="Sacaba"
+                  width={200}
+                  height={200}
+                  className="h-12 w-auto object-contain opacity-70 flex-shrink-0"
+                />
+                <Image
+                  src="/logos/tiquipaya.png"
+                  alt="Tiquipaya"
+                  width={200}
+                  height={200}
+                  className="h-12 w-auto object-contain opacity-70 flex-shrink-0"
+                />
+                <Image
+                  src="/logos/quillacollo.png"
+                  alt="Quillacollo"
+                  width={200}
+                  height={200}
+                  className="h-12 w-auto object-contain opacity-70 flex-shrink-0"
+                />
+              </div>
+            </div>
+          </div>
+          
+          {/* Desktop: Static layout */}
+          <div className="hidden sm:flex justify-center items-center gap-2 md:gap-3 lg:gap-4">
+            <Image
+              src="/logos/gob.png"
+              alt="Gobierno"
+              width={200}
+              height={200}
+              className="h-10 md:h-12 lg:h-14 w-auto object-contain opacity-70 hover:opacity-100 transition-opacity duration-300"
             />
-            <img 
-              src="/logos/cocha.png" 
-              alt="Cochabamba" 
-              className="h-6 md:h-8 w-auto opacity-60 hover:opacity-100 transition-opacity duration-300"
+            <Image
+              src="/logos/cocha.png"
+              alt="Cochabamba"
+              width={200}
+              height={200}
+              className="h-10 md:h-12 lg:h-14 max-w-[100px] md:max-w-[120px] lg:max-w-[140px] object-contain opacity-70 hover:opacity-100 transition-opacity duration-300"
             />
-            <img 
-              src="/logos/sacaba.png" 
-              alt="Sacaba" 
-              className="h-6 md:h-8 w-auto opacity-60 hover:opacity-100 transition-opacity duration-300"
+            <Image
+              src="/logos/sacaba.png"
+              alt="Sacaba"
+              width={200}
+              height={200}
+              className="h-10 md:h-12 lg:h-14 w-auto object-contain opacity-70 hover:opacity-100 transition-opacity duration-300"
             />
-            <img 
-              src="/logos/tiquipaya.png" 
-              alt="Tiquipaya" 
-              className="h-6 md:h-8 w-auto opacity-60 hover:opacity-100 transition-opacity duration-300"
+            <Image
+              src="/logos/tiquipaya.png"
+              alt="Tiquipaya"
+              width={200}
+              height={200}
+              className="h-10 md:h-12 lg:h-14 w-auto object-contain opacity-70 hover:opacity-100 transition-opacity duration-300"
             />
-            <img 
-              src="/logos/quillacollo.png" 
-              alt="Quillacollo" 
-              className="h-6 md:h-8 w-auto opacity-60 hover:opacity-100 transition-opacity duration-300"
+            <Image
+              src="/logos/quillacollo.png"
+              alt="Quillacollo"
+              width={200}
+              height={200}
+              className="h-10 md:h-12 lg:h-14 w-auto object-contain opacity-70 hover:opacity-100 transition-opacity duration-300"
             />
           </div>
         </div>
@@ -152,7 +242,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-gray-900">Emplea y Emprende</h1>
+              <h1 className="text-md sm:text-xl md:text-2xl font-bold text-gray-900">Emplea y Emprende</h1>
             </div>
             <nav className="hidden md:flex space-x-8">
               <button 
@@ -198,7 +288,7 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Text Content */}
             <div className="text-center lg:text-left">
-              <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-bold text-gray-900 mb-6">
                 Plataforma Completa de
                 <span className="text-primary"> Educación y Empleo</span>
               </h1>
@@ -690,48 +780,202 @@ export default function Home() {
       </section>
 
       {/* Partners Section */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-8 sm:py-12 md:py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+          <div className="text-center mb-8 sm:mb-10 md:mb-12">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
               Con el apoyo de:
             </h2>
           </div>
-          <div className="flex justify-center items-center space-x-6 md:space-x-8 flex-wrap gap-6">
+          
+          {/* Mobile: Auto-scrolling carousel - Primer plano */}
+          <div className="block sm:hidden mb-6">
+            <div className="overflow-hidden">
+              <div className="flex animate-scroll gap-4">
+                <img 
+                  src="/logos/cemse.png" 
+                  alt="CEMSE" 
+                  className="h-8 w-auto object-contain opacity-60 flex-shrink-0"
+                />
+                <img 
+                  src="/logos/kallpa.png" 
+                  alt="Kallpa" 
+                  className="h-10 w-auto object-contain opacity-60 flex-shrink-0"
+                />
+                <img 
+                  src="/logos/manqa.png" 
+                  alt="Manqa" 
+                  className="h-12 w-auto object-contain opacity-60 flex-shrink-0"
+                />
+                <img 
+                  src="/logos/childfund.png" 
+                  alt="ChildFund" 
+                  className="h-8 w-auto object-contain opacity-60 flex-shrink-0"
+                />
+                <img 
+                  src="/logos/stc.png" 
+                  alt="STC" 
+                  className="h-6 w-auto object-contain opacity-60 flex-shrink-0"
+                />
+                <img 
+                  src="/logos/40.png" 
+                  alt="40" 
+                  className="h-10 w-auto object-contain opacity-60 flex-shrink-0"
+                />
+                {/* Duplicate for seamless loop */}
+                <img 
+                  src="/logos/cemse.png" 
+                  alt="CEMSE" 
+                  className="h-8 w-auto object-contain opacity-60 flex-shrink-0"
+                />
+                <img 
+                  src="/logos/kallpa.png" 
+                  alt="Kallpa" 
+                  className="h-10 w-auto object-contain opacity-60 flex-shrink-0"
+                />
+                <img 
+                  src="/logos/manqa.png" 
+                  alt="Manqa" 
+                  className="h-12 w-auto object-contain opacity-60 flex-shrink-0"
+                />
+                <img 
+                  src="/logos/childfund.png" 
+                  alt="ChildFund" 
+                  className="h-8 w-auto object-contain opacity-60 flex-shrink-0"
+                />
+                <img 
+                  src="/logos/stc.png" 
+                  alt="STC" 
+                  className="h-6 w-auto object-contain opacity-60 flex-shrink-0"
+                />
+                <img 
+                  src="/logos/40.png" 
+                  alt="40" 
+                  className="h-10 w-auto object-contain opacity-60 flex-shrink-0"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile: Auto-scrolling carousel - Socios estratégicos */}
+          <div className="block sm:hidden">
+            <div className="overflow-hidden">
+              <div className="flex animate-scroll gap-3">
+                <img 
+                  src="/logos/bvlgari.png" 
+                  alt="Bulgari" 
+                  className="h-3 w-auto object-contain opacity-40 flex-shrink-0"
+                />
+                <img 
+                  src="/logos/stc.png" 
+                  alt="STC" 
+                  className="h-4 w-auto object-contain opacity-40 flex-shrink-0"
+                />
+                <img 
+                  src="/logos/40.png" 
+                  alt="40" 
+                  className="h-6 w-auto object-contain opacity-40 flex-shrink-0"
+                />
+                <img 
+                  src="/logos/maria.png" 
+                  alt="Maria" 
+                  className="h-3 w-auto object-contain opacity-40 flex-shrink-0"
+                />
+                <img 
+                  src="/logos/childfund.png" 
+                  alt="ChildFund" 
+                  className="h-5 w-auto object-contain opacity-40 flex-shrink-0"
+                />
+                {/* Duplicate for seamless loop */}
+                <img 
+                  src="/logos/bvlgari.png" 
+                  alt="Bulgari" 
+                  className="h-3 w-auto object-contain opacity-40 flex-shrink-0"
+                />
+                <img 
+                  src="/logos/stc.png" 
+                  alt="STC" 
+                  className="h-4 w-auto object-contain opacity-40 flex-shrink-0"
+                />
+                <img 
+                  src="/logos/40.png" 
+                  alt="40" 
+                  className="h-6 w-auto object-contain opacity-40 flex-shrink-0"
+                />
+                <img 
+                  src="/logos/maria.png" 
+                  alt="Maria" 
+                  className="h-3 w-auto object-contain opacity-40 flex-shrink-0"
+                />
+                <img 
+                  src="/logos/childfund.png" 
+                  alt="ChildFund" 
+                  className="h-5 w-auto object-contain opacity-40 flex-shrink-0"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop: Static layout - Primer plano */}
+          <div className="hidden sm:flex justify-center items-center gap-1.5 md:gap-2 lg:gap-3 mb-6 sm:mb-8">
             <img 
               src="/logos/cemse.png" 
               alt="CEMSE" 
-              className="h-8 md:h-10 w-auto opacity-60 hover:opacity-100 transition-opacity duration-300"
+              className="h-8 md:h-10 lg:h-12 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
             />
             <img 
               src="/logos/kallpa.png" 
               alt="Kallpa" 
-              className="h-8 md:h-10 w-auto opacity-60 hover:opacity-100 transition-opacity duration-300"
+              className="h-10 md:h-12 lg:h-14 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
             />
             <img 
               src="/logos/manqa.png" 
               alt="Manqa" 
-              className="h-8 md:h-10 w-auto opacity-60 hover:opacity-100 transition-opacity duration-300"
+              className="h-12 md:h-14 lg:h-16 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
             />
             <img 
               src="/logos/childfund.png" 
               alt="ChildFund" 
-              className="h-8 md:h-10 w-auto opacity-60 hover:opacity-100 transition-opacity duration-300"
-            />
-            <img 
-              src="/logos/bvlgari.png" 
-              alt="Bulgari" 
-              className="h-8 md:h-10 w-auto opacity-60 hover:opacity-100 transition-opacity duration-300"
+              className="h-8 md:h-10 lg:h-12 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
             />
             <img 
               src="/logos/stc.png" 
               alt="STC" 
-              className="h-8 md:h-10 w-auto opacity-60 hover:opacity-100 transition-opacity duration-300"
+              className="h-6 md:h-8 lg:h-10 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
             />
             <img 
               src="/logos/40.png" 
               alt="40" 
-              className="h-8 md:h-10 w-auto opacity-60 hover:opacity-100 transition-opacity duration-300"
+              className="h-10 md:h-12 lg:h-14 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
+            />
+          </div>
+
+          {/* Desktop: Static layout - Socios estratégicos */}
+          <div className="hidden sm:flex justify-center items-center gap-1.5 md:gap-2 lg:gap-3">
+            <img 
+              src="/logos/bvlgari.png" 
+              alt="Bulgari" 
+              className="h-3 md:h-4 w-auto object-contain opacity-40 hover:opacity-60 transition-opacity duration-300"
+            />
+            <img 
+              src="/logos/stc.png" 
+              alt="STC" 
+              className="h-4 md:h-6 lg:h-8 w-auto object-contain opacity-40 hover:opacity-60 transition-opacity duration-300"
+            />
+            <img 
+              src="/logos/40.png" 
+              alt="40" 
+              className="h-8 md:h-10 lg:h-12 w-auto object-contain opacity-40 hover:opacity-60 transition-opacity duration-300"
+            />
+            <img 
+              src="/logos/maria.png" 
+              alt="Maria" 
+              className="h-3 md:h-4 lg:h-6 w-auto object-contain opacity-40 hover:opacity-60 transition-opacity duration-300"
+            />
+            <img 
+              src="/logos/childfund.png" 
+              alt="ChildFund" 
+              className="h-6 md:h-8 lg:h-10 w-auto object-contain opacity-40 hover:opacity-60 transition-opacity duration-300"
             />
           </div>
         </div>
