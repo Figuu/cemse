@@ -792,65 +792,89 @@ export default function Home() {
           <div className="block sm:hidden mb-6">
             <div className="overflow-hidden">
               <div className="flex animate-scroll gap-4">
-                <img 
+                <Image 
                   src="/logos/cemse.png" 
                   alt="CEMSE" 
+                  width={200}
+                  height={200}
                   className="h-8 w-auto object-contain opacity-60 flex-shrink-0"
                 />
-                <img 
+                <Image 
                   src="/logos/kallpa.png" 
                   alt="Kallpa" 
+                  width={200}
+                  height={200}
                   className="h-10 w-auto object-contain opacity-60 flex-shrink-0"
                 />
-                <img 
+                <Image 
                   src="/logos/manqa.png" 
                   alt="Manqa" 
+                  width={200}
+                  height={200}
                   className="h-12 w-auto object-contain opacity-60 flex-shrink-0"
                 />
-                <img 
+                <Image 
                   src="/logos/childfund.png" 
                   alt="ChildFund" 
+                  width={200}
+                  height={200}
                   className="h-8 w-auto object-contain opacity-60 flex-shrink-0"
                 />
-                <img 
+                <Image 
                   src="/logos/stc.png" 
                   alt="STC" 
+                  width={200}
+                  height={200}
                   className="h-6 w-auto object-contain opacity-60 flex-shrink-0"
                 />
-                <img 
+                <Image 
                   src="/logos/40.png" 
                   alt="40" 
+                  width={200}
+                  height={200}
                   className="h-10 w-auto object-contain opacity-60 flex-shrink-0"
                 />
                 {/* Duplicate for seamless loop */}
-                <img 
+                <Image 
                   src="/logos/cemse.png" 
                   alt="CEMSE" 
+                  width={200}
+                  height={200}
                   className="h-8 w-auto object-contain opacity-60 flex-shrink-0"
                 />
-                <img 
+                <Image 
                   src="/logos/kallpa.png" 
                   alt="Kallpa" 
+                  width={200}
+                  height={200}
                   className="h-10 w-auto object-contain opacity-60 flex-shrink-0"
                 />
-                <img 
+                <Image 
                   src="/logos/manqa.png" 
                   alt="Manqa" 
+                  width={200}
+                  height={200}
                   className="h-12 w-auto object-contain opacity-60 flex-shrink-0"
                 />
-                <img 
+                <Image 
                   src="/logos/childfund.png" 
                   alt="ChildFund" 
+                  width={200}
+                  height={200}
                   className="h-8 w-auto object-contain opacity-60 flex-shrink-0"
                 />
-                <img 
+                <Image 
                   src="/logos/stc.png" 
                   alt="STC" 
+                  width={200}
+                  height={200}
                   className="h-6 w-auto object-contain opacity-60 flex-shrink-0"
                 />
-                <img 
+                <Image 
                   src="/logos/40.png" 
                   alt="40" 
+                  width={200}
+                  height={200}
                   className="h-10 w-auto object-contain opacity-60 flex-shrink-0"
                 />
               </div>
@@ -861,55 +885,75 @@ export default function Home() {
           <div className="block sm:hidden">
             <div className="overflow-hidden">
               <div className="flex animate-scroll gap-3">
-                <img 
+                <Image 
                   src="/logos/bvlgari.png" 
                   alt="Bulgari" 
+                  width={200}
+                  height={200}
                   className="h-3 w-auto object-contain opacity-40 flex-shrink-0"
                 />
-                <img 
+                <Image 
                   src="/logos/stc.png" 
                   alt="STC" 
+                  width={200}
+                  height={200}
                   className="h-4 w-auto object-contain opacity-40 flex-shrink-0"
                 />
-                <img 
+                <Image 
                   src="/logos/40.png" 
                   alt="40" 
+                  width={200}
+                  height={200}
                   className="h-6 w-auto object-contain opacity-40 flex-shrink-0"
                 />
-                <img 
+                <Image 
                   src="/logos/maria.png" 
                   alt="Maria" 
+                  width={200}
+                  height={200}
                   className="h-3 w-auto object-contain opacity-40 flex-shrink-0"
                 />
-                <img 
+                <Image 
                   src="/logos/childfund.png" 
                   alt="ChildFund" 
+                  width={200}
+                  height={200}
                   className="h-5 w-auto object-contain opacity-40 flex-shrink-0"
                 />
                 {/* Duplicate for seamless loop */}
-                <img 
+                <Image 
                   src="/logos/bvlgari.png" 
                   alt="Bulgari" 
+                  width={200}
+                  height={200}
                   className="h-3 w-auto object-contain opacity-40 flex-shrink-0"
                 />
-                <img 
+                <Image 
                   src="/logos/stc.png" 
                   alt="STC" 
+                  width={200}
+                  height={200}
                   className="h-4 w-auto object-contain opacity-40 flex-shrink-0"
                 />
-                <img 
+                <Image 
                   src="/logos/40.png" 
                   alt="40" 
+                  width={200}
+                  height={200}
                   className="h-6 w-auto object-contain opacity-40 flex-shrink-0"
                 />
-                <img 
+                <Image 
                   src="/logos/maria.png" 
                   alt="Maria" 
+                  width={200}
+                  height={200}
                   className="h-3 w-auto object-contain opacity-40 flex-shrink-0"
                 />
-                <img 
+                <Image 
                   src="/logos/childfund.png" 
                   alt="ChildFund" 
+                  width={200}
+                  height={200}
                   className="h-5 w-auto object-contain opacity-40 flex-shrink-0"
                 />
               </div>
@@ -917,65 +961,87 @@ export default function Home() {
           </div>
 
           {/* Desktop: Static layout - Primer plano */}
-          <div className="hidden sm:flex justify-center items-center gap-1.5 md:gap-2 lg:gap-3 mb-6 sm:mb-8">
-            <img 
+          <div className="hidden sm:flex justify-center items-center gap-3 md:gap-4 lg:gap-6 mb-6 sm:mb-8">
+            <Image 
               src="/logos/cemse.png" 
               alt="CEMSE" 
-              className="h-8 md:h-10 lg:h-12 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
+              width={200}
+              height={200}
+              className="h-14 md:h-16 lg:h-18 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
             />
-            <img 
+            <Image 
               src="/logos/kallpa.png" 
               alt="Kallpa" 
-              className="h-10 md:h-12 lg:h-14 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
+              width={200}
+              height={200}
+              className="h-16 md:h-18 lg:h-20 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
             />
-            <img 
+            <Image 
               src="/logos/manqa.png" 
               alt="Manqa" 
-              className="h-12 md:h-14 lg:h-16 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
+              width={200}
+              height={200}
+              className="h-16 md:h-18 lg:h-20 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
             />
-            <img 
+            <Image 
               src="/logos/childfund.png" 
               alt="ChildFund" 
+              width={200}
+              height={200}
               className="h-8 md:h-10 lg:h-12 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
             />
-            <img 
+            <Image 
               src="/logos/stc.png" 
               alt="STC" 
-              className="h-6 md:h-8 lg:h-10 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
+              width={200}
+              height={200}
+              className="h-12 md:h-14 lg:h-16 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
             />
-            <img 
+            <Image 
               src="/logos/40.png" 
               alt="40" 
-              className="h-10 md:h-12 lg:h-14 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
+              width={200}
+              height={200}
+              className="h-14 md:h-16 lg:h-18 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
             />
           </div>
 
           {/* Desktop: Static layout - Socios estratégicos */}
-          <div className="hidden sm:flex justify-center items-center gap-1.5 md:gap-2 lg:gap-3">
-            <img 
+          <div className="hidden sm:flex justify-center items-center gap-2 md:gap-3 lg:gap-4">
+            <Image 
               src="/logos/bvlgari.png" 
               alt="Bulgari" 
-              className="h-3 md:h-4 w-auto object-contain opacity-40 hover:opacity-60 transition-opacity duration-300"
+              width={200}
+              height={200}
+              className="h-4 md:h-5 lg:h-6 w-auto object-contain opacity-40 hover:opacity-60 transition-opacity duration-300"
             />
-            <img 
+            <Image 
               src="/logos/stc.png" 
               alt="STC" 
-              className="h-4 md:h-6 lg:h-8 w-auto object-contain opacity-40 hover:opacity-60 transition-opacity duration-300"
+              width={200}
+              height={200}
+              className="h-10 md:h-12 lg:h-14 w-auto object-contain opacity-40 hover:opacity-60 transition-opacity duration-300"
             />
-            <img 
+            <Image 
               src="/logos/40.png" 
               alt="40" 
-              className="h-8 md:h-10 lg:h-12 w-auto object-contain opacity-40 hover:opacity-60 transition-opacity duration-300"
+              width={200}
+              height={200}
+              className="h-10 md:h-12 lg:h-14 w-auto object-contain opacity-40 hover:opacity-60 transition-opacity duration-300"
             />
-            <img 
+            <Image 
               src="/logos/maria.png" 
               alt="Maria" 
-              className="h-3 md:h-4 lg:h-6 w-auto object-contain opacity-40 hover:opacity-60 transition-opacity duration-300"
+              width={200}
+              height={200}
+              className="h-6 md:h-8 lg:h-10 w-auto object-contain opacity-40 hover:opacity-60 transition-opacity duration-300"
             />
-            <img 
+            <Image 
               src="/logos/childfund.png" 
               alt="ChildFund" 
-              className="h-6 md:h-8 lg:h-10 w-auto object-contain opacity-40 hover:opacity-60 transition-opacity duration-300"
+              width={200}
+              height={200}
+              className="h-8 md:h-10 lg:h-12 w-auto object-contain opacity-40 hover:opacity-60 transition-opacity duration-300"
             />
           </div>
         </div>
