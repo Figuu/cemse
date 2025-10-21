@@ -25,18 +25,32 @@ export default function Home() {
     "/images/(2).JPG",
     "/images/(3).JPG",
     "/images/(4).JPG",
-    "/images/(5).jpg",
-    "/images/(6).jpg",
-    "/images/(7).jpg",
-    "/images/(8).jpg",
-    "/images/(9).jpg",
-    "/images/(10).jpg",
-    "/images/(11).jpg",
-    "/images/(12).jpg",
-    "/images/(13).jpg",
-    "/images/(14).jpg",
-    "/images/(15).jpg",
-    "/images/(16).jpg"
+    "/images/(5).JPG",
+    "/images/(6).JPG",
+    "/images/(7).JPG",
+    "/images/(8).JPG",
+    "/images/(9).JPG",
+    "/images/(10).JPG",
+    "/images/(11).JPG",
+    "/images/(12).JPG",
+    "/images/(13).JPG",
+    "/images/(14).JPG",
+    "/images/(15).JPG",
+    "/images/(16).JPG",
+    "/images/(17).JPG",
+    "/images/(18).JPG",
+    "/images/(19).JPG",
+    "/images/(20).JPG",
+    "/images/(21).JPG",
+    "/images/(22).JPG",
+    "/images/(23).JPG",
+    "/images/(24).JPG",
+    "/images/(25).JPG",
+    "/images/(26).JPG",
+    "/images/(27).JPG",
+    "/images/(28).JPG",
+    "/images/(29).JPG",
+    "/images/(30).JPG",
   ];
 
   // Fetch data for sections
@@ -490,6 +504,156 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Ejecutado por Section */}
+      <section className="py-8 sm:py-12 md:py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-8 sm:mb-10 md:mb-12">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
+              Ejecutado por:
+            </h2>
+          </div>
+
+          {/* Mobile: Auto-scrolling carousel - Primer plano */}
+          <div className="block sm:hidden">
+            <div className="overflow-hidden">
+              <div className="flex animate-scroll gap-4">
+                <Image
+                  src="/logos/cemse.png"
+                  alt="CEMSE"
+                  width={200}
+                  height={200}
+                  className="h-8 w-auto object-contain opacity-60 flex-shrink-0"
+                />
+                <Image
+                  src="/logos/kallpa.png"
+                  alt="Kallpa"
+                  width={200}
+                  height={200}
+                  className="h-10 w-auto object-contain opacity-60 flex-shrink-0"
+                />
+                <Image
+                  src="/logos/manqa.png"
+                  alt="Manqa"
+                  width={200}
+                  height={200}
+                  className="h-12 w-auto object-contain opacity-60 flex-shrink-0"
+                />
+                <Image
+                  src="/logos/childfund.png"
+                  alt="ChildFund"
+                  width={200}
+                  height={200}
+                  className="h-8 w-auto object-contain opacity-60 flex-shrink-0"
+                />
+                <Image
+                  src="/logos/stc.png"
+                  alt="STC"
+                  width={200}
+                  height={200}
+                  className="h-6 w-auto object-contain opacity-60 flex-shrink-0"
+                />
+                <Image
+                  src="/logos/40.png"
+                  alt="40"
+                  width={200}
+                  height={200}
+                  className="h-10 w-auto object-contain opacity-60 flex-shrink-0"
+                />
+                {/* Duplicate for seamless loop */}
+                <Image
+                  src="/logos/cemse.png"
+                  alt="CEMSE"
+                  width={200}
+                  height={200}
+                  className="h-8 w-auto object-contain opacity-60 flex-shrink-0"
+                />
+                <Image
+                  src="/logos/kallpa.png"
+                  alt="Kallpa"
+                  width={200}
+                  height={200}
+                  className="h-10 w-auto object-contain opacity-60 flex-shrink-0"
+                />
+                <Image
+                  src="/logos/manqa.png"
+                  alt="Manqa"
+                  width={200}
+                  height={200}
+                  className="h-12 w-auto object-contain opacity-60 flex-shrink-0"
+                />
+                <Image
+                  src="/logos/childfund.png"
+                  alt="ChildFund"
+                  width={200}
+                  height={200}
+                  className="h-8 w-auto object-contain opacity-60 flex-shrink-0"
+                />
+                <Image
+                  src="/logos/stc.png"
+                  alt="STC"
+                  width={200}
+                  height={200}
+                  className="h-6 w-auto object-contain opacity-60 flex-shrink-0"
+                />
+                <Image
+                  src="/logos/40.png"
+                  alt="40"
+                  width={200}
+                  height={200}
+                  className="h-10 w-auto object-contain opacity-60 flex-shrink-0"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop: Static layout - Primer plano */}
+          <div className="hidden sm:flex justify-center items-center gap-3 md:gap-4 lg:gap-6">
+            <Image
+              src="/logos/cemse.png"
+              alt="CEMSE"
+              width={200}
+              height={200}
+              className="h-14 md:h-16 lg:h-18 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
+            />
+            <Image
+              src="/logos/kallpa.png"
+              alt="Kallpa"
+              width={200}
+              height={200}
+              className="h-16 md:h-18 lg:h-20 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
+            />
+            <Image
+              src="/logos/manqa.png"
+              alt="Manqa"
+              width={200}
+              height={200}
+              className="h-16 md:h-18 lg:h-20 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
+            />
+            <Image
+              src="/logos/childfund.png"
+              alt="ChildFund"
+              width={200}
+              height={200}
+              className="h-8 md:h-10 lg:h-12 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
+            />
+            <Image
+              src="/logos/stc.png"
+              alt="STC"
+              width={200}
+              height={200}
+              className="h-12 md:h-14 lg:h-16 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
+            />
+            <Image
+              src="/logos/40.png"
+              alt="40"
+              width={200}
+              height={200}
+              className="h-14 md:h-16 lg:h-18 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
+            />
+          </div>
+        </div>
+      </section>
+
       {/* Bolsa de Empleo Section */}
       <section id="bolsa-empleo" className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -779,106 +943,13 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Partners Section */}
+      {/* Financiado por Section */}
       <section className="py-8 sm:py-12 md:py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8 sm:mb-10 md:mb-12">
             <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
-              Con el apoyo de:
+              Financiado por:
             </h2>
-          </div>
-          
-          {/* Mobile: Auto-scrolling carousel - Primer plano */}
-          <div className="block sm:hidden mb-6">
-            <div className="overflow-hidden">
-              <div className="flex animate-scroll gap-4">
-                <Image 
-                  src="/logos/cemse.png" 
-                  alt="CEMSE" 
-                  width={200}
-                  height={200}
-                  className="h-8 w-auto object-contain opacity-60 flex-shrink-0"
-                />
-                <Image 
-                  src="/logos/kallpa.png" 
-                  alt="Kallpa" 
-                  width={200}
-                  height={200}
-                  className="h-10 w-auto object-contain opacity-60 flex-shrink-0"
-                />
-                <Image 
-                  src="/logos/manqa.png" 
-                  alt="Manqa" 
-                  width={200}
-                  height={200}
-                  className="h-12 w-auto object-contain opacity-60 flex-shrink-0"
-                />
-                <Image 
-                  src="/logos/childfund.png" 
-                  alt="ChildFund" 
-                  width={200}
-                  height={200}
-                  className="h-8 w-auto object-contain opacity-60 flex-shrink-0"
-                />
-                <Image 
-                  src="/logos/stc.png" 
-                  alt="STC" 
-                  width={200}
-                  height={200}
-                  className="h-6 w-auto object-contain opacity-60 flex-shrink-0"
-                />
-                <Image 
-                  src="/logos/40.png" 
-                  alt="40" 
-                  width={200}
-                  height={200}
-                  className="h-10 w-auto object-contain opacity-60 flex-shrink-0"
-                />
-                {/* Duplicate for seamless loop */}
-                <Image 
-                  src="/logos/cemse.png" 
-                  alt="CEMSE" 
-                  width={200}
-                  height={200}
-                  className="h-8 w-auto object-contain opacity-60 flex-shrink-0"
-                />
-                <Image 
-                  src="/logos/kallpa.png" 
-                  alt="Kallpa" 
-                  width={200}
-                  height={200}
-                  className="h-10 w-auto object-contain opacity-60 flex-shrink-0"
-                />
-                <Image 
-                  src="/logos/manqa.png" 
-                  alt="Manqa" 
-                  width={200}
-                  height={200}
-                  className="h-12 w-auto object-contain opacity-60 flex-shrink-0"
-                />
-                <Image 
-                  src="/logos/childfund.png" 
-                  alt="ChildFund" 
-                  width={200}
-                  height={200}
-                  className="h-8 w-auto object-contain opacity-60 flex-shrink-0"
-                />
-                <Image 
-                  src="/logos/stc.png" 
-                  alt="STC" 
-                  width={200}
-                  height={200}
-                  className="h-6 w-auto object-contain opacity-60 flex-shrink-0"
-                />
-                <Image 
-                  src="/logos/40.png" 
-                  alt="40" 
-                  width={200}
-                  height={200}
-                  className="h-10 w-auto object-contain opacity-60 flex-shrink-0"
-                />
-              </div>
-            </div>
           </div>
 
           {/* Mobile: Auto-scrolling carousel - Socios estratégicos */}
@@ -958,52 +1029,6 @@ export default function Home() {
                 />
               </div>
             </div>
-          </div>
-
-          {/* Desktop: Static layout - Primer plano */}
-          <div className="hidden sm:flex justify-center items-center gap-3 md:gap-4 lg:gap-6 mb-6 sm:mb-8">
-            <Image 
-              src="/logos/cemse.png" 
-              alt="CEMSE" 
-              width={200}
-              height={200}
-              className="h-14 md:h-16 lg:h-18 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
-            />
-            <Image 
-              src="/logos/kallpa.png" 
-              alt="Kallpa" 
-              width={200}
-              height={200}
-              className="h-16 md:h-18 lg:h-20 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
-            />
-            <Image 
-              src="/logos/manqa.png" 
-              alt="Manqa" 
-              width={200}
-              height={200}
-              className="h-16 md:h-18 lg:h-20 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
-            />
-            <Image 
-              src="/logos/childfund.png" 
-              alt="ChildFund" 
-              width={200}
-              height={200}
-              className="h-8 md:h-10 lg:h-12 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
-            />
-            <Image 
-              src="/logos/stc.png" 
-              alt="STC" 
-              width={200}
-              height={200}
-              className="h-12 md:h-14 lg:h-16 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
-            />
-            <Image 
-              src="/logos/40.png" 
-              alt="40" 
-              width={200}
-              height={200}
-              className="h-14 md:h-16 lg:h-18 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
-            />
           </div>
 
           {/* Desktop: Static layout - Socios estratégicos */}
