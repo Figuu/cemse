@@ -131,118 +131,24 @@ export default function Home() {
       {/* Partner Logos Section */}
       <section className="py-4 sm:py-6 bg-gray-50 border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Mobile: Auto-scrolling carousel */}
+          {/* Mobile: Static layout - Solo logo gob */}
           <div className="block sm:hidden">
-            <div className="overflow-hidden">
-              <div className="flex animate-scroll gap-6">
-                <Image
-                  src="/logos/gob.png"
-                  alt="Gobierno"
-                  width={200}
-                  height={200}
-                  className="h-12 w-auto object-contain opacity-70 flex-shrink-0"
-                />
-                <Image
-                  src="/logos/cocha.png"
-                  alt="Cochabamba"
-                  width={200}
-                  height={200}
-                  className="h-12 max-w-[120px] object-contain opacity-70 flex-shrink-0"
-                />
-                <Image
-                  src="/logos/sacaba.png"
-                  alt="Sacaba"
-                  width={200}
-                  height={200}
-                  className="h-12 w-auto object-contain opacity-70 flex-shrink-0"
-                />
-                <Image
-                  src="/logos/tiquipaya.png"
-                  alt="Tiquipaya"
-                  width={200}
-                  height={200}
-                  className="h-12 w-auto object-contain opacity-70 flex-shrink-0"
-                />
-                <Image
-                  src="/logos/quillacollo.png"
-                  alt="Quillacollo"
-                  width={200}
-                  height={200}
-                  className="h-12 w-auto object-contain opacity-70 flex-shrink-0"
-                />
-                {/* Duplicate for seamless loop */}
-                <Image
-                  src="/logos/gob.png"
-                  alt="Gobierno"
-                  width={200}
-                  height={200}
-                  className="h-12 w-auto object-contain opacity-70 flex-shrink-0"
-                />
-                <Image
-                  src="/logos/cocha.png"
-                  alt="Cochabamba"
-                  width={200}
-                  height={200}
-                  className="h-12 max-w-[120px] object-contain opacity-70 flex-shrink-0"
-                />
-                <Image
-                  src="/logos/sacaba.png"
-                  alt="Sacaba"
-                  width={200}
-                  height={200}
-                  className="h-12 w-auto object-contain opacity-70 flex-shrink-0"
-                />
-                <Image
-                  src="/logos/tiquipaya.png"
-                  alt="Tiquipaya"
-                  width={200}
-                  height={200}
-                  className="h-12 w-auto object-contain opacity-70 flex-shrink-0"
-                />
-                <Image
-                  src="/logos/quillacollo.png"
-                  alt="Quillacollo"
-                  width={200}
-                  height={200}
-                  className="h-12 w-auto object-contain opacity-70 flex-shrink-0"
-                />
-              </div>
+            <div className="flex justify-center items-center">
+              <Image
+                src="/logos/gob.png"
+                alt="Gobierno"
+                width={200}
+                height={200}
+                className="h-12 w-auto object-contain opacity-70"
+              />
             </div>
           </div>
           
-          {/* Desktop: Static layout */}
-          <div className="hidden sm:flex justify-center items-center gap-2 md:gap-3 lg:gap-4">
+          {/* Desktop: Static layout - Solo logo gob */}
+          <div className="hidden sm:flex justify-center items-center">
             <Image
               src="/logos/gob.png"
               alt="Gobierno"
-              width={200}
-              height={200}
-              className="h-10 md:h-12 lg:h-14 w-auto object-contain opacity-70 hover:opacity-100 transition-opacity duration-300"
-            />
-            <Image
-              src="/logos/cocha.png"
-              alt="Cochabamba"
-              width={200}
-              height={200}
-              className="h-10 md:h-12 lg:h-14 max-w-[100px] md:max-w-[120px] lg:max-w-[140px] object-contain opacity-70 hover:opacity-100 transition-opacity duration-300"
-            />
-            <Image
-              src="/logos/sacaba.png"
-              alt="Sacaba"
-              width={200}
-              height={200}
-              className="h-10 md:h-12 lg:h-14 w-auto object-contain opacity-70 hover:opacity-100 transition-opacity duration-300"
-            />
-            <Image
-              src="/logos/tiquipaya.png"
-              alt="Tiquipaya"
-              width={200}
-              height={200}
-              className="h-10 md:h-12 lg:h-14 w-auto object-contain opacity-70 hover:opacity-100 transition-opacity duration-300"
-            />
-            <Image
-              src="/logos/quillacollo.png"
-              alt="Quillacollo"
               width={200}
               height={200}
               className="h-10 md:h-12 lg:h-14 w-auto object-contain opacity-70 hover:opacity-100 transition-opacity duration-300"
