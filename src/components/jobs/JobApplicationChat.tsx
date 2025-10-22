@@ -66,8 +66,9 @@ export function JobApplicationChat({
   const [isMinimized, setIsMinimized] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Fetch messages for this application - only by contextId (jobOfferId)
+  // Fetch messages for this application - by contextId and recipientId
   const { data: messagesData, isLoading: messagesLoading } = useMessages({
+    recipientId: applicant.id,
     contextType: 'JOB_APPLICATION',
     contextId: jobId,
   });
@@ -83,11 +84,17 @@ export function JobApplicationChat({
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!message.trim() || sendMessageMutation.isPending) return;
 
     const messageText = message.trim();
     setMessage("");
+
+    console.log("JobApplicationChat - Sending message with:", {
+      recipientId: applicant.id,
+      contextType: 'JOB_APPLICATION',
+      contextId: jobId,
+    });
 
     try {
       await sendMessageMutation.mutateAsync({

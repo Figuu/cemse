@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useSession } from "next-auth/react";
+import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -106,8 +107,38 @@ function JobsPageContent() {
   };
 
   const applyToJob = async (jobId: string, applicationData: any) => {
-    // TODO: Implement job application functionality
-    console.log('Applying to job:', jobId, applicationData);
+    try {
+      // Find the job to get the company ID
+      const job = jobs.find(j => j.id === jobId);
+      if (!job) {
+        throw new Error("Job not found");
+      }
+
+      const companyId = job.companyId;
+
+      const response = await fetch(`/api/companies/${companyId}/jobs/${jobId}/applications`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(applicationData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to submit application');
+      }
+
+      const application = await response.json();
+
+      // Refetch jobs to update application status
+      await refetch();
+
+      return application;
+    } catch (error) {
+      console.error('Error applying to job:', error);
+      throw error;
+    }
   };
 
 
@@ -137,13 +168,15 @@ function JobsPageContent() {
 
   const handleApplicationSubmit = async (applicationData: Record<string, unknown>) => {
     if (!selectedJob) return;
-    
+
     try {
       await applyToJob(selectedJob.id, applicationData);
+      toast.success("¡Aplicación enviada exitosamente!");
       setShowApplicationForm(false);
       setSelectedJob(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error applying to job:", error);
+      toast.error(error?.message || "Error al enviar la aplicación. Por favor, intenta de nuevo.");
     }
   };
 
@@ -232,12 +265,12 @@ function JobsPageContent() {
     >
       <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
-        <div>
-          <h1 className="text-xl font-bold text-foreground sm:text-2xl">
+      <div className="flex flex-col space-y-4 xl:flex-row xl:items-start xl:justify-between xl:space-y-0">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl font-bold text-foreground sm:text-2xl xl:text-3xl">
             {isCompany ? "Gestionar Trabajos" : isAdmin ? "Administrar Ofertas de Trabajo" : "Ofertas de Trabajo"}
           </h1>
-          <p className="text-sm text-muted-foreground sm:text-base">
+          <p className="text-sm text-muted-foreground sm:text-base mt-1">
             {isCompany 
               ? "Administra y publica ofertas de trabajo para tu empresa"
               : isAdmin 
@@ -246,7 +279,7 @@ function JobsPageContent() {
             }
           </p>
         </div>
-        <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-2">
+        <div className="flex flex-col space-y-3 xl:flex-row xl:items-center xl:space-y-0 xl:space-x-3 xl:flex-shrink-0">
           <div className="flex items-center space-x-2">
             {isCompany && (
               <>
@@ -308,48 +341,56 @@ function JobsPageContent() {
 
       {/* Company Stats Section */}
       {isCompany && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          <Card>
-            <CardContent className="p-3 sm:p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Briefcase className="h-4 w-4 text-blue-600" />
-                <span className="text-xs sm:text-sm font-medium">Mis Trabajos</span>
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 xl:gap-6">
+          <Card className="hover:shadow-md transition-shadow">
+            <CardContent className="p-4 xl:p-6">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Briefcase className="h-5 w-5 text-blue-600" />
+                </div>
+                <span className="text-sm xl:text-base font-medium">Mis Trabajos</span>
               </div>
-              <p className="text-lg sm:text-2xl font-bold">{filteredJobs.length}</p>
+              <p className="text-2xl xl:text-3xl font-bold text-blue-600">{filteredJobs.length}</p>
             </CardContent>
           </Card>
           
-          <Card>
-            <CardContent className="p-3 sm:p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Users className="h-4 w-4 text-green-600" />
-                <span className="text-xs sm:text-sm font-medium">Aplicaciones</span>
+          <Card className="hover:shadow-md transition-shadow">
+            <CardContent className="p-4 xl:p-6">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <Users className="h-5 w-5 text-green-600" />
+                </div>
+                <span className="text-sm xl:text-base font-medium">Aplicaciones</span>
               </div>
-              <p className="text-lg sm:text-2xl font-bold">
+              <p className="text-2xl xl:text-3xl font-bold text-green-600">
                 {safeSum(filteredJobs.map(job => job._count?.applications || 0))}
               </p>
             </CardContent>
           </Card>
           
-          <Card>
-            <CardContent className="p-3 sm:p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Eye className="h-4 w-4 text-purple-600" />
-                <span className="text-xs sm:text-sm font-medium">Vistas</span>
+          <Card className="hover:shadow-md transition-shadow">
+            <CardContent className="p-4 xl:p-6">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <Eye className="h-5 w-5 text-purple-600" />
+                </div>
+                <span className="text-sm xl:text-base font-medium">Vistas</span>
               </div>
-              <p className="text-lg sm:text-2xl font-bold">
+              <p className="text-2xl xl:text-3xl font-bold text-purple-600">
                 {safeSum(filteredJobs.map(job => job.totalViews || 0))}
               </p>
             </CardContent>
           </Card>
           
-          <Card>
-            <CardContent className="p-3 sm:p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <BarChart3 className="h-4 w-4 text-orange-600" />
-                <span className="text-xs sm:text-sm font-medium">Activos</span>
+          <Card className="hover:shadow-md transition-shadow">
+            <CardContent className="p-4 xl:p-6">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 bg-orange-100 rounded-lg">
+                  <BarChart3 className="h-5 w-5 text-orange-600" />
+                </div>
+                <span className="text-sm xl:text-base font-medium">Activos</span>
               </div>
-              <p className="text-lg sm:text-2xl font-bold">
+              <p className="text-2xl xl:text-3xl font-bold text-orange-600">
                 {filteredJobs.filter(job => job.isActive).length}
               </p>
             </CardContent>
@@ -358,36 +399,38 @@ function JobsPageContent() {
       )}
 
       {/* Search and Filters */}
-      <div className="space-y-4">
+      <div className="space-y-4 xl:space-y-6">
         {/* Search Bar */}
-        <div className="relative">
+        <div className="relative max-w-2xl">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Buscar por título, empresa, habilidades..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className="pl-10 h-11 xl:h-12 text-sm xl:text-base"
           />
         </div>
 
         {/* Filters */}
         {showFilters && (
-          <JobFilters
-            filters={selectedFilters}
-            selectedMunicipality={selectedMunicipality}
-            onMunicipalityChange={setSelectedMunicipality}
-            municipalityInstitutions={municipalityInstitutions}
-            onFiltersChange={setSelectedFilters}
-            onClearFilters={clearFilters}
-          />
+          <div className="bg-gray-50 rounded-lg p-4 xl:p-6">
+            <JobFilters
+              filters={selectedFilters}
+              selectedMunicipality={selectedMunicipality}
+              onMunicipalityChange={setSelectedMunicipality}
+              municipalityInstitutions={municipalityInstitutions}
+              onFiltersChange={setSelectedFilters}
+              onClearFilters={clearFilters}
+            />
+          </div>
         )}
 
         {/* Sort */}
-        <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-          <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-2">
-            <Label htmlFor="sort" className="text-sm font-medium">Ordenar por:</Label>
+        <div className="flex flex-col space-y-3 xl:flex-row xl:items-center xl:justify-between xl:space-y-0">
+          <div className="flex flex-col space-y-2 xl:flex-row xl:items-center xl:space-y-0 xl:space-x-3">
+            <Label htmlFor="sort" className="text-sm xl:text-base font-medium">Ordenar por:</Label>
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-full sm:w-48">
+              <SelectTrigger className="w-full xl:w-56 h-11 xl:h-12">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -398,6 +441,9 @@ function JobsPageContent() {
                 <SelectItem value="title">Título A-Z</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div className="text-sm xl:text-base text-muted-foreground">
+            Mostrando {filteredJobs.length} {filteredJobs.length === 1 ? 'oferta' : 'ofertas'}
           </div>
         </div>
       </div>
@@ -436,8 +482,8 @@ function JobsPageContent() {
       ) : (
         <div className={
           viewMode === "grid"
-            ? "grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3"
-            : "space-y-3 sm:space-y-4"
+            ? "grid grid-cols-1 gap-4 sm:gap-6 lg:gap-8 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3"
+            : "space-y-4 sm:space-y-6 lg:space-y-8"
         }>
           {filteredJobs.map(job => {
             const applicationStatus = getApplicationStatus(job.id);

@@ -78,6 +78,8 @@ export async function GET(request: NextRequest) {
           },
           lastMessage: null,
           unreadCount: 0,
+          contextId: message.contextId, // Add contextId from the message
+          contextType: message.contextType, // Add contextType from the message
         });
       }
 

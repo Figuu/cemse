@@ -64,6 +64,7 @@ export async function GET(
     const transformedJob = {
       id: job.id,
       title: job.title,
+      companyId: job.companyId,
       description: job.description,
       requirements: job.requirements ? job.requirements.split('\n').filter(r => r.trim()) : [],
       responsibilities: (job as any).responsibilities || [],

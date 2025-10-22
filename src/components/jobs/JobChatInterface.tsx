@@ -1,15 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { 
-  MessageSquare, 
-  X, 
-  User, 
+import {
+  MessageSquare,
+  X,
+  User,
   MessageCircle,
   Loader2,
   Check,
@@ -54,10 +54,11 @@ interface ApplicationWithMessages {
   hasMessages: boolean;
   status: string;
   appliedAt: string;
+  jobId?: string; // Add jobId to track which job this application belongs to
 }
 
-export function JobChatInterface({ 
-  jobId, 
+export function JobChatInterface({
+  jobId,
   className,
   children,
   selectedApplicationId,
@@ -68,6 +69,7 @@ export function JobChatInterface({
   const [showChat, setShowChat] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState<ApplicationWithMessages | null>(null);
   const [applicationsWithMessages, setApplicationsWithMessages] = useState<ApplicationWithMessages[]>([]);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Fetch conversations for this job
   const { data: conversationsData, isLoading: conversationsLoading } = useConversations({
@@ -75,11 +77,13 @@ export function JobChatInterface({
     contextId: jobId,
   });
 
-  // Fetch messages for selected application
+  // Fetch messages for selected application - use jobId from selected application if available
+  const currentJobId = selectedApplication?.jobId || jobId;
+
   const { data: messagesData, isLoading: messagesLoading } = useMessages({
     recipientId: selectedApplication?.applicantId || selectedApplicationId,
     contextType: 'JOB_APPLICATION',
-    contextId: jobId,
+    contextId: currentJobId,
   });
 
   const sendMessage = useSendMessage();
@@ -98,9 +102,10 @@ export function JobChatInterface({
           hasMessages: true,
           status: 'APPLIED', // Default status
           appliedAt: conv.lastMessage?.createdAt || new Date().toISOString(),
+          jobId: conv.contextId, // Get jobId from the conversation context
         };
       });
-      
+
       setApplicationsWithMessages(applicationsWithMsgs);
     }
   }, [conversationsData]);
@@ -137,17 +142,33 @@ export function JobChatInterface({
 
   const messages = messagesData?.messages || [];
 
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
+
   const handleSendMessage = async (e: React.FormEvent, message: string) => {
     e.preventDefault();
-    
+
     if (!message.trim() || !selectedApplication || sendMessage.isPending) return;
+
+    // Use the jobId from the selected application if available, otherwise use the prop jobId
+    const messageJobId = selectedApplication.jobId || jobId;
+
+    // Don't send if we don't have a valid jobId
+    if (!messageJobId) {
+      console.error("Cannot send message: no jobId available");
+      return;
+    }
 
     try {
       await sendMessage.mutateAsync({
         recipientId: selectedApplication.applicantId,
         content: message.trim(),
         contextType: 'JOB_APPLICATION',
-        contextId: jobId,
+        contextId: messageJobId,
       });
     } catch (error) {
       console.error("Error sending message:", error);
@@ -400,6 +421,7 @@ export function JobChatInterface({
                           );
                         })
                       )}
+                      <div ref={messagesEndRef} />
                     </div>
                   </ScrollArea>
 

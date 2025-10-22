@@ -103,10 +103,10 @@ export function JobCard({
 
   if (variant === "compact") {
     return (
-      <Card className="hover:shadow-md transition-shadow">
+      <Card className="hover:shadow-md transition-shadow h-full">
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
-            <Avatar className="h-10 w-10">
+            <Avatar className="h-10 w-10 flex-shrink-0">
               <AvatarImage src={job.company.logo} />
               <AvatarFallback>
                 <Building2 className="h-5 w-5" />
@@ -116,7 +116,7 @@ export function JobCard({
               <div className="flex items-center gap-2 mb-1">
                 <h3 className="font-semibold truncate">{job.title}</h3>
                 {job.isUrgent && (
-                  <Badge variant="destructive" className="text-xs">
+                  <Badge variant="destructive" className="text-xs flex-shrink-0">
                     Urgente
                   </Badge>
                 )}
@@ -125,12 +125,12 @@ export function JobCard({
                 {job.company.name} • <MapPin className="inline h-3 w-3 mr-1" />{job.location}
               </p>
               <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                <span><Briefcase className="inline h-3 w-3 mr-1" />{EmploymentTypeLabels[job.employmentType]}</span>
-                <span>{ExperienceLevelLabels[job.experienceLevel]}</span>
-                <span>{job.totalApplications} aplicaciones</span>
+                <span className="truncate"><Briefcase className="inline h-3 w-3 mr-1" />{EmploymentTypeLabels[job.employmentType]}</span>
+                <span className="truncate">{ExperienceLevelLabels[job.experienceLevel]}</span>
+                <span className="truncate">{job.totalApplications} aplicaciones</span>
               </div>
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 flex-shrink-0">
               <Button
                 variant="ghost"
                 size="sm"
@@ -154,38 +154,38 @@ export function JobCard({
 
   if (variant === "featured") {
     return (
-      <Card className="hover:shadow-lg transition-shadow group border-2 border-primary/20">
-        <CardHeader className="pb-3">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
-              <Avatar className="h-12 w-12">
+      <Card className="hover:shadow-lg transition-shadow group border-2 border-primary/20 h-full flex flex-col">
+        <CardHeader className="pb-3 flex-shrink-0">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <Avatar className="h-12 w-12 flex-shrink-0">
                 <AvatarImage src={job.company.logo} />
                 <AvatarFallback>
                   <Building2 className="h-6 w-6" />
                 </AvatarFallback>
               </Avatar>
-              <div>
+              <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 mb-1">
-                  <h3 className="text-lg font-semibold">{job.title}</h3>
+                  <h3 className="text-lg font-semibold truncate">{job.title}</h3>
                   {job.isUrgent && (
-                    <Badge variant="destructive" className="text-xs">
+                    <Badge variant="destructive" className="text-xs flex-shrink-0">
                       Urgente
                     </Badge>
                   )}
-                  <Badge variant="secondary" className="text-xs">
+                  <Badge variant="secondary" className="text-xs flex-shrink-0">
                     Destacado
                   </Badge>
                 </div>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foreground truncate">
                   {job.company.name} • <MapPin className="inline h-3 w-3 mr-1" />{job.location}
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground truncate">
                   <Calendar className="inline h-3 w-3 mr-1" />
                   {formatTimeAgo(job.createdAt)}
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-shrink-0">
               <Button
                 variant="ghost"
                 size="sm"
@@ -209,13 +209,13 @@ export function JobCard({
             </div>
           </div>
         </CardHeader>
-        <CardContent className="pt-0">
-          <div className="space-y-4">
-            <p className="text-sm leading-relaxed line-clamp-2">
+        <CardContent className="pt-0 flex-1 flex flex-col">
+          <div className="space-y-4 flex-1">
+            <p className="text-sm leading-relaxed line-clamp-2 min-h-[2.5rem]">
               {job.description}
             </p>
             
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 min-h-[1.5rem]">
               {job.skills.slice(0, 5).map((skill) => (
                 <Badge key={skill} variant="outline" className="text-xs">
                   {skill}
@@ -229,45 +229,45 @@ export function JobCard({
             </div>
             
             <div className="grid grid-cols-2 gap-4 text-sm">
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                <span>{EmploymentTypeLabels[job.employmentType]}</span>
+              <div className="flex items-center gap-2 min-w-0">
+                <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <span className="truncate">{EmploymentTypeLabels[job.employmentType]}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Star className="h-4 w-4 text-muted-foreground" />
-                <span>{ExperienceLevelLabels[job.experienceLevel]}</span>
+              <div className="flex items-center gap-2 min-w-0">
+                <Star className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <span className="truncate">{ExperienceLevelLabels[job.experienceLevel]}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Eye className="h-4 w-4 text-muted-foreground" />
-                <span>{job.totalViews} vistas</span>
+              <div className="flex items-center gap-2 min-w-0">
+                <Eye className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <span className="truncate">{job.totalViews} vistas</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-muted-foreground" />
-                <span>{job.totalApplications} aplicaciones</span>
+              <div className="flex items-center gap-2 min-w-0">
+                <Users className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <span className="truncate">{job.totalApplications} aplicaciones</span>
               </div>
             </div>
           </div>
           
-          <div className="flex items-center justify-between pt-4 border-t mt-4">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between pt-4 border-t mt-4 flex-shrink-0">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
               {!hasApplied ? (
-                <Button onClick={handleApply} disabled={!canInteract}>
+                <Button onClick={handleApply} disabled={!canInteract} className="flex-shrink-0">
                   Aplicar Ahora
                 </Button>
               ) : (
                 <Link href={`/applications/${applicationId}`}>
-                  <Button variant="outline">
+                  <Button variant="outline" className="flex-shrink-0">
                     Ver Aplicación
                   </Button>
                 </Link>
               )}
               <Link href={`/jobs/${job.id}`}>
-                <Button variant="outline">
+                <Button variant="outline" className="flex-shrink-0">
                   Ver Detalles
                 </Button>
               </Link>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-shrink-0 ml-2">
               <Link href={`/companies/${job.company.id}`}>
                 <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                   <ExternalLink className="h-4 w-4" />
@@ -281,32 +281,32 @@ export function JobCard({
   }
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <Avatar className="h-10 w-10">
+    <Card className="hover:shadow-md transition-shadow h-full flex flex-col">
+      <CardHeader className="pb-3 flex-shrink-0">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <Avatar className="h-10 w-10 flex-shrink-0">
               <AvatarImage src={job.company.logo} />
               <AvatarFallback>
                 <Building2 className="h-5 w-5" />
               </AvatarFallback>
             </Avatar>
-            <div className="flex-1">
+            <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 mb-1">
-                <h3 className="font-semibold text-sm">{job.title}</h3>
+                <h3 className="font-semibold text-sm lg:text-base truncate">{job.title}</h3>
                 {job.isUrgent && (
-                  <Badge variant="destructive" className="text-xs">
+                  <Badge variant="destructive" className="text-xs flex-shrink-0">
                     Urgente
                   </Badge>
                 )}
               </div>
-                <p className="text-xs text-muted-foreground">
-                  {job.company.name} • <MapPin className="inline h-3 w-3 mr-1" />{job.location}
-                </p>
+              <p className="text-xs lg:text-sm text-muted-foreground truncate">
+                {job.company.name} • <MapPin className="inline h-3 w-3 mr-1" />{job.location}
+              </p>
             </div>
           </div>
           
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 flex-shrink-0">
             <Button
               variant="ghost"
               size="sm"
@@ -329,55 +329,55 @@ export function JobCard({
         </div>
       </CardHeader>
 
-      <CardContent className="pt-0">
-        <div className="space-y-3">
-          <p className="text-sm leading-relaxed line-clamp-2">
+      <CardContent className="pt-0 flex-1 flex flex-col">
+        <div className="space-y-3 lg:space-y-4 flex-1">
+          <p className="text-sm lg:text-base leading-relaxed line-clamp-2 min-h-[2.5rem] lg:min-h-[3rem]">
             {job.description}
           </p>
           
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1 lg:gap-2 min-h-[1.5rem]">
             {job.skills.slice(0, 3).map((skill) => (
-              <Badge key={skill} variant="outline" className="text-xs">
+              <Badge key={skill} variant="outline" className="text-xs lg:text-sm">
                 {skill}
               </Badge>
             ))}
             {job.skills.length > 3 && (
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-xs lg:text-sm">
                 +{job.skills.length - 3}
               </Badge>
             )}
           </div>
           
-          <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Briefcase className="h-3 w-3" />
-              <span>{EmploymentTypeLabels[job.employmentType]}</span>
+          <div className="grid grid-cols-2 gap-2 lg:gap-3 text-xs lg:text-sm text-muted-foreground">
+            <div className="flex items-center gap-1 lg:gap-2 min-w-0">
+              <Briefcase className="h-3 w-3 lg:h-4 lg:w-4 flex-shrink-0" />
+              <span className="truncate">{EmploymentTypeLabels[job.employmentType]}</span>
             </div>
-            <div className="flex items-center gap-1">
-              <Star className="h-3 w-3" />
-              <span>{ExperienceLevelLabels[job.experienceLevel]}</span>
+            <div className="flex items-center gap-1 lg:gap-2 min-w-0">
+              <Star className="h-3 w-3 lg:h-4 lg:w-4 flex-shrink-0" />
+              <span className="truncate">{ExperienceLevelLabels[job.experienceLevel]}</span>
             </div>
-            <div className="flex items-center gap-1">
-              <Eye className="h-3 w-3" />
-              <span>{job.totalViews}</span>
+            <div className="flex items-center gap-1 lg:gap-2 min-w-0">
+              <Eye className="h-3 w-3 lg:h-4 lg:w-4 flex-shrink-0" />
+              <span className="truncate">{job.totalViews}</span>
             </div>
-            <div className="flex items-center gap-1">
-              <Users className="h-3 w-3" />
-              <span>{job.totalApplications}</span>
+            <div className="flex items-center gap-1 lg:gap-2 min-w-0">
+              <Users className="h-3 w-3 lg:h-4 lg:w-4 flex-shrink-0" />
+              <span className="truncate">{job.totalApplications}</span>
             </div>
           </div>
 
           {formatSalary() && (
-            <div className="flex items-center gap-1 text-sm font-medium text-green-600">
-              <DollarSign className="h-4 w-4" />
-              <span>{formatSalary()}</span>
+            <div className="flex items-center gap-1 lg:gap-2 text-sm lg:text-base font-medium text-green-600">
+              <DollarSign className="h-4 w-4 lg:h-5 lg:w-5 flex-shrink-0" />
+              <span className="truncate">{formatSalary()}</span>
             </div>
           )}
 
           {getWorkArrangements().length > 0 && (
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-1 lg:gap-2">
               {getWorkArrangements().map((arrangement) => (
-                <Badge key={arrangement} variant="secondary" className="text-xs">
+                <Badge key={arrangement} variant="secondary" className="text-xs lg:text-sm">
                   {arrangement}
                 </Badge>
               ))}
@@ -386,28 +386,28 @@ export function JobCard({
         </div>
 
         {showActions && (
-          <div className="flex items-center justify-between pt-3 border-t mt-3">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between pt-3 lg:pt-4 border-t mt-3 lg:mt-4 flex-shrink-0">
+            <div className="flex items-center gap-2 lg:gap-3 min-w-0 flex-1">
               {!hasApplied ? (
-                <Button size="sm" onClick={handleApply} disabled={!canInteract}>
+                <Button size="sm" onClick={handleApply} disabled={!canInteract} className="flex-shrink-0 text-xs lg:text-sm">
                   Aplicar
                 </Button>
               ) : (
                 <Link href={`/applications/${applicationId}`}>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" className="flex-shrink-0 text-xs lg:text-sm">
                     Ver Aplicación
                   </Button>
                 </Link>
               )}
               <Link href={`/jobs/${job.id}`}>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="flex-shrink-0 text-xs lg:text-sm">
                   Ver Detalles
                 </Button>
               </Link>
             </div>
-            <div className="text-xs text-muted-foreground">
-              <Calendar className="inline h-3 w-3 mr-1" />
-              {formatTimeAgo(job.createdAt)}
+            <div className="text-xs lg:text-sm text-muted-foreground flex-shrink-0 ml-2">
+              <Calendar className="inline h-3 w-3 lg:h-4 lg:w-4 mr-1" />
+              <span className="truncate">{formatTimeAgo(job.createdAt)}</span>
             </div>
           </div>
         )}

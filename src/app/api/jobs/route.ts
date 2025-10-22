@@ -117,6 +117,7 @@ export async function GET(request: NextRequest) {
     const transformedJobs = jobs.map((job: any) => ({
       id: job.id,
       title: job.title,
+      companyId: job.companyId,
       company: {
         id: job.company.id,
         name: job.company.name,

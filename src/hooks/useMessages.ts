@@ -52,6 +52,8 @@ export interface Conversation {
     isRead: boolean;
   };
   unreadCount: number;
+  contextId?: string;
+  contextType?: string;
 }
 
 export function useMessages({

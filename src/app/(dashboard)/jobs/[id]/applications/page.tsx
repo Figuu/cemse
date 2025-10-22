@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -49,6 +49,7 @@ export default function JobApplicationsPage() {
   const [selectedChatUser, setSelectedChatUser] = useState<JobApplication | null>(null);
   const [showChat, setShowChat] = useState(false);
   const [messageText, setMessageText] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Get the company for the current user
   const { data: company, isLoading: companyLoading } = useCompanyByUser(session?.user?.id || "");
@@ -103,8 +104,9 @@ export default function JobApplicationsPage() {
     setIsProfileModalOpen(true);
   };
 
-  // Get messages for the selected chat user - only by contextId (jobOfferId)
+  // Get messages for the selected chat user - by contextId and recipientId
   const { data: messagesData } = useMessages({
+    recipientId: selectedChatUser?.applicant?.user?.id,
     contextType: "JOB_APPLICATION",
     contextId: jobId,
     enabled: !!selectedChatUser,
@@ -112,16 +114,29 @@ export default function JobApplicationsPage() {
 
   const sendMessageMutation = useSendMessage();
 
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messagesData?.messages]);
+
   const handleSendMessage = () => {
     if (!messageText.trim() || !selectedChatUser) return;
-    
+
+    console.log("JobApplicationsPage - Sending message with:", {
+      recipientId: selectedChatUser.applicant.user.id,
+      contextType: "JOB_APPLICATION",
+      contextId: jobId,
+    });
+
     sendMessageMutation.mutate({
       recipientId: selectedChatUser.applicant.user.id,
       content: messageText,
       contextType: "JOB_APPLICATION",
       contextId: jobId,
     });
-    
+
     setMessageText("");
   };
 
@@ -727,6 +742,7 @@ export default function JobApplicationsPage() {
                         );
                       })
                     )}
+                    <div ref={messagesEndRef} />
                   </div>
                 </ScrollArea>
 
