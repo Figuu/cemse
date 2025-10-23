@@ -7,13 +7,13 @@
 # - git pull
 # - prisma migrate & generate
 # - restart docker backend
-# - restart emplea-y-emprende service
+# - restart cemse service
 # =============================================================================
 
 set -e  # Exit on any error
 
 # Configuration
-APP_NAME="emplea-y-emprende"
+APP_NAME="cemse"
 APP_PATH="/opt/$APP_NAME"
 
 # Colors for output
@@ -135,13 +135,13 @@ restart_services() {
     # Wait a moment for containers to be ready
     sleep 5
 
-    # Restart the emplea-y-emprende service (Next.js app)
+    # Restart the cemse service (Next.js app)
     log "Restarting Emplea y Emprende service..."
-    if systemctl is-active --quiet emplea-y-emprende 2>/dev/null; then
-        sudo systemctl restart emplea-y-emprende
+    if systemctl is-active --quiet cemse 2>/dev/null; then
+        sudo systemctl restart cemse
     else
         warn "Emplea y Emprende service not running, starting it..."
-        sudo systemctl start emplea-y-emprende
+        sudo systemctl start cemse
     fi
 
     success "Services restarted"
@@ -159,12 +159,12 @@ verify_update() {
         docker-compose ps
     fi
 
-    # Check emplea-y-emprende service
-    if systemctl is-active --quiet emplea-y-emprende 2>/dev/null; then
+    # Check cemse service
+    if systemctl is-active --quiet cemse 2>/dev/null; then
         success "Emplea y Emprende service is running"
     else
         error "Emplea y Emprende service failed to start"
-        warn "Check logs with: sudo journalctl -u emplea-y-emprende -f"
+        warn "Check logs with: sudo journalctl -u cemse -f"
     fi
 
     # Check if app is responding (wait a bit for startup)
@@ -173,7 +173,7 @@ verify_update() {
         success "Application is responding"
     else
         warn "Application health check failed, but this might be temporary"
-        warn "Check status with: sudo systemctl status emplea-y-emprende"
+        warn "Check status with: sudo systemctl status cemse"
     fi
 }
 
@@ -193,7 +193,7 @@ show_status() {
     echo ""
 
     log "🔧 Service Status:"
-    if systemctl is-active --quiet emplea-y-emprende 2>/dev/null; then
+    if systemctl is-active --quiet cemse 2>/dev/null; then
         echo "✅ Emplea y Emprende service: Running"
     else
         echo "❌ Emplea y Emprende service: Not running"
@@ -212,9 +212,9 @@ show_status() {
     echo ""
 
     log "📝 Useful Commands:"
-    echo "   - Check logs: sudo journalctl -u emplea-y-emprende -f"
-    echo "   - Check status: sudo systemctl status emplea-y-emprende"
-    echo "   - Manual restart: sudo systemctl restart emplea-y-emprende"
+    echo "   - Check logs: sudo journalctl -u cemse -f"
+    echo "   - Check status: sudo systemctl status cemse"
+    echo "   - Manual restart: sudo systemctl restart cemse"
     echo "   - Docker logs: docker-compose logs -f"
     echo ""
 }
@@ -265,7 +265,7 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
     echo "  - pnpm prisma generate"
     echo "  - pnpm prisma migrate deploy"
     echo "  - docker-compose restart"
-    echo "  - sudo systemctl restart emplea-y-emprende"
+    echo "  - sudo systemctl restart cemse"
     echo ""
     exit 0
 fi
