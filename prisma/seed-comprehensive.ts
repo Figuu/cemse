@@ -1290,7 +1290,9 @@ async function main() {
           questionId: question.id,
           answer: question.type === 'text' 
             ? 'Esta es mi respuesta detallada a la pregunta.'
-            : question.options?.[Math.floor(Math.random() * question.options.length)] || 'Opción seleccionada',
+            : Array.isArray(question.options) && question.options.length > 0
+              ? question.options[Math.floor(Math.random() * question.options.length)] as string
+              : 'Opción seleccionada',
         },
       });
     }
@@ -1432,7 +1434,8 @@ async function main() {
           where: { 
             email: institution.email,
             role: 'INSTITUTION'
-          }
+          },
+          include: { profile: true }
         });
         if (institutionUser) {
           authorUser = institutionUser;
@@ -1451,7 +1454,8 @@ async function main() {
           where: { 
             email: company.email,
             role: 'COMPANIES'
-          }
+          },
+          include: { profile: true }
         });
         if (companyUser) {
           authorUser = companyUser;
