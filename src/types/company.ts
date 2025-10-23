@@ -5,6 +5,7 @@ export interface Company {
   website?: string;
   logo?: string;
   industry?: string;
+  businessSector?: string;
   size?: CompanySize;
   location?: string;
   address?: string;

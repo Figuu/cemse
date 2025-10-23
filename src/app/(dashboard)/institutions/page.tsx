@@ -32,13 +32,18 @@ import { useSession } from "next-auth/react";
 interface Institution {
   id: string;
   name: string;
+  description: string;
   department: string;
   region?: string;
   institutionType: "MUNICIPALITY" | "NGO" | "TRAINING_CENTER" | "FOUNDATION" | "OTHER";
+  type: "MUNICIPALITY" | "NGO" | "TRAINING_CENTER";
+  city: string;
+  country: string;
   website?: string;
   phone?: string;
   email?: string;
   address?: string;
+  logoUrl?: string;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
