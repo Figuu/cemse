@@ -276,12 +276,13 @@ export default function ApplicationDetailPage() {
 
   return (
     <>
-      <div className={`space-y-6 ${showChat ? 'lg:mr-96' : ''}`}>
+      <div className={`space-y-6 transition-all duration-300 ${showChat ? 'mr-0 sm:mr-80 md:mr-80 lg:mr-80 xl:mr-96' : ''}`}>
       {/* Back Button */}
-      <Button variant="ghost" asChild>
+      <Button variant="ghost" asChild className="w-full sm:w-auto">
         <Link href="/applications">
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Volver a Aplicaciones
+          <span className="hidden sm:inline">Volver a Aplicaciones</span>
+          <span className="sm:hidden">Volver</span>
         </Link>
       </Button>
 
@@ -394,57 +395,57 @@ export default function ApplicationDetailPage() {
 
           {/* Desktop Layout */}
           <div className="hidden lg:block">
-            <div className="flex items-start space-x-6">
-              {/* Left Column - Company Info */}
-              <div className="flex-shrink-0 w-64">
-                <div className="flex items-center space-x-4 mb-4">
-                  <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <Building2 className="h-8 w-8 text-gray-600" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h1 className="text-2xl font-bold truncate">{application.jobTitle}</h1>
-                    <p className="text-lg text-muted-foreground truncate">{application.company}</p>
-                  </div>
+            {/* First Row - Title and Main Info */}
+            <div className="flex items-start justify-between mb-6">
+              <div className="flex items-start space-x-4 flex-1 min-w-0">
+                <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Building2 className="h-8 w-8 text-gray-600" />
                 </div>
-                
-                <div className="space-y-3">
-                  <div className="flex items-center text-muted-foreground">
-                    <MapPin className="h-4 w-4 mr-2 flex-shrink-0" />
-                    <span className="truncate">{application.location}</span>
-                  </div>
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <Clock className="h-4 w-4 mr-2 flex-shrink-0" />
-                    <span>Aplicado {formatDate(application.appliedDate)}</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Badge className={statusConfig[application.status].color}>
-                      <StatusIcon className="h-3 w-3 mr-1" />
-                      {statusConfig[application.status].label}
-                    </Badge>
-                    <Badge variant="outline" className={priorityConfig[application.priority].color}>
-                      {priorityConfig[application.priority].label}
-                    </Badge>
+                <div className="min-w-0 flex-1">
+                  <h1 className="text-xl xl:text-2xl font-bold leading-tight mb-2">{application.jobTitle}</h1>
+                  <p className="text-lg xl:text-xl text-muted-foreground leading-tight mb-3">{application.company}</p>
+                  <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                    <div className="flex items-center">
+                      <MapPin className="h-4 w-4 mr-1 flex-shrink-0" />
+                      <span>{application.location}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <Clock className="h-4 w-4 mr-1 flex-shrink-0" />
+                      <span>Aplicado {formatDate(application.appliedDate)}</span>
+                    </div>
                   </div>
                 </div>
               </div>
+              <div className="flex items-center space-x-2 flex-shrink-0">
+                <Badge className={statusConfig[application.status].color}>
+                  <StatusIcon className="h-3 w-3 mr-1" />
+                  {statusConfig[application.status].label}
+                </Badge>
+                <Badge variant="outline" className={priorityConfig[application.priority].color}>
+                  {priorityConfig[application.priority].label}
+                </Badge>
+              </div>
+            </div>
 
-              {/* Center Column - Job Stats */}
-              <div className="flex-1 min-w-0">
-                <div className="grid grid-cols-4 gap-4 mb-6">
+            {/* Second Row - Stats and Actions */}
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+              {/* Job Stats */}
+              <div className="xl:col-span-2">
+                <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-4">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-600">{jobTypeLabels[application.jobType]}</div>
+                    <div className="text-lg xl:text-xl font-bold text-blue-600">{jobTypeLabels[application.jobType]}</div>
                     <div className="text-sm text-muted-foreground">Tipo de Trabajo</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600">{application.experience}</div>
+                    <div className="text-lg xl:text-xl font-bold text-green-600">{application.experience}</div>
                     <div className="text-sm text-muted-foreground">Experiencia</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-purple-600">{application.skills.length}</div>
+                    <div className="text-lg xl:text-xl font-bold text-purple-600">{application.skills.length}</div>
                     <div className="text-sm text-muted-foreground">Habilidades</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-orange-600">
+                    <div className="text-lg xl:text-xl font-bold text-orange-600">
                       {application.remote ? "Sí" : "No"}
                     </div>
                     <div className="text-sm text-muted-foreground">Remoto</div>
@@ -452,7 +453,7 @@ export default function ApplicationDetailPage() {
                 </div>
 
                 {application.salary && (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
                     <div className="flex items-center justify-between">
                       <div>
                         <h4 className="font-semibold text-green-800">Salario Ofrecido</h4>
@@ -460,7 +461,7 @@ export default function ApplicationDetailPage() {
                           {application.salary.min.toLocaleString()} - {application.salary.max.toLocaleString()} {application.salary.currency}
                         </p>
                       </div>
-                      <DollarSign className="h-8 w-8 text-green-600" />
+                      <DollarSign className="h-6 w-6 text-green-600" />
                     </div>
                   </div>
                 )}
@@ -478,27 +479,25 @@ export default function ApplicationDetailPage() {
                 </div>
               </div>
 
-              {/* Right Column - Actions */}
-              <div className="flex-shrink-0 w-48">
-                <div className="space-y-2">
-                  <Button className="w-full">
-                    <Eye className="h-4 w-4 mr-2" />
-                    Ver Trabajo
+              {/* Actions */}
+              <div className="flex flex-col space-y-2">
+                <Button className="w-full">
+                  <Eye className="h-4 w-4 mr-2" />
+                  Ver Trabajo
+                </Button>
+                <Button variant="outline" className="w-full" onClick={handleOpenChat}>
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  Contactar
+                </Button>
+                <Button variant="outline" className="w-full">
+                  <Download className="h-4 w-4 mr-2" />
+                  Descargar CV
+                </Button>
+                {application.status === "offered" && !isYouth && (
+                  <Button className="w-full bg-green-600 hover:bg-green-700">
+                    Responder Oferta
                   </Button>
-                  <Button variant="outline" className="w-full" onClick={handleOpenChat}>
-                    <MessageCircle className="h-4 w-4 mr-2" />
-                    Contactar
-                  </Button>
-                  <Button variant="outline" className="w-full">
-                    <Download className="h-4 w-4 mr-2" />
-                    Descargar CV
-                  </Button>
-                  {application.status === "offered" && !isYouth && (
-                    <Button className="w-full bg-green-600 hover:bg-green-700">
-                      Responder Oferta
-                    </Button>
-                  )}
-                </div>
+                )}
               </div>
             </div>
           </div>
@@ -508,13 +507,13 @@ export default function ApplicationDetailPage() {
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-3 h-auto">
-          <TabsTrigger value="overview" className="text-xs sm:text-sm py-2 px-3">Resumen</TabsTrigger>
-          <TabsTrigger value="details" className="text-xs sm:text-sm py-2 px-3">Detalles</TabsTrigger>
-          <TabsTrigger value="contact" className="text-xs sm:text-sm py-2 px-3">Contacto</TabsTrigger>
+          <TabsTrigger value="overview" className="text-xs sm:text-sm py-2 px-2 sm:px-3 truncate">Resumen</TabsTrigger>
+          <TabsTrigger value="details" className="text-xs sm:text-sm py-2 px-2 sm:px-3 truncate">Detalles</TabsTrigger>
+          <TabsTrigger value="contact" className="text-xs sm:text-sm py-2 px-2 sm:px-3 truncate">Contacto</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4 sm:space-y-6">
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {/* Job Description */}
             <Card>
               <CardHeader>
@@ -609,7 +608,7 @@ export default function ApplicationDetailPage() {
         </TabsContent>
 
         <TabsContent value="details" className="space-y-4 sm:space-y-6">
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             <Card>
               <CardHeader>
                 <CardTitle>Información de la Empresa</CardTitle>

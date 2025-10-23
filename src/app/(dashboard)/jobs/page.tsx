@@ -171,6 +171,7 @@ function JobsPageContent() {
     experience: string;
     salaryMin: string;
     salaryMax: string;
+    currency: string;
     remote: string;
     skills: string[];
   }) => {
@@ -179,6 +180,7 @@ function JobsPageContent() {
       experienceLevel: newFilters.experience,
       salaryMin: newFilters.salaryMin,
       salaryMax: newFilters.salaryMax,
+      currency: newFilters.currency,
       remote: newFilters.remote,
       skills: newFilters.skills,
     });
@@ -411,6 +413,7 @@ function JobsPageContent() {
                 experience: filters.experienceLevel || "all",
                 salaryMin: filters.salaryMin || "",
                 salaryMax: filters.salaryMax || "",
+                currency: filters.currency || "all",
                 remote: filters.remote || "all",
                 skills: filters.skills || [],
               }}

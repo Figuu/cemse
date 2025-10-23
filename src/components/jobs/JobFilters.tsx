@@ -24,6 +24,7 @@ interface JobFiltersProps {
     experience: string;
     salaryMin: string;
     salaryMax: string;
+    currency: string;
     remote: string;
     skills: string[];
   };
@@ -35,6 +36,7 @@ interface JobFiltersProps {
     experience: string;
     salaryMin: string;
     salaryMax: string;
+    currency: string;
     remote: string;
     skills: string[];
   }) => void;
@@ -43,18 +45,26 @@ interface JobFiltersProps {
 
 
 const jobTypes = [
-  { value: "full-time", label: "Tiempo Completo" },
-  { value: "part-time", label: "Medio Tiempo" },
-  { value: "contract", label: "Contrato" },
-  { value: "internship", label: "Prácticas" }
+  { value: "FULL_TIME", label: "Tiempo Completo" },
+  { value: "PART_TIME", label: "Medio Tiempo" },
+  { value: "FREELANCE", label: "Freelance" },
+  { value: "INTERNSHIP", label: "Prácticas" },
+  { value: "VOLUNTEER", label: "Voluntariado" }
 ];
 
 const experienceLevels = [
-  { value: "0-1", label: "0-1 años" },
-  { value: "2-3", label: "2-3 años" },
-  { value: "4-5", label: "4-5 años" },
-  { value: "6-10", label: "6-10 años" },
-  { value: "10+", label: "10+ años" }
+  { value: "NO_EXPERIENCE", label: "Sin experiencia" },
+  { value: "ENTRY_LEVEL", label: "Nivel inicial" },
+  { value: "MID_LEVEL", label: "Nivel medio" },
+  { value: "SENIOR_LEVEL", label: "Nivel senior" }
+];
+
+const currencies = [
+  { value: "USD", label: "USD - Dólar Americano" },
+  { value: "BOB", label: "BOB - Boliviano" },
+  { value: "EUR", label: "EUR - Euro" },
+  { value: "ARS", label: "ARS - Peso Argentino" },
+  { value: "BRL", label: "BRL - Real Brasileño" }
 ];
 
 export function JobFilters({ filters, selectedMunicipality, onMunicipalityChange, municipalityInstitutions, onFiltersChange, onClearFilters }: JobFiltersProps) {
@@ -70,6 +80,7 @@ export function JobFilters({ filters, selectedMunicipality, onMunicipalityChange
       experience: string;
       salaryMin: string;
       salaryMax: string;
+      currency: string;
       remote: string;
       skills: string[];
     });
@@ -189,7 +200,7 @@ export function JobFilters({ filters, selectedMunicipality, onMunicipalityChange
         <div>
           <Label className="flex items-center mb-2">
             <DollarSign className="h-4 w-4 mr-2" />
-            Rango Salarial (BOB)
+            Rango Salarial
           </Label>
           <div className="grid grid-cols-2 gap-2">
             <div>
@@ -219,6 +230,30 @@ export function JobFilters({ filters, selectedMunicipality, onMunicipalityChange
               />
             </div>
           </div>
+        </div>
+
+        {/* Currency Filter */}
+        <div>
+          <Label className="flex items-center mb-2">
+            <DollarSign className="h-4 w-4 mr-2" />
+            Moneda
+          </Label>
+          <Select
+            value={filters.currency}
+            onValueChange={(value) => handleFilterChange("currency", value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecciona moneda" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas las monedas</SelectItem>
+              {currencies.map(currency => (
+                <SelectItem key={currency.value} value={currency.value}>
+                  {currency.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Remote Work Filter */}
@@ -311,15 +346,21 @@ export function JobFilters({ filters, selectedMunicipality, onMunicipalityChange
                {(filters.salaryMin || filters.salaryMax) && (
                  <Badge variant="outline">
                    Salario: {filters.salaryMin && filters.salaryMax 
-                     ? `${filters.salaryMin} - ${filters.salaryMax} BOB`
+                     ? `${filters.salaryMin} - ${filters.salaryMax} ${filters.currency !== "all" ? filters.currency : "BOB"}`
                      : filters.salaryMin 
-                       ? `Desde ${filters.salaryMin} BOB`
-                       : `Hasta ${filters.salaryMax} BOB`
+                       ? `Desde ${filters.salaryMin} ${filters.currency !== "all" ? filters.currency : "BOB"}`
+                       : `Hasta ${filters.salaryMax} ${filters.currency !== "all" ? filters.currency : "BOB"}`
                    }
                    <X className="h-3 w-3 ml-1 cursor-pointer" onClick={() => {
                      handleFilterChange("salaryMin", "");
                      handleFilterChange("salaryMax", "");
                    }} />
+                 </Badge>
+               )}
+               {filters.currency && filters.currency !== "all" && (
+                 <Badge variant="outline">
+                   Moneda: {currencies.find(c => c.value === filters.currency)?.label}
+                   <X className="h-3 w-3 ml-1 cursor-pointer" onClick={() => handleFilterChange("currency", "all")} />
                  </Badge>
                )}
                {filters.remote && filters.remote !== "all" && (

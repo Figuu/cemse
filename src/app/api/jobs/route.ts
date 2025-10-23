@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
     const experienceLevel = searchParams.get("experienceLevel");
     const salaryMin = searchParams.get("salaryMin");
     const salaryMax = searchParams.get("salaryMax");
+    const currency = searchParams.get("currency");
     const skills = searchParams.get("skills");
     const municipality = searchParams.get("municipality");
     const remote = searchParams.get("remote");
@@ -52,9 +53,9 @@ export async function GET(request: NextRequest) {
           { salaryMax: { gte: parseInt(salaryMin) } }
         ];
       } else if (salaryMin) {
-        whereClause.salaryMin = { gte: parseInt(salaryMin) };
+        whereClause.salaryMax = { gte: parseInt(salaryMin) };
       } else if (salaryMax) {
-        whereClause.salaryMax = { lte: parseInt(salaryMax) };
+        whereClause.salaryMin = { lte: parseInt(salaryMax) };
       }
     }
 
@@ -62,6 +63,11 @@ export async function GET(request: NextRequest) {
     if (skills) {
       const skillsArray = skills.split(',');
       whereClause.skillsRequired = { hasSome: skillsArray };
+    }
+
+    // Currency filtering
+    if (currency && currency !== "all") {
+      whereClause.salaryCurrency = currency;
     }
 
     // Municipality filtering (based on company's institution)
@@ -121,6 +127,13 @@ export async function GET(request: NextRequest) {
             logoUrl: true,
             address: true,
             website: true,
+            institution: {
+              select: {
+                id: true,
+                name: true,
+                institutionType: true,
+              },
+            },
           },
         },
         applications: {
@@ -150,6 +163,7 @@ export async function GET(request: NextRequest) {
         logo: job.company.logoUrl,
         location: job.company.address,
         website: job.company.website,
+        institution: job.company.institution,
       },
       location: job.location,
       type: job.contractType,
@@ -169,6 +183,7 @@ export async function GET(request: NextRequest) {
       education: job.educationRequired,
       skills: job.skillsRequired || [],
       remote: job.workModality === "REMOTE" || job.workModality === "HYBRID",
+      workModality: job.workModality,
       urgent: job.featured || false,
       // Add missing fields that the frontend expects
       totalViews: job.viewsCount || 0,

@@ -154,7 +154,7 @@ export function JobApplicationChat({
   return (
     <div className={cn(
       "fixed right-0 top-0 h-screen bg-white border-l shadow-lg transition-all duration-300 z-50 flex flex-col",
-      isMinimized ? "w-16" : "w-96"
+      isMinimized ? "w-16" : "w-full sm:w-80 lg:w-80 xl:w-96"
     )}>
       {isMinimized ? (
         // Minimized state
@@ -180,30 +180,30 @@ export function JobApplicationChat({
         // Expanded state
         <div className="flex-1 flex flex-col min-h-0">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b bg-muted/50 flex-shrink-0">
-            <div className="flex items-center gap-3">
-              <MessageSquare className="h-6 w-6" />
-              <div>
-                <h3 className="font-medium text-sm">Chat con Empresa</h3>
-                <p className="text-xs text-muted-foreground">{applicantName}</p>
+          <div className="flex items-center justify-between p-3 sm:p-4 border-b bg-muted/50 flex-shrink-0">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+              <MessageSquare className="h-5 w-5 sm:h-6 sm:w-6 flex-shrink-0" />
+              <div className="min-w-0 flex-1">
+                <h3 className="font-medium text-xs sm:text-sm truncate">Chat con Empresa</h3>
+                <p className="text-xs text-muted-foreground truncate">{applicantName}</p>
               </div>
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 flex-shrink-0">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleMinimize}
-                className="h-8 w-8 p-0"
+                className="h-7 w-7 sm:h-8 sm:w-8 p-0"
               >
-                <Minimize2 className="h-4 w-4" />
+                <Minimize2 className="h-3 w-3 sm:h-4 sm:w-4" />
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={onClose}
-                className="h-8 w-8 p-0"
+                className="h-7 w-7 sm:h-8 sm:w-8 p-0"
               >
-                <X className="h-4 w-4" />
+                <X className="h-3 w-3 sm:h-4 sm:w-4" />
               </Button>
             </div>
           </div>
@@ -330,7 +330,7 @@ export function JobApplicationChat({
 
           {/* Messages */}
           <div className="flex-1 min-h-0">
-            <ScrollArea className="h-full p-4">
+            <ScrollArea className="h-full p-2 sm:p-4">
               {messagesLoading ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin" />
@@ -362,7 +362,7 @@ export function JobApplicationChat({
                       )}
                       
                       <div className={cn(
-                        "max-w-[70%] space-y-1",
+                        "max-w-[75%] sm:max-w-[70%] space-y-1",
                         isOwnMessage(msg.senderId) && "flex flex-col items-end"
                       )}>
                         <div
@@ -414,13 +414,13 @@ export function JobApplicationChat({
           </div>
 
           {/* Message Input */}
-          <div className="p-4 border-t flex-shrink-0">
+          <div className="p-2 sm:p-4 border-t flex-shrink-0">
             <form onSubmit={handleSendMessage} className="flex gap-2">
               <Textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder={`Escribe un mensaje a ${applicantName}...`}
-                className="min-h-[40px] max-h-[120px] resize-none"
+                className="min-h-[36px] sm:min-h-[40px] max-h-[100px] sm:max-h-[120px] resize-none text-sm"
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
@@ -432,12 +432,12 @@ export function JobApplicationChat({
                 type="submit"
                 size="sm"
                 disabled={!message.trim() || sendMessageMutation.isPending}
-                className="px-3"
+                className="px-2 sm:px-3 h-9 sm:h-10"
               >
                 {sendMessageMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
                 ) : (
-                  <Send className="h-4 w-4" />
+                  <Send className="h-3 w-3 sm:h-4 sm:w-4" />
                 )}
               </Button>
             </form>

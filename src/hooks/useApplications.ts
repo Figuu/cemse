@@ -216,7 +216,7 @@ export function useApplications(filters?: {
     applications: query.data?.applications || [],
     isLoading: query.isLoading,
     error: query.error?.message || null,
-    refetch: query.refetch,
+    refetch: async () => { await query.refetch(); },
     createApplication,
     updateApplication,
     deleteApplication,

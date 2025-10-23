@@ -12,6 +12,7 @@ interface JobsFilters {
   experienceLevel?: string;
   salaryMin?: number;
   salaryMax?: number;
+  currency?: string;
   skills?: string[];
   municipality?: string;
   remote?: string;
@@ -68,6 +69,7 @@ export function useJobs(filters: JobsFilters = {}) {
       if (filters.experienceLevel) params.append("experienceLevel", filters.experienceLevel);
       if (filters.salaryMin) params.append("salaryMin", filters.salaryMin.toString());
       if (filters.salaryMax) params.append("salaryMax", filters.salaryMax.toString());
+      if (filters.currency) params.append("currency", filters.currency);
       if (filters.skills && filters.skills.length > 0) params.append("skills", filters.skills.join(','));
       if (filters.municipality) params.append("municipality", filters.municipality);
       if (filters.remote) params.append("remote", filters.remote);

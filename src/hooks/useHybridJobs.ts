@@ -8,6 +8,7 @@ interface HybridFilters {
   experienceLevel?: string;
   salaryMin?: string;
   salaryMax?: string;
+  currency?: string;
   skills?: string[];
   municipality?: string;
   remote?: string;
@@ -26,6 +27,7 @@ export function useHybridJobs({ initialFilters = {}, debounceMs = 500 }: UseHybr
     experienceLevel: "all",
     salaryMin: "",
     salaryMax: "",
+    currency: "all",
     skills: [],
     municipality: "all",
     remote: "all",
@@ -48,6 +50,9 @@ export function useHybridJobs({ initialFilters = {}, debounceMs = 500 }: UseHybr
     search: debouncedFilters.search,
     employmentType: debouncedFilters.employmentType !== "all" ? debouncedFilters.employmentType : undefined,
     experienceLevel: debouncedFilters.experienceLevel !== "all" ? debouncedFilters.experienceLevel : undefined,
+    salaryMin: debouncedFilters.salaryMin ? parseFloat(debouncedFilters.salaryMin) : undefined,
+    salaryMax: debouncedFilters.salaryMax ? parseFloat(debouncedFilters.salaryMax) : undefined,
+    currency: debouncedFilters.currency !== "all" ? debouncedFilters.currency : undefined,
     skills: debouncedFilters.skills && debouncedFilters.skills.length > 0 ? debouncedFilters.skills : undefined,
     municipality: debouncedFilters.municipality !== "all" ? debouncedFilters.municipality : undefined,
     remote: debouncedFilters.remote !== "all" ? debouncedFilters.remote : undefined,
@@ -74,18 +79,18 @@ export function useHybridJobs({ initialFilters = {}, debounceMs = 500 }: UseHybr
 
       // Employment type filter
       if (clientFilters.employmentType && clientFilters.employmentType !== "all") {
-        if (job.type !== clientFilters.employmentType) return false;
+        if (job.employmentType !== clientFilters.employmentType) return false;
       }
 
       // Experience level filter
       if (clientFilters.experienceLevel && clientFilters.experienceLevel !== "all") {
-        if (job.experience !== clientFilters.experienceLevel) return false;
+        if (job.experienceLevel !== clientFilters.experienceLevel) return false;
       }
 
       // Salary range filter
       if (clientFilters.salaryMin || clientFilters.salaryMax) {
-        const jobSalaryMin = job.salaryMin || job.salary?.min || 0;
-        const jobSalaryMax = job.salaryMax || job.salary?.max || 0;
+        const jobSalaryMin = job.salaryMin || 0;
+        const jobSalaryMax = job.salaryMax || 0;
         
         if (clientFilters.salaryMin && clientFilters.salaryMin.trim()) {
           const minSalary = parseInt(clientFilters.salaryMin);
@@ -96,6 +101,12 @@ export function useHybridJobs({ initialFilters = {}, debounceMs = 500 }: UseHybr
           const maxSalary = parseInt(clientFilters.salaryMax);
           if (!isNaN(maxSalary) && jobSalaryMin > 0 && jobSalaryMin > maxSalary) return false;
         }
+      }
+
+      // Currency filter
+      if (clientFilters.currency && clientFilters.currency !== "all") {
+        const jobCurrency = job.currency || "BOB";
+        if (jobCurrency !== clientFilters.currency) return false;
       }
 
       // Skills filter
@@ -120,10 +131,9 @@ export function useHybridJobs({ initialFilters = {}, debounceMs = 500 }: UseHybr
 
       // Remote work filter
       if (clientFilters.remote && clientFilters.remote !== "all") {
-        const isRemote = job.remote || false;
-        if (clientFilters.remote === "yes" && !isRemote) return false;
-        if (clientFilters.remote === "no" && isRemote) return false;
-        if (clientFilters.remote === "hybrid" && !isRemote) return false;
+        if (clientFilters.remote === "yes" && !job.remoteWork) return false;
+        if (clientFilters.remote === "no" && !job.officeWork) return false;
+        if (clientFilters.remote === "hybrid" && !job.hybridWork) return false;
       }
 
       return true;
@@ -151,14 +161,14 @@ export function useHybridJobs({ initialFilters = {}, debounceMs = 500 }: UseHybr
         return jobsToSort.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
       case "salary-high":
         return jobsToSort.sort((a, b) => {
-          const aSalary = a.salaryMin || a.salary?.min || 0;
-          const bSalary = b.salaryMin || b.salary?.min || 0;
+          const aSalary = a.salaryMin || 0;
+          const bSalary = b.salaryMin || 0;
           return bSalary - aSalary;
         });
       case "salary-low":
         return jobsToSort.sort((a, b) => {
-          const aSalary = a.salaryMin || a.salary?.min || 0;
-          const bSalary = b.salaryMin || b.salary?.min || 0;
+          const aSalary = a.salaryMin || 0;
+          const bSalary = b.salaryMin || 0;
           return aSalary - bSalary;
         });
       case "title":
@@ -181,6 +191,7 @@ export function useHybridJobs({ initialFilters = {}, debounceMs = 500 }: UseHybr
       experienceLevel: "all",
       salaryMin: "",
       salaryMax: "",
+      currency: "all",
       skills: [],
       municipality: "all",
       remote: "all",
