@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useCallback } from "react";
 import { useSession } from "next-auth/react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface ApplicationCommunication {
   id: string;
@@ -105,17 +106,15 @@ export function useApplications(filters?: {
   search?: string;
 }): UseApplicationsReturn {
   const { data: session } = useSession();
-  const [applications, setApplications] = useState<JobApplication[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  const fetchApplications = useCallback(async () => {
-    if (!session?.user?.id) return;
+  const query = useQuery({
+    queryKey: ["applications", filters],
+    queryFn: async (): Promise<{ applications: JobApplication[] }> => {
+      if (!session?.user?.id) {
+        throw new Error("User not authenticated");
+      }
 
-    setIsLoading(true);
-    setError(null);
-
-    try {
       const params = new URLSearchParams();
       if (filters?.status) params.append("status", filters.status);
       if (filters?.priority) params.append("priority", filters.priority);
@@ -128,24 +127,17 @@ export function useApplications(filters?: {
         throw new Error(errorData.error || "Failed to fetch applications");
       }
 
-      const data = await response.json();
-      setApplications(data.applications || []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [session?.user?.id, filters?.status, filters?.priority, filters?.search]);
+      return response.json();
+    },
+    enabled: !!session?.user?.id,
+  });
 
-  const createApplication = async (data: CreateApplicationData) => {
-    if (!session?.user?.id) {
-      throw new Error("User not authenticated");
-    }
+  const createApplicationMutation = useMutation({
+    mutationFn: async (data: CreateApplicationData): Promise<void> => {
+      if (!session?.user?.id) {
+        throw new Error("User not authenticated");
+      }
 
-    setIsLoading(true);
-    setError(null);
-
-    try {
       const response = await fetch("/api/applications", {
         method: "POST",
         headers: {
@@ -158,26 +150,18 @@ export function useApplications(filters?: {
         const errorData = await response.json();
         throw new Error(errorData.error || "Failed to create application");
       }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["applications"] });
+    },
+  });
 
-      // Refetch applications to get updated list
-      await fetchApplications();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create application");
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const updateApplicationMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<JobApplication> }): Promise<void> => {
+      if (!session?.user?.id) {
+        throw new Error("User not authenticated");
+      }
 
-  const updateApplication = async (id: string, data: Partial<JobApplication>) => {
-    if (!session?.user?.id) {
-      throw new Error("User not authenticated");
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
       const response = await fetch(`/api/applications/${id}`, {
         method: "PUT",
         headers: {
@@ -190,26 +174,18 @@ export function useApplications(filters?: {
         const errorData = await response.json();
         throw new Error(errorData.error || "Failed to update application");
       }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["applications"] });
+    },
+  });
 
-      // Refetch applications to get updated list
-      await fetchApplications();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update application");
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const deleteApplicationMutation = useMutation({
+    mutationFn: async (id: string): Promise<void> => {
+      if (!session?.user?.id) {
+        throw new Error("User not authenticated");
+      }
 
-  const deleteApplication = async (id: string) => {
-    if (!session?.user?.id) {
-      throw new Error("User not authenticated");
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
       const response = await fetch(`/api/applications/${id}`, {
         method: "DELETE",
       });
@@ -218,26 +194,29 @@ export function useApplications(filters?: {
         const errorData = await response.json();
         throw new Error(errorData.error || "Failed to delete application");
       }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["applications"] });
+    },
+  });
 
-      // Refetch applications to get updated list
-      await fetchApplications();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete application");
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const createApplication = useCallback(async (data: CreateApplicationData) => {
+    return createApplicationMutation.mutateAsync(data);
+  }, [createApplicationMutation]);
 
-  useEffect(() => {
-    fetchApplications();
-  }, [fetchApplications]);
+  const updateApplication = useCallback(async (id: string, data: Partial<JobApplication>) => {
+    return updateApplicationMutation.mutateAsync({ id, data });
+  }, [updateApplicationMutation]);
+
+  const deleteApplication = useCallback(async (id: string) => {
+    return deleteApplicationMutation.mutateAsync(id);
+  }, [deleteApplicationMutation]);
 
   return {
-    applications,
-    isLoading,
-    error,
-    refetch: fetchApplications,
+    applications: query.data?.applications || [],
+    isLoading: query.isLoading,
+    error: query.error?.message || null,
+    refetch: query.refetch,
     createApplication,
     updateApplication,
     deleteApplication,

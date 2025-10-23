@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Award, 
-  Plus,
   RefreshCw,
   AlertCircle,
   Search,
@@ -80,7 +79,7 @@ export default function CertificatesPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Certificados</h1>
-            <p className="text-muted-foreground">Gestiona tus certificados de completación</p>
+            <p className="text-muted-foreground">Visualiza los certificados que has obtenido al completar cursos</p>
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -107,7 +106,7 @@ export default function CertificatesPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Certificados</h1>
-            <p className="text-muted-foreground">Gestiona tus certificados de completación</p>
+            <p className="text-muted-foreground">Visualiza los certificados que has obtenido al completar cursos</p>
           </div>
         </div>
         <Card>
@@ -144,17 +143,13 @@ export default function CertificatesPage() {
           <div>
             <h1 className="text-2xl font-bold text-foreground">Certificados</h1>
             <p className="text-muted-foreground">
-              Gestiona tus certificados de completación
+              Visualiza los certificados que has obtenido al completar cursos
             </p>
           </div>
           <div className="flex space-x-2 mt-4 sm:mt-0">
             <Button variant="outline" onClick={refetch}>
               <RefreshCw className="h-4 w-4 mr-2" />
               Actualizar
-            </Button>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Generar Certificado
             </Button>
           </div>
         </div>

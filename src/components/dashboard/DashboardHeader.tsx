@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut, Settings, User, Menu } from "lucide-react";
+import { LogOut, User, Menu } from "lucide-react";
 import { getInitials } from "@/lib/utils";
 
 interface DashboardHeaderProps {
@@ -106,12 +106,6 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                 <a href="/profile" className="flex items-center">
                   <User className="mr-2 h-4 w-4" />
                   <span>Mi Perfil</span>
-                </a>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <a href="/settings" className="flex items-center">
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Configuración</span>
                 </a>
               </DropdownMenuItem>
               <DropdownMenuSeparator />

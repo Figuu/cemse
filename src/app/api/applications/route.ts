@@ -20,12 +20,23 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status");
     const search = searchParams.get("search");
 
-    // Build query with proper types
+    // Map frontend status values to database status values
+    const statusMap: Record<string, string> = {
+      "applied": "SENT",
+      "reviewing": "UNDER_REVIEW", 
+      "shortlisted": "PRE_SELECTED",
+      "interview": "UNDER_REVIEW", // Assuming interview is still under review
+      "offered": "HIRED",
+      "rejected": "REJECTED",
+      "withdrawn": "REJECTED" // Treat withdrawn as rejected for filtering
+    };
+
+    const dbStatus = status && status !== "all" ? statusMap[status] : undefined;
 
     const applications = await prisma.jobApplication.findMany({
       where: {
         applicantId: session.user.id,
-        ...(status && status !== "all" && { status: status as "SENT" | "UNDER_REVIEW" | "PRE_SELECTED" | "REJECTED" | "HIRED" }),
+        ...(dbStatus && { status: dbStatus as "SENT" | "UNDER_REVIEW" | "PRE_SELECTED" | "REJECTED" | "HIRED" }),
         ...(search && {
           OR: [
             { jobOffer: { title: { contains: search, mode: "insensitive" } } },

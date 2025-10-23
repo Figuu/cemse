@@ -217,7 +217,7 @@ export function JobChatInterface({
   };
 
   return (
-    <div className={cn("flex h-screen bg-gray-50", className)}>
+    <div className={cn("flex bg-gray-50", className)}>
       {/* Main Content */}
       <div className={`flex-1 transition-all duration-300 ${showChat ? 'mr-96' : ''}`}>
         {children}
@@ -225,7 +225,7 @@ export function JobChatInterface({
 
       {/* Chat Sidebar */}
       {showChat && (
-        <div className="fixed right-0 top-0 h-full w-96 bg-white border-l shadow-lg z-50">
+        <div className="fixed right-0 top-0 h-screen w-96 bg-white border-l shadow-lg z-50">
           <div className="flex flex-col h-full">
             {/* Chat Header */}
             <div className="p-4 border-b bg-gray-50">

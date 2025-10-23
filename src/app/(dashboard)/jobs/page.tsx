@@ -258,7 +258,6 @@ function JobsPageContent() {
   return (
     <JobChatInterface 
       jobId={selectedJob?.id || ""}
-      className="h-screen"
       selectedApplicationId={selectedApplicationId}
       onOpenChat={handleOpenChat}
       applications={[]} // This would be populated with actual applications data

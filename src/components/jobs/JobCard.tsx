@@ -10,8 +10,6 @@ import {
   DollarSign, 
   Clock, 
   Users, 
-  Heart,
-  Share2,
   Eye,
   Calendar,
   Star,
@@ -25,8 +23,6 @@ import Link from "next/link";
 interface JobCardProps {
   job: JobPosting;
   currentUserId?: string;
-  onLike?: (jobId: string) => void;
-  onShare?: (jobId: string) => void;
   onApply?: (jobId: string) => void;
   onBookmark?: (jobId: string) => void;
   variant?: "default" | "featured" | "compact";
@@ -38,8 +34,6 @@ interface JobCardProps {
 export function JobCard({ 
   job, 
   currentUserId,
-  onLike,
-  onShare,
   onApply,
   onBookmark,
   variant = "default",
@@ -47,22 +41,9 @@ export function JobCard({
   hasApplied = false,
   applicationId
 }: JobCardProps) {
-  const isLiked = false; // This would come from a hook in real app
-  
   // Use currentUserId to determine if user can interact with the job
   const canInteract = Boolean(currentUserId);
 
-  const handleLike = () => {
-    if (onLike) {
-      onLike(job.id);
-    }
-  };
-
-  const handleShare = () => {
-    if (onShare) {
-      onShare(job.id);
-    }
-  };
 
   const handleApply = () => {
     if (onApply) {
@@ -131,15 +112,6 @@ export function JobCard({
               </div>
             </div>
             <div className="flex items-center gap-1 flex-shrink-0">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onBookmark ? handleBookmark : handleLike}
-                disabled={!canInteract}
-                className="h-8 w-8 p-0"
-              >
-                <Heart className={`h-4 w-4 ${isLiked ? 'fill-current text-red-500' : ''}`} />
-              </Button>
               <Link href={`/jobs/${job.id}`}>
                 <Button variant="outline" size="sm">
                   Ver
@@ -186,26 +158,6 @@ export function JobCard({
               </div>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onBookmark ? handleBookmark : handleLike}
-                disabled={!canInteract}
-                className="flex items-center gap-1"
-              >
-                <Heart className={`h-4 w-4 ${isLiked ? 'fill-current text-red-500' : ''}`} />
-                <span>{job.totalLikes}</span>
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleShare}
-                disabled={!canInteract}
-                className="flex items-center gap-1"
-              >
-                <Share2 className="h-4 w-4" />
-                <span>{job.totalShares}</span>
-              </Button>
             </div>
           </div>
         </CardHeader>
@@ -307,24 +259,6 @@ export function JobCard({
           </div>
           
           <div className="flex items-center gap-1 flex-shrink-0">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onBookmark ? handleBookmark : handleLike}
-              disabled={!canInteract}
-              className="h-8 w-8 p-0"
-            >
-              <Heart className={`h-4 w-4 ${isLiked ? 'fill-current text-red-500' : ''}`} />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleShare}
-              disabled={!canInteract}
-              className="h-8 w-8 p-0"
-            >
-              <Share2 className="h-4 w-4" />
-            </Button>
           </div>
         </div>
       </CardHeader>
@@ -386,28 +320,30 @@ export function JobCard({
         </div>
 
         {showActions && (
-          <div className="flex items-center justify-between pt-3 lg:pt-4 border-t mt-3 lg:mt-4 flex-shrink-0">
-            <div className="flex items-center gap-2 lg:gap-3 min-w-0 flex-1">
-              {!hasApplied ? (
-                <Button size="sm" onClick={handleApply} disabled={!canInteract} className="flex-shrink-0 text-xs lg:text-sm">
-                  Aplicar
-                </Button>
-              ) : (
-                <Link href={`/applications/${applicationId}`}>
+          <div className="pt-3 lg:pt-4 border-t mt-3 lg:mt-4 flex-shrink-0">
+            <div className="flex flex-col space-y-2 lg:space-y-0 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex items-center gap-2 lg:gap-3">
+                {!hasApplied ? (
+                  <Button size="sm" onClick={handleApply} disabled={!canInteract} className="flex-shrink-0 text-xs lg:text-sm">
+                    Aplicar
+                  </Button>
+                ) : (
+                  <Link href={`/applications/${applicationId}`}>
+                    <Button variant="outline" size="sm" className="flex-shrink-0 text-xs lg:text-sm">
+                      Ver Aplicación
+                    </Button>
+                  </Link>
+                )}
+                <Link href={`/jobs/${job.id}`}>
                   <Button variant="outline" size="sm" className="flex-shrink-0 text-xs lg:text-sm">
-                    Ver Aplicación
+                    Ver Detalles
                   </Button>
                 </Link>
-              )}
-              <Link href={`/jobs/${job.id}`}>
-                <Button variant="outline" size="sm" className="flex-shrink-0 text-xs lg:text-sm">
-                  Ver Detalles
-                </Button>
-              </Link>
-            </div>
-            <div className="text-xs lg:text-sm text-muted-foreground flex-shrink-0 ml-2">
-              <Calendar className="inline h-3 w-3 lg:h-4 lg:w-4 mr-1" />
-              <span className="truncate">{formatTimeAgo(job.createdAt)}</span>
+              </div>
+              <div className="text-xs lg:text-sm text-muted-foreground">
+                <Calendar className="inline h-3 w-3 lg:h-4 lg:w-4 mr-1" />
+                <span>{formatTimeAgo(job.createdAt)}</span>
+              </div>
             </div>
           </div>
         )}
