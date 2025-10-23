@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { useState, useEffect } from "react";
+import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,14 @@ export default function SignInPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
+  const { data: session, status } = useSession();
+
+  // Auto-redirect when session becomes available
+  useEffect(() => {
+    if (status === "authenticated" && session) {
+      router.push("/dashboard");
+    }
+  }, [status, session, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,9 +41,10 @@ export default function SignInPage() {
       if (result?.error) {
         setError("Credenciales inválidas");
       } else {
-        router.push("/dashboard");
+        // Use window.location.href for a hard redirect to ensure it works
+        window.location.href = "/dashboard";
       }
-    } catch {
+    } catch (error) {
       setError("Error al iniciar sesión");
     } finally {
       setIsLoading(false);

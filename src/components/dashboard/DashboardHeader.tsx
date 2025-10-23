@@ -38,7 +38,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   };
 
   const handleSignOut = () => {
-    signOut({ callbackUrl: "/sign-in" });
+    signOut({ callbackUrl: "/" });
   };
 
   return (

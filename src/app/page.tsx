@@ -1,17 +1,16 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookOpen, Briefcase, Users, Building2, GraduationCap, Lightbulb, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { LandingHeader } from "@/components/LandingHeader";
 
 export default function Home() {
   const { data: session, status } = useSession();
-  const router = useRouter();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [jobs, setJobs] = useState([]);
   const [entrepreneurships, setEntrepreneurships] = useState([]);
@@ -105,13 +104,6 @@ export default function Home() {
     );
   };
 
-  useEffect(() => {
-    if (status === "loading") return;
-    if (session) {
-      router.push("/dashboard");
-    }
-  }, [session, status, router]);
-
   if (status === "loading") {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
@@ -121,10 +113,6 @@ export default function Home() {
         </div>
       </div>
     );
-  }
-
-  if (session) {
-    return null; // Will redirect to dashboard
   }
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -158,49 +146,7 @@ export default function Home() {
       </section>
 
       {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center">
-              <h1 className="text-md sm:text-xl md:text-2xl font-bold text-gray-900">Emplea y Emprende</h1>
-            </div>
-            <nav className="hidden md:flex space-x-8">
-              <button 
-                onClick={() => document.getElementById('bolsa-empleo')?.scrollIntoView({ behavior: 'smooth' })}
-                className="text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                Bolsa de Empleo
-              </button>
-              <button 
-                onClick={() => document.getElementById('emprendimiento')?.scrollIntoView({ behavior: 'smooth' })}
-                className="text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                Emprendimiento
-              </button>
-              <button 
-                onClick={() => document.getElementById('capacitaciones')?.scrollIntoView({ behavior: 'smooth' })}
-                className="text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                Capacitaciones
-              </button>
-              <button 
-                onClick={() => document.getElementById('necesitas-apoyo')?.scrollIntoView({ behavior: 'smooth' })}
-                className="text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                ¿Necesitas Apoyo?
-              </button>
-            </nav>
-            <div className="flex items-center space-x-4">
-              <Button variant="outline" asChild>
-                <Link href="/sign-in">Iniciar Sesión</Link>
-              </Button>
-              <Button asChild>
-                <Link href="/sign-up">Registrarse</Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <LandingHeader />
 
       {/* Hero Section */}
       <section className="py-20">

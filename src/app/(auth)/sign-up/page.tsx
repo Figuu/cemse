@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,6 +36,14 @@ export default function SignUpPage() {
   const [error, setError] = useState("");
 
   const router = useRouter();
+  const { data: session, status } = useSession();
+
+  // Auto-redirect when session becomes available
+  useEffect(() => {
+    if (status === "authenticated" && session) {
+      router.push("/dashboard");
+    }
+  }, [status, session, router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
