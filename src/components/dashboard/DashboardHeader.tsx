@@ -36,8 +36,9 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
     }
   };
 
-  const handleSignOut = () => {
-    signOut({ callbackUrl: "/" });
+  const handleSignOut = async () => {
+    await signOut({ redirect: false });
+    window.location.href = "/";
   };
 
   return (

@@ -17,8 +17,9 @@ import Link from "next/link";
 export function LandingHeader() {
   const { data: session, status } = useSession();
 
-  const handleSignOut = () => {
-    signOut({ callbackUrl: "/" });
+  const handleSignOut = async () => {
+    await signOut({ redirect: false });
+    window.location.href = "/";
   };
 
   const getRoleDisplayName = (role: string) => {
