@@ -14,8 +14,9 @@ import { JobApplicationForm } from "@/components/jobs/JobApplicationForm";
 import { JobChatInterface } from "@/components/jobs/JobChatInterface";
 import { JobApplicationChat } from "@/components/jobs/JobApplicationChat";
 import { RoleGuard } from "@/components/auth/RoleGuard";
-import { useJobs } from "@/hooks/useJobs";
+import { useHybridJobs } from "@/hooks/useHybridJobs";
 import { useJobApplicationStatus } from "@/hooks/useJobApplicationStatus";
+import { useMunicipalities } from "@/hooks/useMunicipalities";
 import { JobPosting } from "@/types/company";
 import { useQuery } from "@tanstack/react-query";
 import { 
@@ -43,30 +44,6 @@ function JobsPageContent() {
   const isYouth = userRole === "YOUTH";
   const isAdmin = userRole === "SUPERADMIN" || userRole === "INSTITUTION";
   
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedFilters, setSelectedFilters] = useState({
-    location: "all",
-    type: "all",
-    experience: "all",
-    salary: "all",
-    remote: "all",
-    skills: [] as string[],
-  });
-  const [selectedMunicipality, setSelectedMunicipality] = useState("all");
-  const [sortBy, setSortBy] = useState("newest");
-
-  // Fetch municipality institutions for the filter (only for authorized users)
-  const { data: municipalityInstitutions = [] } = useQuery({
-    queryKey: ['municipality-institutions-jobs'],
-    queryFn: async () => {
-      const response = await fetch('/api/admin/institutions');
-      if (!response.ok) throw new Error('Failed to fetch institutions');
-      const institutions = await response.json();
-      // Filter only municipality type institutions
-      return institutions.filter((institution: any) => institution.institutionType === 'MUNICIPALITY');
-    },
-    enabled: !isYouth // Only fetch for non-youth users
-  });
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);
   const [selectedJob, setSelectedJob] = useState<JobPosting | null>(null);
@@ -74,22 +51,23 @@ function JobsPageContent() {
   const [showChat, setShowChat] = useState(false);
   const [selectedApplicationId, setSelectedApplicationId] = useState<string | null>(null);
 
-  const { 
-    data: jobsData, 
-    isLoading, 
-    error, 
-    refetch
-  } = useJobs({
-    search: searchTerm || undefined,
-    location: selectedFilters.location || undefined,
-    employmentType: selectedFilters.type || undefined,
-    experienceLevel: selectedFilters.experience || undefined,
-    sortBy: sortBy,
-    // For companies, we need to get their company ID and filter by it
-    // This would need to be implemented in the hook or we'd need to get the company ID from the session
+  // Use hybrid jobs hook
+  const {
+    jobs,
+    isLoading,
+    error,
+    refetch,
+    filters,
+    updateFilters,
+    clearFilters,
+    isDebouncing
+  } = useHybridJobs({
+    debounceMs: 500, // 500ms debounce
   });
 
-  const jobs = jobsData?.jobs || [];
+  // Fetch municipalities for the filter
+  const { data: municipalitiesData, isLoading: municipalitiesLoading } = useMunicipalities();
+  const municipalityInstitutions = municipalitiesData?.municipalities || [];
 
   // Get application statuses for all jobs
   const jobIds = jobs.map(job => job.id);
@@ -142,13 +120,6 @@ function JobsPageContent() {
   };
 
 
-  // Filter jobs by municipality (based on company's associated institution)
-  const filteredJobs = jobs.filter(job => {
-    if (selectedMunicipality === "all") return true;
-    return job.company?.institution?.name === selectedMunicipality;
-  });
-
-
   const handleBookmark = async (jobId: string) => {
     try {
       // For now, just bookmark the job (could be enhanced with actual bookmark state)
@@ -195,17 +166,38 @@ function JobsPageContent() {
     setSelectedApplicationId(null);
   };
 
-  const clearFilters = () => {
-    setSelectedFilters({
-      location: "all",
-      type: "all",
-      experience: "all",
-      salary: "all",
-      remote: "all",
-      skills: [],
+  const handleFiltersChange = (newFilters: {
+    type: string;
+    experience: string;
+    salaryMin: string;
+    salaryMax: string;
+    remote: string;
+    skills: string[];
+  }) => {
+    updateFilters({
+      employmentType: newFilters.type,
+      experienceLevel: newFilters.experience,
+      salaryMin: newFilters.salaryMin,
+      salaryMax: newFilters.salaryMax,
+      remote: newFilters.remote,
+      skills: newFilters.skills,
     });
-    setSelectedMunicipality("all");
-    setSearchTerm("");
+  };
+
+  const handleMunicipalityChange = (value: string) => {
+    updateFilters({ municipality: value });
+  };
+
+  const handleSearchChange = (value: string) => {
+    updateFilters({ search: value });
+  };
+
+  const handleSortChange = (value: string) => {
+    updateFilters({ sortBy: value });
+  };
+
+  const handleClearFilters = () => {
+    clearFilters();
   };
 
   if (isLoading) {
@@ -274,7 +266,7 @@ function JobsPageContent() {
               ? "Administra y publica ofertas de trabajo para tu empresa"
               : isAdmin 
                 ? "Supervisa y administra todas las ofertas de trabajo del sistema"
-                : `${filteredJobs.length} ofertas encontradas`
+                : `${jobs.length} ofertas encontradas`
             }
           </p>
         </div>
@@ -349,7 +341,7 @@ function JobsPageContent() {
                 </div>
                 <span className="text-sm xl:text-base font-medium">Mis Trabajos</span>
               </div>
-              <p className="text-2xl xl:text-3xl font-bold text-blue-600">{filteredJobs.length}</p>
+              <p className="text-2xl xl:text-3xl font-bold text-blue-600">{jobs.length}</p>
             </CardContent>
           </Card>
           
@@ -362,7 +354,7 @@ function JobsPageContent() {
                 <span className="text-sm xl:text-base font-medium">Aplicaciones</span>
               </div>
               <p className="text-2xl xl:text-3xl font-bold text-green-600">
-                {safeSum(filteredJobs.map(job => job._count?.applications || 0))}
+                {safeSum(jobs.map(job => job._count?.applications || 0))}
               </p>
             </CardContent>
           </Card>
@@ -376,7 +368,7 @@ function JobsPageContent() {
                 <span className="text-sm xl:text-base font-medium">Vistas</span>
               </div>
               <p className="text-2xl xl:text-3xl font-bold text-purple-600">
-                {safeSum(filteredJobs.map(job => job.totalViews || 0))}
+                {safeSum(jobs.map(job => job.totalViews || 0))}
               </p>
             </CardContent>
           </Card>
@@ -390,7 +382,7 @@ function JobsPageContent() {
                 <span className="text-sm xl:text-base font-medium">Activos</span>
               </div>
               <p className="text-2xl xl:text-3xl font-bold text-orange-600">
-                {filteredJobs.filter(job => job.isActive).length}
+                {jobs.filter(job => job.isActive).length}
               </p>
             </CardContent>
           </Card>
@@ -404,8 +396,8 @@ function JobsPageContent() {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Buscar por título, empresa, habilidades..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            value={filters.search || ""}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="pl-10 h-11 xl:h-12 text-sm xl:text-base"
           />
         </div>
@@ -414,12 +406,19 @@ function JobsPageContent() {
         {showFilters && (
           <div className="bg-gray-50 rounded-lg p-4 xl:p-6">
             <JobFilters
-              filters={selectedFilters}
-              selectedMunicipality={selectedMunicipality}
-              onMunicipalityChange={setSelectedMunicipality}
+              filters={{
+                type: filters.employmentType || "all",
+                experience: filters.experienceLevel || "all",
+                salaryMin: filters.salaryMin || "",
+                salaryMax: filters.salaryMax || "",
+                remote: filters.remote || "all",
+                skills: filters.skills || [],
+              }}
+              selectedMunicipality={filters.municipality || "all"}
+              onMunicipalityChange={handleMunicipalityChange}
               municipalityInstitutions={municipalityInstitutions}
-              onFiltersChange={setSelectedFilters}
-              onClearFilters={clearFilters}
+              onFiltersChange={handleFiltersChange}
+              onClearFilters={handleClearFilters}
             />
           </div>
         )}
@@ -428,7 +427,7 @@ function JobsPageContent() {
         <div className="flex flex-col space-y-3 xl:flex-row xl:items-center xl:justify-between xl:space-y-0">
           <div className="flex flex-col space-y-2 xl:flex-row xl:items-center xl:space-y-0 xl:space-x-3">
             <Label htmlFor="sort" className="text-sm xl:text-base font-medium">Ordenar por:</Label>
-            <Select value={sortBy} onValueChange={setSortBy}>
+            <Select value={filters.sortBy || "newest"} onValueChange={handleSortChange}>
               <SelectTrigger className="w-full xl:w-56 h-11 xl:h-12">
                 <SelectValue />
               </SelectTrigger>
@@ -442,14 +441,19 @@ function JobsPageContent() {
             </Select>
           </div>
           <div className="text-sm xl:text-base text-muted-foreground">
-            Mostrando {filteredJobs.length} {filteredJobs.length === 1 ? 'oferta' : 'ofertas'}
+            Mostrando {jobs.length} {jobs.length === 1 ? 'oferta' : 'ofertas'}
+            {isDebouncing && (
+              <span className="ml-2 text-blue-600">
+                (actualizando filtros...)
+              </span>
+            )}
           </div>
         </div>
       </div>
 
 
       {/* Job Listings */}
-      {filteredJobs.length === 0 ? (
+      {jobs.length === 0 ? (
         <Card>
           <CardContent className="text-center py-12">
             <Briefcase className="mx-auto h-12 w-12 text-gray-400" />
@@ -484,7 +488,7 @@ function JobsPageContent() {
             ? "grid grid-cols-1 gap-4 sm:gap-6 lg:gap-8 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3"
             : "space-y-4 sm:space-y-6 lg:space-y-8"
         }>
-          {filteredJobs.map(job => {
+          {jobs.map(job => {
             const applicationStatus = getApplicationStatus(job.id);
             return (
               <div key={job.id} className="relative group">

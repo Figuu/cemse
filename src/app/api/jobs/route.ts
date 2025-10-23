@@ -13,10 +13,13 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search");
-    const location = searchParams.get("location");
-    const type = searchParams.get("type");
-    const experience = searchParams.get("experience");
-    const salary = searchParams.get("salary");
+    const employmentType = searchParams.get("employmentType");
+    const experienceLevel = searchParams.get("experienceLevel");
+    const salaryMin = searchParams.get("salaryMin");
+    const salaryMax = searchParams.get("salaryMax");
+    const skills = searchParams.get("skills");
+    const municipality = searchParams.get("municipality");
+    const remote = searchParams.get("remote");
     const sortBy = searchParams.get("sortBy") || "newest";
 
     // Build query with proper types
@@ -33,29 +36,52 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    if (location && location !== "all") {
-      whereClause.location = { contains: location, mode: "insensitive" };
+    if (employmentType && employmentType !== "all") {
+      whereClause.contractType = employmentType as "FULL_TIME" | "PART_TIME" | "INTERNSHIP" | "VOLUNTEER" | "FREELANCE";
     }
 
-    if (type && type !== "all") {
-      whereClause.contractType = type as "FULL_TIME" | "PART_TIME" | "INTERNSHIP" | "VOLUNTEER" | "FREELANCE";
+    if (experienceLevel && experienceLevel !== "all") {
+      whereClause.experienceLevel = experienceLevel as "NO_EXPERIENCE" | "ENTRY_LEVEL" | "MID_LEVEL" | "SENIOR_LEVEL";
     }
 
-    if (experience && experience !== "all") {
-      whereClause.experienceLevel = experience as "NO_EXPERIENCE" | "ENTRY_LEVEL" | "MID_LEVEL" | "SENIOR_LEVEL";
+    // Salary range filtering
+    if (salaryMin || salaryMax) {
+      if (salaryMin && salaryMax) {
+        whereClause.AND = [
+          { salaryMin: { lte: parseInt(salaryMax) } },
+          { salaryMax: { gte: parseInt(salaryMin) } }
+        ];
+      } else if (salaryMin) {
+        whereClause.salaryMin = { gte: parseInt(salaryMin) };
+      } else if (salaryMax) {
+        whereClause.salaryMax = { lte: parseInt(salaryMax) };
+      }
     }
 
-    if (salary && salary !== "all") {
-      const salaryRanges = {
-        "0-10000": { min: 0, max: 10000 },
-        "10000-20000": { min: 10000, max: 20000 },
-        "20000-30000": { min: 20000, max: 30000 },
-        "30000+": { min: 30000, max: 999999 },
+    // Skills filtering
+    if (skills) {
+      const skillsArray = skills.split(',');
+      whereClause.skillsRequired = { hasSome: skillsArray };
+    }
+
+    // Municipality filtering (based on company's institution)
+    if (municipality && municipality !== "all") {
+      whereClause.company = {
+        institution: {
+          name: municipality,
+          institutionType: "MUNICIPALITY"
+        }
       };
-      const range = salaryRanges[salary as keyof typeof salaryRanges];
-      if (range) {
-        whereClause.salaryMin = { gte: range.min };
-        whereClause.salaryMax = { lte: range.max };
+    }
+
+    // Remote work filtering
+    if (remote && remote !== "all") {
+      if (remote === "yes") {
+        whereClause.workModality = "REMOTE";
+      } else if (remote === "no") {
+        whereClause.workModality = { not: "REMOTE" };
+      } else if (remote === "hybrid") {
+        whereClause.workModality = "HYBRID";
       }
     }
 

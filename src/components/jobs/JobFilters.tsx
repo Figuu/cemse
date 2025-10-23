@@ -3,6 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -15,13 +16,14 @@ import {
   Wifi,
   Filter
 } from "lucide-react";
+import { useJobSkills } from "@/hooks/useJobSkills";
 
 interface JobFiltersProps {
   filters: {
-    location: string;
     type: string;
     experience: string;
-    salary: string;
+    salaryMin: string;
+    salaryMax: string;
     remote: string;
     skills: string[];
   };
@@ -29,28 +31,16 @@ interface JobFiltersProps {
   onMunicipalityChange: (value: string) => void;
   municipalityInstitutions: Array<{ id: string; name: string }>;
   onFiltersChange: (filters: {
-    location: string;
     type: string;
     experience: string;
-    salary: string;
+    salaryMin: string;
+    salaryMax: string;
     remote: string;
     skills: string[];
   }) => void;
   onClearFilters: () => void;
 }
 
-const locations = [
-  "Ciudad de México",
-  "Guadalajara",
-  "Monterrey",
-  "Puebla",
-  "Tijuana",
-  "León",
-  "Juárez",
-  "Torreón",
-  "Querétaro",
-  "San Luis Potosí"
-];
 
 const jobTypes = [
   { value: "full-time", label: "Tiempo Completo" },
@@ -67,57 +57,19 @@ const experienceLevels = [
   { value: "10+", label: "10+ años" }
 ];
 
-const salaryRanges = [
-  { value: "0-15000", label: "Hasta $15,000" },
-  { value: "15000-25000", label: "$15,000 - $25,000" },
-  { value: "25000-40000", label: "$25,000 - $40,000" },
-  { value: "40000-60000", label: "$40,000 - $60,000" },
-  { value: "60000+", label: "Más de $60,000" }
-];
-
-const popularSkills = [
-  "JavaScript",
-  "React",
-  "Python",
-  "Java",
-  "Node.js",
-  "TypeScript",
-  "Angular",
-  "Vue.js",
-  "PHP",
-  "Laravel",
-  "Django",
-  "Flask",
-  "MySQL",
-  "PostgreSQL",
-  "MongoDB",
-  "AWS",
-  "Docker",
-  "Kubernetes",
-  "Git",
-  "Figma",
-  "Photoshop",
-  "Illustrator",
-  "Marketing Digital",
-  "SEO",
-  "Google Ads",
-  "Facebook Ads",
-  "Analytics",
-  "Excel",
-  "Power BI",
-  "Tableau"
-];
-
 export function JobFilters({ filters, selectedMunicipality, onMunicipalityChange, municipalityInstitutions, onFiltersChange, onClearFilters }: JobFiltersProps) {
+  const { data: skillsData, isLoading: skillsLoading } = useJobSkills();
+  const availableSkills = skillsData?.skills || [];
+
   const handleFilterChange = (key: string, value: string | string[]) => {
     onFiltersChange({
       ...filters,
       [key]: value
     } as {
-      location: string;
       type: string;
       experience: string;
-      salary: string;
+      salaryMin: string;
+      salaryMax: string;
       remote: string;
       skills: string[];
     });
@@ -136,7 +88,7 @@ export function JobFilters({ filters, selectedMunicipality, onMunicipalityChange
   };
 
   const hasActiveFilters = Object.values(filters).some(value => 
-    Array.isArray(value) ? value.length > 0 : value !== "all"
+    Array.isArray(value) ? value.length > 0 : value !== "all" && value !== ""
   ) || selectedMunicipality !== "all";
 
   return (
@@ -159,29 +111,6 @@ export function JobFilters({ filters, selectedMunicipality, onMunicipalityChange
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Location Filter */}
-        <div>
-          <Label className="flex items-center mb-2">
-            <MapPin className="h-4 w-4 mr-2" />
-            Ubicación
-          </Label>
-          <Select
-            value={filters.location}
-            onValueChange={(value) => handleFilterChange("location", value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecciona ubicación" />
-            </SelectTrigger>
-             <SelectContent>
-               <SelectItem value="all">Todas las ubicaciones</SelectItem>
-               {locations.map(location => (
-                 <SelectItem key={location} value={location}>
-                   {location}
-                 </SelectItem>
-               ))}
-             </SelectContent>
-          </Select>
-        </div>
 
         {/* Municipality Filter */}
         <div>
@@ -260,24 +189,36 @@ export function JobFilters({ filters, selectedMunicipality, onMunicipalityChange
         <div>
           <Label className="flex items-center mb-2">
             <DollarSign className="h-4 w-4 mr-2" />
-            Rango Salarial
+            Rango Salarial (BOB)
           </Label>
-          <Select
-            value={filters.salary}
-            onValueChange={(value) => handleFilterChange("salary", value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecciona rango" />
-            </SelectTrigger>
-             <SelectContent>
-               <SelectItem value="all">Todos los rangos</SelectItem>
-               {salaryRanges.map(range => (
-                 <SelectItem key={range.value} value={range.value}>
-                   {range.label}
-                 </SelectItem>
-               ))}
-             </SelectContent>
-          </Select>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label htmlFor="salaryMin" className="text-sm text-muted-foreground">
+                Salario Mínimo
+              </Label>
+              <Input
+                id="salaryMin"
+                type="number"
+                placeholder="Ej: 5000"
+                value={filters.salaryMin}
+                onChange={(e) => handleFilterChange("salaryMin", e.target.value)}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="salaryMax" className="text-sm text-muted-foreground">
+                Salario Máximo
+              </Label>
+              <Input
+                id="salaryMax"
+                type="number"
+                placeholder="Ej: 15000"
+                value={filters.salaryMax}
+                onChange={(e) => handleFilterChange("salaryMax", e.target.value)}
+                className="mt-1"
+              />
+            </div>
+          </div>
         </div>
 
         {/* Remote Work Filter */}
@@ -319,25 +260,29 @@ export function JobFilters({ filters, selectedMunicipality, onMunicipalityChange
                 </Badge>
               ))}
             </div>
-            <div className="max-h-32 overflow-y-auto">
-              <div className="grid grid-cols-2 gap-2">
-                {popularSkills.map(skill => (
-                  <div key={skill} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={skill}
-                      checked={filters.skills.includes(skill)}
-                      onCheckedChange={() => handleSkillToggle(skill)}
-                    />
-                    <Label
-                      htmlFor={skill}
-                      className="text-sm cursor-pointer"
-                    >
-                      {skill}
-                    </Label>
-                  </div>
-                ))}
+            {skillsLoading ? (
+              <div className="text-sm text-muted-foreground">Cargando habilidades...</div>
+            ) : (
+              <div className="max-h-32 overflow-y-auto">
+                <div className="grid grid-cols-2 gap-2">
+                  {availableSkills.map(skill => (
+                    <div key={skill} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={skill}
+                        checked={filters.skills.includes(skill)}
+                        onCheckedChange={() => handleSkillToggle(skill)}
+                      />
+                      <Label
+                        htmlFor={skill}
+                        className="text-sm cursor-pointer"
+                      >
+                        {skill}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
 
@@ -351,12 +296,6 @@ export function JobFilters({ filters, selectedMunicipality, onMunicipalityChange
               </Button>
             </div>
              <div className="flex flex-wrap gap-2">
-               {filters.location && filters.location !== "all" && (
-                 <Badge variant="outline">
-                   Ubicación: {filters.location}
-                   <X className="h-3 w-3 ml-1 cursor-pointer" onClick={() => handleFilterChange("location", "all")} />
-                 </Badge>
-               )}
                {filters.type && filters.type !== "all" && (
                  <Badge variant="outline">
                    Tipo: {jobTypes.find(t => t.value === filters.type)?.label}
@@ -369,10 +308,18 @@ export function JobFilters({ filters, selectedMunicipality, onMunicipalityChange
                    <X className="h-3 w-3 ml-1 cursor-pointer" onClick={() => handleFilterChange("experience", "all")} />
                  </Badge>
                )}
-               {filters.salary && filters.salary !== "all" && (
+               {(filters.salaryMin || filters.salaryMax) && (
                  <Badge variant="outline">
-                   Salario: {salaryRanges.find(s => s.value === filters.salary)?.label}
-                   <X className="h-3 w-3 ml-1 cursor-pointer" onClick={() => handleFilterChange("salary", "all")} />
+                   Salario: {filters.salaryMin && filters.salaryMax 
+                     ? `${filters.salaryMin} - ${filters.salaryMax} BOB`
+                     : filters.salaryMin 
+                       ? `Desde ${filters.salaryMin} BOB`
+                       : `Hasta ${filters.salaryMax} BOB`
+                   }
+                   <X className="h-3 w-3 ml-1 cursor-pointer" onClick={() => {
+                     handleFilterChange("salaryMin", "");
+                     handleFilterChange("salaryMax", "");
+                   }} />
                  </Badge>
                )}
                {filters.remote && filters.remote !== "all" && (
