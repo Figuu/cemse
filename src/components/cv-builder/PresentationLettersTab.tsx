@@ -27,6 +27,7 @@ import {
 import { PresentationLetterTemplate1 } from "./templates/PresentationLetterTemplate1";
 import { PresentationLetterTemplate2 } from "./templates/PresentationLetterTemplate2";
 import { PresentationLetterTemplate3 } from "./templates/PresentationLetterTemplate3";
+import { PresentationLetterPreview } from "./PresentationLetterPreview";
 
 interface PresentationLetterData {
   recipientName: string;
@@ -242,9 +243,48 @@ export function PresentationLettersTab() {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
 
-      toast.success("Carta generada", {
-        description: `Tu carta de presentación en formato ${template.name} se ha descargado correctamente`,
-      });
+      // Upload to MinIO and update profile
+      if (session?.user?.id) {
+        try {
+          // Create FormData for the API call
+          const formData = new FormData();
+          formData.append('file', blob, `Carta_Presentacion_${profile.firstName}_${profile.lastName}_${template.name}.pdf`);
+          formData.append('templateName', template.name);
+          formData.append('fileName', `Carta_Presentacion_${profile.firstName}_${profile.lastName}_${template.name}.pdf`);
+
+          // Upload to MinIO via API
+          const uploadResponse = await fetch('/api/cover-letter/upload', {
+            method: 'POST',
+            body: formData
+          });
+
+          if (uploadResponse.ok) {
+            const uploadResult = await uploadResponse.json();
+            if (uploadResult.success) {
+              toast.success("Carta generada y guardada", {
+                description: `Tu carta de presentación se ha descargado y guardado en tu perfil con la plantilla ${template.name}`,
+              });
+            } else {
+              toast.success("Carta generada", {
+                description: `Tu carta de presentación se ha descargado con la plantilla ${template.name}. Error al guardar en perfil.`,
+              });
+            }
+          } else {
+            toast.success("Carta generada", {
+              description: `Tu carta de presentación se ha descargado con la plantilla ${template.name}. Error al subir a la nube.`,
+            });
+          }
+        } catch (uploadError) {
+          console.error('Upload error:', uploadError);
+          toast.success("Carta generada", {
+            description: `Tu carta de presentación se ha descargado con la plantilla ${template.name}. Error al subir a la nube.`,
+          });
+        }
+      } else {
+        toast.success("Carta generada", {
+          description: `Tu carta de presentación en formato ${template.name} se ha descargado correctamente`,
+        });
+      }
     } catch (error) {
       console.error('PDF generation error:', error);
       toast.error("Error", {
@@ -478,35 +518,14 @@ export function PresentationLettersTab() {
 
       {/* Preview Section */}
       {selectedTemplate && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Eye className="h-5 w-5 mr-2" />
-              Vista Previa - {letterTemplates.find(t => t.id === selectedTemplate)?.name}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="bg-muted/50 rounded-lg p-6 min-h-[400px] flex items-center justify-center">
-              <div className="text-center space-y-4">
-                <Mail className="h-16 w-16 mx-auto text-muted-foreground" />
-                <div>
-                  <h3 className="text-lg font-semibold">Vista Previa de la Carta</h3>
-                  <p className="text-muted-foreground">
-                    Haz clic en "Descargar PDF" para generar tu carta con la plantilla seleccionada
-                  </p>
-                </div>
-                <Button
-                  onClick={() => handleGeneratePDF(selectedTemplate)}
-                  disabled={isGenerating}
-                  className="mt-4"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  {isGenerating ? "Generando PDF..." : "Generar y Descargar PDF"}
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <PresentationLetterPreview
+          profile={profile}
+          letterData={formData}
+          templateId={selectedTemplate}
+          templateName={letterTemplates.find(t => t.id === selectedTemplate)?.name || "Plantilla"}
+          onGeneratePDF={handleGeneratePDF}
+          isGenerating={isGenerating}
+        />
       )}
 
       {/* Tips Section */}

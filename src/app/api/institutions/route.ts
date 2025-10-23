@@ -12,7 +12,6 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const type = searchParams.get("type");
-    const city = searchParams.get("city");
     const search = searchParams.get("search");
     const limit = parseInt(searchParams.get("limit") || "20");
     const offset = parseInt(searchParams.get("offset") || "0");
@@ -21,10 +20,6 @@ export async function GET(request: NextRequest) {
 
     if (type && type !== "all") {
       whereClause.institutionType = type;
-    }
-
-    if (city && city !== "all") {
-      whereClause.department = city;
     }
 
     if (search) {
@@ -46,7 +41,8 @@ export async function GET(request: NextRequest) {
         _count: {
           select: {
             companies: true,
-            profiles: true
+            profiles: true,
+            courses: true
           }
         }
       },

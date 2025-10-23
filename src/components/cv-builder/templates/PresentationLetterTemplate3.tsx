@@ -5,95 +5,45 @@ import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/rendere
 
 const styles = StyleSheet.create({
   page: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     backgroundColor: '#FFFFFF',
     fontFamily: 'Helvetica',
-    fontSize: 10,
-    lineHeight: 1.4,
-  },
-  sidebar: {
-    width: '30%',
-    backgroundColor: '#8b5cf6',
-    padding: 25,
-    color: '#FFFFFF',
-  },
-  mainContent: {
-    width: '70%',
-    padding: 30,
-    backgroundColor: '#FFFFFF',
+    fontSize: 11,
+    lineHeight: 1.5,
+    padding: 40,
   },
   header: {
-    marginBottom: 25,
+    marginBottom: 30,
+    textAlign: 'center',
   },
   name: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 5,
-    lineHeight: 1.2,
+    color: '#1f2937',
+    marginBottom: 8,
+    textAlign: 'center',
   },
   title: {
-    fontSize: 11,
-    color: '#e9d5ff',
+    fontSize: 12,
+    color: '#8b5cf6',
     marginBottom: 15,
     fontWeight: 'bold',
+    textAlign: 'center',
   },
   contactInfo: {
-    fontSize: 8,
-    color: '#e9d5ff',
-    lineHeight: 1.3,
-    marginBottom: 5,
-  },
-  section: {
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 8,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    borderBottomWidth: 1,
-    borderBottomColor: '#a78bfa',
-    paddingBottom: 3,
-  },
-  skillsList: {
-    flexDirection: 'column',
-  },
-  skillItem: {
-    marginBottom: 5,
-  },
-  skillName: {
-    fontSize: 9,
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-  },
-  mainHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 25,
-    paddingBottom: 15,
-    borderBottomWidth: 2,
-    borderBottomColor: '#8b5cf6',
-  },
-  mainTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#1f2937',
-  },
-  date: {
     fontSize: 9,
     color: '#6b7280',
+    textAlign: 'center',
+    marginBottom: 3,
+  },
+  date: {
+    fontSize: 10,
+    color: '#6b7280',
+    textAlign: 'right',
+    marginBottom: 25,
   },
   recipientInfo: {
-    marginBottom: 20,
-    padding: 15,
-    backgroundColor: '#faf5ff',
-    borderRadius: 5,
-    borderLeftWidth: 4,
-    borderLeftColor: '#8b5cf6',
+    marginBottom: 25,
   },
   recipientName: {
     fontSize: 11,
@@ -102,7 +52,7 @@ const styles = StyleSheet.create({
     marginBottom: 3,
   },
   recipientTitle: {
-    fontSize: 9,
+    fontSize: 10,
     color: '#8b5cf6',
     fontWeight: 'bold',
     marginBottom: 2,
@@ -113,49 +63,61 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 2,
   },
+  companyAddress: {
+    fontSize: 9,
+    color: '#6b7280',
+  },
   subject: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: 'bold',
     color: '#1f2937',
     marginBottom: 20,
+    textAlign: 'center',
     padding: 12,
-    backgroundColor: '#f3e8ff',
+    backgroundColor: '#f8fafc',
     borderRadius: 5,
     borderWidth: 1,
-    borderColor: '#8b5cf6',
+    borderColor: '#e2e8f0',
   },
   greeting: {
-    fontSize: 10,
+    fontSize: 11,
     color: '#1f2937',
-    marginBottom: 15,
+    marginBottom: 20,
     fontWeight: 'bold',
   },
   content: {
-    fontSize: 10,
+    fontSize: 11,
     color: '#374151',
-    lineHeight: 1.5,
+    lineHeight: 1.6,
     textAlign: 'justify',
     marginBottom: 15,
   },
   paragraph: {
-    marginBottom: 10,
+    marginBottom: 15,
   },
-  highlight: {
-    backgroundColor: '#f3e8ff',
-    padding: 10,
+  highlightBox: {
+    backgroundColor: '#faf5ff',
+    padding: 15,
+    marginVertical: 15,
     borderRadius: 5,
-    borderLeftWidth: 3,
+    borderLeftWidth: 4,
     borderLeftColor: '#8b5cf6',
-    marginBottom: 10,
   },
-  closing: {
-    marginTop: 20,
-    marginBottom: 10,
-  },
-  closingText: {
+  highlightText: {
     fontSize: 10,
     color: '#1f2937',
-    marginBottom: 25,
+    fontWeight: 'bold',
+    fontStyle: 'italic',
+    textAlign: 'center',
+  },
+  closing: {
+    marginTop: 30,
+    marginBottom: 20,
+  },
+  closingText: {
+    fontSize: 11,
+    color: '#1f2937',
+    marginBottom: 40,
   },
   signature: {
     fontSize: 11,
@@ -163,20 +125,16 @@ const styles = StyleSheet.create({
     color: '#1f2937',
   },
   footer: {
-    position: 'absolute',
-    bottom: 20,
-    left: 30,
-    right: 30,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 10,
+    marginTop: 30,
+    paddingTop: 15,
     borderTopWidth: 1,
     borderTopColor: '#e5e7eb',
+    textAlign: 'center',
   },
   footerText: {
     fontSize: 8,
     color: '#9ca3af',
+    fontStyle: 'italic',
   },
 });
 
@@ -185,203 +143,103 @@ interface PresentationLetterTemplate3Props {
   letterData: any;
 }
 
-export const PresentationLetterTemplate3: React.FC<PresentationLetterTemplate3Props> = ({ 
-  profile, 
-  letterData 
-}) => {
-  const formatDate = (dateString: string) => {
-    if (!dateString) {
-      return new Date().toLocaleDateString('es-ES', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      });
-    }
-    
-    try {
-      // Handle different date formats
-      let date: Date;
-      if (dateString.includes('/')) {
-        // Handle DD/MM/YYYY format
-        const parts = dateString.split('/');
-        if (parts.length === 3) {
-          date = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
-        } else {
-          date = new Date(dateString);
-        }
-      } else {
-        date = new Date(dateString);
-      }
-      
-      // Check if date is valid
-      if (isNaN(date.getTime())) {
-        return new Date().toLocaleDateString('es-ES', { 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
-        });
-      }
-      
-      return date.toLocaleDateString('es-ES', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      });
-    } catch (error) {
-      // Fallback to current date if parsing fails
-      return new Date().toLocaleDateString('es-ES', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      });
-    }
-  };
-
-  const getDefaultContent = () => {
-    if (letterData.content) return letterData.content;
-    
-    return `Me dirijo a usted para expresar mi interés en la posición de ${letterData.position || '[Posición]'} en ${letterData.companyName || '[Empresa]'}.
-
-Como ${profile?.jobTitle || 'profesional'} con ${profile?.experienceLevel ? 
-      (profile.experienceLevel === 'NO_EXPERIENCE' ? 'motivación y ganas de aprender' :
-       profile.experienceLevel === 'ENTRY_LEVEL' ? 'experiencia inicial' :
-       profile.experienceLevel === 'MID_LEVEL' ? 'experiencia sólida' :
-       'amplia experiencia') : 'experiencia relevante'}, estoy convencido/a de que puedo aportar valor a su organización.
-
-${profile?.professionalSummary || 'Mi formación y experiencia me han preparado para enfrentar los desafíos de esta posición, y estoy comprometido/a con el crecimiento profesional y el éxito de la empresa.'}
-
-Estaría encantado/a de tener la oportunidad de discutir cómo mis habilidades y experiencia pueden contribuir al éxito de ${letterData.companyName || 'su empresa'}. Agradezco su consideración y quedo a la espera de su respuesta.`;
+export const PresentationLetterTemplate3: React.FC<PresentationLetterTemplate3Props> = ({ profile, letterData }) => {
+  const formatDate = () => {
+    return new Date().toLocaleDateString('es-ES', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
   };
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* Sidebar */}
-        <View style={styles.sidebar}>
-          {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.name}>
-              {profile?.firstName} {profile?.lastName}
-            </Text>
-            <Text style={styles.title}>{profile?.jobTitle || 'Profesional'}</Text>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.name}>
+            {profile?.firstName} {profile?.lastName}
+          </Text>
+          <Text style={styles.title}>
+            {profile?.jobTitle || profile?.targetPosition || "Profesional"}
+          </Text>
+          <View>
+            {profile?.email && <Text style={styles.contactInfo}>Email: {profile.email}</Text>}
+            {profile?.phone && <Text style={styles.contactInfo}>Tel: {profile.phone}</Text>}
+            {profile?.address && <Text style={styles.contactInfo}>Dir: {profile.address}</Text>}
           </View>
-
-          {/* Contact Info */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Contacto</Text>
-            <Text style={styles.contactInfo}>
-              {profile?.email || ''}
-            </Text>
-            <Text style={styles.contactInfo}>
-              {profile?.phone || ''}
-            </Text>
-            <Text style={styles.contactInfo}>
-              {profile?.address || ''}
-            </Text>
-            <Text style={styles.contactInfo}>
-              {profile?.city}, {profile?.state || profile?.country}
-            </Text>
-          </View>
-
-          {/* Skills */}
-          {profile?.skillsWithLevel && Array.isArray(profile.skillsWithLevel) && profile.skillsWithLevel.length > 0 && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Habilidades</Text>
-              <View style={styles.skillsList}>
-                {profile.skillsWithLevel.slice(0, 5).map((skill: any, index: number) => (
-                  <View key={index} style={styles.skillItem}>
-                    <Text style={styles.skillName}>{skill?.skill || skill || 'Habilidad'}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-          )}
-
-          {/* Professional Summary */}
-          {profile?.professionalSummary && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Perfil</Text>
-              <Text style={styles.contactInfo}>
-                {profile.professionalSummary.substring(0, 150)}...
-              </Text>
-            </View>
-          )}
         </View>
 
-        {/* Main Content */}
-        <View style={styles.mainContent}>
-          {/* Header */}
-          <View style={styles.mainHeader}>
-            <Text style={styles.mainTitle}>Carta de Presentación</Text>
-            <Text style={styles.date}>
-              {formatDate(letterData.date)}
-            </Text>
-          </View>
+        {/* Date */}
+        <Text style={styles.date}>{formatDate()}</Text>
 
-          {/* Recipient Information */}
-          <View style={styles.recipientInfo}>
-            {letterData.recipientName && (
-              <Text style={styles.recipientName}>
-                {letterData.recipientName}
-              </Text>
-            )}
-            {letterData.recipientTitle && (
-              <Text style={styles.recipientTitle}>
-                {letterData.recipientTitle}
-              </Text>
-            )}
-            {letterData.companyName && (
-              <Text style={styles.companyName}>
-                {letterData.companyName}
-              </Text>
-            )}
-          </View>
-
-          {/* Subject */}
-          {letterData.subject && (
-            <Text style={styles.subject}>
-              {letterData.subject}
-            </Text>
-          )}
-
-          {/* Greeting */}
-          <Text style={styles.greeting}>
-            {letterData.recipientName ? 
-              `Estimado/a ${letterData.recipientName}:` : 
-              'Estimado/a Señor/Señora:'
-            }
+        {/* Recipient Info */}
+        <View style={styles.recipientInfo}>
+          <Text style={styles.recipientName}>
+            {letterData?.recipientName || "Nombre del Reclutador"}
           </Text>
+          <Text style={styles.recipientTitle}>
+            {letterData?.recipientTitle || "Título del Reclutador"}
+          </Text>
+          <Text style={styles.companyName}>
+            {letterData?.companyName || "Nombre de la Empresa"}
+          </Text>
+          <Text style={styles.companyAddress}>
+            {letterData?.companyAddress || "Dirección de la Empresa"}
+          </Text>
+        </View>
 
-          {/* Content */}
-          <View style={styles.content}>
-            {getDefaultContent().split('\n\n').map((paragraph, index) => (
-              <View key={index} style={index === 1 ? styles.highlight : styles.paragraph}>
-                <Text>
-                  {paragraph}
-                </Text>
-              </View>
-            ))}
-          </View>
+        {/* Subject */}
+        <Text style={styles.subject}>
+          {letterData?.subject || "Carta de Presentación"}
+        </Text>
 
-          {/* Closing */}
-          <View style={styles.closing}>
-            <Text style={styles.closingText}>
-              {letterData.closing || 'Atentamente,'}
-            </Text>
-            <Text style={styles.signature}>
-              {letterData.signature || `${profile?.firstName} ${profile?.lastName}`}
-            </Text>
-          </View>
+        {/* Greeting */}
+        <Text style={styles.greeting}>
+          {letterData?.greeting || "Estimado/a Reclutador/a,"}
+        </Text>
 
-          {/* Footer */}
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>
-              Carta de Presentación Profesional
-            </Text>
-            <Text style={styles.footerText}>
-              {formatDate(letterData.date)}
-            </Text>
-          </View>
+        {/* Content */}
+        <View style={styles.paragraph}>
+          <Text style={styles.content}>
+            {letterData?.content || "Me dirijo a usted para expresar mi interés en formar parte de su equipo de trabajo. Con mi experiencia y habilidades, estoy seguro de que puedo contribuir significativamente a los objetivos de su organización."}
+          </Text>
+        </View>
+
+        {/* Highlight Box */}
+        <View style={styles.highlightBox}>
+          <Text style={styles.highlightText}>
+            "Mi compromiso con la excelencia y mi pasión por el crecimiento profesional me convierten en un candidato ideal para su equipo."
+          </Text>
+        </View>
+
+        <View style={styles.paragraph}>
+          <Text style={styles.content}>
+            {letterData?.additionalContent || "Mi formación académica y experiencia profesional me han preparado para enfrentar los desafíos que presenta el mercado laboral actual. Estoy comprometido con el crecimiento profesional y el trabajo en equipo."}
+          </Text>
+        </View>
+
+        <View style={styles.paragraph}>
+          <Text style={styles.content}>
+            {letterData?.closingContent || "Agradezco su tiempo y consideración. Quedo a la espera de una oportunidad para discutir cómo puedo contribuir al éxito de su organización."}
+          </Text>
+        </View>
+
+        {/* Closing */}
+        <View style={styles.closing}>
+          <Text style={styles.closingText}>
+            {letterData?.closing || "Atentamente,"}
+          </Text>
+          <Text style={styles.signature}>
+            {profile?.firstName} {profile?.lastName}
+          </Text>
+        </View>
+
+        {/* Footer */}
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>
+            Esta carta fue generada con el CV Builder de CEMSE
+          </Text>
         </View>
       </Page>
     </Document>

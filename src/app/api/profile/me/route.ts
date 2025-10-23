@@ -130,6 +130,10 @@ export async function GET(request: NextRequest) {
         coverLetterSignature: profile.coverLetterSignature,
         coverLetterDate: profile.coverLetterDate,
         
+        // Document URLs
+        cvUrl: profile.cvUrl,
+        coverLetterUrl: profile.coverLetterUrl,
+        
         // Related data
         institution: profile.institution,
         entrepreneurships: profile.entrepreneurships,

@@ -8,9 +8,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
   X, 
   Eye, 
-  Heart, 
-  MessageCircle, 
-  Share, 
   Calendar, 
   User, 
   Globe,
@@ -284,11 +281,6 @@ export function NewsDetailsModal({
                 <span className="font-medium">Vistas:</span>
                 <span>{news.viewCount.toLocaleString()}</span>
               </div>
-              <div className="flex items-center space-x-2 text-sm">
-                <Heart className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">Likes:</span>
-                <span>{news.likeCount}</span>
-              </div>
             </div>
             <div className="space-y-2">
               <div className="flex items-center space-x-2 text-sm">
@@ -313,18 +305,7 @@ export function NewsDetailsModal({
 
           {/* Actions */}
           <div className="flex justify-center space-x-4 pt-4 border-t">
-            <Button variant="outline">
-              <Heart className="h-4 w-4 mr-2" />
-              Me Gusta ({news.likeCount})
-            </Button>
-            <Button variant="outline">
-              <MessageCircle className="h-4 w-4 mr-2" />
-              Comentar ({news.commentCount})
-            </Button>
-            <Button variant="outline">
-              <Share className="h-4 w-4 mr-2" />
-              Compartir
-            </Button>
+            {/* Botones de acción removidos */}
           </div>
         </CardContent>
       </Card>

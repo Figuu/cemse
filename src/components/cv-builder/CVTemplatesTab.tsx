@@ -19,6 +19,7 @@ import { CVTemplate1 } from "./templates/CVTemplate1";
 import { CVTemplate2 } from "./templates/CVTemplate2";
 import { CVTemplate3 } from "./templates/CVTemplate3";
 import { generateSimpleCV, generateHTMLCV, generateCanvasCV } from "./utils/pdfGenerator";
+import { CVPreview } from "./CVPreview";
 
 interface CVTemplate {
   id: string;
@@ -440,46 +441,13 @@ export function CVTemplatesTab() {
 
       {/* Preview Section */}
       {selectedTemplate && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Eye className="h-5 w-5 mr-2" />
-              Vista Previa - {cvTemplates.find(t => t.id === selectedTemplate)?.name}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="bg-muted/50 rounded-lg p-6 min-h-[400px] flex items-center justify-center">
-              <div className="text-center space-y-4">
-                <FileText className="h-16 w-16 mx-auto text-muted-foreground" />
-                <div>
-                  <h3 className="text-lg font-semibold">Vista Previa del CV</h3>
-                  <p className="text-muted-foreground">
-                    Haz clic en "Descargar PDF" para generar tu CV con la plantilla seleccionada
-                  </p>
-                </div>
-                <div className="flex gap-2 mt-4">
-                  <Button
-                    onClick={() => handleGeneratePDF(selectedTemplate)}
-                    disabled={isGenerating}
-                    className="flex-1"
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    {isGenerating ? "Generando PDF..." : "Generar y Descargar PDF"}
-                  </Button>
-                  
-                  <Button
-                    onClick={handleTestPDF}
-                    disabled={isTesting}
-                    variant="outline"
-                    className="px-3"
-                  >
-                    {isTesting ? "Probando..." : "Test PDF"}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <CVPreview
+          profile={profile}
+          templateId={selectedTemplate}
+          templateName={cvTemplates.find(t => t.id === selectedTemplate)?.name || "Plantilla"}
+          onGeneratePDF={handleGeneratePDF}
+          isGenerating={isGenerating}
+        />
       )}
 
       {/* Tips Section */}
@@ -506,6 +474,18 @@ export function CVTemplatesTab() {
                 <li>• Limita el CV a 1-2 páginas máximo</li>
                 <li>• Guarda en formato PDF para mejor compatibilidad</li>
               </ul>
+            </div>
+          </div>
+          <div className="mt-6 pt-4 border-t">
+            <div className="flex justify-center">
+              <Button
+                onClick={handleTestPDF}
+                disabled={isTesting}
+                variant="outline"
+                size="sm"
+              >
+                {isTesting ? "Probando..." : "Test PDF"}
+              </Button>
             </div>
           </div>
         </CardContent>

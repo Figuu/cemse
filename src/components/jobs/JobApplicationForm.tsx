@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { JobPosting, EmploymentTypeLabels, ExperienceLevelLabels } from "@/types/company";
 import { useFileUpload } from "@/hooks/useFileUpload";
+import { useCompleteProfile } from "@/hooks/useCompleteProfile";
 
 const applicationFormSchema = z.object({
   coverLetter: z.string().optional(),
@@ -59,13 +60,16 @@ export function JobApplicationForm({
   isLoading = false,
   currentUser
 }: JobApplicationFormProps) {
+  const { profile: completeProfile } = useCompleteProfile();
+  
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [coverLetterFile, setCoverLetterFile] = useState<File | null>(null);
   const [cvUploadUrl, setCvUploadUrl] = useState<string | null>(null);
   const [coverLetterUploadUrl, setCoverLetterUploadUrl] = useState<string | null>(null);
   
-  // Check if user has a CV URL in their profile
-  const userCvUrl = currentUser?.profile?.cvUrl;
+  // Check if user has CV and Cover Letter URLs in their profile
+  const userCvUrl = completeProfile?.cvUrl;
+  const userCoverLetterUrl = completeProfile?.coverLetterUrl;
 
   const { uploadFile: uploadCvFile, isUploading: isUploadingCv, error: cvUploadError } = useFileUpload();
   const { uploadFile: uploadCoverLetterFile, isUploading: isUploadingCoverLetter, error: coverLetterUploadError } = useFileUpload();
@@ -105,7 +109,10 @@ export function JobApplicationForm({
       data.cvFile = cvUploadUrl;
     }
     
-    if (coverLetterFile && !coverLetterUploadUrl) {
+    // Use user's Cover Letter URL if available, otherwise handle file upload
+    if (userCoverLetterUrl) {
+      data.coverLetterFile = userCoverLetterUrl;
+    } else if (coverLetterFile && !coverLetterUploadUrl) {
       try {
         const uploadUrl = await uploadCoverLetterFile(coverLetterFile);
         setCoverLetterUploadUrl(uploadUrl);

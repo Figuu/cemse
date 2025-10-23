@@ -32,18 +32,17 @@ import { useSession } from "next-auth/react";
 interface Institution {
   id: string;
   name: string;
-  description: string;
-  type: "MUNICIPALITY" | "NGO" | "TRAINING_CENTER";
-  city: string;
-  country: string;
+  department: string;
+  region?: string;
+  institutionType: "MUNICIPALITY" | "NGO" | "TRAINING_CENTER" | "FOUNDATION" | "OTHER";
   website?: string;
   phone?: string;
   email?: string;
-  logoUrl?: string;
+  address?: string;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
-  user: {
+  creator: {
     id: string;
     email: string;
     profile: {
@@ -52,9 +51,9 @@ interface Institution {
     };
   };
   _count: {
+    companies: number;
+    profiles: number;
     courses: number;
-    programs: number;
-    students: number;
   };
 }
 
@@ -68,7 +67,7 @@ export default function InstitutionsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
-  const [cityFilter, setCityFilter] = useState<string>("all");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingInstitution, setEditingInstitution] = useState<Institution | null>(null);
   const [activeTab, setActiveTab] = useState("institutions");
@@ -82,25 +81,47 @@ export default function InstitutionsPage() {
   // Companies data
   const { data: companiesData, isLoading: companiesLoading } = useCompanies({
     search: searchQuery || undefined,
-    location: cityFilter !== "all" ? cityFilter : undefined,
     industry: typeFilter !== "all" ? typeFilter : undefined,
   });
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   useEffect(() => {
     fetchInstitutions();
   }, []);
 
   useEffect(() => {
+    fetchInstitutions();
+  }, [debouncedSearchQuery, typeFilter]);
+
+  useEffect(() => {
     filterInstitutions();
-  }, [institutions, searchQuery, typeFilter, cityFilter]);
+  }, [institutions, searchQuery, typeFilter]);
 
   const fetchInstitutions = async () => {
     try {
-      const response = await fetch("/api/institutions");
-      if (response.ok) {
-        const data = await response.json();
-        setInstitutions(data.institutions || []);
+      setIsLoading(true);
+      const params = new URLSearchParams();
+      
+      if (debouncedSearchQuery) {
+        params.append("search", debouncedSearchQuery);
       }
+      
+      if (typeFilter !== "all") {
+        params.append("type", typeFilter);
+      }
+
+          const response = await fetch(`/api/institutions?${params.toString()}`);
+          if (response.ok) {
+            const data = await response.json();
+            setInstitutions(data.institutions || []);
+          }
     } catch (error) {
       console.error("Error fetching institutions:", error);
     } finally {
@@ -109,29 +130,69 @@ export default function InstitutionsPage() {
   };
 
   const filterInstitutions = () => {
-    let filtered = institutions;
+    // Since API now handles most filtering, we just need to do additional client-side filtering if needed
+    // For now, we'll use the institutions directly from the API
+    setFilteredInstitutions(institutions);
+  };
+
+  // Function to normalize industry names
+  const normalizeIndustry = (industry: string): string => {
+    if (!industry) return '';
+    
+    return industry
+      .toLowerCase()
+      .trim()
+      .normalize('NFD') // Normalize to decomposed form
+      .replace(/[\u0300-\u036f]/g, '') // Remove diacritics (tildes, accents)
+      .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+      .replace(/[^\w\s]/g, '') // Remove special characters except letters, numbers, and spaces
+      .trim();
+  };
+
+  // Get unique normalized industries from companies
+  const getUniqueIndustries = (companies: Company[]): string[] => {
+    const industryMap = new Map<string, string>();
+    
+    companies.forEach(company => {
+      if (company.businessSector) {
+        const normalized = normalizeIndustry(company.businessSector);
+        if (normalized && !industryMap.has(normalized)) {
+          // Store the original industry name as the display value
+          industryMap.set(normalized, company.businessSector);
+        }
+      }
+    });
+    
+    return Array.from(industryMap.values()).sort();
+  };
+
+  // Filter companies based on search and industry
+  const filterCompanies = (companies: Company[]): Company[] => {
+    let filtered = companies;
 
     // Search filter
     if (searchQuery) {
-      filtered = filtered.filter(institution =>
-        institution.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        institution.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        institution.city.toLowerCase().includes(searchQuery.toLowerCase())
+      filtered = filtered.filter(company =>
+        company.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (company.description && company.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (company.location && company.location.toLowerCase().includes(searchQuery.toLowerCase()))
       );
     }
 
-    // Type filter
+    // Industry filter with normalization
     if (typeFilter !== "all") {
-      filtered = filtered.filter(institution => institution.type === typeFilter);
+      filtered = filtered.filter(company => {
+        if (!company.businessSector) return false;
+        return normalizeIndustry(company.businessSector) === normalizeIndustry(typeFilter);
+      });
     }
 
-    // City filter
-    if (cityFilter !== "all") {
-      filtered = filtered.filter(institution => institution.city === cityFilter);
-    }
-
-    setFilteredInstitutions(filtered);
+    return filtered;
   };
+
+  const companies = companiesData?.companies || [];
+  const uniqueIndustries = getUniqueIndustries(companies);
+  const filteredCompanies = filterCompanies(companies);
 
   const handleCreateInstitution = async (institutionData: Record<string, unknown>) => {
     try {
@@ -230,6 +291,10 @@ export default function InstitutionsPage() {
         return "ONG";
       case "TRAINING_CENTER":
         return "Centro de Capacitación";
+      case "FOUNDATION":
+        return "Fundación";
+      case "OTHER":
+        return "Otro";
       default:
         return type;
     }
@@ -243,9 +308,45 @@ export default function InstitutionsPage() {
         return "bg-green-100 text-green-800";
       case "TRAINING_CENTER":
         return "bg-purple-100 text-purple-800";
+      case "FOUNDATION":
+        return "bg-orange-100 text-orange-800";
+      case "OTHER":
+        return "bg-gray-100 text-gray-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
+  };
+
+  const translateResourceType = (type: string) => {
+    const translations: { [key: string]: string } = {
+      "guide": "Guía",
+      "template": "Plantilla",
+      "document": "Documento",
+      "video": "Video",
+      "presentation": "Presentación",
+      "worksheet": "Hoja de Trabajo",
+      "checklist": "Lista de Verificación",
+      "manual": "Manual",
+      "handbook": "Manual",
+      "tutorial": "Tutorial",
+      "course": "Curso",
+      "webinar": "Seminario Web",
+      "ebook": "Libro Electrónico",
+      "pdf": "PDF",
+      "image": "Imagen",
+      "audio": "Audio",
+      "software": "Software",
+      "tool": "Herramienta",
+      "resource": "Recurso",
+      "material": "Material",
+      "other": "Otro",
+      // Tipos específicos encontrados en la base de datos
+      "GUIDE": "Guía",
+      "TEMPLATE": "Plantilla",
+      "COURSE": "Curso"
+    };
+    
+    return translations[type] || translations[type.toLowerCase()] || type;
   };
 
   const getCompanySizeLabel = (size: string) => {
@@ -281,9 +382,6 @@ export default function InstitutionsPage() {
         return "bg-gray-100 text-gray-800";
     }
   };
-
-  const uniqueCities = Array.from(new Set(institutions.map(i => i.city).filter(Boolean))).sort();
-  const companies = companiesData?.companies || [];
 
   if (isLoading) {
     return (
@@ -325,7 +423,7 @@ export default function InstitutionsPage() {
           <Card className="mb-4 sm:mb-6">
             <CardContent className="p-3 sm:p-6">
               <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                   <div>
                     <label className="text-xs sm:text-sm font-medium mb-2 block">Buscar</label>
                     <div className="relative">
@@ -349,20 +447,8 @@ export default function InstitutionsPage() {
                         <SelectItem value="MUNICIPALITY">Municipio</SelectItem>
                         <SelectItem value="NGO">ONG</SelectItem>
                         <SelectItem value="TRAINING_CENTER">Centro de Capacitación</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="text-xs sm:text-sm font-medium mb-2 block">Ciudad</label>
-                    <Select value={cityFilter} onValueChange={setCityFilter}>
-                      <SelectTrigger className="text-sm sm:text-base">
-                        <SelectValue placeholder="Todas las ciudades" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Todas las ciudades</SelectItem>
-                        {uniqueCities.map((city, index) => (
-                          <SelectItem key={`city-${index}-${city}`} value={city}>{city}</SelectItem>
-                        ))}
+                        <SelectItem value="FOUNDATION">Fundación</SelectItem>
+                        <SelectItem value="OTHER">Otro</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -372,7 +458,6 @@ export default function InstitutionsPage() {
                       onClick={() => {
                         setSearchQuery("");
                         setTypeFilter("all");
-                        setCityFilter("all");
                       }}
                       className="w-full sm:w-auto text-xs sm:text-sm"
                     >
@@ -400,8 +485,8 @@ export default function InstitutionsPage() {
                   </Avatar>
                   <div className="min-w-0 flex-1">
                     <CardTitle className="text-base sm:text-lg truncate">{institution.name}</CardTitle>
-                    <Badge className={`mt-1 text-xs sm:text-sm ${getTypeColor(institution.type)}`}>
-                      {getTypeLabel(institution.type)}
+                    <Badge className={`mt-1 text-xs sm:text-sm ${getTypeColor(institution.institutionType)}`}>
+                      {getTypeLabel(institution.institutionType)}
                     </Badge>
                   </div>
                 </div>
@@ -433,7 +518,7 @@ export default function InstitutionsPage() {
               <div className="space-y-2 mb-3 sm:mb-4">
                 <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
                   <MapPin className="h-3 w-3 sm:h-4 sm:w-4 mr-2 flex-shrink-0" />
-                  <span className="truncate">{institution.city}, {institution.country}</span>
+                  <span className="truncate">{institution.department}{institution.region ? `, ${institution.region}` : ''}</span>
                 </div>
                 {institution.website && (
                   <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
@@ -459,16 +544,16 @@ export default function InstitutionsPage() {
 
               <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center mb-3 sm:mb-4">
                 <div>
-                  <div className="text-base sm:text-lg font-bold">{institution._count.courses}</div>
+                  <div className="text-base sm:text-lg font-bold">{institution._count.companies}</div>
+                  <div className="text-xs text-muted-foreground">Empresas</div>
+                </div>
+                <div>
+                  <div className="text-base sm:text-lg font-bold">{institution._count.profiles}</div>
+                  <div className="text-xs text-muted-foreground">Perfiles</div>
+                </div>
+                <div>
+                  <div className="text-base sm:text-lg font-bold">{institution._count?.courses || 0}</div>
                   <div className="text-xs text-muted-foreground">Cursos</div>
-                </div>
-                <div>
-                  <div className="text-base sm:text-lg font-bold">{institution._count.programs}</div>
-                  <div className="text-xs text-muted-foreground">Programas</div>
-                </div>
-                <div>
-                  <div className="text-base sm:text-lg font-bold">{institution._count.students}</div>
-                  <div className="text-xs text-muted-foreground">Estudiantes</div>
                 </div>
               </div>
 
@@ -500,7 +585,7 @@ export default function InstitutionsPage() {
                 <Building className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground mb-4" />
                 <h3 className="text-base sm:text-lg font-medium mb-2">No se encontraron instituciones</h3>
                 <p className="text-xs sm:text-sm text-muted-foreground mb-4">
-                  {searchQuery || typeFilter !== "all" || cityFilter !== "all"
+                  {searchQuery || typeFilter !== "all"
                     ? "Intenta ajustar los filtros de búsqueda"
                     : "Comienza creando tu primera institución"
                   }
@@ -521,7 +606,7 @@ export default function InstitutionsPage() {
           <Card className="mb-4 sm:mb-6">
             <CardContent className="p-3 sm:p-6">
               <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                   <div>
                     <label className="text-xs sm:text-sm font-medium mb-2 block">Buscar</label>
                     <div className="relative">
@@ -542,24 +627,10 @@ export default function InstitutionsPage() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">Todas las industrias</SelectItem>
-                        <SelectItem value="TECHNOLOGY">Tecnología</SelectItem>
-                        <SelectItem value="HEALTHCARE">Salud</SelectItem>
-                        <SelectItem value="FINANCE">Finanzas</SelectItem>
-                        <SelectItem value="EDUCATION">Educación</SelectItem>
-                        <SelectItem value="RETAIL">Retail</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="text-xs sm:text-sm font-medium mb-2 block">Ciudad</label>
-                    <Select value={cityFilter} onValueChange={setCityFilter}>
-                      <SelectTrigger className="text-sm sm:text-base">
-                        <SelectValue placeholder="Todas las ciudades" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Todas las ciudades</SelectItem>
-                        {uniqueCities.map((city, index) => (
-                          <SelectItem key={`city-${index}-${city}`} value={city}>{city}</SelectItem>
+                        {uniqueIndustries.map((industry, index) => (
+                          <SelectItem key={`industry-${index}-${industry}`} value={industry}>
+                            {industry}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -570,7 +641,6 @@ export default function InstitutionsPage() {
                       onClick={() => {
                         setSearchQuery("");
                         setTypeFilter("all");
-                        setCityFilter("all");
                       }}
                       className="w-full sm:w-auto text-xs sm:text-sm"
                     >
@@ -590,7 +660,7 @@ export default function InstitutionsPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              {companies.map((company) => (
+              {filteredCompanies.map((company) => (
                 <Card key={company.id} className="hover:shadow-md transition-shadow">
                   <CardHeader className="p-4 sm:p-6">
                     <div className="flex items-start justify-between gap-3">
@@ -680,13 +750,13 @@ export default function InstitutionsPage() {
             </div>
           )}
 
-          {companies.length === 0 && !companiesLoading && (
+          {filteredCompanies.length === 0 && !companiesLoading && (
             <Card>
               <CardContent className="p-8 sm:p-12 text-center">
                 <Building className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground mb-4" />
                 <h3 className="text-base sm:text-lg font-medium mb-2">No se encontraron empresas</h3>
                 <p className="text-xs sm:text-sm text-muted-foreground mb-4">
-                  {searchQuery || typeFilter !== "all" || cityFilter !== "all"
+                  {searchQuery || typeFilter !== "all"
                     ? "Intenta ajustar los filtros de búsqueda"
                     : "No hay empresas registradas"
                   }
@@ -712,8 +782,8 @@ export default function InstitutionsPage() {
                   </Avatar>
                   <div className="min-w-0 flex-1">
                     <CardTitle className="text-lg sm:text-2xl truncate">{selectedInstitution.name}</CardTitle>
-                    <Badge className={`mt-1 sm:mt-2 text-xs sm:text-sm ${getTypeColor(selectedInstitution.type)}`}>
-                      {getTypeLabel(selectedInstitution.type)}
+                    <Badge className={`mt-1 sm:mt-2 text-xs sm:text-sm ${getTypeColor(selectedInstitution.institutionType)}`}>
+                      {getTypeLabel(selectedInstitution.institutionType)}
                     </Badge>
                   </div>
                 </div>
@@ -735,7 +805,7 @@ export default function InstitutionsPage() {
                   <div className="space-y-2">
                     <div className="flex items-center text-xs sm:text-sm">
                       <MapPin className="h-3 w-3 sm:h-4 sm:w-4 mr-2 text-muted-foreground flex-shrink-0" />
-                      <span className="truncate">{selectedInstitution.city}, {selectedInstitution.country}</span>
+                      <span className="truncate">{selectedInstitution.department}{selectedInstitution.region ? `, ${selectedInstitution.region}` : ''}</span>
                     </div>
                     {selectedInstitution.website && (
                       <div className="flex items-center text-xs sm:text-sm">
@@ -762,9 +832,9 @@ export default function InstitutionsPage() {
                     <div className="text-xs sm:text-sm">
                       <span className="font-medium">Contacto:</span>
                       <p className="text-muted-foreground truncate">
-                        {selectedInstitution.user?.profile?.firstName && selectedInstitution.user?.profile?.lastName 
-                          ? `${selectedInstitution.user.profile.firstName} ${selectedInstitution.user.profile.lastName}`
-                          : selectedInstitution.user?.email || 'No disponible'
+                        {selectedInstitution.creator?.profile?.firstName && selectedInstitution.creator?.profile?.lastName 
+                          ? `${selectedInstitution.creator.profile.firstName} ${selectedInstitution.creator.profile.lastName}`
+                          : selectedInstitution.creator?.email || 'No disponible'
                         }
                       </p>
                     </div>
@@ -788,16 +858,16 @@ export default function InstitutionsPage() {
                 <h3 className="text-base sm:text-lg font-semibold mb-3">Estadísticas</h3>
                 <div className="grid grid-cols-3 gap-2 sm:gap-4">
                   <div className="text-center p-3 sm:p-4 bg-muted rounded-lg">
+                    <div className="text-lg sm:text-2xl font-bold text-primary">{selectedInstitution._count?.companies || 0}</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground">Empresas</div>
+                  </div>
+                  <div className="text-center p-3 sm:p-4 bg-muted rounded-lg">
+                    <div className="text-lg sm:text-2xl font-bold text-primary">{selectedInstitution._count?.profiles || 0}</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground">Perfiles</div>
+                  </div>
+                  <div className="text-center p-3 sm:p-4 bg-muted rounded-lg">
                     <div className="text-lg sm:text-2xl font-bold text-primary">{selectedInstitution._count?.courses || 0}</div>
                     <div className="text-xs sm:text-sm text-muted-foreground">Cursos</div>
-                  </div>
-                  <div className="text-center p-3 sm:p-4 bg-muted rounded-lg">
-                    <div className="text-lg sm:text-2xl font-bold text-primary">{selectedInstitution._count?.programs || 0}</div>
-                    <div className="text-xs sm:text-sm text-muted-foreground">Programas</div>
-                  </div>
-                  <div className="text-center p-3 sm:p-4 bg-muted rounded-lg">
-                    <div className="text-lg sm:text-2xl font-bold text-primary">{selectedInstitution._count?.students || 0}</div>
-                    <div className="text-xs sm:text-sm text-muted-foreground">Estudiantes</div>
                   </div>
                 </div>
               </div>
@@ -828,7 +898,15 @@ export default function InstitutionsPage() {
                       </div>
                     ))}
                     <div className="text-center py-3 sm:py-4">
-                      <Button variant="outline" size="sm" className="text-xs sm:text-sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="text-xs sm:text-sm"
+                        onClick={() => {
+                          // Navigate to courses page with institution filter
+                          window.open(`/courses?institution=${selectedInstitution?.id}`, '_blank');
+                        }}
+                      >
                         Ver Todos los Cursos
                       </Button>
                     </div>
@@ -869,7 +947,15 @@ export default function InstitutionsPage() {
                       </div>
                     ))}
                     <div className="text-center py-3 sm:py-4">
-                      <Button variant="outline" size="sm" className="text-xs sm:text-sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="text-xs sm:text-sm"
+                        onClick={() => {
+                          // Navigate to news page with institution filter
+                          window.open(`/news?institution=${selectedInstitution?.id}`, '_blank');
+                        }}
+                      >
                         Ver Todas las Noticias
                       </Button>
                     </div>
@@ -900,7 +986,7 @@ export default function InstitutionsPage() {
                             <h4 className="font-medium text-sm sm:text-base truncate">{resource.title}</h4>
                             <p className="text-xs sm:text-sm text-muted-foreground line-clamp-1">{resource.description}</p>
                             <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground flex-wrap">
-                              <span>{resource.type}</span>
+                              <span>{translateResourceType(resource.type)}</span>
                               <span>•</span>
                               <span>{resource.downloads} descargas</span>
                               <span>•</span>
@@ -910,6 +996,19 @@ export default function InstitutionsPage() {
                         </div>
                       </div>
                     ))}
+                    <div className="text-center py-3 sm:py-4">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="text-xs sm:text-sm"
+                        onClick={() => {
+                          // Navigate to resources page with institution filter
+                          window.open(`/resources?institution=${selectedInstitution?.id}`, '_blank');
+                        }}
+                      >
+                        Ver Todos los Recursos
+                      </Button>
+                    </div>
                   </div>
                 ) : (
                   <div className="text-center py-6 sm:py-8 text-muted-foreground">

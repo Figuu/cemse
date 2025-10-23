@@ -41,6 +41,44 @@ import { useFeaturedEntrepreneurshipResources } from "@/hooks/useResources";
 import { useMyEntrepreneurships } from "@/hooks/useEntrepreneurships";
 import { useBusinessPlans } from "@/hooks/useBusinessPlans";
 
+// Función para traducir etapas de emprendimiento
+const translateBusinessStage = (stage: string) => {
+  const translations: { [key: string]: string } = {
+    "IDEA": "Idea",
+    "STARTUP": "Inicio", 
+    "GROWING": "Crecimiento",
+    "ESTABLISHED": "Establecido"
+  };
+  return translations[stage] || stage;
+};
+
+// Función para traducir tipos de recursos
+const translateResourceType = (type: string) => {
+  const translations: { [key: string]: string } = {
+    "ARTICLE": "Artículo",
+    "VIDEO": "Video",
+    "AUDIO": "Audio",
+    "DOCUMENT": "Documento",
+    "TOOL": "Herramienta",
+    "TEMPLATE": "Plantilla",
+    "GUIDE": "Guía",
+    "CHECKLIST": "Lista de Verificación",
+    "WEBINAR": "Seminario Web",
+    "COURSE": "Curso",
+    // También manejar versiones en minúsculas
+    "article": "Artículo",
+    "video": "Video",
+    "audio": "Audio",
+    "document": "Documento",
+    "tool": "Herramienta",
+    "template": "Plantilla",
+    "guide": "Guía",
+    "checklist": "Lista de Verificación",
+    "webinar": "Seminario Web",
+    "course": "Curso"
+  };
+  return translations[type] || type;
+};
 
 export default function EntrepreneurshipPage() {
   const [activeTab, setActiveTab] = useState("overview");
@@ -188,7 +226,7 @@ export default function EntrepreneurshipPage() {
               <BarChart3 className="h-6 w-6 sm:h-8 sm:w-8 text-orange-600" />
             </div>
             <div className="space-y-2">
-              <h3 className="text-lg sm:text-xl font-bold text-orange-900">Business Model Canvas</h3>
+              <h3 className="text-lg sm:text-xl font-bold text-orange-900">Canvas de Modelo de Negocio</h3>
               <p className="text-sm sm:text-base text-muted-foreground">
                 Diseña tu modelo de negocio visualmente
               </p>
@@ -381,7 +419,7 @@ export default function EntrepreneurshipPage() {
                         <div className="flex justify-between">
                           <span>Etapa:</span>
                           <Badge variant="secondary" className="text-xs">
-                            {project.businessStage}
+                            {translateBusinessStage(project.businessStage)}
                           </Badge>
                         </div>
                         <div className="flex justify-between">
@@ -552,7 +590,7 @@ export default function EntrepreneurshipPage() {
                         {resource.category}
                       </Badge>
                       <Badge variant="secondary" className="text-xs">
-                        {resource.type}
+                        {translateResourceType(resource.type)}
                       </Badge>
                     </div>
                     <h3 className="font-semibold line-clamp-2">{resource.title}</h3>
@@ -620,7 +658,7 @@ export default function EntrepreneurshipPage() {
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-muted-foreground">Etapa:</span>
                       <Badge variant="secondary">
-                        {project.businessStage}
+                        {translateBusinessStage(project.businessStage)}
                       </Badge>
                     </div>
                     <div className="flex justify-between items-center">

@@ -20,7 +20,6 @@ import {
   FileText,
   ExternalLink,
   TrendingUp,
-  Star,
   DollarSign,
   Clock
 } from "lucide-react";
@@ -176,6 +175,38 @@ export function CompanyDetailsModal({ company, onClose }: CompanyDetailsModalPro
     if (diffInDays < 30) return `Hace ${Math.floor(diffInDays / 7)} semanas`;
     if (diffInDays < 365) return `Hace ${Math.floor(diffInDays / 30)} meses`;
     return `Hace ${Math.floor(diffInDays / 365)} años`;
+  };
+
+  const translateResourceType = (type: string) => {
+    const translations: { [key: string]: string } = {
+      "guide": "Guía",
+      "template": "Plantilla",
+      "document": "Documento",
+      "video": "Video",
+      "presentation": "Presentación",
+      "worksheet": "Hoja de Trabajo",
+      "checklist": "Lista de Verificación",
+      "manual": "Manual",
+      "handbook": "Manual",
+      "tutorial": "Tutorial",
+      "course": "Curso",
+      "webinar": "Seminario Web",
+      "ebook": "Libro Electrónico",
+      "pdf": "PDF",
+      "image": "Imagen",
+      "audio": "Audio",
+      "software": "Software",
+      "tool": "Herramienta",
+      "resource": "Recurso",
+      "material": "Material",
+      "other": "Otro",
+      // Tipos específicos encontrados en la base de datos
+      "GUIDE": "Guía",
+      "TEMPLATE": "Plantilla",
+      "COURSE": "Curso"
+    };
+    
+    return translations[type] || translations[type.toLowerCase()] || type;
   };
 
   if (loading) {
@@ -343,7 +374,14 @@ export function CompanyDetailsModal({ company, onClose }: CompanyDetailsModalPro
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge variant="outline">{job.isActive ? "Activo" : "Inactivo"}</Badge>
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            // Navigate to job details page
+                            window.open(`/jobs/${job.id}`, '_blank');
+                          }}
+                        >
                           <Eye className="h-4 w-4 mr-1" />
                           Ver
                         </Button>
@@ -352,7 +390,14 @@ export function CompanyDetailsModal({ company, onClose }: CompanyDetailsModalPro
                   </div>
                 ))}
                 <div className="text-center py-4">
-                  <Button variant="outline" size="sm">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      // Navigate to jobs page with company filter
+                      window.open(`/jobs?company=${company.id}`, '_blank');
+                    }}
+                  >
                     Ver Todos los Trabajos
                   </Button>
                 </div>
@@ -409,7 +454,14 @@ export function CompanyDetailsModal({ company, onClose }: CompanyDetailsModalPro
                   </div>
                 ))}
                 <div className="text-center py-4">
-                  <Button variant="outline" size="sm">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      // Navigate to news page with company filter
+                      window.open(`/news?company=${company.id}`, '_blank');
+                    }}
+                  >
                     Ver Todas las Noticias
                   </Button>
                 </div>
@@ -441,21 +493,23 @@ export function CompanyDetailsModal({ company, onClose }: CompanyDetailsModalPro
                         <h4 className="font-medium">{resource.title}</h4>
                         <p className="text-sm text-muted-foreground line-clamp-1">{resource.description}</p>
                         <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                          <span>{resource.type}</span>
+                          <span>{translateResourceType(resource.type)}</span>
                           <span>•</span>
                           <span>{resource.downloads} descargas</span>
-                          <span>•</span>
-                          <div className="flex items-center gap-1">
-                            <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                            <span>{resource.rating}</span>
-                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
                 ))}
                 <div className="text-center py-4 col-span-full">
-                  <Button variant="outline" size="sm">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      // Navigate to resources page with company filter
+                      window.open(`/resources?company=${company.id}`, '_blank');
+                    }}
+                  >
                     Ver Todos los Recursos
                   </Button>
                 </div>
@@ -509,7 +563,14 @@ export function CompanyDetailsModal({ company, onClose }: CompanyDetailsModalPro
                   </div>
                 ))}
                 <div className="text-center py-4 col-span-full">
-                  <Button variant="outline" size="sm">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      // Navigate to team/employees page with company filter
+                      window.open(`/team?company=${company.id}`, '_blank');
+                    }}
+                  >
                     Ver Todo el Equipo
                   </Button>
                 </div>

@@ -80,6 +80,22 @@ export default function YouthApplicationDetailPage() {
     console.log('State set - selectedCompanyId:', companyId, 'showChat: true');
   };
 
+  const handleDownloadFile = (fileUrl: string, fileName: string) => {
+    try {
+      // Create a temporary link element to trigger download
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.download = fileName;
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      toast.error('Error al descargar el archivo');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -234,7 +250,8 @@ export default function YouthApplicationDetailPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3 sm:space-y-4">
-                  {application.cvFile && (
+                  {/* CV Document */}
+                  {(application.cvFile || application.cvUrl) && (
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 border rounded-lg">
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
@@ -242,42 +259,38 @@ export default function YouthApplicationDetailPage() {
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="font-medium text-sm sm:text-base">CV/Currículum</p>
-                          <p className="text-xs sm:text-sm text-muted-foreground break-all">{application.cvFile}</p>
-                        </div>
-                      </div>
-                      <Button variant="outline" size="sm" className="self-start sm:self-auto">
-                        <Download className="h-4 w-4 mr-2" />
-                        <span className="hidden sm:inline">Descargar</span>
-                      </Button>
-                    </div>
-                  )}
-                  
-                  {application.cvUrl && (
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 border rounded-lg">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
-                          <ExternalLink className="h-4 w-4 text-blue-600" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium text-sm sm:text-base">CV/Currículum (URL)</p>
                           <p className="text-xs sm:text-sm text-muted-foreground break-all">
-                            {application.cvUrl}
+                            {application.cvFile || application.cvUrl}
                           </p>
                         </div>
                       </div>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => window.open(application.cvUrl, '_blank')}
-                        className="self-start sm:self-auto"
-                      >
-                        <ExternalLink className="h-4 w-4 mr-2" />
-                        <span className="hidden sm:inline">Ver</span>
-                      </Button>
+                      <div className="flex gap-2 self-start sm:self-auto">
+                        {application.cvFile && application.cvUrl && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleDownloadFile(application.cvUrl, application.cvFile)}
+                          >
+                            <Download className="h-4 w-4 mr-2" />
+                            <span className="hidden sm:inline">Descargar</span>
+                          </Button>
+                        )}
+                        {application.cvUrl && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => window.open(application.cvUrl, '_blank')}
+                          >
+                            <ExternalLink className="h-4 w-4 mr-2" />
+                            <span className="hidden sm:inline">Ver</span>
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   )}
 
-                  {application.coverLetterFile && (
+                  {/* Cover Letter Document */}
+                  {(application.coverLetterFile || application.coverLetterUrl) && (
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 border rounded-lg">
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="p-2 bg-green-100 rounded-lg flex-shrink-0">
@@ -285,38 +298,33 @@ export default function YouthApplicationDetailPage() {
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="font-medium text-sm sm:text-base">Carta de Presentación</p>
-                          <p className="text-xs sm:text-sm text-muted-foreground break-all">{application.coverLetterFile}</p>
-                        </div>
-                      </div>
-                      <Button variant="outline" size="sm" className="self-start sm:self-auto">
-                        <Download className="h-4 w-4 mr-2" />
-                        <span className="hidden sm:inline">Descargar</span>
-                      </Button>
-                    </div>
-                  )}
-                  
-                  {application.coverLetterUrl && (
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 border rounded-lg">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="p-2 bg-green-100 rounded-lg flex-shrink-0">
-                          <ExternalLink className="h-4 w-4 text-green-600" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium text-sm sm:text-base">Carta de Presentación (URL)</p>
                           <p className="text-xs sm:text-sm text-muted-foreground break-all">
-                            {application.coverLetterUrl}
+                            {application.coverLetterFile || application.coverLetterUrl}
                           </p>
                         </div>
                       </div>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => window.open(application.coverLetterUrl, '_blank')}
-                        className="self-start sm:self-auto"
-                      >
-                        <ExternalLink className="h-4 w-4 mr-2" />
-                        <span className="hidden sm:inline">Ver</span>
-                      </Button>
+                      <div className="flex gap-2 self-start sm:self-auto">
+                        {application.coverLetterFile && application.coverLetterUrl && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleDownloadFile(application.coverLetterUrl, application.coverLetterFile)}
+                          >
+                            <Download className="h-4 w-4 mr-2" />
+                            <span className="hidden sm:inline">Descargar</span>
+                          </Button>
+                        )}
+                        {application.coverLetterUrl && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => window.open(application.coverLetterUrl, '_blank')}
+                          >
+                            <ExternalLink className="h-4 w-4 mr-2" />
+                            <span className="hidden sm:inline">Ver</span>
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>

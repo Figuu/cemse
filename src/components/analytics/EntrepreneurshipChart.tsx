@@ -26,7 +26,7 @@ interface EntrepreneurshipChartProps {
 export function EntrepreneurshipChart({ data }: EntrepreneurshipChartProps) {
   const stageLabels = {
     'idea': 'Idea',
-    'startup': 'Startup',
+    'startup': 'Inicio',
     'growth': 'Crecimiento',
     'mature': 'Maduro'
   };

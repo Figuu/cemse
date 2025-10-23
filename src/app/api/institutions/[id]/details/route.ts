@@ -81,6 +81,17 @@ export async function GET(
         createdByUserId: institution.creator.id,
         isPublic: true,
         status: "PUBLISHED",
+        // Add additional filter to ensure resources are actually from this institution
+        // This is a temporary solution until we have proper institution-resource relationship
+        AND: [
+          {
+            // Only show resources if they were created by a user associated with this institution
+            // For now, we'll return empty since all resources are admin-created
+            createdByUserId: {
+              not: "cmh3g0q2j0000czx4m12cr80g" // Admin user ID - exclude admin resources
+            }
+          }
+        ]
       },
       orderBy: { publishedDate: "desc" },
       take: 4,

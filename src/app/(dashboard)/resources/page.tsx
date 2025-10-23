@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,7 +29,7 @@ import {
   EyeOff,
   X,
 } from "lucide-react";
-import { useResources } from "@/hooks/useResources";
+import { useHybridResources } from "@/hooks/useHybridResources";
 import { ResourceForm } from "@/components/resources/ResourceForm";
 import { ResourceDetailsModal } from "@/components/resources/ResourceDetailsModal";
 import { RoleGuard } from "@/components/auth/RoleGuard";
@@ -67,25 +67,85 @@ function ResourcesPageContent() {
   const isCompany = session?.user?.role === "COMPANIES";
   const canManageResources = isInstitution || isSuperAdmin || isCompany;
 
-  // Use resources hook
+  // Use hybrid resources hook with debounced search
   const { 
-    resources, 
+    resources: filteredResources, 
+    allResources,
     isLoading, 
     error, 
-    createResource, 
-    updateResource, 
-    deleteResource, 
-    publishResource, 
-    unpublishResource 
-  } = useResources({
-    search: searchTerm || undefined,
-    category: selectedCategory !== "all" ? selectedCategory : undefined,
-    type: selectedType !== "all" ? selectedType : undefined,
-    status: selectedStatus !== "all" ? selectedStatus : undefined,
+    refetch 
+  } = useHybridResources({
+    search: searchTerm,
+    category: selectedCategory,
+    type: selectedType,
+    status: selectedStatus,
+    municipality: selectedMunicipality,
     authorId: isYouth ? undefined : session?.user?.id, // Youth sees all, others see their own
   });
 
-  // Show loading while session is loading
+  // CRUD functions
+  const createResource = useCallback(async (resourceData: any) => {
+    try {
+      const response = await fetch("/api/resources", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(resourceData),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to create resource");
+      }
+      refetch(); // Refetch to update the list
+      return true;
+    } catch (err) {
+      console.error("Error creating resource:", err);
+      return false;
+    }
+  }, [refetch]);
+
+  const updateResource = useCallback(async (id: string, resourceData: any) => {
+    try {
+      const response = await fetch(`/api/resources/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(resourceData),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to update resource");
+      }
+      refetch(); // Refetch to update the list
+      return true;
+    } catch (err) {
+      console.error("Error updating resource:", err);
+      return false;
+    }
+  }, [refetch]);
+
+  const deleteResource = useCallback(async (id: string) => {
+    try {
+      const response = await fetch(`/api/resources/${id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to delete resource");
+      }
+      refetch(); // Refetch to update the list
+      return true;
+    } catch (err) {
+      console.error("Error deleting resource:", err);
+      return false;
+    }
+  }, [refetch]);
+
+  const publishResource = useCallback(async (id: string) => {
+    return updateResource(id, { status: "PUBLISHED", publishedDate: new Date().toISOString() });
+  }, [updateResource]);
+
+  const unpublishResource = useCallback(async (id: string) => {
+    return updateResource(id, { status: "DRAFT" });
+  }, [updateResource]);
   if (sessionStatus === "loading") {
     return (
       <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
@@ -170,39 +230,36 @@ function ResourcesPageContent() {
   };
 
   // Filter resources by municipality (based on creator's associated institution)
-  const filteredResources = resources.filter(resource => {
-    if (selectedMunicipality === "all") return true;
-    return resource.createdBy?.profile?.institution?.name === selectedMunicipality;
-  });
+  const resources = filteredResources;
 
   const categories = [
-    { id: "all", name: "Todos", count: filteredResources.length },
-    { id: "Tecnología", name: "Tecnología", count: filteredResources.filter(r => r.category === "Tecnología").length },
-    { id: "Marketing", name: "Marketing", count: filteredResources.filter(r => r.category === "Marketing").length },
-    { id: "Empleo", name: "Empleo", count: filteredResources.filter(r => r.category === "Empleo").length },
-    { id: "Emprendimiento", name: "Emprendimiento", count: filteredResources.filter(r => r.category === "Emprendimiento").length },
-    { id: "Educación", name: "Educación", count: filteredResources.filter(r => r.category === "Educación").length },
-    { id: "Salud", name: "Salud", count: filteredResources.filter(r => r.category === "Salud").length },
-    { id: "Finanzas", name: "Finanzas", count: filteredResources.filter(r => r.category === "Finanzas").length },
-    { id: "Recursos Humanos", name: "Recursos Humanos", count: filteredResources.filter(r => r.category === "Recursos Humanos").length },
-    { id: "Otros", name: "Otros", count: filteredResources.filter(r => r.category === "Otros").length }
+    { id: "all", name: "Todos", count: allResources.length },
+    { id: "Tecnología", name: "Tecnología", count: allResources.filter(r => r.category === "Tecnología").length },
+    { id: "Marketing", name: "Marketing", count: allResources.filter(r => r.category === "Marketing").length },
+    { id: "Empleo", name: "Empleo", count: allResources.filter(r => r.category === "Empleo").length },
+    { id: "Emprendimiento", name: "Emprendimiento", count: allResources.filter(r => r.category === "Emprendimiento").length },
+    { id: "Educación", name: "Educación", count: allResources.filter(r => r.category === "Educación").length },
+    { id: "Salud", name: "Salud", count: allResources.filter(r => r.category === "Salud").length },
+    { id: "Finanzas", name: "Finanzas", count: allResources.filter(r => r.category === "Finanzas").length },
+    { id: "Recursos Humanos", name: "Recursos Humanos", count: allResources.filter(r => r.category === "Recursos Humanos").length },
+    { id: "Otros", name: "Otros", count: allResources.filter(r => r.category === "Otros").length }
   ];
 
   const types = [
-    { id: "all", name: "Todos", count: filteredResources.length },
-    { id: "PDF", name: "PDF", count: filteredResources.filter(r => r.type === "PDF").length },
-    { id: "Video", name: "Video", count: filteredResources.filter(r => r.type === "Video").length },
-    { id: "Image", name: "Imagen", count: filteredResources.filter(r => r.type === "Image").length },
-    { id: "ZIP", name: "ZIP", count: filteredResources.filter(r => r.type === "ZIP").length },
-    { id: "DOC", name: "Documento", count: filteredResources.filter(r => r.type === "DOC").length },
-    { id: "URL", name: "Enlace", count: filteredResources.filter(r => r.type === "URL").length }
+    { id: "all", name: "Todos", count: allResources.length },
+    { id: "PDF", name: "PDF", count: allResources.filter(r => r.type === "PDF").length },
+    { id: "Video", name: "Video", count: allResources.filter(r => r.type === "Video").length },
+    { id: "Image", name: "Imagen", count: allResources.filter(r => r.type === "Image").length },
+    { id: "ZIP", name: "ZIP", count: allResources.filter(r => r.type === "ZIP").length },
+    { id: "DOC", name: "Documento", count: allResources.filter(r => r.type === "DOC").length },
+    { id: "URL", name: "Enlace", count: allResources.filter(r => r.type === "URL").length }
   ];
 
   const statuses = [
-    { id: "all", name: "Todos", count: filteredResources.length },
-    { id: "PUBLISHED", name: "Publicados", count: filteredResources.filter(r => r.status === "PUBLISHED").length },
-    { id: "DRAFT", name: "Borradores", count: filteredResources.filter(r => r.status === "DRAFT").length },
-    { id: "ARCHIVED", name: "Archivados", count: filteredResources.filter(r => r.status === "ARCHIVED").length }
+    { id: "all", name: "Todos", count: allResources.length },
+    { id: "PUBLISHED", name: "Publicados", count: allResources.filter(r => r.status === "PUBLISHED").length },
+    { id: "DRAFT", name: "Borradores", count: allResources.filter(r => r.status === "DRAFT").length },
+    { id: "ARCHIVED", name: "Archivados", count: allResources.filter(r => r.status === "ARCHIVED").length }
   ];
 
   const handleEditResource = (resource: any) => {
@@ -274,7 +331,7 @@ function ResourcesPageContent() {
             <FileText className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="p-3 sm:p-6 pt-0">
-            <div className="text-lg sm:text-2xl font-bold">{resources.length}</div>
+            <div className="text-lg sm:text-2xl font-bold">{allResources.length}</div>
             <p className="text-xs text-muted-foreground">
               {isYouth ? "Disponibles" : "En tu biblioteca"}
             </p>
@@ -288,7 +345,7 @@ function ResourcesPageContent() {
           </CardHeader>
           <CardContent className="p-3 sm:p-6 pt-0">
             <div className="text-lg sm:text-2xl font-bold">
-              {resources.reduce((sum, r) => sum + r.downloads, 0)}
+              {allResources.reduce((sum, r) => sum + r.downloads, 0)}
             </div>
             <p className="text-xs text-muted-foreground">
               {isYouth ? "Descargas realizadas" : "De tus recursos"}
@@ -316,7 +373,7 @@ function ResourcesPageContent() {
           </CardHeader>
           <CardContent className="p-3 sm:p-6 pt-0">
             <div className="text-lg sm:text-2xl font-bold">
-              {resources.filter(r => r.status === "PUBLISHED").length}
+              {allResources.filter(r => r.status === "PUBLISHED").length}
             </div>
             <p className="text-xs text-muted-foreground">
               {isYouth ? "Disponibles" : "En tu biblioteca"}

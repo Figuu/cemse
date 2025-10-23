@@ -14,7 +14,9 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    marginBottom: 20,
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 25,
     paddingBottom: 15,
     borderBottomWidth: 2,
     borderBottomColor: '#2563eb',
@@ -22,107 +24,100 @@ const styles = StyleSheet.create({
   headerLeft: {
     flex: 1,
   },
-  headerRight: {
-    flex: 1,
-    alignItems: 'flex-end',
-  },
   name: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1e40af',
-    marginBottom: 5,
-  },
-  title: {
-    fontSize: 14,
-    color: '#64748b',
-    marginBottom: 10,
-  },
-  contactInfo: {
-    fontSize: 9,
-    color: '#64748b',
-    lineHeight: 1.3,
-  },
-  section: {
-    marginBottom: 15,
-  },
-  sectionTitle: {
-    fontSize: 12,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#1e40af',
     marginBottom: 8,
-    paddingBottom: 3,
+  },
+  title: {
+    fontSize: 12,
+    color: '#64748b',
+    marginBottom: 12,
+  },
+  contactInfo: {
+    fontSize: 8,
+    color: '#64748b',
+    lineHeight: 1.4,
+    marginBottom: 3,
+  },
+  section: {
+    marginBottom: 18,
+  },
+  sectionTitle: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#1e40af',
+    marginBottom: 10,
+    paddingBottom: 4,
     borderBottomWidth: 1,
     borderBottomColor: '#e2e8f0',
   },
   summary: {
-    fontSize: 10,
+    fontSize: 9,
     color: '#374151',
     lineHeight: 1.5,
     textAlign: 'justify',
   },
   experienceItem: {
-    marginBottom: 10,
+    marginBottom: 12,
   },
   experienceHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 3,
+    marginBottom: 4,
   },
   jobTitle: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: 'bold',
     color: '#1f2937',
   },
   company: {
-    fontSize: 10,
+    fontSize: 9,
     color: '#2563eb',
     fontWeight: 'bold',
+    marginBottom: 2,
   },
   date: {
-    fontSize: 9,
+    fontSize: 8,
     color: '#6b7280',
   },
   description: {
-    fontSize: 9,
+    fontSize: 8,
     color: '#374151',
     lineHeight: 1.4,
-    marginTop: 3,
+    marginTop: 4,
   },
   educationItem: {
-    marginBottom: 8,
+    marginBottom: 10,
   },
   degree: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: 'bold',
     color: '#1f2937',
   },
   institution: {
-    fontSize: 10,
+    fontSize: 9,
     color: '#2563eb',
+    fontWeight: 'bold',
+    marginBottom: 2,
   },
   skillsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: 'column',
   },
-  skillTag: {
-    backgroundColor: '#f1f5f9',
-    color: '#1e40af',
-    padding: '3 8',
-    margin: '2 4 2 0',
-    borderRadius: 3,
+  skillItem: {
+    marginBottom: 3,
+  },
+  skillText: {
     fontSize: 8,
-    fontWeight: 'bold',
+    color: '#374151',
   },
-  twoColumn: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  languageItem: {
+    marginBottom: 3,
   },
-  leftColumn: {
-    flex: 1,
-    marginRight: 15,
-  },
-  rightColumn: {
-    flex: 1,
+  languageText: {
+    fontSize: 8,
+    color: '#374151',
   },
 });
 
@@ -131,60 +126,6 @@ interface CVTemplate1Props {
 }
 
 export const CVTemplate1: React.FC<CVTemplate1Props> = ({ profile }) => {
-  const formatDate = (dateString: string) => {
-    if (!dateString) return '';
-    
-    try {
-      // Handle different date formats
-      let date: Date;
-      if (dateString.includes('/')) {
-        // Handle DD/MM/YYYY format
-        const parts = dateString.split('/');
-        if (parts.length === 3) {
-          date = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
-        } else {
-          date = new Date(dateString);
-        }
-      } else {
-        date = new Date(dateString);
-      }
-      
-      // Check if date is valid
-      if (isNaN(date.getTime())) {
-        return '';
-      }
-      
-      return date.toLocaleDateString('es-ES', { 
-        year: 'numeric', 
-        month: 'short' 
-      });
-    } catch (error) {
-      return '';
-    }
-  };
-
-  const getExperienceLevel = (level: string) => {
-    switch (level) {
-      case 'NO_EXPERIENCE': return 'Sin experiencia';
-      case 'ENTRY_LEVEL': return 'Nivel inicial (0-2 años)';
-      case 'MID_LEVEL': return 'Nivel medio (3-5 años)';
-      case 'SENIOR_LEVEL': return 'Nivel senior (6+ años)';
-      default: return level;
-    }
-  };
-
-  const getEducationLevel = (level: string) => {
-    switch (level) {
-      case 'PRIMARY': return 'Primaria';
-      case 'SECONDARY': return 'Secundaria';
-      case 'TECHNICAL': return 'Técnico';
-      case 'UNIVERSITY': return 'Universitario';
-      case 'POSTGRADUATE': return 'Postgrado';
-      case 'OTHER': return 'Otro';
-      default: return level;
-    }
-  };
-
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -194,233 +135,85 @@ export const CVTemplate1: React.FC<CVTemplate1Props> = ({ profile }) => {
             <Text style={styles.name}>
               {profile?.firstName} {profile?.lastName}
             </Text>
-            <Text style={styles.title}>{profile?.jobTitle || 'Profesional'}</Text>
-          </View>
-          <View style={styles.headerRight}>
-            <Text style={styles.contactInfo}>
-              {profile?.email || ''}
-            </Text>
-            <Text style={styles.contactInfo}>
-              {profile?.phone || ''}
-            </Text>
-            <Text style={styles.contactInfo}>
-              {profile?.address || ''}
-            </Text>
-            <Text style={styles.contactInfo}>
-              {profile?.city}, {profile?.state || profile?.country}
-            </Text>
+            <Text style={styles.title}>{profile?.jobTitle || profile?.targetPosition || 'Profesional'}</Text>
+            <View>
+              {profile?.email && <Text style={styles.contactInfo}>Email: {profile.email}</Text>}
+              {profile?.phone && <Text style={styles.contactInfo}>Tel: {profile.phone}</Text>}
+              {profile?.address && <Text style={styles.contactInfo}>Dir: {profile.address}</Text>}
+            </View>
           </View>
         </View>
 
         {/* Professional Summary */}
         {profile?.professionalSummary && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>RESUMEN PROFESIONAL</Text>
+            <Text style={styles.sectionTitle}>Resumen Profesional</Text>
             <Text style={styles.summary}>{profile.professionalSummary}</Text>
           </View>
         )}
 
-        {/* Two Column Layout */}
-        <View style={styles.twoColumn}>
-          <View style={styles.leftColumn}>
-            {/* Experience */}
-            {profile?.workExperience && profile.workExperience.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>EXPERIENCIA LABORAL</Text>
-                {profile.workExperience.map((exp: any, index: number) => (
-                  <View key={index} style={styles.experienceItem}>
-                    <View style={styles.experienceHeader}>
-                      <View>
-                        <Text style={styles.jobTitle}>{exp.position}</Text>
-                        <Text style={styles.company}>{exp.company}</Text>
-                      </View>
-                      <Text style={styles.date}>
-                        {formatDate(exp.startDate)} - {exp.current ? 'Actual' : formatDate(exp.endDate)}
-                      </Text>
-                    </View>
-                    {exp.description && (
-                      <Text style={styles.description}>{exp.description}</Text>
-                    )}
-                  </View>
-                ))}
-              </View>
-            )}
-
-            {/* Education */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>EDUCACIÓN</Text>
-              {profile?.educationHistory && profile.educationHistory.length > 0 ? (
-                profile.educationHistory.map((edu: any, index: number) => (
-                  <View key={index} style={styles.educationItem}>
-                    <Text style={styles.degree}>{edu.degree}</Text>
-                    <Text style={styles.institution}>{edu.institution}</Text>
-                    <Text style={styles.date}>
-                      {formatDate(edu.startDate)} - {edu.current ? 'Actual' : formatDate(edu.endDate)}
-                    </Text>
-                    {edu.gpa && (
-                      <Text style={styles.date}>GPA: {edu.gpa}</Text>
-                    )}
-                  </View>
-                ))
-              ) : (
-                <View style={styles.educationItem}>
-                  <Text style={styles.degree}>
-                    {profile?.currentDegree || getEducationLevel(profile?.educationLevel || '')}
-                  </Text>
-                  <Text style={styles.institution}>
-                    {profile?.currentInstitution || profile?.universityName}
-                  </Text>
-                  {profile?.graduationYear && (
-                    <Text style={styles.date}>Graduación: {profile.graduationYear}</Text>
-                  )}
-                  {profile?.gpa && (
-                    <Text style={styles.date}>GPA: {profile.gpa}</Text>
-                  )}
+        {/* Experience */}
+        {profile?.workExperience && profile.workExperience.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Experiencia Laboral</Text>
+            {profile.workExperience.slice(0, 3).map((exp: any, index: number) => (
+              <View key={index} style={styles.experienceItem}>
+                <View style={styles.experienceHeader}>
+                  <Text style={styles.jobTitle}>{exp.position || exp.jobTitle}</Text>
+                  <Text style={styles.date}>{exp.duration || exp.period}</Text>
                 </View>
-              )}
+                <Text style={styles.company}>{exp.company || exp.employer}</Text>
+                {exp.description && (
+                  <Text style={styles.description}>{exp.description}</Text>
+                )}
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Education */}
+        {profile?.educationHistory && profile.educationHistory.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Educación</Text>
+            {profile.educationHistory.slice(0, 2).map((edu: any, index: number) => (
+              <View key={index} style={styles.educationItem}>
+                <View style={styles.experienceHeader}>
+                  <Text style={styles.degree}>{edu.degree || edu.title}</Text>
+                  <Text style={styles.date}>{edu.year || edu.graduationYear}</Text>
+                </View>
+                <Text style={styles.institution}>{edu.institution || edu.school}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Skills */}
+        {profile?.skills && profile.skills.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Habilidades</Text>
+            <View style={styles.skillsContainer}>
+              {profile.skills.slice(0, 6).map((skill: any, index: number) => (
+                <View key={index} style={styles.skillItem}>
+                  <Text style={styles.skillText}>• {typeof skill === 'string' ? skill : skill.name || skill.skill}</Text>
+                </View>
+              ))}
             </View>
           </View>
+        )}
 
-          <View style={styles.rightColumn}>
-            {/* Skills */}
-            {profile?.skillsWithLevel && profile.skillsWithLevel.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>HABILIDADES</Text>
-                <View style={styles.skillsContainer}>
-                  {profile.skillsWithLevel.map((skill: any, index: number) => (
-                    <Text key={index} style={styles.skillTag}>
-                      {skill.skill} ({skill.level})
-                    </Text>
-                  ))}
+        {/* Languages */}
+        {profile?.languages && profile.languages.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Idiomas</Text>
+            <View style={styles.skillsContainer}>
+              {profile.languages.slice(0, 3).map((lang: any, index: number) => (
+                <View key={index} style={styles.languageItem}>
+                  <Text style={styles.languageText}>• {typeof lang === 'string' ? lang : lang.language || lang.name}</Text>
                 </View>
-              </View>
-            )}
-
-            {/* Languages */}
-            {profile?.languages && profile.languages.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>IDIOMAS</Text>
-                {profile.languages.map((lang: any, index: number) => (
-                  <View key={index} style={styles.educationItem}>
-                    <Text style={styles.degree}>{lang.language}</Text>
-                    <Text style={styles.date}>{lang.level}</Text>
-                  </View>
-                ))}
-              </View>
-            )}
-
-            {/* Social Links */}
-            {profile?.socialLinks && profile.socialLinks.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>ENLACES PROFESIONALES</Text>
-                {profile.socialLinks.map((link: any, index: number) => (
-                  <View key={index} style={styles.educationItem}>
-                    <Text style={styles.degree}>{link.platform}</Text>
-                    <Text style={styles.date}>{link.url}</Text>
-                  </View>
-                ))}
-              </View>
-            )}
-
-            {/* Extracurricular Activities */}
-            {profile?.extracurricularActivities && profile.extracurricularActivities.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>ACTIVIDADES EXTRACURRICULARES</Text>
-                {profile.extracurricularActivities.map((activity: any, index: number) => (
-                  <View key={index} style={styles.experienceItem}>
-                    <Text style={styles.jobTitle}>{activity.activity}</Text>
-                    <Text style={styles.company}>{activity.organization}</Text>
-                    <Text style={styles.date}>
-                      {formatDate(activity.startDate)} - {activity.current ? 'Actual' : formatDate(activity.endDate)}
-                    </Text>
-                    <Text style={styles.description}>{activity.description}</Text>
-                  </View>
-                ))}
-              </View>
-            )}
-
-            {/* Achievements */}
-            {profile?.achievements && profile.achievements.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>LOGROS Y RECONOCIMIENTOS</Text>
-                {profile.achievements.map((achievement: any, index: number) => (
-                  <View key={index} style={styles.experienceItem}>
-                    <Text style={styles.jobTitle}>{achievement.title}</Text>
-                    <Text style={styles.company}>{achievement.issuer}</Text>
-                    <Text style={styles.date}>{formatDate(achievement.date)}</Text>
-                    <Text style={styles.description}>{achievement.description}</Text>
-                  </View>
-                ))}
-              </View>
-            )}
-
-            {/* Academic Achievements */}
-            {profile?.academicAchievements && profile.academicAchievements.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>LOGROS ACADÉMICOS</Text>
-                {profile.academicAchievements.map((achievement: any, index: number) => (
-                  <View key={index} style={styles.experienceItem}>
-                    <Text style={styles.jobTitle}>{achievement.title}</Text>
-                    <Text style={styles.company}>{achievement.institution}</Text>
-                    <Text style={styles.date}>{formatDate(achievement.date)}</Text>
-                    <Text style={styles.description}>{achievement.description}</Text>
-                  </View>
-                ))}
-              </View>
-            )}
-
-            {/* Projects */}
-            {profile?.projects && profile.projects.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>PROYECTOS</Text>
-                {profile.projects.map((project: any, index: number) => (
-                  <View key={index} style={styles.experienceItem}>
-                    <Text style={styles.jobTitle}>{project.name}</Text>
-                    <Text style={styles.date}>
-                      {formatDate(project.startDate)} - {formatDate(project.endDate)}
-                    </Text>
-                    <Text style={styles.description}>{project.description}</Text>
-                    {project.technologies && project.technologies.length > 0 && (
-                      <Text style={styles.date}>Tecnologías: {project.technologies.join(', ')}</Text>
-                    )}
-                    {project.url && <Text style={styles.date}>🔗 {project.url}</Text>}
-                  </View>
-                ))}
-              </View>
-            )}
-
-            {/* Entrepreneurship */}
-            {profile?.entrepreneurships && profile.entrepreneurships.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>EMPRENDIMIENTOS</Text>
-                {profile.entrepreneurships.map((business: any, index: number) => (
-                  <View key={index} style={styles.experienceItem}>
-                    <Text style={styles.jobTitle}>{business.name}</Text>
-                    <Text style={styles.company}>{business.category} - {business.businessStage}</Text>
-                    <Text style={styles.date}>{business.founded ? formatDate(business.founded) : 'En curso'}</Text>
-                    <Text style={styles.description}>{business.description}</Text>
-                    {business.website && <Text style={styles.date}>🌐 {business.website}</Text>}
-                    {business.employees > 0 && <Text style={styles.date}>👥 {business.employees} empleados</Text>}
-                  </View>
-                ))}
-              </View>
-            )}
-
-            {/* Certificates */}
-            {profile?.certificates && profile.certificates.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>CERTIFICADOS</Text>
-                {profile.certificates.map((cert: any, index: number) => (
-                  <View key={index} style={styles.experienceItem}>
-                    <Text style={styles.jobTitle}>{cert.title}</Text>
-                    <Text style={styles.company}>{cert.issuer}</Text>
-                    <Text style={styles.date}>{formatDate(cert.issueDate)}</Text>
-                  </View>
-                ))}
-              </View>
-            )}
+              ))}
+            </View>
           </View>
-        </View>
+        )}
       </Page>
     </Document>
   );

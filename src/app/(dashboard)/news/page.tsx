@@ -14,9 +14,6 @@ import {
   Eye,
   Calendar,
   User,
-  Heart,
-  MessageCircle,
-  Share,
   BookOpen,
   TrendingUp,
   Edit,
@@ -217,53 +214,53 @@ export default function NewsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Noticias</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Noticias</h1>
+          <p className="text-sm sm:text-base text-muted-foreground mt-1">
             {isYouth 
               ? "Mantente informado con las últimas noticias y actualizaciones"
               : "Gestiona y publica noticias para tu audiencia"
             }
           </p>
         </div>
-        {canManageNews && (
-          <div className="flex items-center space-x-2">
-            {/* View Mode Toggle - Only visible on desktop */}
-            <div className="hidden sm:flex items-center bg-muted rounded-lg p-1">
-              <Button
-                variant={viewMode === "grid" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode("grid")}
-                className="h-8 w-8 p-0"
-              >
-                <Grid3X3 className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === "list" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode("list")}
-                className="h-8 w-8 p-0"
-              >
-                <List className="h-4 w-4" />
-              </Button>
-            </div>
-            <Button onClick={() => setShowForm(true)}>
+        <div className="flex items-center space-x-2">
+          {/* View Mode Toggle - Only visible on desktop */}
+          <div className="hidden sm:flex items-center bg-muted rounded-lg p-1">
+            <Button
+              variant={viewMode === "grid" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("grid")}
+              className="h-8 w-8 p-0"
+            >
+              <Grid3X3 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === "list" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("list")}
+              className="h-8 w-8 p-0"
+            >
+              <List className="h-4 w-4" />
+            </Button>
+          </div>
+          {canManageNews && (
+            <Button onClick={() => setShowForm(true)} className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               Crear Noticia
             </Button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
             <CardTitle className="text-sm font-medium">Total Noticias</CardTitle>
             <Globe className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 sm:p-6 pt-0">
             <div className="text-2xl font-bold">{newsArticles.length}</div>
             <p className="text-xs text-muted-foreground">
               {isYouth ? "Disponibles" : "Publicadas por ti"}
@@ -272,11 +269,11 @@ export default function NewsPage() {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
             <CardTitle className="text-sm font-medium">Total Vistas</CardTitle>
             <Eye className="h-4 w-4 text-blue-600" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 sm:p-6 pt-0">
             <div className="text-2xl font-bold">
               {newsArticles.reduce((sum, n) => sum + n.viewCount, 0).toLocaleString()}
             </div>
@@ -286,13 +283,12 @@ export default function NewsPage() {
           </CardContent>
         </Card>
 
-
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
             <CardTitle className="text-sm font-medium">Destacadas</CardTitle>
             <TrendingUp className="h-4 w-4 text-purple-600" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 sm:p-6 pt-0">
             <div className="text-2xl font-bold">
               {newsArticles.filter(n => n.featured).length}
             </div>
@@ -305,220 +301,215 @@ export default function NewsPage() {
 
       {/* Search and Filters */}
       <Card>
-        <CardHeader>
-          <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-end sm:space-y-0">
-            <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Buscar noticias..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-full sm:w-64"
-                />
-              </div>
-              <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
-                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                  <SelectTrigger className="w-full sm:w-40">
-                    <SelectValue placeholder="Categoría" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name} ({category.count})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={selectedMunicipality} onValueChange={setSelectedMunicipality}>
-                  <SelectTrigger className="w-full sm:w-40">
-                    <SelectValue placeholder="Municipio" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
-                    {municipalityInstitutions.map((institution: any) => (
-                      <SelectItem key={institution.id} value={institution.name}>
-                        {institution.name}
-                      </SelectItem>
-                    ))}
-                    <SelectItem value="Otro">Otro</SelectItem>
-                  </SelectContent>
-                </Select>
-                {canManageNews && (
-                  <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+        <CardHeader className="p-4 sm:p-6">
+          <div className="flex flex-col space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    placeholder="Buscar noticias..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 w-full"
+                  />
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                     <SelectTrigger className="w-full sm:w-40">
-                      <SelectValue placeholder="Estado" />
+                      <SelectValue placeholder="Categoría" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name} ({category.count})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={selectedMunicipality} onValueChange={setSelectedMunicipality}>
+                    <SelectTrigger className="w-full sm:w-40">
+                      <SelectValue placeholder="Municipio" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todos</SelectItem>
-                      <SelectItem value="PUBLISHED">Publicados</SelectItem>
-                      <SelectItem value="DRAFT">Borradores</SelectItem>
-                      <SelectItem value="ARCHIVED">Archivados</SelectItem>
+                      {municipalityInstitutions.map((institution: any) => (
+                        <SelectItem key={institution.id} value={institution.name}>
+                          {institution.name}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="Otro">Otro</SelectItem>
                     </SelectContent>
                   </Select>
-                )}
+                  {canManageNews && (
+                    <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                      <SelectTrigger className="w-full sm:w-40">
+                        <SelectValue placeholder="Estado" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos</SelectItem>
+                        <SelectItem value="PUBLISHED">Publicados</SelectItem>
+                        <SelectItem value="DRAFT">Borradores</SelectItem>
+                        <SelectItem value="ARCHIVED">Archivados</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
               </div>
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ${viewMode === "list" ? "sm:space-y-6 sm:grid-cols-none" : ""}`}>
-                {newsArticles.length === 0 ? (
-                  <div className={viewMode === "grid" ? "col-span-full" : ""}>
-                    <Card>
-                      <CardContent className="p-12 text-center">
-                        <Globe className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                        <h3 className="text-lg font-medium mb-2">No hay noticias</h3>
-                        <p className="text-muted-foreground mb-4">
-                          {isYouth 
-                            ? "No hay noticias disponibles en esta categoría"
-                            : "No has creado ninguna noticia aún"
-                          }
-                        </p>
-                        {canManageNews && (
-                          <Button onClick={() => setShowForm(true)}>
-                            <Plus className="h-4 w-4 mr-2" />
-                            Crear Primera Noticia
-                          </Button>
+          <div className="space-y-4">
+            {newsArticles.length === 0 ? (
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <Globe className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium mb-2">No hay noticias</h3>
+                  <p className="text-muted-foreground mb-4">
+                    {isYouth 
+                      ? "No hay noticias disponibles en esta categoría"
+                      : "No has creado ninguna noticia aún"
+                    }
+                  </p>
+                  {canManageNews && (
+                    <Button onClick={() => setShowForm(true)}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Crear Primera Noticia
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            ) : (
+              <div className={`grid gap-4 ${
+                viewMode === "grid" 
+                  ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" 
+                  : "grid-cols-1"
+              }`}>
+                {filteredNews.map((article) => (
+                  <Card key={article.id} className="hover:shadow-md transition-shadow overflow-hidden">
+                    <CardContent className="p-4">
+                      {/* Article Image */}
+                      <div className="w-full h-40 sm:h-32 bg-gray-200 rounded-lg mb-4 flex items-center justify-center overflow-hidden">
+                        {article.imageUrl ? (
+                          <img 
+                            src={article.imageUrl} 
+                            alt={article.title}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <Globe className="h-8 w-8 text-gray-400" />
                         )}
-                      </CardContent>
-                    </Card>
-                  </div>
-                ) : (
-                  filteredNews.map((article) => (
-                    <Card key={article.id} className={`hover:shadow-md transition-shadow ${
-                      viewMode === "grid" ? "h-full flex flex-col" : "sm:h-auto sm:flex-none"
-                    }`}>
-                      <CardContent className={`p-6 ${viewMode === "grid" ? "flex flex-col flex-1" : "sm:flex-none"}`}>
-                        <div className={`${viewMode === "grid" ? "flex flex-col space-y-4" : "sm:flex-row sm:space-x-4"} flex-col space-y-4`}>
-                          {/* Article Image */}
-                          <div className={`${viewMode === "grid" ? "w-full" : "sm:flex-shrink-0"} w-full`}>
-                            <div className={`${viewMode === "grid" ? "w-full h-48" : "sm:w-32 sm:h-24"} w-full h-48 sm:h-24 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden`}>
-                              {article.imageUrl ? (
-                                <img 
-                                  src={article.imageUrl} 
-                                  alt={article.title}
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                <Globe className="h-8 w-8 text-gray-400" />
-                              )}
-                            </div>
-                          </div>
-                          
-                          {/* Article Content */}
-                          <div className="flex-1 min-w-0">
-                            <div className={`${viewMode === "grid" ? "flex flex-col" : "flex items-start justify-between"}`}>
-                              <div className="flex-1">
-                                <div className="flex items-center space-x-2 mb-2 flex-wrap">
-                                  {article.featured && (
-                                    <Badge className="bg-yellow-100 text-yellow-800">
-                                      Destacado
-                                    </Badge>
-                                  )}
-                                  <Badge className={getPriorityColor(article.priority)}>
-                                    {article.priority}
-                                  </Badge>
-                                  <Badge variant="outline">{article.category}</Badge>
-                                  {canManageNews && (
-                                    <Badge className={getStatusColor(article.status)}>
-                                      {article.status === "PUBLISHED" ? "Publicado" : 
-                                       article.status === "DRAFT" ? "Borrador" : "Archivado"}
-                                    </Badge>
-                                  )}
-                                </div>
-                                
-                                <h3 className={`font-semibold mb-2 line-clamp-2 ${
-                                  viewMode === "grid" ? "text-lg" : "text-xl"
-                                }`}>
-                                  {article.title}
-                                </h3>
-                                
-                                <p className={`text-gray-600 mb-4 ${
-                                  viewMode === "grid" ? "line-clamp-3" : "line-clamp-2"
-                                }`}>
-                                  {article.summary}
-                                </p>
-                                
-                                <div className={`${viewMode === "grid" ? "flex flex-col space-y-2" : "flex items-center space-x-4"} text-sm text-gray-500 mb-3`}>
-                                  <div className="flex items-center space-x-1">
-                                    {getAuthorTypeIcon(article.authorType)}
-                                    <span className={viewMode === "grid" ? "truncate" : ""}>{article.authorName}</span>
-                                  </div>
-                                  <div className="flex items-center space-x-1">
-                                    <Calendar className="h-4 w-4" />
-                                    <span>
-                                      {article.publishedAt 
-                                        ? new Date(article.publishedAt).toLocaleDateString()
-                                        : "No publicado"
-                                      }
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center space-x-1">
-                                    <Eye className="h-4 w-4" />
-                                    <span>{article.viewCount.toLocaleString()}</span>
-                                  </div>
-                                </div>
-                                
-                                <div className="flex flex-wrap gap-1 mb-4">
-                                  {article.tags.slice(0, 4).map((tag) => (
-                                    <Badge key={tag} variant="secondary" className="text-xs">
-                                      {tag}
-                                    </Badge>
-                                  ))}
-                                  {article.tags.length > 4 && (
-                                    <Badge variant="secondary" className="text-xs">
-                                      +{article.tags.length - 4}
-                                    </Badge>
-                                  )}
-                                </div>
-                              </div>
-                              
-                              {/* Article Actions */}
-                              <div className={`${viewMode === "grid" ? "mt-auto" : "flex flex-col space-y-2 ml-4"}`}>
-                                
-                                <div className={`flex ${viewMode === "grid" ? "flex-col space-y-2" : "space-x-2"}`}>
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm"
-                                    onClick={() => handleViewNews(article)}
-                                    className={viewMode === "grid" ? "w-full" : ""}
-                                  >
-                                    <Eye className="h-4 w-4 mr-1" />
-                                    Leer
-                                  </Button>
-                                  {canManageNews && (
-                                    <>
-                                      <Button 
-                                        variant="outline" 
-                                        size="sm"
-                                        onClick={() => handleEditNews(article)}
-                                        className={viewMode === "grid" ? "w-full" : ""}
-                                      >
-                                        <Edit className="h-4 w-4 mr-1" />
-                                        Editar
-                                      </Button>
-                                      {article.status === "DRAFT" && (
-                                        <Button 
-                                          size="sm"
-                                          onClick={() => handlePublishNews(article.id)}
-                                          className={viewMode === "grid" ? "w-full" : ""}
-                                        >
-                                          <Eye className="h-4 w-4 mr-1" />
-                                          Publicar
-                                        </Button>
-                                      )}
-                                    </>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
+                      </div>
+                      
+                      {/* Badges */}
+                      <div className="flex flex-wrap gap-1 mb-3">
+                        {article.featured && (
+                          <Badge className="bg-yellow-100 text-yellow-800 text-xs">
+                            Destacado
+                          </Badge>
+                        )}
+                        <Badge className={`text-xs ${getPriorityColor(article.priority)}`}>
+                          {article.priority}
+                        </Badge>
+                        <Badge variant="outline" className="text-xs">
+                          {article.category}
+                        </Badge>
+                        {canManageNews && (
+                          <Badge className={`text-xs ${getStatusColor(article.status)}`}>
+                            {article.status === "PUBLISHED" ? "Publicado" : 
+                             article.status === "DRAFT" ? "Borrador" : "Archivado"}
+                          </Badge>
+                        )}
+                      </div>
+                      
+                      {/* Title */}
+                      <h3 className="font-semibold mb-2 text-base sm:text-lg line-clamp-2 leading-tight">
+                        {article.title}
+                      </h3>
+                      
+                      {/* Summary */}
+                      <p className="text-gray-600 mb-3 text-sm line-clamp-2 leading-relaxed">
+                        {article.summary}
+                      </p>
+                      
+                      {/* Metadata */}
+                      <div className="space-y-2 mb-3 text-xs text-gray-500">
+                        <div className="flex items-center space-x-1">
+                          {getAuthorTypeIcon(article.authorType)}
+                          <span className="truncate">{article.authorName}</span>
                         </div>
-                      </CardContent>
-                    </Card>
-                  ))
-                )}
+                        <div className="flex items-center space-x-1">
+                          <Calendar className="h-3 w-3" />
+                          <span>
+                            {article.publishedAt 
+                              ? new Date(article.publishedAt).toLocaleDateString()
+                              : "No publicado"
+                            }
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <Eye className="h-3 w-3" />
+                          <span>{article.viewCount.toLocaleString()}</span>
+                        </div>
+                      </div>
+                      
+                      {/* Tags */}
+                      {article.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mb-4">
+                          {article.tags.slice(0, 3).map((tag) => (
+                            <Badge key={tag} variant="secondary" className="text-xs">
+                              {tag}
+                            </Badge>
+                          ))}
+                          {article.tags.length > 3 && (
+                            <Badge variant="secondary" className="text-xs">
+                              +{article.tags.length - 3}
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+                      
+                      {/* Actions */}
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleViewNews(article)}
+                          className="flex-1"
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          Leer
+                        </Button>
+                        {canManageNews && (
+                          <>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleEditNews(article)}
+                              className="flex-1"
+                            >
+                              <Edit className="h-4 w-4 mr-1" />
+                              Editar
+                            </Button>
+                            {article.status === "DRAFT" && (
+                              <Button 
+                                size="sm"
+                                onClick={() => handlePublishNews(article.id)}
+                                className="flex-1"
+                              >
+                                <Eye className="h-4 w-4 mr-1" />
+                                Publicar
+                              </Button>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

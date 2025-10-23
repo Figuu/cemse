@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { JobCard } from "@/components/jobs/JobCard";
 import { JobFilters } from "@/components/jobs/JobFilters";
-import { JobApplicationForm } from "@/components/jobs/JobApplicationForm";
+import { JobApplicationModal } from "@/components/jobs/JobApplicationModal";
 import { JobChatInterface } from "@/components/jobs/JobChatInterface";
 import { JobApplicationChat } from "@/components/jobs/JobApplicationChat";
 import { RoleGuard } from "@/components/auth/RoleGuard";
@@ -84,40 +84,6 @@ function JobsPageContent() {
     console.log('Unbookmarking job:', jobId);
   };
 
-  const applyToJob = async (jobId: string, applicationData: any) => {
-    try {
-      // Find the job to get the company ID
-      const job = jobs.find(j => j.id === jobId);
-      if (!job) {
-        throw new Error("Job not found");
-      }
-
-      const companyId = job.companyId;
-
-      const response = await fetch(`/api/companies/${companyId}/jobs/${jobId}/applications`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(applicationData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to submit application');
-      }
-
-      const application = await response.json();
-
-      // Refetch jobs to update application status
-      await refetch();
-
-      return application;
-    } catch (error) {
-      console.error('Error applying to job:', error);
-      throw error;
-    }
-  };
 
 
   const handleBookmark = async (jobId: string) => {
@@ -137,19 +103,6 @@ function JobsPageContent() {
     }
   };
 
-  const handleApplicationSubmit = async (applicationData: Record<string, unknown>) => {
-    if (!selectedJob) return;
-
-    try {
-      await applyToJob(selectedJob.id, applicationData);
-      toast.success("¡Aplicación enviada exitosamente!");
-      setShowApplicationForm(false);
-      setSelectedJob(null);
-    } catch (error: any) {
-      console.error("Error applying to job:", error);
-      toast.error(error?.message || "Error al enviar la aplicación. Por favor, intenta de nuevo.");
-    }
-  };
 
   const handleCloseApplicationForm = () => {
     setShowApplicationForm(false);
@@ -542,28 +495,16 @@ function JobsPageContent() {
         </div>
       )}
 
-      {/* Application Form Modal */}
+      {/* Application Modal */}
       {showApplicationForm && selectedJob && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
-          <div className="w-full max-w-4xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
-            <JobApplicationForm
-              job={selectedJob}
-              onClose={handleCloseApplicationForm}
-              onSubmit={handleApplicationSubmit}
-              currentUser={session?.user ? {
-                id: session.user.id,
-                email: session.user.email || '',
-                profile: {
-                  firstName: session.user.profile?.firstName || '',
-                  lastName: session.user.profile?.lastName || '',
-                  phone: session.user.profile?.phone || '',
-                  address: session.user.profile?.address || '',
-                  cvUrl: session.user.profile?.cvUrl || ''
-                }
-              } : undefined}
-            />
-          </div>
-        </div>
+        <JobApplicationModal
+          isOpen={showApplicationForm}
+          onClose={handleCloseApplicationForm}
+          jobId={selectedJob.id}
+          jobTitle={selectedJob.title}
+          companyName={selectedJob.company?.name || "Empresa"}
+          job={selectedJob}
+        />
       )}
       </div>
     </JobChatInterface>

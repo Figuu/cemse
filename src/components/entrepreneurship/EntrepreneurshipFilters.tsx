@@ -22,7 +22,7 @@ import { BusinessStage } from "@prisma/client";
 
 const businessStages: { value: BusinessStage; label: string }[] = [
   { value: "IDEA", label: "Idea" },
-  { value: "STARTUP", label: "Startup" },
+  { value: "STARTUP", label: "Inicio" },
   { value: "GROWING", label: "Crecimiento" },
   { value: "ESTABLISHED", label: "Establecido" },
 ];

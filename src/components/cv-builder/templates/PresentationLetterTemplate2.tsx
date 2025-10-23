@@ -7,7 +7,7 @@ const styles = StyleSheet.create({
   page: {
     flexDirection: 'column',
     backgroundColor: '#FFFFFF',
-    padding: 50,
+    padding: 40,
     fontFamily: 'Helvetica',
     fontSize: 11,
     lineHeight: 1.5,
@@ -16,8 +16,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 30,
-    paddingBottom: 20,
+    marginBottom: 35,
+    paddingBottom: 25,
     borderBottomWidth: 3,
     borderBottomColor: '#10b981',
   },
@@ -29,57 +29,58 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   name: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#1f2937',
-    marginBottom: 5,
+    marginBottom: 6,
   },
   title: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#10b981',
     fontWeight: 'bold',
   },
   contactInfo: {
-    fontSize: 9,
+    fontSize: 8,
     color: '#6b7280',
     lineHeight: 1.3,
     textAlign: 'right',
+    marginBottom: 4,
   },
   date: {
-    fontSize: 10,
+    fontSize: 9,
     color: '#6b7280',
-    marginBottom: 20,
+    marginBottom: 25,
     textAlign: 'right',
   },
   recipientInfo: {
-    marginBottom: 25,
+    marginBottom: 30,
     padding: 15,
     backgroundColor: '#f9fafb',
     borderRadius: 5,
   },
   recipientName: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: 'bold',
     color: '#1f2937',
-    marginBottom: 3,
+    marginBottom: 4,
   },
   recipientTitle: {
-    fontSize: 10,
+    fontSize: 9,
     color: '#10b981',
     fontWeight: 'bold',
-    marginBottom: 2,
+    marginBottom: 3,
   },
   companyName: {
-    fontSize: 11,
+    fontSize: 10,
     color: '#374151',
     fontWeight: 'bold',
-    marginBottom: 2,
+    marginBottom: 3,
   },
   subject: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: 'bold',
     color: '#1f2937',
-    marginBottom: 20,
+    marginBottom: 25,
     padding: 10,
     backgroundColor: '#ecfdf5',
     borderRadius: 3,
@@ -87,65 +88,34 @@ const styles = StyleSheet.create({
     borderLeftColor: '#10b981',
   },
   greeting: {
-    fontSize: 11,
+    fontSize: 10,
     color: '#1f2937',
-    marginBottom: 15,
+    marginBottom: 18,
     fontWeight: 'bold',
   },
   content: {
-    fontSize: 11,
+    fontSize: 10,
     color: '#374151',
     lineHeight: 1.6,
     textAlign: 'justify',
-    marginBottom: 15,
+    marginBottom: 18,
   },
   paragraph: {
-    marginBottom: 12,
-  },
-  highlight: {
-    backgroundColor: '#f0fdf4',
-    padding: 8,
-    borderRadius: 3,
-    borderLeftWidth: 3,
-    borderLeftColor: '#10b981',
-    marginBottom: 12,
+    marginBottom: 18,
   },
   closing: {
-    marginTop: 25,
-    marginBottom: 10,
+    marginTop: 35,
+    marginBottom: 15,
   },
   closingText: {
-    fontSize: 11,
+    fontSize: 10,
     color: '#1f2937',
-    marginBottom: 30,
+    marginBottom: 50,
   },
   signature: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: 'bold',
     color: '#1f2937',
-  },
-  footer: {
-    position: 'absolute',
-    bottom: 30,
-    left: 50,
-    right: 50,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 15,
-    borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
-  },
-  footerLeft: {
-    flex: 1,
-  },
-  footerRight: {
-    flex: 1,
-    alignItems: 'flex-end',
-  },
-  footerText: {
-    fontSize: 8,
-    color: '#9ca3af',
   },
 });
 
@@ -154,72 +124,13 @@ interface PresentationLetterTemplate2Props {
   letterData: any;
 }
 
-export const PresentationLetterTemplate2: React.FC<PresentationLetterTemplate2Props> = ({ 
-  profile, 
-  letterData 
-}) => {
-  const formatDate = (dateString: string) => {
-    if (!dateString) {
-      return new Date().toLocaleDateString('es-ES', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      });
-    }
-    
-    try {
-      // Handle different date formats
-      let date: Date;
-      if (dateString.includes('/')) {
-        // Handle DD/MM/YYYY format
-        const parts = dateString.split('/');
-        if (parts.length === 3) {
-          date = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
-        } else {
-          date = new Date(dateString);
-        }
-      } else {
-        date = new Date(dateString);
-      }
-      
-      // Check if date is valid
-      if (isNaN(date.getTime())) {
-        return new Date().toLocaleDateString('es-ES', { 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
-        });
-      }
-      
-      return date.toLocaleDateString('es-ES', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      });
-    } catch (error) {
-      // Fallback to current date if parsing fails
-      return new Date().toLocaleDateString('es-ES', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      });
-    }
-  };
-
-  const getDefaultContent = () => {
-    if (letterData.content) return letterData.content;
-    
-    return `Me dirijo a usted para expresar mi interés en la posición de ${letterData.position || '[Posición]'} en ${letterData.companyName || '[Empresa]'}.
-
-Como ${profile?.jobTitle || 'profesional'} con ${profile?.experienceLevel ? 
-      (profile.experienceLevel === 'NO_EXPERIENCE' ? 'motivación y ganas de aprender' :
-       profile.experienceLevel === 'ENTRY_LEVEL' ? 'experiencia inicial' :
-       profile.experienceLevel === 'MID_LEVEL' ? 'experiencia sólida' :
-       'amplia experiencia') : 'experiencia relevante'}, estoy convencido/a de que puedo aportar valor a su organización.
-
-${profile?.professionalSummary || 'Mi formación y experiencia me han preparado para enfrentar los desafíos de esta posición, y estoy comprometido/a con el crecimiento profesional y el éxito de la empresa.'}
-
-Estaría encantado/a de tener la oportunidad de discutir cómo mis habilidades y experiencia pueden contribuir al éxito de ${letterData.companyName || 'su empresa'}. Agradezco su consideración y quedo a la espera de su respuesta.`;
+export const PresentationLetterTemplate2: React.FC<PresentationLetterTemplate2Props> = ({ profile, letterData }) => {
+  const formatDate = () => {
+    return new Date().toLocaleDateString('es-ES', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
   };
 
   return (
@@ -231,93 +142,73 @@ Estaría encantado/a de tener la oportunidad de discutir cómo mis habilidades y
             <Text style={styles.name}>
               {profile?.firstName} {profile?.lastName}
             </Text>
-            <Text style={styles.title}>{profile?.jobTitle || 'Profesional'}</Text>
+            <Text style={styles.title}>
+              {profile?.jobTitle || profile?.targetPosition || "Profesional"}
+            </Text>
           </View>
           <View style={styles.headerRight}>
-            <Text style={styles.contactInfo}>
-              {profile?.email || ''}
-            </Text>
-            <Text style={styles.contactInfo}>
-              {profile?.phone || ''}
-            </Text>
-            <Text style={styles.contactInfo}>
-              {profile?.city}, {profile?.state || profile?.country}
-            </Text>
+            <View>
+              {profile?.email && <Text style={styles.contactInfo}>Email: {profile.email}</Text>}
+              {profile?.phone && <Text style={styles.contactInfo}>Tel: {profile.phone}</Text>}
+              {profile?.address && <Text style={styles.contactInfo}>Dir: {profile.address}</Text>}
+            </View>
+            <Text style={styles.date}>{formatDate()}</Text>
           </View>
         </View>
 
-        {/* Date */}
-        <Text style={styles.date}>
-          {formatDate(letterData.date)}
-        </Text>
-
-        {/* Recipient Information */}
+        {/* Recipient Info */}
         <View style={styles.recipientInfo}>
-          {letterData.recipientName && (
-            <Text style={styles.recipientName}>
-              {letterData.recipientName}
-            </Text>
-          )}
-          {letterData.recipientTitle && (
-            <Text style={styles.recipientTitle}>
-              {letterData.recipientTitle}
-            </Text>
-          )}
-          {letterData.companyName && (
-            <Text style={styles.companyName}>
-              {letterData.companyName}
-            </Text>
-          )}
+          <Text style={styles.recipientName}>
+            {letterData?.recipientName || "Nombre del Reclutador"}
+          </Text>
+          <Text style={styles.recipientTitle}>
+            {letterData?.recipientTitle || "Título del Reclutador"}
+          </Text>
+          <Text style={styles.companyName}>
+            {letterData?.companyName || "Nombre de la Empresa"}
+          </Text>
+          <Text style={styles.contactInfo}>
+            {letterData?.companyAddress || "Dirección de la Empresa"}
+          </Text>
         </View>
 
         {/* Subject */}
-        {letterData.subject && (
-          <Text style={styles.subject}>
-            {letterData.subject}
-          </Text>
-        )}
+        <Text style={styles.subject}>
+          {letterData?.subject || "Carta de Presentación"}
+        </Text>
 
         {/* Greeting */}
         <Text style={styles.greeting}>
-          {letterData.recipientName ? 
-            `Estimado/a ${letterData.recipientName}:` : 
-            'Estimado/a Señor/Señora:'
-          }
+          {letterData?.greeting || "Estimado/a Reclutador/a,"}
         </Text>
 
         {/* Content */}
-        <View style={styles.content}>
-          {getDefaultContent().split('\n\n').map((paragraph, index) => (
-            <View key={index} style={index === 1 ? styles.highlight : styles.paragraph}>
-              <Text>
-                {paragraph}
-              </Text>
-            </View>
-          ))}
+        <View style={styles.paragraph}>
+          <Text style={styles.content}>
+            {letterData?.content || "Me dirijo a usted para expresar mi interés en formar parte de su equipo de trabajo. Con mi experiencia y habilidades, estoy seguro de que puedo contribuir significativamente a los objetivos de su organización."}
+          </Text>
+        </View>
+
+        <View style={styles.paragraph}>
+          <Text style={styles.content}>
+            {letterData?.additionalContent || "Mi formación académica y experiencia profesional me han preparado para enfrentar los desafíos que presenta el mercado laboral actual. Estoy comprometido con el crecimiento profesional y el trabajo en equipo."}
+          </Text>
+        </View>
+
+        <View style={styles.paragraph}>
+          <Text style={styles.content}>
+            {letterData?.closingContent || "Agradezco su tiempo y consideración. Quedo a la espera de una oportunidad para discutir cómo puedo contribuir al éxito de su organización."}
+          </Text>
         </View>
 
         {/* Closing */}
         <View style={styles.closing}>
           <Text style={styles.closingText}>
-            {letterData.closing || 'Atentamente,'}
+            {letterData?.closing || "Atentamente,"}
           </Text>
           <Text style={styles.signature}>
-            {letterData.signature || `${profile?.firstName} ${profile?.lastName}`}
+            {profile?.firstName} {profile?.lastName}
           </Text>
-        </View>
-
-        {/* Footer */}
-        <View style={styles.footer}>
-          <View style={styles.footerLeft}>
-            <Text style={styles.footerText}>
-              Carta de Presentación
-            </Text>
-          </View>
-          <View style={styles.footerRight}>
-            <Text style={styles.footerText}>
-              {formatDate(letterData.date)}
-            </Text>
-          </View>
         </View>
       </Page>
     </Document>

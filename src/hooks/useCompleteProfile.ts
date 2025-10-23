@@ -68,6 +68,10 @@ export interface CompleteProfile {
   coverLetterSignature: string;
   coverLetterDate: string;
   
+  // Document URLs
+  cvUrl: string;
+  coverLetterUrl: string;
+  
   // Related data
   institution: any;
   entrepreneurships: any[];

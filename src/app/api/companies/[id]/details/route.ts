@@ -107,11 +107,24 @@ export async function GET(
     // Fetch resources by this company using ownerId
     const resourcesAuthorId = company.ownerId || company.createdBy;
     
+    // Only fetch resources if the company actually created them
+    // For now, we'll return empty array since all resources are created by the same admin user
     const resources = await prisma.resource.findMany({
       where: {
         createdByUserId: resourcesAuthorId,
         isPublic: true,
         status: "PUBLISHED",
+        // Add additional filter to ensure resources are actually from this company
+        // This is a temporary solution until we have proper company-resource relationship
+        AND: [
+          {
+            // Only show resources if they were created by a user associated with this company
+            // For now, we'll return empty since all resources are admin-created
+            createdByUserId: {
+              not: "cmh3g0q2j0000czx4m12cr80g" // Admin user ID - exclude admin resources
+            }
+          }
+        ]
       },
       orderBy: { publishedDate: "desc" },
       take: 10,

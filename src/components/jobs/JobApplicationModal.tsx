@@ -30,11 +30,11 @@ import {
 import { useApplications } from "@/hooks/useApplications";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { useSession } from "next-auth/react";
+import { useCompleteProfile } from "@/hooks/useCompleteProfile";
 import { EmploymentTypeLabels, ExperienceLevelLabels } from "@/types/company";
 import { toast } from "sonner";
 
 const applicationFormSchema = z.object({
-  coverLetter: z.string().optional(),
   notes: z.string().optional(),
   cvData: z.any().optional(),
   cvFile: z.string().optional(),
@@ -61,13 +61,21 @@ export function JobApplicationModal({
   job,
 }: JobApplicationModalProps) {
   const { data: session } = useSession();
+  const { profile: completeProfile } = useCompleteProfile();
+  
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [coverLetterFile, setCoverLetterFile] = useState<File | null>(null);
   const [cvUploadUrl, setCvUploadUrl] = useState<string | null>(null);
   const [coverLetterUploadUrl, setCoverLetterUploadUrl] = useState<string | null>(null);
   
-  // Check if user has a CV URL in their profile
-  const userCvUrl = session?.user?.profile?.cvUrl;
+  // Check if user has CV and Cover Letter URLs in their profile
+  const userCvUrl = completeProfile?.cvUrl;
+  const userCoverLetterUrl = completeProfile?.coverLetterUrl;
+
+  // Debug logging
+  console.log("JobApplicationModal - Complete profile:", completeProfile);
+  console.log("JobApplicationModal - User CV URL:", userCvUrl);
+  console.log("JobApplicationModal - User Cover Letter URL:", userCoverLetterUrl);
 
   const { uploadFile: uploadCvFile, isUploading: isUploadingCv, error: cvUploadError } = useFileUpload();
   const { uploadFile: uploadCoverLetterFile, isUploading: isUploadingCoverLetter, error: coverLetterUploadError } = useFileUpload();
@@ -82,7 +90,6 @@ export function JobApplicationModal({
   } = useForm<ApplicationFormData>({
     resolver: zodResolver(applicationFormSchema),
     defaultValues: {
-      coverLetter: "",
       notes: "",
       cvData: null,
       cvFile: "",
@@ -130,7 +137,10 @@ export function JobApplicationModal({
       data.cvFile = cvUploadUrl;
     }
     
-    if (coverLetterFile && !coverLetterUploadUrl) {
+    // Use user's Cover Letter URL if available, otherwise handle file upload
+    if (userCoverLetterUrl) {
+      data.coverLetterFile = userCoverLetterUrl;
+    } else if (coverLetterFile && !coverLetterUploadUrl) {
       try {
         const uploadUrl = await uploadCoverLetterFile(coverLetterFile);
         setCoverLetterUploadUrl(uploadUrl);
@@ -146,7 +156,6 @@ export function JobApplicationModal({
     try {
       await createApplication({
         jobId,
-        coverLetter: data.coverLetter,
         notes: data.notes,
         cvFile: data.cvFile,
         coverLetterFile: data.coverLetterFile,
@@ -395,22 +404,64 @@ export function JobApplicationModal({
                 {/* Cover Letter */}
                 <div className="space-y-3 sm:space-y-4">
                   <h4 className="font-medium text-sm sm:text-base">Carta de Presentación</h4>
+                  
+                  {/* Cover Letter File Upload */}
                   <div className="space-y-2">
-                    <Label htmlFor="coverLetter" className="text-sm">Carta de Presentación (Opcional)</Label>
-                    <Textarea
-                      id="coverLetter"
-                      {...register("coverLetter")}
-                      placeholder="Explica por qué eres el candidato ideal para este trabajo..."
-                      rows={4}
-                      className="resize-none"
-                    />
-                    {errors.coverLetter && (
-                      <p className="text-sm text-destructive">{errors.coverLetter.message}</p>
+                    <Label htmlFor="coverLetterFile" className="text-sm">Carta de Presentación (Archivo)</Label>
+                    
+                    {userCoverLetterUrl ? (
+                      <div className="p-3 bg-green-50 border border-green-200 rounded-md">
+                        <div className="flex items-center gap-2">
+                          <div className="h-4 w-4 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span className="text-white text-xs">✓</span>
+                          </div>
+                          <span className="text-sm font-medium text-green-800">
+                            Usando tu carta de presentación guardada
+                          </span>
+                        </div>
+                        <p className="text-xs text-green-700 mt-1">
+                          Se utilizará automáticamente tu carta de presentación del perfil. Si quieres usar una diferente, puedes subir una nueva.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                        <Input
+                          id="coverLetterFile"
+                          type="file"
+                          accept=".pdf,.doc,.docx"
+                          onChange={handleCoverLetterFileUpload}
+                          className="flex-1"
+                        />
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          size="sm"
+                          disabled={isUploadingCoverLetter}
+                          onClick={() => {
+                            const input = document.getElementById('coverLetterFile') as HTMLInputElement;
+                            input?.click();
+                          }}
+                          className="w-full sm:w-auto"
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          {isUploadingCoverLetter ? "Subiendo..." : "Subir"}
+                        </Button>
+                      </div>
                     )}
-                    <p className="text-xs text-muted-foreground">
-                      Una carta de presentación personalizada puede aumentar tus posibilidades de ser seleccionado.
-                    </p>
+                    
+                    {coverLetterFile && (
+                      <p className="text-sm text-muted-foreground">
+                        Archivo seleccionado: {coverLetterFile.name}
+                        {coverLetterUploadUrl && " ✓ Subido"}
+                      </p>
+                    )}
+                    {coverLetterUploadError && (
+                      <p className="text-sm text-destructive">
+                        Error al subir carta de presentación: {coverLetterUploadError}
+                      </p>
+                    )}
                   </div>
+
                 </div>
 
                 {/* Additional Notes */}
@@ -446,7 +497,14 @@ export function JobApplicationModal({
                       </div>
                       <div className="flex flex-col gap-1 sm:flex-row sm:justify-between">
                         <span className="text-muted-foreground">Carta de Presentación:</span>
-                        <span className="text-right sm:text-left">{watchedValues.coverLetter ? "Incluida" : "No incluida"}</span>
+                        <span className="text-right sm:text-left">
+                          {userCoverLetterUrl 
+                            ? "Carta del perfil (automático)" 
+                            : coverLetterFile 
+                              ? coverLetterFile.name 
+                              : "No incluida"
+                          }
+                        </span>
                       </div>
                     </div>
                   </CardContent>
