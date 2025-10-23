@@ -29,7 +29,7 @@ import {
 
 const businessStageLabels: Record<BusinessStage, string> = {
   IDEA: "Idea",
-  STARTUP: "Startup",
+  STARTUP: "Inicio",
   GROWING: "Crecimiento",
   ESTABLISHED: "Establecido",
 };

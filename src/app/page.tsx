@@ -10,6 +10,17 @@ import Image from "next/image";
 import { LandingHeader } from "@/components/LandingHeader";
 import { motion, AnimatePresence, useInView } from "framer-motion";
 
+// Business Stage translations
+const businessStageLabels: Record<string, string> = {
+  IDEA: "Idea",
+  STARTUP: "Inicio",
+  GROWING: "Crecimiento",
+  ESTABLISHED: "Establecido",
+  GROWTH: "Crecimiento",
+  MATURE: "Maduro",
+  SCALE: "Escala"
+};
+
 // Animated Section Component
 interface AnimatedSectionProps {
   children: React.ReactNode;
@@ -49,16 +60,16 @@ const features = [
     iconColor: 'text-primary',
     modalContent: {
       title: 'Educación y Capacitación',
-      description: 'Accede a una amplia variedad de cursos especializados diseñados para impulsar tu desarrollo profesional.',
+      description: 'Accede a cursos especializados diseñados para impulsar tu desarrollo profesional.',
       features: [
-        '📚 Cursos de habilidades blandas y técnicas',
-        '🎯 Competencias básicas para el mundo laboral',
-        '💻 Alfabetización digital completa',
-        '🗣️ Liderazgo y comunicación efectiva',
-        '📊 Gestión de proyectos y trabajo en equipo',
+        '📚 Cursos de habilidades blandas',
+        '🎯 Competencias básicas laborales',
+        '💻 Alfabetización digital',
+        '🗣️ Liderazgo y comunicación',
         '🎓 Certificación automática al completar',
-        '📱 Acceso móvil 24/7',
-        '👥 Foros de discusión con instructores'
+        '📖 Material de estudio descargable',
+        '✅ Evaluaciones y cuestionarios',
+        '📈 Seguimiento de progreso'
       ],
       cta: 'Explorar Cursos',
       link: '/courses'
@@ -73,16 +84,16 @@ const features = [
     iconColor: 'text-green',
     modalContent: {
       title: 'Bolsa de Empleo',
-      description: 'Conectamos tu talento con las mejores oportunidades laborales en Bolivia.',
+      description: 'Conectamos tu talento con oportunidades laborales en Bolivia.',
       features: [
-        '💼 Miles de ofertas de trabajo actualizadas',
+        '💼 Ofertas de trabajo actualizadas',
         '📝 Constructor de CV profesional',
-        '🔔 Alertas de empleo personalizadas',
         '💬 Chat directo con empresas',
-        '📈 Seguimiento de postulaciones',
-        '🎯 Matching automático con tu perfil',
-        '📊 Análisis del mercado laboral',
-        '🤝 Preparación para entrevistas'
+        '📋 Gestión de postulaciones',
+        '🏢 Perfiles de empresas',
+        '📍 Búsqueda por ubicación',
+        '💰 Información de salarios',
+        '📅 Programación de entrevistas'
       ],
       cta: 'Buscar Empleos',
       link: '/jobs'
@@ -97,16 +108,16 @@ const features = [
     iconColor: 'text-orange',
     modalContent: {
       title: 'Red de Emprendedores',
-      description: 'Transforma tus ideas en negocios exitosos con nuestra red de apoyo.',
+      description: 'Conecta con otros emprendedores y haz crecer tu negocio.',
       features: [
-        '🚀 Planes de negocio personalizados',
-        '🤝 Networking con otros emprendedores',
-        '📚 Recursos especializados y guías',
-        '💡 Mentoría de expertos',
-        '📊 Herramientas de análisis financiero',
-        '🎯 Acceso a inversionistas',
-        '📈 Estrategias de marketing digital',
-        '🏆 Competencias y premios'
+        '🚀 Generador de planes de negocio',
+        '🤝 Red de networking activa',
+        '📚 Biblioteca de recursos',
+        '💡 Compartir ideas y proyectos',
+        '📊 Calculadora de presupuestos',
+        '📰 Noticias del ecosistema',
+        '🌐 Directorio de emprendimientos',
+        '💬 Mensajería entre emprendedores'
       ],
       cta: 'Unirme a la Red',
       link: '/entrepreneurship'
@@ -121,18 +132,18 @@ const features = [
     iconColor: 'text-blue-dark',
     modalContent: {
       title: 'Portal Institucional',
-      description: 'Herramientas completas para la gestión de municipios y ONGs.',
+      description: 'Herramientas para la gestión de municipios y ONGs.',
       features: [
-        '👥 Gestión integral de usuarios',
-        '📝 Creación y edición de contenido',
-        '📊 Reportes y estadísticas en tiempo real',
+        '👥 Gestión de usuarios y estudiantes',
+        '📝 Creación de cursos y contenido',
+        '📊 Panel de administración',
         '🎯 Seguimiento de programas',
-        '📈 Dashboard administrativo',
-        '🔐 Control de accesos y permisos',
-        '📧 Comunicación masiva',
-        '🎓 Gestión de certificaciones'
+        '🎓 Emisión de certificados',
+        '📚 Gestión de programas educativos',
+        '👨‍🏫 Asignación de instructores',
+        '📅 Calendario de actividades'
       ],
-      cta: 'Solicitar Demo',
+      cta: 'Ver más',
       link: '/institutions'
     }
   },
@@ -145,16 +156,16 @@ const features = [
     iconColor: 'text-destructive',
     modalContent: {
       title: 'Portal Empresarial',
-      description: 'Encuentra el talento que tu empresa necesita para crecer.',
+      description: 'Encuentra el talento que tu empresa necesita.',
       features: [
-        '📢 Publicación ilimitada de ofertas',
-        '🎯 Filtros avanzados de candidatos',
-        '💬 Chat con candidatos en tiempo real',
-        '📊 Analytics de contratación',
+        '📢 Publicación de ofertas de trabajo',
+        '👥 Búsqueda de candidatos',
+        '💬 Chat con candidatos',
         '📝 Gestión de aplicaciones',
-        '🤖 IA para matching de perfiles',
-        '📈 Reportes de desempeño',
-        '🔐 Portal privado de empresa'
+        '🏢 Perfil completo de empresa',
+        '📊 Panel de control empresarial',
+        '👔 Gestión de empleados',
+        '📅 Programación de entrevistas'
       ],
       cta: 'Registrar Empresa',
       link: '/companies'
@@ -171,14 +182,14 @@ const features = [
       title: 'Portal Juvenil',
       description: 'Todo lo que necesitas para construir tu futuro profesional.',
       features: [
-        '👤 Perfil profesional personalizado',
-        '📈 Seguimiento de progreso',
-        '🎓 Certificaciones verificables',
-        '👥 Comunidad activa de jóvenes',
-        '🎯 Orientación vocacional',
-        '📚 Biblioteca de recursos',
-        '🏆 Programa de reconocimientos',
-        '💬 Mentoría entre pares'
+        '👤 Perfil profesional completo',
+        '📈 Seguimiento de tu progreso',
+        '🎓 Certificados de cursos completados',
+        '👥 Comunidad de jóvenes activa',
+        '💼 Aplicación a ofertas laborales',
+        '📚 Acceso a todos los cursos',
+        '💬 Foros de discusión',
+        '🎯 Rutas de aprendizaje'
       ],
       cta: 'Comenzar Ahora',
       link: '/sign-up'
@@ -402,7 +413,7 @@ function FeatureSection() {
 }
 
 export default function Home() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [jobs, setJobs] = useState([]);
   const [entrepreneurships, setEntrepreneurships] = useState([]);
@@ -956,7 +967,7 @@ export default function Home() {
                   <CardHeader>
                     <CardTitle className="text-lg">{entrepreneurship.name}</CardTitle>
                     <CardDescription>
-                      {entrepreneurship.category} • {entrepreneurship.businessStage}
+                      {entrepreneurship.category} • {businessStageLabels[entrepreneurship.businessStage] || entrepreneurship.businessStage}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>

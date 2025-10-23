@@ -20,6 +20,7 @@ import {
 import { useJob, useJobApplications } from "@/hooks/useJobs";
 import { useSession } from "next-auth/react";
 import { useCompanyByUser } from "@/hooks/useCompanies";
+import { EmploymentTypeLabels, ExperienceLevelLabels } from "@/types/company";
 import Link from "next/link";
 
 export default function JobAnalyticsPage() {
@@ -316,13 +317,17 @@ export default function JobAnalyticsPage() {
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm font-medium">Tipo:</span>
-                <span className="text-sm text-muted-foreground">{(job as any).contractType || job.employmentType}</span>
+                <span className="text-sm text-muted-foreground">
+                  {EmploymentTypeLabels[(job as any).contractType || job.employmentType] || (job as any).contractType || job.employmentType}
+                </span>
               </div>
-              
+
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm font-medium">Experiencia:</span>
-                <span className="text-sm text-muted-foreground">{job.experienceLevel}</span>
+                <span className="text-sm text-muted-foreground">
+                  {ExperienceLevelLabels[job.experienceLevel] || job.experienceLevel}
+                </span>
               </div>
               
               <div className="flex items-center gap-2">
