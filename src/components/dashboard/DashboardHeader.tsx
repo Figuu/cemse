@@ -11,7 +11,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ThemeToggle } from "@/components/dashboard/ThemeProvider";
 import { LogOut, Settings, User, Menu } from "lucide-react";
 import { getInitials } from "@/lib/utils";
 
@@ -67,10 +66,8 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
           </div>
         </div>
 
-        {/* Right side - Theme toggle and user menu */}
+        {/* Right side - User menu */}
         <div className="ml-4 flex items-center space-x-4">
-          {/* Theme Toggle */}
-          <ThemeToggle />
 
           {/* User dropdown */}
           <DropdownMenu>

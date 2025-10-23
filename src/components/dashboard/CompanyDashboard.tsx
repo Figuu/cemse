@@ -122,7 +122,7 @@ export function CompanyDashboard({ stats = [] }: CompanyDashboardProps) {
               </p>
             </div>
             <div className="flex items-center space-x-2">
-              <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+              <Badge className="bg-green-100 text-green-800">
                 <Building2 className="h-3 w-3 mr-1" />
                 Empresa
               </Badge>

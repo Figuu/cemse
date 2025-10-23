@@ -97,8 +97,8 @@ export default function EntrepreneurshipPage() {
   return (
     <div className="space-y-8">
       {/* Hero Section */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-purple-50 via-indigo-50 to-blue-50 dark:from-purple-950/20 dark:via-indigo-950/20 dark:to-blue-950/20 rounded-2xl p-6 sm:p-8 md:p-12">
-        <div className="absolute inset-0 bg-grid-slate-100 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))] dark:bg-grid-slate-700/25 dark:[mask-image:linear-gradient(0deg,rgba(255,255,255,0.1),rgba(255,255,255,0.5))]" />
+      <div className="relative overflow-hidden bg-gradient-to-br from-purple-50 via-indigo-50 to-blue-50 rounded-2xl p-6 sm:p-8 md:p-12">
+        <div className="absolute inset-0 bg-grid-slate-100 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))]" />
         <div className="relative">
           <div className="text-center space-y-4 sm:space-y-6">
             <div className="space-y-2">
@@ -115,7 +115,7 @@ export default function EntrepreneurshipPage() {
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-        <Card className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-purple-200 dark:hover:border-purple-800 cursor-pointer" onClick={() => {
+        <Card className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-purple-200 cursor-pointer" onClick={() => {
           // Check if user already has a business plan
           if (businessPlansData?.businessPlans && businessPlansData.businessPlans.length > 0) {
             // Load the first (most recent) business plan
@@ -127,11 +127,11 @@ export default function EntrepreneurshipPage() {
           setShowBusinessPlanBuilder(true);
         }}>
           <CardContent className="p-4 sm:p-6 text-center space-y-3 sm:space-y-4">
-            <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto bg-purple-100 dark:bg-purple-900/30 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto bg-purple-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
               <FileText className="h-6 w-6 sm:h-8 sm:w-8 text-purple-600" />
             </div>
             <div className="space-y-2">
-              <h3 className="text-lg sm:text-xl font-bold text-purple-900 dark:text-purple-100">Plan de Negocio</h3>
+              <h3 className="text-lg sm:text-xl font-bold text-purple-900">Plan de Negocio</h3>
               <p className="text-sm sm:text-base text-muted-foreground">
                 {businessPlansData?.businessPlans && businessPlansData.businessPlans.length > 0 
                   ? 'Continúa editando tu plan de negocio' 
@@ -146,13 +146,13 @@ export default function EntrepreneurshipPage() {
           </CardContent>
         </Card>
 
-        <Card className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-blue-200 dark:hover:border-blue-800 cursor-pointer" onClick={() => setShowFinancialCalculator(true)}>
+        <Card className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-blue-200 cursor-pointer" onClick={() => setShowFinancialCalculator(true)}>
           <CardContent className="p-4 sm:p-6 text-center space-y-3 sm:space-y-4">
-            <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto bg-blue-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
               <Calculator className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
             </div>
             <div className="space-y-2">
-              <h3 className="text-lg sm:text-xl font-bold text-blue-900 dark:text-blue-100">Calculadora Financiera</h3>
+              <h3 className="text-lg sm:text-xl font-bold text-blue-900">Calculadora Financiera</h3>
               <p className="text-sm sm:text-base text-muted-foreground">
                 Calcula métricas financieras y proyecciones
               </p>
@@ -164,13 +164,13 @@ export default function EntrepreneurshipPage() {
           </CardContent>
         </Card>
 
-        <Card className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-green-200 dark:hover:border-green-800 cursor-pointer" onClick={() => router.push('/entrepreneurship/network')}>
+        <Card className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-green-200 cursor-pointer" onClick={() => router.push('/entrepreneurship/network')}>
           <CardContent className="p-4 sm:p-6 text-center space-y-3 sm:space-y-4">
-            <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto bg-green-100 dark:bg-green-900/30 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto bg-green-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
               <Users className="h-6 w-6 sm:h-8 sm:w-8 text-green-600" />
             </div>
             <div className="space-y-2">
-              <h3 className="text-lg sm:text-xl font-bold text-green-900 dark:text-green-100">Red de Emprendedores</h3>
+              <h3 className="text-lg sm:text-xl font-bold text-green-900">Red de Emprendedores</h3>
               <p className="text-sm sm:text-base text-muted-foreground">
                 Conecta con otros emprendedores y mentores
               </p>
@@ -182,13 +182,13 @@ export default function EntrepreneurshipPage() {
           </CardContent>
         </Card>
 
-        <Card className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-orange-200 dark:hover:border-orange-800 cursor-pointer" onClick={() => setShowBusinessModelCanvas(true)}>
+        <Card className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-orange-200 cursor-pointer" onClick={() => setShowBusinessModelCanvas(true)}>
           <CardContent className="p-4 sm:p-6 text-center space-y-3 sm:space-y-4">
-            <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto bg-orange-100 dark:bg-orange-900/30 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto bg-orange-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
               <BarChart3 className="h-6 w-6 sm:h-8 sm:w-8 text-orange-600" />
             </div>
             <div className="space-y-2">
-              <h3 className="text-lg sm:text-xl font-bold text-orange-900 dark:text-orange-100">Business Model Canvas</h3>
+              <h3 className="text-lg sm:text-xl font-bold text-orange-900">Business Model Canvas</h3>
               <p className="text-sm sm:text-base text-muted-foreground">
                 Diseña tu modelo de negocio visualmente
               </p>

@@ -70,8 +70,8 @@ export function YouthDashboard({ stats = [] }: YouthDashboardProps) {
   return (
     <div className="space-y-8">
       {/* Hero Section */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950/20 dark:via-indigo-950/20 dark:to-purple-950/20 rounded-2xl p-4 sm:p-6 md:p-8 lg:p-12">
-        <div className="absolute inset-0 bg-grid-slate-100 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))] dark:bg-grid-slate-700/25 dark:[mask-image:linear-gradient(0deg,rgba(255,255,255,0.1),rgba(255,255,255,0.5))]" />
+      <div className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-2xl p-4 sm:p-6 md:p-8 lg:p-12">
+        <div className="absolute inset-0 bg-grid-slate-100 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))]" />
         <div className="relative">
           <div className="text-center space-y-4 sm:space-y-6">
             <div className="space-y-2">
@@ -86,13 +86,13 @@ export function YouthDashboard({ stats = [] }: YouthDashboardProps) {
             {/* Path Selection */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto px-4">
               {/* Employment Path */}
-              <Card className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-blue-200 dark:hover:border-blue-800">
+              <Card className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-blue-200">
                 <CardContent className="p-4 sm:p-6 md:p-8 text-center space-y-3 sm:space-y-4">
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto bg-blue-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                     <Briefcase className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
                   </div>
                   <div className="space-y-2">
-                    <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-blue-900 dark:text-blue-100">Empleo</h3>
+                    <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-blue-900">Empleo</h3>
                     <p className="text-sm sm:text-base text-muted-foreground">
                       Encuentra oportunidades laborales, mejora tu CV y conecta con empresas
                     </p>
@@ -116,13 +116,13 @@ export function YouthDashboard({ stats = [] }: YouthDashboardProps) {
               </Card>
 
               {/* Entrepreneurship Path */}
-              <Card className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-purple-200 dark:hover:border-purple-800">
+              <Card className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-purple-200">
                 <CardContent className="p-4 sm:p-6 md:p-8 text-center space-y-3 sm:space-y-4">
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto bg-purple-100 dark:bg-purple-900/30 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto bg-purple-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                     <Lightbulb className="h-6 w-6 sm:h-8 sm:w-8 text-purple-600" />
                   </div>
                   <div className="space-y-2">
-                    <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-purple-900 dark:text-purple-100">Emprendimiento</h3>
+                    <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-purple-900">Emprendimiento</h3>
                     <p className="text-sm sm:text-base text-muted-foreground">
                       Desarrolla tu idea de negocio, conecta con mentores y accede a recursos
                     </p>
@@ -148,14 +148,14 @@ export function YouthDashboard({ stats = [] }: YouthDashboardProps) {
 
             {/* Learning Path */}
             <div className="max-w-2xl mx-auto px-4">
-              <Card className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/20 border-emerald-200 dark:border-emerald-800">
+              <Card className="bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200">
                 <CardContent className="p-4 sm:p-6">
                   <div className="flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-4">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-emerald-100 rounded-xl flex items-center justify-center flex-shrink-0">
                       <GraduationCap className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-600" />
                     </div>
                     <div className="flex-1 text-center">
-                      <h4 className="font-semibold text-emerald-900 dark:text-emerald-100 text-sm sm:text-base">
+                      <h4 className="font-semibold text-emerald-900 text-sm sm:text-base">
                         ¿Prefieres aprender primero?
                       </h4>
                       <p className="text-xs sm:text-sm text-muted-foreground">

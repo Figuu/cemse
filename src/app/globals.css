@@ -104,32 +104,6 @@
     border: 2px solid white;
   }
 
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 197 100% 56%; /* Mantener el azul principal */
-    --primary-foreground: 222.2 84% 4.9%;
-    --secondary: 197 100% 20%; /* Azul más oscuro para modo oscuro */
-    --secondary-foreground: 210 40% 98%;
-    --muted: 197 100% 20%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 197 100% 20%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 345 100% 42%; /* Mantener el rojo */
-    --destructive-foreground: 210 40% 98%;
-    --border: 197 100% 20%;
-    --input: 197 100% 20%;
-    --ring: 197 100% 56%;
-    
-    /* Colores personalizados para modo oscuro */
-    --blue-dark: 197 100% 60%; /* Más claro para modo oscuro */
-    --orange: 25 100% 60%; /* Más claro para modo oscuro */
-    --green: 75 100% 60%; /* Más claro para modo oscuro */
-  }
 }
 
 @layer base {

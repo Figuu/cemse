@@ -971,7 +971,7 @@ function YouthUsersManagement() {
 
         {/* Filter Panel */}
         {showFilters && (
-          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border">
+          <div className="p-4 bg-gray-50 rounded-lg border">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-medium">Filtros</h3>
               <Button

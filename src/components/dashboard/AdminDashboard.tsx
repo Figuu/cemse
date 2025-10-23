@@ -66,7 +66,7 @@ export function AdminDashboard({ stats = [] }: AdminDashboardProps) {
               </p>
             </div>
             <div className="flex items-center space-x-2">
-              <Badge className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+              <Badge className="bg-red-100 text-red-800">
                 <Shield className="h-3 w-3 mr-1" />
                 Super Administrador
               </Badge>
@@ -94,11 +94,11 @@ export function AdminDashboard({ stats = [] }: AdminDashboardProps) {
         ) : error ? (
           // Error state
           <div className="col-span-full">
-            <Card className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950">
+            <Card className="border-red-200 bg-red-50">
               <CardContent className="p-6">
                 <div className="flex items-center space-x-2">
                   <AlertTriangle className="h-5 w-5 text-red-500" />
-                  <p className="text-red-700 dark:text-red-300">
+                  <p className="text-red-700">
                     Error al cargar estadísticas: {error}
                   </p>
                 </div>

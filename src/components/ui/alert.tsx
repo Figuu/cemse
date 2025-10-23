@@ -9,7 +9,7 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
   ({ className, variant = "default", ...props }, ref) => {
     const variantClasses = {
       default: "bg-background text-foreground",
-      destructive: "border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive"
+      destructive: "border-destructive/50 text-destructive [&>svg]:text-destructive"
     }
 
     return (

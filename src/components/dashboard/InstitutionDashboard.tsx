@@ -105,7 +105,7 @@ export function InstitutionDashboard({ stats = [] }: InstitutionDashboardProps) 
               </p>
             </div>
             <div className="flex items-center space-x-2">
-              <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+              <Badge className="bg-blue-100 text-blue-800">
                 <GraduationCap className="h-3 w-3 mr-1" />
                 Institución
               </Badge>
