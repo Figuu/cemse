@@ -1,13 +1,405 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookOpen, Briefcase, Users, Building2, GraduationCap, Lightbulb, ChevronLeft, ChevronRight } from "lucide-react";
+import { BookOpen, Briefcase, Users, Building2, GraduationCap, Lightbulb, ChevronLeft, ChevronRight, X, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { LandingHeader } from "@/components/LandingHeader";
+import { motion, AnimatePresence, useInView } from "framer-motion";
+
+// Animated Section Component
+interface AnimatedSectionProps {
+  children: React.ReactNode;
+  className?: string;
+  delay?: number;
+}
+
+function AnimatedSection({ children, className = "", delay = 0 }: AnimatedSectionProps) {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-100px" });
+
+  return (
+    <motion.div
+      ref={ref}
+      className={className}
+      initial={{ opacity: 0, y: 50 }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
+      transition={{
+        duration: 0.8,
+        delay,
+        ease: "easeOut"
+      }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+// Feature card data
+const features = [
+  {
+    id: 'education',
+    icon: BookOpen,
+    title: 'Educación',
+    shortDescription: 'Cursos con certificación',
+    bgColor: 'bg-secondary',
+    iconColor: 'text-primary',
+    modalContent: {
+      title: 'Educación y Capacitación',
+      description: 'Accede a una amplia variedad de cursos especializados diseñados para impulsar tu desarrollo profesional.',
+      features: [
+        '📚 Cursos de habilidades blandas y técnicas',
+        '🎯 Competencias básicas para el mundo laboral',
+        '💻 Alfabetización digital completa',
+        '🗣️ Liderazgo y comunicación efectiva',
+        '📊 Gestión de proyectos y trabajo en equipo',
+        '🎓 Certificación automática al completar',
+        '📱 Acceso móvil 24/7',
+        '👥 Foros de discusión con instructores'
+      ],
+      cta: 'Explorar Cursos',
+      link: '/courses'
+    }
+  },
+  {
+    id: 'employment',
+    icon: Briefcase,
+    title: 'Empleo',
+    shortDescription: 'Oportunidades laborales',
+    bgColor: 'bg-green/20',
+    iconColor: 'text-green',
+    modalContent: {
+      title: 'Bolsa de Empleo',
+      description: 'Conectamos tu talento con las mejores oportunidades laborales en Bolivia.',
+      features: [
+        '💼 Miles de ofertas de trabajo actualizadas',
+        '📝 Constructor de CV profesional',
+        '🔔 Alertas de empleo personalizadas',
+        '💬 Chat directo con empresas',
+        '📈 Seguimiento de postulaciones',
+        '🎯 Matching automático con tu perfil',
+        '📊 Análisis del mercado laboral',
+        '🤝 Preparación para entrevistas'
+      ],
+      cta: 'Buscar Empleos',
+      link: '/jobs'
+    }
+  },
+  {
+    id: 'entrepreneurship',
+    icon: Lightbulb,
+    title: 'Emprendimiento',
+    shortDescription: 'Red de emprendedores',
+    bgColor: 'bg-orange/20',
+    iconColor: 'text-orange',
+    modalContent: {
+      title: 'Red de Emprendedores',
+      description: 'Transforma tus ideas en negocios exitosos con nuestra red de apoyo.',
+      features: [
+        '🚀 Planes de negocio personalizados',
+        '🤝 Networking con otros emprendedores',
+        '📚 Recursos especializados y guías',
+        '💡 Mentoría de expertos',
+        '📊 Herramientas de análisis financiero',
+        '🎯 Acceso a inversionistas',
+        '📈 Estrategias de marketing digital',
+        '🏆 Competencias y premios'
+      ],
+      cta: 'Unirme a la Red',
+      link: '/entrepreneurship'
+    }
+  },
+  {
+    id: 'institutions',
+    icon: Building2,
+    title: 'Instituciones',
+    shortDescription: 'Gestión completa',
+    bgColor: 'bg-blue-dark/20',
+    iconColor: 'text-blue-dark',
+    modalContent: {
+      title: 'Portal Institucional',
+      description: 'Herramientas completas para la gestión de municipios y ONGs.',
+      features: [
+        '👥 Gestión integral de usuarios',
+        '📝 Creación y edición de contenido',
+        '📊 Reportes y estadísticas en tiempo real',
+        '🎯 Seguimiento de programas',
+        '📈 Dashboard administrativo',
+        '🔐 Control de accesos y permisos',
+        '📧 Comunicación masiva',
+        '🎓 Gestión de certificaciones'
+      ],
+      cta: 'Solicitar Demo',
+      link: '/institutions'
+    }
+  },
+  {
+    id: 'companies',
+    icon: Users,
+    title: 'Empresas',
+    shortDescription: 'Reclutamiento eficiente',
+    bgColor: 'bg-destructive/20',
+    iconColor: 'text-destructive',
+    modalContent: {
+      title: 'Portal Empresarial',
+      description: 'Encuentra el talento que tu empresa necesita para crecer.',
+      features: [
+        '📢 Publicación ilimitada de ofertas',
+        '🎯 Filtros avanzados de candidatos',
+        '💬 Chat con candidatos en tiempo real',
+        '📊 Analytics de contratación',
+        '📝 Gestión de aplicaciones',
+        '🤖 IA para matching de perfiles',
+        '📈 Reportes de desempeño',
+        '🔐 Portal privado de empresa'
+      ],
+      cta: 'Registrar Empresa',
+      link: '/companies'
+    }
+  },
+  {
+    id: 'youth',
+    icon: GraduationCap,
+    title: 'Jóvenes',
+    shortDescription: 'Desarrollo integral',
+    bgColor: 'bg-secondary',
+    iconColor: 'text-primary',
+    modalContent: {
+      title: 'Portal Juvenil',
+      description: 'Todo lo que necesitas para construir tu futuro profesional.',
+      features: [
+        '👤 Perfil profesional personalizado',
+        '📈 Seguimiento de progreso',
+        '🎓 Certificaciones verificables',
+        '👥 Comunidad activa de jóvenes',
+        '🎯 Orientación vocacional',
+        '📚 Biblioteca de recursos',
+        '🏆 Programa de reconocimientos',
+        '💬 Mentoría entre pares'
+      ],
+      cta: 'Comenzar Ahora',
+      link: '/sign-up'
+    }
+  }
+];
+
+// Feature Section Component
+function FeatureSection() {
+  const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
+  const sectionRef = useRef(null);
+  const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
+
+  // Close modal on Escape key press
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setSelectedFeature(null);
+      }
+    };
+
+    if (selectedFeature) {
+      document.addEventListener('keydown', handleEscape);
+      // Prevent body scroll when modal is open
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'unset';
+    };
+  }, [selectedFeature]);
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      }
+    }
+  };
+
+  const cardVariants = {
+    hidden: {
+      opacity: 0,
+      y: 50,
+      scale: 0.9
+    },
+    visible: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: {
+        type: "spring" as const,
+        damping: 20,
+        stiffness: 100
+      }
+    }
+  };
+
+  return (
+    <section ref={sectionRef} className="py-20 bg-white overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div
+          className="text-center mb-16"
+          initial={{ opacity: 0, y: -20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+        >
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            ¿Qué ofrecemos?
+          </h2>
+          <p className="text-lg text-gray-600">
+            Descubre todo lo que puedes lograr
+          </p>
+        </motion.div>
+
+        <motion.div
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          variants={containerVariants}
+          initial="hidden"
+          animate={isInView ? "visible" : "hidden"}
+        >
+          {features.map((feature) => {
+            const Icon = feature.icon;
+            return (
+              <motion.div
+                key={feature.id}
+                variants={cardVariants}
+                whileHover={{
+                  scale: 1.03,
+                  transition: { duration: 0.2 }
+                }}
+                className="relative"
+              >
+                <Card
+                  className="h-full cursor-pointer border-2 hover:border-primary/30 transition-all duration-300 group"
+                  onClick={() => setSelectedFeature(feature.id)}
+                >
+                  <CardHeader className="text-center pb-4">
+                    <motion.div
+                      className={`mx-auto w-16 h-16 ${feature.bgColor} rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}
+                      whileHover={{ rotate: [0, -10, 10, -10, 0] }}
+                      transition={{ duration: 0.5 }}
+                    >
+                      <Icon className={`w-8 h-8 ${feature.iconColor}`} />
+                    </motion.div>
+                    <CardTitle className="text-xl">{feature.title}</CardTitle>
+                    <CardDescription className="text-sm">
+                      {feature.shortDescription}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="text-center pb-6">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="group-hover:text-primary transition-colors"
+                    >
+                      Click para más detalles
+                      <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </Button>
+                  </CardContent>
+                </Card>
+
+              </motion.div>
+            );
+          })}
+        </motion.div>
+
+        {/* Centralized Modal Overlay */}
+        <AnimatePresence>
+          {selectedFeature && (
+            <>
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+                onClick={() => setSelectedFeature(null)}
+              />
+
+              {/* Modal Container */}
+              <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                  transition={{ type: "spring", damping: 20, stiffness: 300 }}
+                  className="w-[90%] max-w-2xl bg-white rounded-2xl shadow-2xl border border-gray-200 p-8
+                           max-h-[85vh] overflow-y-auto relative pointer-events-auto mx-4"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Close button */}
+                  <button
+                    onClick={() => setSelectedFeature(null)}
+                    className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+
+                  {/* Modal content */}
+                  {(() => {
+                    const feature = features.find(f => f.id === selectedFeature);
+                    if (!feature) return null;
+                    const Icon = feature.icon;
+
+                    return (
+                      <div className="space-y-6">
+                        {/* Header */}
+                        <div className="flex items-start gap-4">
+                          <div className={`w-16 h-16 ${feature.bgColor} rounded-2xl flex items-center justify-center flex-shrink-0`}>
+                            <Icon className={`w-8 h-8 ${feature.iconColor}`} />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                              {feature.modalContent.title}
+                            </h3>
+                            <p className="text-gray-600">
+                              {feature.modalContent.description}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Features Grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {feature.modalContent.features.map((item, index) => (
+                            <motion.div
+                              key={index}
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: index * 0.03 }}
+                              className="text-sm text-gray-700 flex items-start bg-gray-50 rounded-lg p-3"
+                            >
+                              <span>{item}</span>
+                            </motion.div>
+                          ))}
+                        </div>
+
+                        {/* CTA Button */}
+                        <Button asChild className="w-full sm:w-auto" size="lg">
+                          <Link href={feature.modalContent.link}>
+                            {feature.modalContent.cta}
+                            <ArrowRight className="ml-2 w-4 h-4" />
+                          </Link>
+                        </Button>
+                      </div>
+                    );
+                  })()}
+                </motion.div>
+              </div>
+            </>
+          )}
+        </AnimatePresence>
+      </div>
+    </section>
+  );
+}
 
 export default function Home() {
   const { data: session, status } = useSession();
@@ -153,27 +545,65 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Text Content */}
-            <div className="text-center lg:text-left">
-              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-bold text-gray-900 mb-6">
+            <motion.div
+              className="text-center lg:text-left"
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{
+                duration: 0.8,
+                ease: "easeOut",
+                delay: 0.2
+              }}
+            >
+              <motion.h1
+                className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-bold text-gray-900 mb-6"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+              >
                 Plataforma Completa de
-                <span className="text-primary"> Educación y Empleo</span>
-              </h1>
-              <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto lg:mx-0">
-                Conectamos a jóvenes con oportunidades de educación, empleo y emprendimiento 
+                <motion.span
+                  className="text-primary"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.8, delay: 0.5 }}
+                > Educación y Empleo</motion.span>
+              </motion.h1>
+              <motion.p
+                className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto lg:mx-0"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+              >
+                Conectamos a jóvenes con oportunidades de educación, empleo y emprendimiento
                 para construir un futuro mejor en Bolivia.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+              </motion.p>
+              <motion.div
+                className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.5 }}
+              >
                 <Button size="lg" asChild>
                   <Link href="/sign-up">Comenzar Ahora</Link>
                 </Button>
                 <Button size="lg" variant="outline" asChild>
                   <Link href="/courses">Explorar Cursos</Link>
                 </Button>
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
 
             {/* Image Carousel */}
-            <div className="relative">
+            <motion.div
+              className="relative"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{
+                duration: 0.8,
+                ease: "easeOut",
+                delay: 0.6
+              }}
+            >
               <div className="relative h-96 lg:h-[500px] rounded-lg overflow-hidden shadow-2xl">
                 <Image
                   src={images[currentImageIndex]}
@@ -215,146 +645,13 @@ export default function Home() {
                   ))}
                 </div>
               </div>
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              ¿Qué ofrecemos?
-            </h2>
-            <p className="text-xl text-gray-600">
-              Una plataforma integral para el desarrollo personal y profesional
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <Card className="text-center">
-              <CardHeader>
-                <div className="mx-auto w-12 h-12 bg-secondary rounded-lg flex items-center justify-center mb-4">
-                  <BookOpen className="w-6 h-6 text-primary" />
-                </div>
-                <CardTitle>Educación</CardTitle>
-                <CardDescription>
-                  Cursos especializados con certificación automática
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="text-sm text-gray-600 space-y-2">
-                  <li>• Cursos de habilidades blandas</li>
-                  <li>• Competencias básicas</li>
-                  <li>• Alfabetización digital</li>
-                  <li>• Liderazgo y comunicación</li>
-                </ul>
-              </CardContent>
-            </Card>
-
-            <Card className="text-center">
-              <CardHeader>
-                <div className="mx-auto w-12 h-12 bg-green/20 rounded-lg flex items-center justify-center mb-4">
-                  <Briefcase className="w-6 h-6 text-green" />
-                </div>
-                <CardTitle>Empleo</CardTitle>
-                <CardDescription>
-                  Conectamos talento con oportunidades laborales
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="text-sm text-gray-600 space-y-2">
-                  <li>• Ofertas de trabajo</li>
-                  <li>• Postulaciones abiertas</li>
-                  <li>• Constructor de CV</li>
-                  <li>• Chat con empresas</li>
-                </ul>
-              </CardContent>
-            </Card>
-
-            <Card className="text-center">
-              <CardHeader>
-                <div className="mx-auto w-12 h-12 bg-orange/20 rounded-lg flex items-center justify-center mb-4">
-                  <Lightbulb className="w-6 h-6 text-orange" />
-                </div>
-                <CardTitle>Emprendimiento</CardTitle>
-                <CardDescription>
-                  Red de emprendedores y recursos especializados
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="text-sm text-gray-600 space-y-2">
-                  <li>• Red de emprendedores</li>
-                  <li>• Recursos especializados</li>
-                  <li>• Planes de negocio</li>
-                  <li>• Networking</li>
-                </ul>
-              </CardContent>
-            </Card>
-
-            <Card className="text-center">
-              <CardHeader>
-                <div className="mx-auto w-12 h-12 bg-blue-dark/20 rounded-lg flex items-center justify-center mb-4">
-                  <Building2 className="w-6 h-6 text-blue-dark" />
-                </div>
-                <CardTitle>Instituciones</CardTitle>
-                <CardDescription>
-                  Gestión completa para municipios y ONGs
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="text-sm text-gray-600 space-y-2">
-                  <li>• Gestión de usuarios</li>
-                  <li>• Creación de contenido</li>
-                  <li>• Reportes y estadísticas</li>
-                  <li>• Administración completa</li>
-                </ul>
-              </CardContent>
-            </Card>
-
-            <Card className="text-center">
-              <CardHeader>
-                <div className="mx-auto w-12 h-12 bg-destructive/20 rounded-lg flex items-center justify-center mb-4">
-                  <Users className="w-6 h-6 text-destructive" />
-                </div>
-                <CardTitle>Empresas</CardTitle>
-                <CardDescription>
-                  Herramientas para reclutamiento y gestión
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="text-sm text-gray-600 space-y-2">
-                  <li>• Publicar ofertas</li>
-                  <li>• Gestionar aplicaciones</li>
-                  <li>• Chat con candidatos</li>
-                  <li>• Reportes de contratación</li>
-                </ul>
-              </CardContent>
-            </Card>
-
-            <Card className="text-center">
-              <CardHeader>
-                <div className="mx-auto w-12 h-12 bg-secondary rounded-lg flex items-center justify-center mb-4">
-                  <GraduationCap className="w-6 h-6 text-primary" />
-                </div>
-                <CardTitle>Jóvenes</CardTitle>
-                <CardDescription>
-                  Desarrollo integral y oportunidades de crecimiento
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="text-sm text-gray-600 space-y-2">
-                  <li>• Perfil personalizado</li>
-                  <li>• Seguimiento de progreso</li>
-                  <li>• Certificaciones</li>
-                  <li>• Comunidad activa</li>
-                </ul>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
+      {/* Features Section with Hover Modals */}
+      <FeatureSection />
 
       {/* Ejecutado por Section */}
       <section className="py-8 sm:py-12 md:py-16 bg-white">
@@ -509,36 +806,57 @@ export default function Home() {
       {/* Bolsa de Empleo Section */}
       <section id="bolsa-empleo" className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
+          <AnimatedSection className="text-center mb-16">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
               Bolsa de Empleo
             </h2>
             <p className="text-xl text-gray-600">
               Encuentra las mejores oportunidades laborales
             </p>
-          </div>
-          
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(6)].map((_, i) => (
-                <Card key={i} className="animate-pulse">
-                  <CardHeader>
-                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <div className="h-3 bg-gray-200 rounded"></div>
-                      <div className="h-3 bg-gray-200 rounded w-5/6"></div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {jobs.map((job: any) => (
-                <Card key={job.id} className="hover:shadow-lg transition-shadow">
+          </AnimatedSection>
+
+          <AnimatedSection delay={0.2}>
+            {loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, i) => (
+                  <Card key={i} className="animate-pulse">
+                    <CardHeader>
+                      <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                      <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        <div className="h-3 bg-gray-200 rounded"></div>
+                        <div className="h-3 bg-gray-200 rounded w-5/6"></div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <motion.div
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                initial="hidden"
+                animate="visible"
+                variants={{
+                  visible: {
+                    transition: {
+                      staggerChildren: 0.1
+                    }
+                  }
+                }}
+              >
+                {jobs.map((job: any) => (
+                  <motion.div
+                    key={job.id}
+                    variants={{
+                      hidden: { opacity: 0, y: 20 },
+                      visible: { opacity: 1, y: 0 }
+                    }}
+                    whileHover={{ scale: 1.02 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <Card className="hover:shadow-lg transition-shadow h-full">
                   <CardHeader>
                     <CardTitle className="text-lg">{job.title}</CardTitle>
                     <CardDescription className="flex items-center gap-2">
@@ -566,52 +884,75 @@ export default function Home() {
                       <Link href="/sign-up">Ver Detalles</Link>
                     </Button>
                   </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-          
-          <div className="text-center mt-12">
+                    </Card>
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
+          </AnimatedSection>
+
+          <AnimatedSection delay={0.3} className="text-center mt-12">
             <Button size="lg" asChild>
               <Link href="/sign-up">Ver Todas las Ofertas</Link>
             </Button>
-          </div>
+          </AnimatedSection>
         </div>
       </section>
 
       {/* Emprendimiento Section */}
       <section id="emprendimiento" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
+          <AnimatedSection className="text-center mb-16">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
               Emprendimiento
             </h2>
             <p className="text-xl text-gray-600">
               Conecta con emprendedores y haz crecer tu negocio
             </p>
-          </div>
-          
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(6)].map((_, i) => (
-                <Card key={i} className="animate-pulse">
-                  <CardHeader>
-                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <div className="h-3 bg-gray-200 rounded"></div>
-                      <div className="h-3 bg-gray-200 rounded w-5/6"></div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {entrepreneurships.map((entrepreneurship: any) => (
-                <Card key={entrepreneurship.id} className="hover:shadow-lg transition-shadow">
+          </AnimatedSection>
+
+          <AnimatedSection delay={0.2}>
+            {loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, i) => (
+                  <Card key={i} className="animate-pulse">
+                    <CardHeader>
+                      <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                      <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        <div className="h-3 bg-gray-200 rounded"></div>
+                        <div className="h-3 bg-gray-200 rounded w-5/6"></div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <motion.div
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                initial="hidden"
+                animate="visible"
+                variants={{
+                  visible: {
+                    transition: {
+                      staggerChildren: 0.1
+                    }
+                  }
+                }}
+              >
+                {entrepreneurships.map((entrepreneurship: any) => (
+                  <motion.div
+                    key={entrepreneurship.id}
+                    variants={{
+                      hidden: { opacity: 0, y: 20 },
+                      visible: { opacity: 1, y: 0 }
+                    }}
+                    whileHover={{ scale: 1.02 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <Card className="hover:shadow-lg transition-shadow h-full">
                   <CardHeader>
                     <CardTitle className="text-lg">{entrepreneurship.name}</CardTitle>
                     <CardDescription>
@@ -630,52 +971,75 @@ export default function Home() {
                       <Link href="/sign-up">Conectar</Link>
                     </Button>
                   </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-          
-          <div className="text-center mt-12">
+                    </Card>
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
+          </AnimatedSection>
+
+          <AnimatedSection delay={0.3} className="text-center mt-12">
             <Button size="lg" asChild>
               <Link href="/sign-up">Explorar Emprendimientos</Link>
             </Button>
-          </div>
+          </AnimatedSection>
         </div>
       </section>
 
       {/* Capacitaciones Section */}
       <section id="capacitaciones" className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
+          <AnimatedSection className="text-center mb-16">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
               Capacitaciones
             </h2>
             <p className="text-xl text-gray-600">
               Desarrolla tus habilidades con nuestros cursos especializados
             </p>
-          </div>
-          
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(6)].map((_, i) => (
-                <Card key={i} className="animate-pulse">
-                  <CardHeader>
-                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <div className="h-3 bg-gray-200 rounded"></div>
-                      <div className="h-3 bg-gray-200 rounded w-5/6"></div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {courses.map((course: any) => (
-                <Card key={course.id} className="hover:shadow-lg transition-shadow">
+          </AnimatedSection>
+
+          <AnimatedSection delay={0.2}>
+            {loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, i) => (
+                  <Card key={i} className="animate-pulse">
+                    <CardHeader>
+                      <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                      <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        <div className="h-3 bg-gray-200 rounded"></div>
+                        <div className="h-3 bg-gray-200 rounded w-5/6"></div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <motion.div
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                initial="hidden"
+                animate="visible"
+                variants={{
+                  visible: {
+                    transition: {
+                      staggerChildren: 0.1
+                    }
+                  }
+                }}
+              >
+                {courses.map((course: any) => (
+                  <motion.div
+                    key={course.id}
+                    variants={{
+                      hidden: { opacity: 0, y: 20 },
+                      visible: { opacity: 1, y: 0 }
+                    }}
+                    whileHover={{ scale: 1.02 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <Card className="hover:shadow-lg transition-shadow h-full">
                   <CardHeader>
                     <CardTitle className="text-lg">{course.title}</CardTitle>
                     <CardDescription>
@@ -700,98 +1064,133 @@ export default function Home() {
                       <Link href="/sign-up">Inscribirse</Link>
                     </Button>
                   </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-          
-          <div className="text-center mt-12">
+                    </Card>
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
+          </AnimatedSection>
+
+          <AnimatedSection delay={0.3} className="text-center mt-12">
             <Button size="lg" asChild>
               <Link href="/sign-up">Ver Todos los Cursos</Link>
             </Button>
-          </div>
+          </AnimatedSection>
         </div>
       </section>
 
       {/* ¿Necesitas Apoyo? Section */}
       <section id="necesitas-apoyo" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
+          <AnimatedSection className="text-center mb-16">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
               ¿Necesitas Apoyo?
             </h2>
             <p className="text-xl text-gray-600">
               Estamos aquí para ayudarte en tu camino hacia el éxito
             </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <Card className="text-center">
-              <CardHeader>
-                <div className="mx-auto w-12 h-12 bg-secondary rounded-lg flex items-center justify-center mb-4">
-                  <Users className="w-6 h-6 text-primary" />
-                </div>
-                <CardTitle>Mentoría Personalizada</CardTitle>
-                <CardDescription>
-                  Conecta con mentores experimentados
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="text-sm text-gray-600 space-y-2">
-                  <li>• Orientación profesional</li>
-                  <li>• Desarrollo de habilidades</li>
-                  <li>• Networking estratégico</li>
-                  <li>• Planificación de carrera</li>
-                </ul>
-              </CardContent>
-            </Card>
+          </AnimatedSection>
 
-            <Card className="text-center">
-              <CardHeader>
-                <div className="mx-auto w-12 h-12 bg-green/20 rounded-lg flex items-center justify-center mb-4">
-                  <Lightbulb className="w-6 h-6 text-green" />
-                </div>
-                <CardTitle>Recursos Educativos</CardTitle>
-                <CardDescription>
-                  Acceso a materiales y herramientas
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="text-sm text-gray-600 space-y-2">
-                  <li>• Guías y tutoriales</li>
-                  <li>• Plantillas descargables</li>
-                  <li>• Webinars exclusivos</li>
-                  <li>• Biblioteca digital</li>
-                </ul>
-              </CardContent>
-            </Card>
+          <AnimatedSection delay={0.2}>
+            <motion.div
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+              initial="hidden"
+              animate="visible"
+              variants={{
+                visible: {
+                  transition: {
+                    staggerChildren: 0.1
+                  }
+                }
+              }}
+            >
+              <motion.div
+                variants={{
+                  hidden: { opacity: 0, y: 20 },
+                  visible: { opacity: 1, y: 0 }
+                }}
+              >
+                <Card className="text-center h-full hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <div className="mx-auto w-12 h-12 bg-secondary rounded-lg flex items-center justify-center mb-4">
+                      <Users className="w-6 h-6 text-primary" />
+                    </div>
+                    <CardTitle>Mentoría Personalizada</CardTitle>
+                    <CardDescription>
+                      Conecta con mentores experimentados
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="text-sm text-gray-600 space-y-2">
+                      <li>• Orientación profesional</li>
+                      <li>• Desarrollo de habilidades</li>
+                      <li>• Networking estratégico</li>
+                      <li>• Planificación de carrera</li>
+                    </ul>
+                  </CardContent>
+                </Card>
+              </motion.div>
 
-            <Card className="text-center">
-              <CardHeader>
-                <div className="mx-auto w-12 h-12 bg-orange/20 rounded-lg flex items-center justify-center mb-4">
-                  <GraduationCap className="w-6 h-6 text-orange" />
-                </div>
-                <CardTitle>Soporte Técnico</CardTitle>
-                <CardDescription>
-                  Asistencia cuando la necesites
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="text-sm text-gray-600 space-y-2">
-                  <li>• Chat en vivo</li>
-                  <li>• Base de conocimientos</li>
-                  <li>• Soporte por email</li>
-                  <li>• Tutoriales paso a paso</li>
-                </ul>
-              </CardContent>
-            </Card>
-          </div>
-          
-          <div className="text-center mt-12">
+              <motion.div
+                variants={{
+                  hidden: { opacity: 0, y: 20 },
+                  visible: { opacity: 1, y: 0 }
+                }}
+              >
+                <Card className="text-center h-full hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <div className="mx-auto w-12 h-12 bg-green/20 rounded-lg flex items-center justify-center mb-4">
+                      <Lightbulb className="w-6 h-6 text-green" />
+                    </div>
+                    <CardTitle>Recursos Educativos</CardTitle>
+                    <CardDescription>
+                      Acceso a materiales y herramientas
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="text-sm text-gray-600 space-y-2">
+                      <li>• Guías y tutoriales</li>
+                      <li>• Plantillas descargables</li>
+                      <li>• Webinars exclusivos</li>
+                      <li>• Biblioteca digital</li>
+                    </ul>
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              <motion.div
+                variants={{
+                  hidden: { opacity: 0, y: 20 },
+                  visible: { opacity: 1, y: 0 }
+                }}
+              >
+                <Card className="text-center h-full hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <div className="mx-auto w-12 h-12 bg-orange/20 rounded-lg flex items-center justify-center mb-4">
+                      <GraduationCap className="w-6 h-6 text-orange" />
+                    </div>
+                    <CardTitle>Soporte Técnico</CardTitle>
+                    <CardDescription>
+                      Asistencia cuando la necesites
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="text-sm text-gray-600 space-y-2">
+                      <li>• Chat en vivo</li>
+                      <li>• Base de conocimientos</li>
+                      <li>• Soporte por email</li>
+                      <li>• Tutoriales paso a paso</li>
+                    </ul>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </motion.div>
+          </AnimatedSection>
+          <AnimatedSection delay={0.3} className="text-center mt-12">
             <Button size="lg" asChild>
               <Link href="/sign-up">Obtener Ayuda</Link>
             </Button>
-          </div>
+          </AnimatedSection>
         </div>
       </section>
 
