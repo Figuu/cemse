@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Globe, 
@@ -23,7 +22,9 @@ import {
   Edit,
   Trash2,
   EyeOff,
-  X
+  X,
+  Grid3X3,
+  List
 } from "lucide-react";
 import { useNews } from "@/hooks/useNews";
 import { NewsForm } from "@/components/news/NewsForm";
@@ -41,6 +42,7 @@ export default function NewsPage() {
   const [editingNews, setEditingNews] = useState<any>(null);
   const [selectedNews, setSelectedNews] = useState<any>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("list");
 
   // Role-based permissions
   const isYouth = session?.user?.role === "YOUTH";
@@ -76,7 +78,7 @@ export default function NewsPage() {
     search: searchTerm || undefined,
     category: selectedCategory !== "all" ? selectedCategory : undefined,
     status: selectedStatus !== "all" ? selectedStatus : undefined,
-    authorId: isYouth ? undefined : session?.user?.id, // Youth sees all, others see their own
+    authorId: (isYouth || isSuperAdmin) ? undefined : session?.user?.id, // Youth and SuperAdmin see all, others see their own
   });
 
 
@@ -227,6 +229,25 @@ export default function NewsPage() {
         </div>
         {canManageNews && (
           <div className="flex items-center space-x-2">
+            {/* View Mode Toggle - Only visible on desktop */}
+            <div className="hidden sm:flex items-center bg-muted rounded-lg p-1">
+              <Button
+                variant={viewMode === "grid" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("grid")}
+                className="h-8 w-8 p-0"
+              >
+                <Grid3X3 className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === "list" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("list")}
+                className="h-8 w-8 p-0"
+              >
+                <List className="h-4 w-4" />
+              </Button>
+            </div>
             <Button onClick={() => setShowForm(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Crear Noticia
@@ -236,7 +257,7 @@ export default function NewsPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Noticias</CardTitle>
@@ -265,20 +286,6 @@ export default function NewsPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Interacciones</CardTitle>
-            <Heart className="h-4 w-4 text-red-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {newsArticles.reduce((sum, n) => sum + n.likeCount + n.commentCount, 0)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Likes y comentarios
-            </p>
-          </CardContent>
-        </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -299,89 +306,94 @@ export default function NewsPage() {
       {/* Search and Filters */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>
-              {isYouth ? "Noticias y Artículos" : "Mis Noticias"}
-            </CardTitle>
-            <div className="flex items-center space-x-2">
+          <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-end sm:space-y-0">
+            <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-2">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
                   placeholder="Buscar noticias..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-64"
+                  className="pl-10 w-full sm:w-64"
                 />
               </div>
-              <Select value={selectedMunicipality} onValueChange={setSelectedMunicipality}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Municipio" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  {municipalityInstitutions.map((institution: any) => (
-                    <SelectItem key={institution.id} value={institution.name}>
-                      {institution.name}
-                    </SelectItem>
-                  ))}
-                  <SelectItem value="Otro">Otro</SelectItem>
-                </SelectContent>
-              </Select>
-              {canManageNews && (
-                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder="Estado" />
+              <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
+                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <SelectTrigger className="w-full sm:w-40">
+                    <SelectValue placeholder="Categoría" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name} ({category.count})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={selectedMunicipality} onValueChange={setSelectedMunicipality}>
+                  <SelectTrigger className="w-full sm:w-40">
+                    <SelectValue placeholder="Municipio" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos</SelectItem>
-                    <SelectItem value="PUBLISHED">Publicados</SelectItem>
-                    <SelectItem value="DRAFT">Borradores</SelectItem>
-                    <SelectItem value="ARCHIVED">Archivados</SelectItem>
+                    {municipalityInstitutions.map((institution: any) => (
+                      <SelectItem key={institution.id} value={institution.name}>
+                        {institution.name}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="Otro">Otro</SelectItem>
                   </SelectContent>
                 </Select>
-              )}
+                {canManageNews && (
+                  <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                    <SelectTrigger className="w-full sm:w-40">
+                      <SelectValue placeholder="Estado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="PUBLISHED">Publicados</SelectItem>
+                      <SelectItem value="DRAFT">Borradores</SelectItem>
+                      <SelectItem value="ARCHIVED">Archivados</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
-            <TabsList className="grid w-full grid-cols-7">
-              {categories.slice(0, 7).map((category) => (
-                <TabsTrigger key={category.id} value={category.id}>
-                  {category.name} ({category.count})
-                </TabsTrigger>
-              ))}
-            </TabsList>
-
-            <TabsContent value={selectedCategory} className="mt-6">
-              <div className="space-y-6">
+          <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ${viewMode === "list" ? "sm:space-y-6 sm:grid-cols-none" : ""}`}>
                 {newsArticles.length === 0 ? (
-                  <Card>
-                    <CardContent className="p-12 text-center">
-                      <Globe className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                      <h3 className="text-lg font-medium mb-2">No hay noticias</h3>
-                      <p className="text-muted-foreground mb-4">
-                        {isYouth 
-                          ? "No hay noticias disponibles en esta categoría"
-                          : "No has creado ninguna noticia aún"
-                        }
-                      </p>
-                      {canManageNews && (
-                        <Button onClick={() => setShowForm(true)}>
-                          <Plus className="h-4 w-4 mr-2" />
-                          Crear Primera Noticia
-                        </Button>
-                      )}
-                    </CardContent>
-                  </Card>
+                  <div className={viewMode === "grid" ? "col-span-full" : ""}>
+                    <Card>
+                      <CardContent className="p-12 text-center">
+                        <Globe className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                        <h3 className="text-lg font-medium mb-2">No hay noticias</h3>
+                        <p className="text-muted-foreground mb-4">
+                          {isYouth 
+                            ? "No hay noticias disponibles en esta categoría"
+                            : "No has creado ninguna noticia aún"
+                          }
+                        </p>
+                        {canManageNews && (
+                          <Button onClick={() => setShowForm(true)}>
+                            <Plus className="h-4 w-4 mr-2" />
+                            Crear Primera Noticia
+                          </Button>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </div>
                 ) : (
                   filteredNews.map((article) => (
-                    <Card key={article.id} className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-6">
-                        <div className="flex space-x-4">
+                    <Card key={article.id} className={`hover:shadow-md transition-shadow ${
+                      viewMode === "grid" ? "h-full flex flex-col" : "sm:h-auto sm:flex-none"
+                    }`}>
+                      <CardContent className={`p-6 ${viewMode === "grid" ? "flex flex-col flex-1" : "sm:flex-none"}`}>
+                        <div className={`${viewMode === "grid" ? "flex flex-col space-y-4" : "sm:flex-row sm:space-x-4"} flex-col space-y-4`}>
                           {/* Article Image */}
-                          <div className="flex-shrink-0">
-                            <div className="w-32 h-24 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
+                          <div className={`${viewMode === "grid" ? "w-full" : "sm:flex-shrink-0"} w-full`}>
+                            <div className={`${viewMode === "grid" ? "w-full h-48" : "sm:w-32 sm:h-24"} w-full h-48 sm:h-24 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden`}>
                               {article.imageUrl ? (
                                 <img 
                                   src={article.imageUrl} 
@@ -396,9 +408,9 @@ export default function NewsPage() {
                           
                           {/* Article Content */}
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between">
+                            <div className={`${viewMode === "grid" ? "flex flex-col" : "flex items-start justify-between"}`}>
                               <div className="flex-1">
-                                <div className="flex items-center space-x-2 mb-2">
+                                <div className="flex items-center space-x-2 mb-2 flex-wrap">
                                   {article.featured && (
                                     <Badge className="bg-yellow-100 text-yellow-800">
                                       Destacado
@@ -416,18 +428,22 @@ export default function NewsPage() {
                                   )}
                                 </div>
                                 
-                                <h3 className="text-xl font-semibold mb-2 line-clamp-2">
+                                <h3 className={`font-semibold mb-2 line-clamp-2 ${
+                                  viewMode === "grid" ? "text-lg" : "text-xl"
+                                }`}>
                                   {article.title}
                                 </h3>
                                 
-                                <p className="text-gray-600 mb-4 line-clamp-2">
+                                <p className={`text-gray-600 mb-4 ${
+                                  viewMode === "grid" ? "line-clamp-3" : "line-clamp-2"
+                                }`}>
                                   {article.summary}
                                 </p>
                                 
-                                <div className="flex items-center space-x-4 text-sm text-gray-500 mb-3">
+                                <div className={`${viewMode === "grid" ? "flex flex-col space-y-2" : "flex items-center space-x-4"} text-sm text-gray-500 mb-3`}>
                                   <div className="flex items-center space-x-1">
                                     {getAuthorTypeIcon(article.authorType)}
-                                    <span>{article.authorName}</span>
+                                    <span className={viewMode === "grid" ? "truncate" : ""}>{article.authorName}</span>
                                   </div>
                                   <div className="flex items-center space-x-1">
                                     <Calendar className="h-4 w-4" />
@@ -459,23 +475,14 @@ export default function NewsPage() {
                               </div>
                               
                               {/* Article Actions */}
-                              <div className="flex flex-col space-y-2 ml-4">
-                                <div className="flex items-center space-x-4 text-sm text-gray-500">
-                                  <div className="flex items-center space-x-1">
-                                    <Heart className="h-4 w-4" />
-                                    <span>{article.likeCount}</span>
-                                  </div>
-                                  <div className="flex items-center space-x-1">
-                                    <MessageCircle className="h-4 w-4" />
-                                    <span>{article.commentCount}</span>
-                                  </div>
-                                </div>
+                              <div className={`${viewMode === "grid" ? "mt-auto" : "flex flex-col space-y-2 ml-4"}`}>
                                 
-                                <div className="flex space-x-2">
+                                <div className={`flex ${viewMode === "grid" ? "flex-col space-y-2" : "space-x-2"}`}>
                                   <Button 
                                     variant="outline" 
                                     size="sm"
                                     onClick={() => handleViewNews(article)}
+                                    className={viewMode === "grid" ? "w-full" : ""}
                                   >
                                     <Eye className="h-4 w-4 mr-1" />
                                     Leer
@@ -486,6 +493,7 @@ export default function NewsPage() {
                                         variant="outline" 
                                         size="sm"
                                         onClick={() => handleEditNews(article)}
+                                        className={viewMode === "grid" ? "w-full" : ""}
                                       >
                                         <Edit className="h-4 w-4 mr-1" />
                                         Editar
@@ -494,28 +502,13 @@ export default function NewsPage() {
                                         <Button 
                                           size="sm"
                                           onClick={() => handlePublishNews(article.id)}
+                                          className={viewMode === "grid" ? "w-full" : ""}
                                         >
                                           <Eye className="h-4 w-4 mr-1" />
                                           Publicar
                                         </Button>
                                       )}
-                                      {article.status === "PUBLISHED" && (
-                                        <Button 
-                                          variant="outline" 
-                                          size="sm"
-                                          onClick={() => handleUnpublishNews(article.id)}
-                                        >
-                                          <EyeOff className="h-4 w-4 mr-1" />
-                                          Despublicar
-                                        </Button>
-                                      )}
                                     </>
-                                  )}
-                                  {!isYouth && (
-                                    <Button variant="outline" size="sm">
-                                      <Share className="h-4 w-4 mr-1" />
-                                      Compartir
-                                    </Button>
                                   )}
                                 </div>
                               </div>
@@ -526,9 +519,7 @@ export default function NewsPage() {
                     </Card>
                   ))
                 )}
-              </div>
-            </TabsContent>
-          </Tabs>
+          </div>
         </CardContent>
       </Card>
 

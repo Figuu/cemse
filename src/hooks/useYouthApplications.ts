@@ -15,6 +15,7 @@ export function useYouthApplications({
   status = "",
   sortBy = "createdAt",
   sortOrder = "desc",
+  myApplications = false,
 }: {
   page?: number;
   limit?: number;
@@ -22,9 +23,10 @@ export function useYouthApplications({
   status?: string;
   sortBy?: string;
   sortOrder?: string;
+  myApplications?: boolean;
 } = {}) {
   return useQuery({
-    queryKey: ["youth-applications", page, limit, search, status, sortBy, sortOrder],
+    queryKey: ["youth-applications", page, limit, search, status, sortBy, sortOrder, myApplications],
     queryFn: async (): Promise<{ applications: YouthApplication[]; pagination: any }> => {
       const params = new URLSearchParams();
       params.append("page", page.toString());
@@ -33,6 +35,7 @@ export function useYouthApplications({
       if (status) params.append("status", status);
       if (sortBy) params.append("sortBy", sortBy);
       if (sortOrder) params.append("sortOrder", sortOrder);
+      if (myApplications) params.append("myApplications", "true");
 
       const response = await fetch(`/api/youth-applications?${params.toString()}`);
       if (!response.ok) {

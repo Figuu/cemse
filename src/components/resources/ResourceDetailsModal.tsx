@@ -232,27 +232,24 @@ export function ResourceDetailsModal({
 
           {/* Actions */}
           {(canEdit || canDelete || canPublish) && (
-            <div className="flex justify-end space-x-2 pt-6 border-t">
-              {canEdit && onEdit && (
-                <Button variant="outline" onClick={() => onEdit(resource)}>
-                  <Edit className="h-4 w-4 mr-2" /> Editar
-                </Button>
-              )}
+            <div className="pt-6 border-t">
               {canPublish && resource.status === "DRAFT" && onPublish && (
-                <Button onClick={handlePublish}>
+                <Button onClick={handlePublish} className="w-full mb-2">
                   <Eye className="h-4 w-4 mr-2" /> Publicar
                 </Button>
               )}
-              {canPublish && resource.status === "PUBLISHED" && onUnpublish && (
-                <Button variant="outline" onClick={handleUnpublish}>
-                  <EyeOff className="h-4 w-4 mr-2" /> Despublicar
-                </Button>
-              )}
-              {canDelete && onDelete && (
-                <Button variant="destructive" onClick={handleDelete}>
-                  <Trash2 className="h-4 w-4 mr-2" /> Eliminar
-                </Button>
-              )}
+              <div className="flex gap-2">
+                {canEdit && onEdit && (
+                  <Button variant="outline" onClick={() => onEdit(resource)} className="flex-1">
+                    <Edit className="h-4 w-4 mr-2" /> Editar
+                  </Button>
+                )}
+                {canDelete && onDelete && (
+                  <Button variant="destructive" onClick={handleDelete} className="flex-1">
+                    <Trash2 className="h-4 w-4 mr-2" /> Eliminar
+                  </Button>
+                )}
+              </div>
             </div>
           )}
         </CardContent>

@@ -205,9 +205,6 @@ export function MessageInterface({
                   <p className="text-muted-foreground text-sm">
                     Envía tu primer mensaje para comenzar a chatear.
                   </p>
-                  <div className="text-xs text-muted-foreground mt-2">
-                    Debug: recipientId={recipientId}, contextType={contextType}, contextId={contextId}
-                  </div>
                 </div>
               ) : (
                 messages.map((msg) => {

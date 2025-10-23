@@ -31,6 +31,7 @@ export default function TalentDetailPage() {
   const router = useRouter();
   const applicationId = params.id as string;
   const [isShowingInterest, setIsShowingInterest] = useState(false);
+  const isAdmin = session?.user?.role === "SUPERADMIN";
 
   const { data: application, isLoading, error } = useYouthApplication(applicationId);
 
@@ -113,9 +114,9 @@ export default function TalentDetailPage() {
   const hasShownInterest = application.companyInterests && application.companyInterests.length > 0;
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-2 sm:px-4 py-6 sm:py-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-6 sm:mb-8">
         <div className="flex items-center gap-4">
           <Button 
             variant="outline" 
@@ -125,40 +126,50 @@ export default function TalentDetailPage() {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Volver
           </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground truncate">
               {application.title}
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-sm sm:text-base text-muted-foreground truncate">
               Por {application.youthProfile.firstName} {application.youthProfile.lastName}
             </p>
           </div>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           <Button 
             variant="outline" 
             size="sm"
             onClick={handleContact}
+            className="text-xs sm:text-sm"
           >
-            <MessageCircle className="h-4 w-4 mr-2" />
-            Contactar
+            <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Contactar</span>
+            <span className="sm:hidden">Chat</span>
           </Button>
-          <Button 
-            size="sm"
-            onClick={handleShowInterest}
-            disabled={isShowingInterest || hasShownInterest}
-            variant={hasShownInterest ? "secondary" : "default"}
-          >
-            <Heart className="h-4 w-4 mr-2" />
-            {hasShownInterest ? "Ya mostraste interés" : "Mostrar Interés"}
-          </Button>
+          {!isAdmin && (
+            <Button 
+              size="sm"
+              onClick={handleShowInterest}
+              disabled={isShowingInterest || hasShownInterest}
+              variant={hasShownInterest ? "secondary" : "default"}
+              className="text-xs sm:text-sm"
+            >
+              <Heart className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">
+                {hasShownInterest ? "Ya mostraste interés" : "Mostrar Interés"}
+              </span>
+              <span className="sm:hidden">
+                {hasShownInterest ? "Interés" : "Interés"}
+              </span>
+            </Button>
+          )}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
         {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4 sm:space-y-6">
           {/* Candidate Profile */}
           <Card>
             <CardHeader>
@@ -316,7 +327,7 @@ export default function TalentDetailPage() {
         </div>
 
         {/* Sidebar */}
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Stats */}
           <Card>
             <CardHeader>
@@ -369,7 +380,7 @@ export default function TalentDetailPage() {
           </Card>
 
           {/* Interest Status */}
-          {hasShownInterest && (
+          {!isAdmin && hasShownInterest && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Tu Interés</CardTitle>

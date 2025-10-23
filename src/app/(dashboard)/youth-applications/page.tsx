@@ -38,10 +38,11 @@ export default function YouthApplicationsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
 
-  // For now, we'll show all applications (in a real app, you'd filter by user)
+  // Show only the current user's applications
   const { data: applicationsData, isLoading, error } = useYouthApplications({
     search: searchTerm,
     status: statusFilter,
+    myApplications: true,
   });
 
   const applications = applicationsData?.applications || [];
@@ -201,82 +202,85 @@ export default function YouthApplicationsPage() {
           </Button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
           {applications.map((application) => (
             <Card key={application.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex items-start justify-between">
+              <CardContent className="p-6">
+                <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+                  {/* Left side - Main content */}
                   <div className="flex-1">
-                    <CardTitle className="text-lg mb-2 line-clamp-2">
-                      {application.title}
-                    </CardTitle>
-                    <div className="flex items-center gap-2 mb-2">
-                      <Badge variant={
-                        application.status === "ACTIVE" ? "default" :
-                        application.status === "PAUSED" ? "secondary" :
-                        application.status === "CLOSED" ? "destructive" :
-                        "outline"
-                      }>
-                        {YouthApplicationStatusLabels[application.status]}
-                      </Badge>
-                      {application.isPublic ? (
-                        <Badge variant="outline" className="text-green-600">
-                          <Eye className="h-3 w-3 mr-1" />
-                          Público
+                    <div className="flex items-start justify-between mb-3">
+                      <CardTitle className="text-xl mb-2 line-clamp-2">
+                        {application.title}
+                      </CardTitle>
+                      <div className="flex items-center gap-2 ml-4">
+                        <Badge variant={
+                          application.status === "ACTIVE" ? "default" :
+                          application.status === "PAUSED" ? "secondary" :
+                          application.status === "CLOSED" ? "destructive" :
+                          "outline"
+                        }>
+                          {YouthApplicationStatusLabels[application.status]}
                         </Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-gray-600">
-                          <EyeOff className="h-3 w-3 mr-1" />
-                          Privado
-                        </Badge>
-                      )}
+                        {application.isPublic ? (
+                          <Badge variant="outline" className="text-green-600">
+                            <Eye className="h-3 w-3 mr-1" />
+                            Público
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-gray-600">
+                            <EyeOff className="h-3 w-3 mr-1" />
+                            Privado
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <p className="text-sm text-muted-foreground mb-4 line-clamp-2 lg:line-clamp-1">
+                      {application.description}
+                    </p>
+                    
+                    <div className="flex items-center gap-6 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {formatDistanceToNow(new Date(application.createdAt), { 
+                          addSuffix: true, 
+                          locale: es 
+                        })}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <MessageCircle className="h-3 w-3" />
+                        {application._count?.companyInterests || 0} intereses
+                      </div>
                     </div>
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
-                  {application.description}
-                </p>
-                
-                <div className="flex items-center gap-4 text-xs text-muted-foreground mb-4">
-                  <div className="flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
-                    {formatDistanceToNow(new Date(application.createdAt), { 
-                      addSuffix: true, 
-                      locale: es 
-                    })}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <MessageCircle className="h-3 w-3" />
-                    {application._count?.companyInterests || 0} intereses
-                  </div>
-                </div>
 
-                <div className="flex items-center gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => router.push(`/youth-applications/${application.id}`)}
-                    className="flex-1"
-                  >
-                    Ver Detalles
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => router.push(`/youth-applications/${application.id}/edit`)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => handleDeleteApplication(application.id)}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  {/* Right side - Actions */}
+                  <div className="flex items-center gap-2 lg:flex-shrink-0">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => router.push(`/youth-applications/${application.id}`)}
+                      className="lg:min-w-[120px]"
+                    >
+                      Ver Detalles
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => router.push(`/youth-applications/${application.id}/edit`)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleDeleteApplication(application.id)}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>

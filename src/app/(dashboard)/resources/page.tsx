@@ -533,46 +533,37 @@ function ResourcesPageContent() {
                           </div>
 
                           {canManageResources && (
-                            <div className="flex flex-wrap justify-end gap-2 pt-2 border-t">
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => handleEditResource(resource)}
-                                className="text-xs sm:text-sm"
-                              >
-                                <Edit className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                                Editar
-                              </Button>
+                            <div className="pt-2 border-t">
                               {resource.status === "DRAFT" && (
                                 <Button 
                                   size="sm"
                                   onClick={() => handlePublishResource(resource.id)}
-                                  className="text-xs sm:text-sm"
+                                  className="w-full text-xs sm:text-sm mb-2"
                                 >
                                   <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                                   Publicar
                                 </Button>
                               )}
-                              {resource.status === "PUBLISHED" && (
+                              <div className="flex gap-2">
                                 <Button 
-                                  variant="outline"
+                                  variant="outline" 
                                   size="sm"
-                                  onClick={() => handleUnpublishResource(resource.id)}
-                                  className="text-xs sm:text-sm"
+                                  onClick={() => handleEditResource(resource)}
+                                  className="flex-1 text-xs sm:text-sm"
                                 >
-                                  <EyeOff className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                                  Despublicar
+                                  <Edit className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                                  Editar
                                 </Button>
-                              )}
-                              <Button 
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => handleDeleteResource(resource.id)}
-                                className="text-xs sm:text-sm"
-                              >
-                                <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                                Eliminar
-                              </Button>
+                                <Button 
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => handleDeleteResource(resource.id)}
+                                  className="flex-1 text-xs sm:text-sm"
+                                >
+                                  <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                                  Eliminar
+                                </Button>
+                              </div>
                             </div>
                           )}
                         </div>

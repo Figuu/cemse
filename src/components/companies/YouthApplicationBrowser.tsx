@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,7 +28,9 @@ import {
   CheckCircle,
   UserPlus,
   X,
-  Send
+  Send,
+  Grid3X3,
+  List
 } from "lucide-react";
 import { MessageInterface } from "@/components/messaging/MessageInterface";
 import { formatDistanceToNow } from "date-fns";
@@ -72,6 +75,9 @@ interface YouthApplicationBrowserProps {
 }
 
 export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserProps) {
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.role === "SUPERADMIN";
+  
   const [applications, setApplications] = useState<YouthApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -82,6 +88,7 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
   const [selectedApplication, setSelectedApplication] = useState<YouthApplication | null>(null);
   const [showChat, setShowChat] = useState(false);
   const [activeChat, setActiveChat] = useState<{ applicationId: string; youthId: string; youthName: string } | null>(null);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   // Fetch applications
   useEffect(() => {
@@ -194,12 +201,21 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
     if (!application.youth?.profile) return null;
     
     return (
-    <Card className="hover:shadow-md transition-shadow cursor-pointer" 
+    <Card className={`hover:shadow-md transition-shadow cursor-pointer ${
+      viewMode === "grid" ? "h-full flex flex-col" : ""
+    }`} 
           onClick={() => setSelectedApplication(application)}>
-      <CardContent className="p-4 sm:p-6">
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
-          <div className="flex items-center space-x-3 sm:space-x-4">
-            <Avatar className="h-10 w-10 sm:h-12 sm:w-12">
+      <CardContent className={`p-4 sm:p-6 ${viewMode === "grid" ? "flex flex-col flex-1" : ""}`}>
+        {/* Header with Avatar and Status */}
+        <div className={`flex items-start justify-between gap-3 mb-4 ${
+          viewMode === "list" ? "sm:flex-row sm:items-start" : ""
+        }`}>
+          <div className={`flex items-center space-x-3 flex-1 min-w-0 ${
+            viewMode === "list" ? "sm:space-x-4" : ""
+          }`}>
+            <Avatar className={`flex-shrink-0 ${
+              viewMode === "list" ? "h-12 w-12 sm:h-16 sm:w-16" : "h-10 w-10 sm:h-12 sm:w-12"
+            }`}>
               <AvatarImage src={application.youth?.profile?.avatarUrl} />
               <AvatarFallback>
                 {application.youth?.profile?.firstName?.[0]}
@@ -207,89 +223,105 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <h4 className="font-semibold text-base sm:text-lg truncate">{application.title}</h4>
-              <p className="text-muted-foreground text-sm sm:text-base">
+              <h4 className={`font-semibold truncate ${
+                viewMode === "list" ? "text-base sm:text-lg" : "text-sm sm:text-base lg:text-lg"
+              }`}>{application.title}</h4>
+              <p className={`text-muted-foreground truncate ${
+                viewMode === "list" ? "text-sm sm:text-base" : "text-xs sm:text-sm"
+              }`}>
                 {application.youth?.profile?.firstName} {application.youth?.profile?.lastName}
               </p>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-1 text-xs sm:text-sm text-muted-foreground">
-                {application.youth?.profile?.city && (
-                  <div className="flex items-center gap-1">
-                    <MapPin className="h-3 w-3" />
-                    <span>{application.youth?.profile.city}</span>
-                  </div>
-                )}
-                {application.youth?.profile?.education && (
-                  <Badge variant="outline" className="text-xs w-fit">
-                    {application.youth?.profile.education}
-                  </Badge>
-                )}
-                <div className="flex items-center gap-1">
-                  <Calendar className="h-3 w-3" />
-                  <span>
-                    {formatDistanceToNow(new Date(application.createdAt), { 
-                      addSuffix: true, 
-                      locale: es 
-                    })}
-                  </span>
-                </div>
-              </div>
             </div>
           </div>
-          <div className="flex items-center justify-between sm:flex-col sm:items-end sm:text-right">
-            <Badge className={getStatusColor(application.status)}>
-              {getStatusLabel(application.status)}
-            </Badge>
-            <div className="flex items-center gap-1 sm:gap-4 text-xs text-muted-foreground">
-              <div className="flex items-center gap-1">
-                <Heart className="h-3 w-3" />
-                <span>{application.totalInterests}</span>
-              </div>
+          <Badge className={`${getStatusColor(application.status)} text-xs flex-shrink-0 ${
+            viewMode === "list" ? "sm:text-sm" : ""
+          }`}>
+            {getStatusLabel(application.status)}
+          </Badge>
+        </div>
+
+        {/* Location and Education */}
+        <div className={`flex gap-2 mb-3 text-xs text-muted-foreground ${
+          viewMode === "list" ? "flex-row sm:items-center sm:gap-4" : "flex-col"
+        }`}>
+          {application.youth?.profile?.city && (
+            <div className="flex items-center gap-1">
+              <MapPin className="h-3 w-3" />
+              <span>{application.youth?.profile.city}</span>
             </div>
+          )}
+          {application.youth?.profile?.education && (
+            <Badge variant="outline" className="text-xs w-fit">
+              {application.youth?.profile.education}
+            </Badge>
+          )}
+          <div className="flex items-center gap-1">
+            <Calendar className="h-3 w-3" />
+            <span>
+              {formatDistanceToNow(new Date(application.createdAt), { 
+                addSuffix: true, 
+                locale: es 
+              })}
+            </span>
           </div>
         </div>
 
-        <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
+        {/* Description */}
+        <p className={`text-muted-foreground mb-3 ${
+          viewMode === "list" 
+            ? "text-sm sm:text-base line-clamp-3" 
+            : "text-xs sm:text-sm line-clamp-2 flex-1"
+        }`}>
           {application.description}
         </p>
 
         {/* Skills */}
         {application.youth?.profile.skills && application.youth?.profile.skills.length > 0 && (
           <div className="mb-4">
-            <div className="flex flex-wrap gap-2">
-              {application.youth?.profile.skills.slice(0, 4).map((skill: any, index) => (
-                <Badge key={index} variant="outline" className="text-xs">
+            <div className="flex flex-wrap gap-1">
+              {application.youth?.profile.skills.slice(0, viewMode === "list" ? 6 : 3).map((skill: any, index) => (
+                <Badge key={index} variant="outline" className="text-xs px-2 py-1">
                   {typeof skill === 'string' ? skill : skill.name || skill}
                 </Badge>
               ))}
-              {application.youth?.profile.skills.length > 4 && (
-                <Badge variant="outline" className="text-xs">
-                  +{application.youth?.profile.skills.length - 4} más
+              {application.youth?.profile.skills.length > (viewMode === "list" ? 6 : 3) && (
+                <Badge variant="outline" className="text-xs px-2 py-1">
+                  +{application.youth?.profile.skills.length - (viewMode === "list" ? 6 : 3)}
                 </Badge>
               )}
             </div>
           </div>
         )}
 
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-4 border-t">
-          <div className="flex items-center space-x-3 sm:space-x-4 text-xs sm:text-sm text-muted-foreground">
+        {/* Actions Footer */}
+        <div className={`pt-3 border-t ${viewMode === "grid" ? "mt-auto" : ""}`}>
+          {/* Document indicators */}
+          <div className={`flex items-center gap-3 text-xs text-muted-foreground mb-3 ${
+            viewMode === "list" ? "sm:mb-0 sm:flex-row sm:justify-end" : ""
+          }`}>
             {application.cvFile || application.cvUrl && (
-              <div className="flex items-center space-x-1">
-                <Download className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span className="hidden sm:inline">CV disponible</span>
-                <span className="sm:hidden">CV</span>
+              <div className="flex items-center gap-1">
+                <Download className="h-3 w-3" />
+                <span>CV</span>
               </div>
             )}
             {application.youth?.profile.phone && (
-              <div className="flex items-center space-x-1">
-                <Phone className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span>Contacto</span>
+              <div className="flex items-center gap-1">
+                <Phone className="h-3 w-3" />
+                <span>Teléfono</span>
               </div>
             )}
           </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:space-x-2">
+          
+          {/* Action buttons */}
+          <div className={`flex gap-2 ${
+            viewMode === "list" ? "sm:flex-row sm:items-center sm:justify-between" : "flex-col"
+          }`}>
             {application.hasInterest ? (
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:space-x-2">
-                <Badge variant="default" className="text-xs w-fit">
+              <div className={viewMode === "list" ? "flex items-center gap-2" : "space-y-2"}>
+                <Badge variant="default" className={`text-xs ${
+                  viewMode === "list" ? "w-fit" : "w-full justify-center"
+                }`}>
                   {application.interestStatus === "INTERESTED" && "Interés Expresado"}
                   {application.interestStatus === "CONTACTED" && "Contactado"}
                   {application.interestStatus === "INTERVIEW_SCHEDULED" && "Entrevista Programada"}
@@ -300,7 +332,7 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
                   <Button 
                     size="sm" 
                     variant="outline"
-                    className="w-full sm:w-auto"
+                    className={viewMode === "list" ? "w-auto" : "w-full"}
                     onClick={(e) => {
                       e.stopPropagation();
                       updateInterest(application.id, application.interestId!, "CONTACTED");
@@ -313,21 +345,20 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
                   <Button 
                     size="sm" 
                     variant="outline"
-                    className="w-full sm:w-auto"
+                    className={viewMode === "list" ? "w-auto" : "w-full"}
                     onClick={(e) => {
                       e.stopPropagation();
                       updateInterest(application.id, application.interestId!, "INTERVIEW_SCHEDULED");
                     }}
                   >
-                    <span className="hidden sm:inline">Programar Entrevista</span>
-                    <span className="sm:hidden">Entrevista</span>
+                    Programar Entrevista
                   </Button>
                 )}
                 {application.interestStatus === "INTERVIEW_SCHEDULED" && (
                   <Button 
                     size="sm" 
                     variant="outline"
-                    className="w-full sm:w-auto"
+                    className={viewMode === "list" ? "w-auto" : "w-full"}
                     onClick={(e) => {
                       e.stopPropagation();
                       updateInterest(application.id, application.interestId!, "HIRED");
@@ -338,24 +369,29 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
                 )}
               </div>
             ) : (
-              <Button 
-                size="sm" 
-                className="w-full sm:w-auto"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  expressInterest(application.id);
-                }}
-              >
-                <UserPlus className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">Expresar Interés</span>
-                <span className="sm:hidden">Interés</span>
-              </Button>
+              !isAdmin && (
+                <Button 
+                  size="sm" 
+                  className={viewMode === "list" ? "w-auto" : "w-full"}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    expressInterest(application.id);
+                  }}
+                >
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Expresar Interés
+                </Button>
+              )
             )}
-            <div className="flex items-center gap-2">
+            
+            {/* Chat and View buttons */}
+            <div className={`flex gap-2 ${viewMode === "list" ? "sm:ml-auto" : ""}`}>
               <Button 
                 variant="outline" 
                 size="sm"
-                className="flex-1 sm:flex-none text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                className={`text-blue-600 hover:text-blue-700 hover:bg-blue-50 ${
+                  viewMode === "list" ? "w-auto" : "flex-1"
+                }`}
                 onClick={(e) => {
                   e.stopPropagation();
                   startChat(application);
@@ -391,7 +427,7 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
   }
 
   return (
-    <div className="flex flex-col lg:flex-row h-screen bg-gray-50">
+    <div className="flex flex-col lg:flex-row bg-gray-50">
       {/* Main Content */}
       <div className={`flex-1 transition-all duration-300 ${showChat ? 'lg:mr-96' : ''}`}>
         <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
@@ -404,6 +440,25 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
               </p>
             </div>
             <div className="flex items-center justify-center sm:justify-end space-x-2">
+              {/* View Mode Toggle */}
+              <div className="flex items-center bg-muted rounded-lg p-1">
+                <Button
+                  variant={viewMode === "grid" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setViewMode("grid")}
+                  className="h-8 w-8 p-0"
+                >
+                  <Grid3X3 className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={viewMode === "list" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setViewMode("list")}
+                  className="h-8 w-8 p-0"
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+              </div>
               <Button variant="outline" size="sm" className="w-full sm:w-auto">
                 <Filter className="h-4 w-4 mr-2" />
                 Filtros
@@ -412,7 +467,7 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className={`grid gap-3 sm:gap-4 ${isAdmin ? 'grid-cols-2 lg:grid-cols-2' : 'grid-cols-2 lg:grid-cols-4'}`}>
             <Card>
               <CardContent className="p-3 sm:p-4">
                 <div className="flex items-center space-x-2">
@@ -437,32 +492,36 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
                 </div>
               </CardContent>
             </Card>
-            <Card>
-              <CardContent className="p-3 sm:p-4">
-                <div className="flex items-center space-x-2">
-                  <Heart className="h-4 w-4 sm:h-5 sm:w-5 text-red-600" />
-                  <div>
-                    <p className="text-lg sm:text-2xl font-bold">
-                      {filteredApplications.filter(app => app.hasInterest).length}
-                    </p>
-                    <p className="text-xs sm:text-sm text-muted-foreground">Con Interés</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-3 sm:p-4">
-                <div className="flex items-center space-x-2">
-                  <Star className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-600" />
-                  <div>
-                    <p className="text-lg sm:text-2xl font-bold">
-                      {filteredApplications.filter(app => app.totalInterests > 0).length}
-                    </p>
-                    <p className="text-xs sm:text-sm text-muted-foreground">Populares</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            {!isAdmin && (
+              <>
+                <Card>
+                  <CardContent className="p-3 sm:p-4">
+                    <div className="flex items-center space-x-2">
+                      <Heart className="h-4 w-4 sm:h-5 sm:w-5 text-red-600" />
+                      <div>
+                        <p className="text-lg sm:text-2xl font-bold">
+                          {filteredApplications.filter(app => app.hasInterest).length}
+                        </p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">Con Interés</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-3 sm:p-4">
+                    <div className="flex items-center space-x-2">
+                      <Star className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-600" />
+                      <div>
+                        <p className="text-lg sm:text-2xl font-bold">
+                          {filteredApplications.filter(app => app.totalInterests > 0).length}
+                        </p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">Populares</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
+            )}
           </div>
 
           {/* Filters */}
@@ -512,14 +571,17 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
             </div>
           </div>
 
-      {/* Applications List */}
-      <div className="space-y-4">
+      {/* Applications Grid/List */}
+      <div className={viewMode === "grid" 
+        ? "grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6" 
+        : "space-y-4"
+      }>
         {filteredApplications.length > 0 ? (
           filteredApplications.map((application) => (
             <ApplicationCard key={application.id} application={application} />
           ))
         ) : (
-          <div className="text-center py-12">
+          <div className="col-span-full text-center py-12">
             <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">No se encontraron aplicaciones</h3>
             <p className="text-muted-foreground mb-4">
@@ -583,6 +645,7 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
           onExpressInterest={expressInterest}
           onUpdateInterest={updateInterest}
           onOpenChat={() => startChat(selectedApplication)}
+          isAdmin={isAdmin}
         />
       )}
     </div>
@@ -595,13 +658,15 @@ function YouthApplicationDetailModal({
   onClose, 
   onExpressInterest,
   onUpdateInterest,
-  onOpenChat
+  onOpenChat,
+  isAdmin
 }: { 
   application: YouthApplication;
   onClose: () => void;
   onExpressInterest: (id: string, notes?: string) => void;
   onUpdateInterest: (applicationId: string, interestId: string, status: string, notes?: string) => void;
   onOpenChat: () => void;
+  isAdmin: boolean;
 }) {
   const [notes, setNotes] = useState("");
 
@@ -724,13 +789,15 @@ function YouthApplicationDetailModal({
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-2 sm:space-x-2">
             {!application.hasInterest ? (
-              <Button 
-                className="w-full sm:w-auto"
-                onClick={() => onExpressInterest(application.id, notes)}
-              >
-                <UserPlus className="h-4 w-4 mr-2" />
-                Expresar Interés
-              </Button>
+              !isAdmin && (
+                <Button 
+                  className="w-full sm:w-auto"
+                  onClick={() => onExpressInterest(application.id, notes)}
+                >
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Expresar Interés
+                </Button>
+              )
             ) : (
               <div className="flex flex-col sm:flex-row gap-2 sm:space-x-2">
                 <Button 

@@ -38,14 +38,21 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status") || "";
     const sortBy = searchParams.get("sortBy") || "createdAt";
     const sortOrder = searchParams.get("sortOrder") || "desc";
+    const myApplications = searchParams.get("myApplications") === "true";
 
     const skip = (page - 1) * limit;
 
     // Build where clause
-    const where: any = {
-      isPublic: true,
-      status: "ACTIVE",
-    };
+    const where: any = {};
+    
+    if (myApplications) {
+      // For user's own applications, show all regardless of status or visibility
+      where.youthProfileId = session.user.id;
+    } else {
+      // For public browsing, only show public and active applications
+      where.isPublic = true;
+      where.status = "ACTIVE";
+    }
 
     if (search) {
       where.OR = [

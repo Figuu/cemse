@@ -12,6 +12,7 @@ import {
   Loader2
 } from "lucide-react";
 import { useConversations } from "@/hooks/useMessages";
+import { CompanyInterestStatusLabels } from "@/types/youth-application";
 
 interface CompanyInterest {
   id: string;
@@ -135,37 +136,37 @@ export function InterestedCompaniesList({
             </div>
           ) : (
             companiesWithChatStatus.map((interest) => (
-              <div key={interest.id} className="flex items-center justify-between p-3 border rounded-lg">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-10 w-10">
+              <div key={interest.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 border rounded-lg">
+                <div className="flex items-center gap-3 min-w-0">
+                  <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
                     <AvatarImage src={interest.company.logoUrl} />
                     <AvatarFallback>
                       <Building2 className="h-4 w-4" />
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium">{interest.company.name}</p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                      <p className="font-medium text-sm sm:text-base break-words">{interest.company.name}</p>
                       {interest.hasMessages && interest.lastMessage && (
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="secondary" className="text-xs self-start sm:self-center">
                           <MessageCircle className="h-3 w-3 mr-1" />
                           Ha contactado
                         </Badge>
                       )}
                     </div>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       Interesado el {new Date(interest.interestedAt).toLocaleDateString()}
                     </p>
                     {interest.lastMessage && (
-                      <p className="text-xs text-muted-foreground truncate max-w-xs">
+                      <p className="text-xs text-muted-foreground break-words">
                         Último mensaje: {interest.lastMessage.content}
                       </p>
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline">
-                    {interest.status}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge variant="outline" className="text-xs">
+                    {CompanyInterestStatusLabels[interest.status as keyof typeof CompanyInterestStatusLabels] || interest.status}
                   </Badge>
                   <Button 
                     variant={interest.hasMessages ? "default" : "outline"}
@@ -178,10 +179,11 @@ export function InterestedCompaniesList({
                         detail: { companyId: interest.company.id } 
                       }));
                     }}
-                    className="relative"
+                    className="relative flex-1 sm:flex-none"
                   >
                     <MessageCircle className="h-4 w-4 mr-2" />
-                    Ir a mensajes
+                    <span className="hidden sm:inline">Ir a mensajes</span>
+                    <span className="sm:hidden">Mensajes</span>
                     {interest.unreadCount > 0 && (
                       <Badge 
                         variant="destructive" 

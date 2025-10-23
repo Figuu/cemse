@@ -347,22 +347,22 @@ export function YouthApplicationChatInterface({
   return (
     <div className={cn("flex h-screen bg-gray-50", className)}>
       {/* Main Content */}
-      <div className={`flex-1 transition-all duration-300 ${showChat ? 'mr-96' : ''}`}>
+      <div className={`flex-1 transition-all duration-300 ${showChat ? 'mr-0 sm:mr-80 lg:mr-96' : ''}`}>
         {children}
       </div>
 
       {/* Chat Sidebar */}
       {showChat && (
-        <div className="fixed right-0 top-0 h-full w-96 bg-white border-l shadow-lg z-50">
+        <div className="fixed right-0 top-0 h-full w-full sm:w-80 lg:w-96 bg-white border-l shadow-lg z-50">
           <div className="flex flex-col h-full">
             {/* Chat Header */}
-            <div className="p-4 border-b bg-gray-50">
+            <div className="p-3 sm:p-4 border-b bg-gray-50">
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <MessageSquare className="h-5 w-5 text-blue-600" />
-                  <div>
-                    <h3 className="font-semibold">Chat con Empresas</h3>
-                    <p className="text-sm text-muted-foreground">
+                <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
+                  <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 flex-shrink-0" />
+                  <div className="min-w-0">
+                    <h3 className="font-semibold text-sm sm:text-base">Chat con Empresas</h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground truncate">
                       {selectedCompany ? `Conversando con ${selectedCompany.name}` : 'Selecciona una empresa'}
                     </p>
                   </div>
@@ -374,6 +374,7 @@ export function YouthApplicationChatInterface({
                     setShowChat(false);
                     setSelectedCompany(null);
                   }}
+                  className="flex-shrink-0"
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -385,8 +386,8 @@ export function YouthApplicationChatInterface({
               {!selectedCompany ? (
                 // Company List
                 <div className="h-full flex flex-col">
-                  <div className="p-4 border-b">
-                    <h4 className="font-medium">Empresas que han contactado</h4>
+                  <div className="p-3 sm:p-4 border-b">
+                    <h4 className="font-medium text-sm sm:text-base">Empresas que han contactado</h4>
                   </div>
                   <ScrollArea className="flex-1">
                     <div className="p-2 space-y-2">
@@ -416,23 +417,23 @@ export function YouthApplicationChatInterface({
                             )}
                             onClick={() => setSelectedCompany(company)}
                           >
-                            <CardContent className="p-3">
-                              <div className="flex items-center space-x-3">
-                                <Avatar className="h-10 w-10">
+                            <CardContent className="p-2 sm:p-3">
+                              <div className="flex items-center space-x-2 sm:space-x-3">
+                                <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
                                   <AvatarImage src={company.logoUrl} />
                                   <AvatarFallback>
-                                    <Building2 className="h-4 w-4" />
+                                    <Building2 className="h-3 w-3 sm:h-4 sm:w-4" />
                                   </AvatarFallback>
                                 </Avatar>
                                 <div className="flex-1 min-w-0">
-                                  <p className="font-medium truncate">{company.name}</p>
+                                  <p className="font-medium text-sm sm:text-base truncate">{company.name}</p>
                                   {company.lastMessage && (
-                                    <p className="text-sm text-muted-foreground truncate">
+                                    <p className="text-xs sm:text-sm text-muted-foreground truncate">
                                       {company.lastMessage.content}
                                     </p>
                                   )}
                                 </div>
-                                <div className="flex flex-col items-end space-y-1">
+                                <div className="flex flex-col items-end space-y-1 flex-shrink-0">
                                   {company.unreadCount > 0 && (
                                     <Badge variant="destructive" className="text-xs">
                                       {company.unreadCount}
@@ -456,32 +457,32 @@ export function YouthApplicationChatInterface({
                 // Individual Chat
                 <div className="h-full flex flex-col">
                   {/* Company Header */}
-                  <div className="p-4 border-b bg-gray-50">
-                    <div className="flex items-center space-x-3">
-                      <Avatar className="h-8 w-8">
+                  <div className="p-3 sm:p-4 border-b bg-gray-50">
+                    <div className="flex items-center space-x-2 sm:space-x-3">
+                      <Avatar className="h-6 w-6 sm:h-8 sm:w-8 flex-shrink-0">
                         <AvatarImage src={selectedCompany.logoUrl} />
                         <AvatarFallback>
-                          <Building2 className="h-4 w-4" />
+                          <Building2 className="h-3 w-3 sm:h-4 sm:w-4" />
                         </AvatarFallback>
                       </Avatar>
-                      <div>
-                        <h4 className="font-medium">{selectedCompany.name}</h4>
-                        <p className="text-sm text-muted-foreground">Empresa</p>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-medium text-sm sm:text-base truncate">{selectedCompany.name}</h4>
+                        <p className="text-xs sm:text-sm text-muted-foreground">Empresa</p>
                       </div>
                     </div>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => setSelectedCompany(null)}
-                      className="mt-2"
+                      className="mt-2 w-full sm:w-auto"
                     >
                       ← Volver a la lista
                     </Button>
                   </div>
 
                   {/* Messages */}
-                  <ScrollArea className="flex-1 p-4">
-                    <div className="space-y-4">
+                  <ScrollArea className="flex-1 p-3 sm:p-4">
+                    <div className="space-y-3 sm:space-y-4">
                       {messagesLoading ? (
                         <div className="flex items-center justify-center py-8">
                           <Loader2 className="h-6 w-6 animate-spin" />
@@ -501,27 +502,27 @@ export function YouthApplicationChatInterface({
                             <div
                               key={msg.id}
                               className={cn(
-                                "flex gap-3",
+                                "flex gap-2 sm:gap-3",
                                 isOwnMessage ? "justify-end" : "justify-start"
                               )}
                             >
                               <div className={cn(
-                                "flex gap-3 max-w-[80%]",
+                                "flex gap-2 sm:gap-3 max-w-[85%] sm:max-w-[80%]",
                                 isOwnMessage ? "flex-row-reverse" : "flex-row"
                               )}>
-                                <Avatar className="h-8 w-8">
+                                <Avatar className="h-6 w-6 sm:h-8 sm:w-8 flex-shrink-0">
                                   <AvatarImage src={isOwnMessage ? session?.user?.profile?.avatarUrl : selectedCompany.logoUrl} />
                                   <AvatarFallback>
-                                    {isOwnMessage ? getInitials(`${session?.user?.name || 'Yo'}`) : <Building2 className="h-4 w-4" />}
+                                    {isOwnMessage ? getInitials(`${session?.user?.name || 'Yo'}`) : <Building2 className="h-3 w-3 sm:h-4 sm:w-4" />}
                                   </AvatarFallback>
                                 </Avatar>
                                 <div className={cn(
-                                  "rounded-lg px-3 py-2",
+                                  "rounded-lg px-2 py-1 sm:px-3 sm:py-2",
                                   isOwnMessage 
                                     ? "bg-blue-600 text-white" 
                                     : "bg-gray-100"
                                 )}>
-                                  <p className="text-sm">{msg.content}</p>
+                                  <p className="text-xs sm:text-sm break-words">{msg.content}</p>
                                   <div className={cn(
                                     "flex items-center gap-1 mt-1 text-xs",
                                     isOwnMessage ? "text-blue-100" : "text-muted-foreground"
@@ -543,7 +544,7 @@ export function YouthApplicationChatInterface({
                   </ScrollArea>
 
                   {/* Message Input */}
-                  <div className="border-t p-4">
+                  <div className="border-t p-3 sm:p-4">
                     <form onSubmit={(e) => {
                       const input = e.currentTarget.querySelector('input') as HTMLInputElement;
                       if (input) {
@@ -554,7 +555,7 @@ export function YouthApplicationChatInterface({
                       <input
                         type="text"
                         placeholder="Escribe tu mensaje..."
-                        className="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="flex-1 px-2 py-2 sm:px-3 sm:py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
                         onKeyDown={(e) => {
                           if (e.key === "Enter" && !e.shiftKey) {
                             e.preventDefault();
@@ -568,6 +569,7 @@ export function YouthApplicationChatInterface({
                         type="submit" 
                         disabled={sendMessage.isPending}
                         size="sm"
+                        className="flex-shrink-0"
                       >
                         {sendMessage.isPending ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
@@ -587,11 +589,12 @@ export function YouthApplicationChatInterface({
       {/* Chat Toggle Button */}
       <Button
         onClick={() => setShowChat(!showChat)}
-        className="fixed bottom-6 right-6 z-40 shadow-lg"
-        size="lg"
+        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 shadow-lg"
+        size="sm"
       >
-        <MessageSquare className="h-5 w-5 mr-2" />
-        {showChat ? 'Cerrar Chat' : 'Abrir Chat'}
+        <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" />
+        <span className="hidden sm:inline">{showChat ? 'Cerrar Chat' : 'Abrir Chat'}</span>
+        <span className="sm:hidden">{showChat ? 'Cerrar' : 'Chat'}</span>
       </Button>
     </div>
   );

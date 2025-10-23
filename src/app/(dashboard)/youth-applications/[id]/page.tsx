@@ -124,74 +124,77 @@ export default function YouthApplicationDetailPage() {
       onOpenChat={handleOpenChat}
       companyInterests={application.companyInterests || []}
     >
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-4 sm:py-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
             <Button 
               variant="outline" 
               size="sm" 
               onClick={() => router.back()}
+              className="self-start"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Volver
             </Button>
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl font-bold text-foreground break-words">
                 {application.title}
               </h1>
-              <p className="text-muted-foreground">
+              <p className="text-sm sm:text-base text-muted-foreground">
                 Por {application.youthProfile.firstName} {application.youthProfile.lastName}
               </p>
             </div>
           </div>
           
           {isOwner && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <Button 
                 variant="outline" 
                 size="sm"
                 onClick={() => router.push(`/youth-applications/${applicationId}/edit`)}
+                className="flex-1 sm:flex-none"
               >
                 <Edit className="h-4 w-4 mr-2" />
-                Editar
+                <span className="hidden sm:inline">Editar</span>
               </Button>
               <Button 
                 variant="destructive" 
                 size="sm" 
                 onClick={() => setShowDeleteDialog(true)}
+                className="flex-1 sm:flex-none"
               >
                 <Trash2 className="h-4 w-4 mr-2" />
-                Eliminar
+                <span className="hidden sm:inline">Eliminar</span>
               </Button>
             </div>
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
           {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
           {/* Application Details */}
           <Card>
             <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-12 w-12">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                <div className="flex items-center gap-3 min-w-0">
+                  <Avatar className="h-10 w-10 sm:h-12 sm:w-12 flex-shrink-0">
                     <AvatarImage src={application.youthProfile.avatarUrl} />
                     <AvatarFallback>
                       {application.youthProfile.firstName?.[0]}{application.youthProfile.lastName?.[0]}
                     </AvatarFallback>
                   </Avatar>
-                  <div>
-                    <CardTitle className="text-lg">
+                  <div className="min-w-0 flex-1">
+                    <CardTitle className="text-base sm:text-lg break-words">
                       {application.youthProfile.firstName} {application.youthProfile.lastName}
                     </CardTitle>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs sm:text-sm text-muted-foreground break-all">
                       {application.youthProfile.user.email}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <Badge variant={
                     application.status === "ACTIVE" ? "default" :
                     application.status === "PAUSED" ? "secondary" :
@@ -230,34 +233,34 @@ export default function YouthApplicationDetailPage() {
                 <CardTitle className="text-lg">Documentos</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   {application.cvFile && (
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-blue-100 rounded-lg">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 border rounded-lg">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
                           <Download className="h-4 w-4 text-blue-600" />
                         </div>
-                        <div>
-                          <p className="font-medium">CV/Resume</p>
-                          <p className="text-sm text-muted-foreground">{application.cvFile}</p>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-sm sm:text-base">CV/Currículum</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground break-all">{application.cvFile}</p>
                         </div>
                       </div>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" className="self-start sm:self-auto">
                         <Download className="h-4 w-4 mr-2" />
-                        Descargar
+                        <span className="hidden sm:inline">Descargar</span>
                       </Button>
                     </div>
                   )}
                   
                   {application.cvUrl && (
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-blue-100 rounded-lg">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 border rounded-lg">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
                           <ExternalLink className="h-4 w-4 text-blue-600" />
                         </div>
-                        <div>
-                          <p className="font-medium">CV/Resume (URL)</p>
-                          <p className="text-sm text-muted-foreground truncate max-w-xs">
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-sm sm:text-base">CV/Currículum (URL)</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground break-all">
                             {application.cvUrl}
                           </p>
                         </div>
@@ -266,40 +269,41 @@ export default function YouthApplicationDetailPage() {
                         variant="outline" 
                         size="sm"
                         onClick={() => window.open(application.cvUrl, '_blank')}
+                        className="self-start sm:self-auto"
                       >
                         <ExternalLink className="h-4 w-4 mr-2" />
-                        Ver
+                        <span className="hidden sm:inline">Ver</span>
                       </Button>
                     </div>
                   )}
 
                   {application.coverLetterFile && (
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-green-100 rounded-lg">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 border rounded-lg">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="p-2 bg-green-100 rounded-lg flex-shrink-0">
                           <Download className="h-4 w-4 text-green-600" />
                         </div>
-                        <div>
-                          <p className="font-medium">Carta de Presentación</p>
-                          <p className="text-sm text-muted-foreground">{application.coverLetterFile}</p>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-sm sm:text-base">Carta de Presentación</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground break-all">{application.coverLetterFile}</p>
                         </div>
                       </div>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" className="self-start sm:self-auto">
                         <Download className="h-4 w-4 mr-2" />
-                        Descargar
+                        <span className="hidden sm:inline">Descargar</span>
                       </Button>
                     </div>
                   )}
                   
                   {application.coverLetterUrl && (
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-green-100 rounded-lg">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 border rounded-lg">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="p-2 bg-green-100 rounded-lg flex-shrink-0">
                           <ExternalLink className="h-4 w-4 text-green-600" />
                         </div>
-                        <div>
-                          <p className="font-medium">Carta de Presentación (URL)</p>
-                          <p className="text-sm text-muted-foreground truncate max-w-xs">
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-sm sm:text-base">Carta de Presentación (URL)</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground break-all">
                             {application.coverLetterUrl}
                           </p>
                         </div>
@@ -308,9 +312,10 @@ export default function YouthApplicationDetailPage() {
                         variant="outline" 
                         size="sm"
                         onClick={() => window.open(application.coverLetterUrl, '_blank')}
+                        className="self-start sm:self-auto"
                       >
                         <ExternalLink className="h-4 w-4 mr-2" />
-                        Ver
+                        <span className="hidden sm:inline">Ver</span>
                       </Button>
                     </div>
                   )}
@@ -328,21 +333,21 @@ export default function YouthApplicationDetailPage() {
         </div>
 
         {/* Sidebar */}
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Stats */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Estadísticas</CardTitle>
+              <CardTitle className="text-base sm:text-lg">Estadísticas</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Intereses</span>
-                  <span className="font-semibold">{application._count?.companyInterests || 0}</span>
+                  <span className="text-xs sm:text-sm text-muted-foreground">Intereses</span>
+                  <span className="font-semibold text-sm sm:text-base">{application._count?.companyInterests || 0}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Creado</span>
-                  <span className="font-semibold">
+                  <span className="text-xs sm:text-sm text-muted-foreground">Creado</span>
+                  <span className="font-semibold text-xs sm:text-sm">
                     {formatDistanceToNow(new Date(application.createdAt), { 
                       addSuffix: true, 
                       locale: es 
@@ -356,24 +361,24 @@ export default function YouthApplicationDetailPage() {
           {/* Contact Info */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Información de Contacto</CardTitle>
+              <CardTitle className="text-base sm:text-lg">Información de Contacto</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
+              <div className="space-y-2 sm:space-y-3">
                 <div className="flex items-center gap-2">
-                  <MessageCircle className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{application.youthProfile.user.email}</span>
+                  <MessageCircle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <span className="text-xs sm:text-sm break-all">{application.youthProfile.user.email}</span>
                 </div>
                 {application.youthProfile.phone && (
                   <div className="flex items-center gap-2">
-                    <MessageCircle className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{application.youthProfile.phone}</span>
+                    <MessageCircle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <span className="text-xs sm:text-sm">{application.youthProfile.phone}</span>
                   </div>
                 )}
                 {application.youthProfile.address && (
                   <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{application.youthProfile.address}</span>
+                    <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <span className="text-xs sm:text-sm break-words">{application.youthProfile.address}</span>
                   </div>
                 )}
               </div>
@@ -384,7 +389,7 @@ export default function YouthApplicationDetailPage() {
           {isCompany && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Acciones</CardTitle>
+                <CardTitle className="text-base sm:text-lg">Acciones</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
@@ -419,26 +424,26 @@ export default function YouthApplicationDetailPage() {
       {/* Delete Confirmation Dialog */}
       {showDeleteDialog && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <Card className="w-full max-w-md">
+          <Card className="w-full max-w-md mx-4">
             <CardHeader>
-              <CardTitle>Confirmar Eliminación</CardTitle>
+              <CardTitle className="text-lg sm:text-xl">Confirmar Eliminación</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground mb-4">
+              <p className="text-sm sm:text-base text-muted-foreground mb-4">
                 ¿Estás seguro de que quieres eliminar esta aplicación? Esta acción no se puede deshacer.
               </p>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-2">
                 <Button 
                   variant="destructive" 
                   onClick={handleDelete}
-                  className="flex-1"
+                  className="w-full sm:flex-1"
                 >
                   Eliminar
                 </Button>
                 <Button 
                   variant="outline" 
                   onClick={() => setShowDeleteDialog(false)}
-                  className="flex-1"
+                  className="w-full sm:flex-1"
                 >
                   Cancelar
                 </Button>
