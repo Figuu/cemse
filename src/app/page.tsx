@@ -21,6 +21,57 @@ const businessStageLabels: Record<string, string> = {
   SCALE: "Escala"
 };
 
+// Employment Type translations
+const employmentTypeLabels: Record<string, string> = {
+  FULL_TIME: "Tiempo completo",
+  PART_TIME: "Medio tiempo",
+  CONTRACT: "Contrato",
+  INTERNSHIP: "Pasantía",
+  FREELANCE: "Freelance",
+  TEMPORARY: "Temporal"
+};
+
+// Course Level translations
+const courseLevelLabels: Record<string, string> = {
+  BEGINNER: "Principiante",
+  INTERMEDIATE: "Intermedio",
+  ADVANCED: "Avanzado",
+  EXPERT: "Experto"
+};
+
+// Course Category translations
+const courseCategoryLabels: Record<string, string> = {
+  TECHNOLOGY: "Tecnología",
+  BUSINESS: "Negocios",
+  DESIGN: "Diseño",
+  MARKETING: "Marketing",
+  LANGUAGES: "Idiomas",
+  HEALTH: "Salud",
+  EDUCATION: "Educación",
+  PERSONAL_DEVELOPMENT: "Desarrollo Personal",
+  ARTS: "Artes",
+  SCIENCE: "Ciencia"
+};
+
+// Entrepreneurship Category translations
+const entrepreneurshipCategoryLabels: Record<string, string> = {
+  TECHNOLOGY: "Tecnología",
+  SERVICES: "Servicios",
+  COMMERCE: "Comercio",
+  FOOD: "Alimentos",
+  EDUCATION: "Educación",
+  HEALTH: "Salud",
+  TOURISM: "Turismo",
+  AGRICULTURE: "Agricultura",
+  MANUFACTURING: "Manufactura",
+  SOCIAL: "Social",
+  RETAIL: "Retail",
+  CONSULTING: "Consultoría",
+  ENTERTAINMENT: "Entretenimiento",
+  FASHION: "Moda",
+  SPORTS: "Deportes"
+};
+
 // Animated Section Component
 interface AnimatedSectionProps {
   children: React.ReactNode;
@@ -879,7 +930,7 @@ export default function Home() {
                     <div className="space-y-2 text-sm text-gray-600">
                       <p className="flex items-center gap-2">
                         <Briefcase className="w-4 h-4" />
-                        {job.type}
+                        {employmentTypeLabels[job.type] || employmentTypeLabels[job.employmentType] || job.type || job.employmentType}
                       </p>
                       <p className="flex items-center gap-2">
                         <Users className="w-4 h-4" />
@@ -967,7 +1018,7 @@ export default function Home() {
                   <CardHeader>
                     <CardTitle className="text-lg">{entrepreneurship.name}</CardTitle>
                     <CardDescription>
-                      {entrepreneurship.category} • {businessStageLabels[entrepreneurship.businessStage] || entrepreneurship.businessStage}
+                      {entrepreneurshipCategoryLabels[entrepreneurship.category] || entrepreneurship.category} • {businessStageLabels[entrepreneurship.businessStage] || entrepreneurship.businessStage}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -1054,7 +1105,7 @@ export default function Home() {
                   <CardHeader>
                     <CardTitle className="text-lg">{course.title}</CardTitle>
                     <CardDescription>
-                      {course.category} • {course.level}
+                      {courseCategoryLabels[course.category] || course.category} • {courseLevelLabels[course.level] || course.level}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
