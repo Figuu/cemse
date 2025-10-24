@@ -114,13 +114,11 @@ export function InstructorCourseCard({
     });
   };
 
-  const formatDuration = (minutes: number) => {
-    if (minutes < 60) {
-      return `${minutes} min`;
+  const formatDuration = (hours: number) => {
+    if (hours === 1) {
+      return "1 hora";
     }
-    const hours = Math.floor(minutes / 60);
-    const remainingMinutes = minutes % 60;
-    return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}min` : `${hours}h`;
+    return `${hours} horas`;
   };
 
   return (

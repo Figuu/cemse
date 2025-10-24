@@ -181,13 +181,11 @@ export function CourseCard({
     }
   };
 
-  const formatDuration = (minutes: number) => {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    if (hours > 0) {
-      return `${hours}h ${mins}m`;
+  const formatDuration = (hours: number) => {
+    if (hours === 1) {
+      return "1 hora";
     }
-    return `${mins}m`;
+    return `${hours} horas`;
   };
 
   const handleEnroll = async () => {
