@@ -733,28 +733,28 @@ export default function Home() {
                   alt="CEMSE"
                   width={200}
                   height={200}
-                  className="h-8 w-auto object-contain opacity-60 flex-shrink-0"
+                  className="h-12 w-auto object-contain opacity-60 flex-shrink-0"
                 />
                 <Image
                   src="/logos/kallpa.png"
                   alt="Kallpa"
                   width={200}
                   height={200}
-                  className="h-10 w-auto object-contain opacity-60 flex-shrink-0"
+                  className="h-12 w-auto object-contain opacity-60 flex-shrink-0"
                 />
                 <Image
                   src="/logos/manqa.png"
                   alt="Manqa"
                   width={200}
                   height={200}
-                  className="h-12 w-auto object-contain opacity-60 flex-shrink-0"
+                  className="h-14 w-auto object-contain opacity-60 flex-shrink-0"
                 />
                 <Image
                   src="/logos/childfund.png"
                   alt="ChildFund"
                   width={200}
                   height={200}
-                  className="h-8 w-auto object-contain opacity-60 flex-shrink-0"
+                  className="h-12 w-auto object-contain opacity-60 flex-shrink-0"
                 />
                 <Image
                   src="/logos/stc.png"
@@ -768,7 +768,7 @@ export default function Home() {
                   alt="40"
                   width={200}
                   height={200}
-                  className="h-10 w-auto object-contain opacity-60 flex-shrink-0"
+                  className="h-12 w-auto object-contain opacity-60 flex-shrink-0"
                 />
                 {/* Duplicate for seamless loop */}
                 <Image
@@ -776,28 +776,28 @@ export default function Home() {
                   alt="CEMSE"
                   width={200}
                   height={200}
-                  className="h-8 w-auto object-contain opacity-60 flex-shrink-0"
+                  className="h-12 w-auto object-contain opacity-60 flex-shrink-0"
                 />
                 <Image
                   src="/logos/kallpa.png"
                   alt="Kallpa"
                   width={200}
                   height={200}
-                  className="h-10 w-auto object-contain opacity-60 flex-shrink-0"
+                  className="h-12 w-auto object-contain opacity-60 flex-shrink-0"
                 />
                 <Image
                   src="/logos/manqa.png"
                   alt="Manqa"
                   width={200}
                   height={200}
-                  className="h-12 w-auto object-contain opacity-60 flex-shrink-0"
+                  className="h-14 w-auto object-contain opacity-60 flex-shrink-0"
                 />
                 <Image
                   src="/logos/childfund.png"
                   alt="ChildFund"
                   width={200}
                   height={200}
-                  className="h-8 w-auto object-contain opacity-60 flex-shrink-0"
+                  className="h-12 w-auto object-contain opacity-60 flex-shrink-0"
                 />
                 <Image
                   src="/logos/stc.png"
@@ -811,7 +811,7 @@ export default function Home() {
                   alt="40"
                   width={200}
                   height={200}
-                  className="h-10 w-auto object-contain opacity-60 flex-shrink-0"
+                  className="h-12 w-auto object-contain opacity-60 flex-shrink-0"
                 />
               </div>
             </div>
@@ -824,21 +824,21 @@ export default function Home() {
               alt="CEMSE"
               width={200}
               height={200}
-              className="h-14 md:h-16 lg:h-18 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
+              className="h-20 md:h-22 lg:h-24 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
             />
             <Image
               src="/logos/kallpa.png"
               alt="Kallpa"
               width={200}
               height={200}
-              className="h-16 md:h-18 lg:h-20 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
+              className="h-20 md:h-24 lg:h-28 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
             />
             <Image
               src="/logos/manqa.png"
               alt="Manqa"
               width={200}
               height={200}
-              className="h-16 md:h-18 lg:h-20 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
+              className="h-18 md:h-20 lg:h-24 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
             />
             <Image
               src="/logos/childfund.png"
@@ -1403,7 +1403,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
               <h3 className="text-lg font-semibold mb-4">Emplea y Emprende</h3>
               <p className="text-gray-400">
@@ -1424,20 +1424,13 @@ export default function Home() {
               <ul className="space-y-2 text-gray-400">
                 <li><Link href="/resources">Recursos</Link></li>
                 <li><Link href="/help">Ayuda</Link></li>
-                <li><Link href="/contact">Contacto</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-lg font-semibold mb-4">Legal</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><Link href="/privacy">Privacidad</Link></li>
-                <li><Link href="/terms">Términos</Link></li>
-                <li><Link href="/cookies">Cookies</Link></li>
+                <li><a href="mailto:empleaemprende@cemse.edu.bo" className="hover:text-white transition-colors">Contacto</a></li>
               </ul>
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 Emplea y Emprende. Todos los derechos reservados.</p>
+            <p>&copy; 2025 Emplea y Emprende. Todos los derechos reservados.</p>
+            <p className="mt-2 text-sm">Desarrollado por Boring Ventures</p>
           </div>
         </div>
       </footer>

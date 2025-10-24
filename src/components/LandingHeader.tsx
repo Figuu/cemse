@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LogOut, User, Settings } from "lucide-react";
+import { Logo } from "@/components/ui/Logo";
 import Link from "next/link";
 
 export function LandingHeader() {
@@ -41,8 +42,8 @@ export function LandingHeader() {
     <header className="bg-white shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-6">
-          <div className="flex items-center">
-            <h1 className="text-md sm:text-xl md:text-2xl font-bold text-gray-900">Emplea y Emprende</h1>
+          <div className="flex items-center space-x-3">
+            <Logo size="lg" showText={true} href="/" />
           </div>
           <nav className="hidden md:flex space-x-8">
             <button 

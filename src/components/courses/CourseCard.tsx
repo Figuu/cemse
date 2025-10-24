@@ -94,23 +94,23 @@ export function CourseCard({
   const getCategoryColor = (category: string) => {
     switch (category) {
       case "TECHNOLOGY":
-        return "bg-blue-100 text-blue-800";
+        return "bg-main-blue/10 text-main-blue";
       case "BUSINESS":
-        return "bg-green-100 text-green-800";
+        return "bg-green-environment/10 text-green-environment";
       case "DESIGN":
-        return "bg-pink-100 text-pink-800";
+        return "bg-purple-gender/10 text-purple-gender";
       case "MARKETING":
-        return "bg-orange-100 text-orange-800";
+        return "bg-orange-economy/10 text-orange-economy";
       case "LANGUAGES":
-        return "bg-purple-100 text-purple-800";
+        return "bg-purple-light/10 text-purple-light";
       case "HEALTH":
-        return "bg-red-100 text-red-800";
+        return "bg-green-success/10 text-green-success";
       case "EDUCATION":
-        return "bg-indigo-100 text-indigo-800";
+        return "bg-main-dark-blue/10 text-main-dark-blue";
       case "ARTS":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-orange-light/10 text-orange-light";
       case "SCIENCE":
-        return "bg-cyan-100 text-cyan-800";
+        return "bg-green-light/10 text-green-light";
       case "ENGINEERING":
         return "bg-gray-100 text-gray-800";
       default:

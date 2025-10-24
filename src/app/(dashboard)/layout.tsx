@@ -9,6 +9,7 @@ import { BreadcrumbNavigation } from "@/components/dashboard/BreadcrumbNavigatio
 import { ErrorBoundary } from "@/components/dashboard/ErrorBoundary";
 import { PageLoading } from "@/components/dashboard/LoadingStates";
 import { X } from "lucide-react";
+import { Logo } from "@/components/ui/Logo";
 
 export default function DashboardLayout({
   children,
@@ -51,11 +52,9 @@ export default function DashboardLayout({
               className={`fixed top-0 left-0 right-0 max-h-[85vh] bg-white shadow-2xl border-b border-gray-200 transform transition-transform duration-300 ease-out ${sidebarOpen ? 'translate-y-0' : '-translate-y-full'}`}
             >
               {/* Header section */}
-              <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+              <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-main-light-blue/20 to-main-blue/20">
                 <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                    <span className="text-white font-bold text-sm">C</span>
-                  </div>
+                  <Logo size="md" showText={false} />
                   <div>
                     <h1 className="text-lg font-bold text-gray-900">Emplea y Emprende</h1>
                     <p className="text-xs text-gray-500">Plataforma de Empleabilidad</p>
@@ -105,7 +104,9 @@ export default function DashboardLayout({
               {/* Footer section */}
               <div className="p-3 border-t border-gray-200 bg-gray-50">
                 <div className="text-xs text-gray-500 text-center">
-                  © 2024 Emplea y Emprende Platform
+                  © 2025 Emplea y Emprende Platform
+                  <br />
+                  Desarrollado por Boring Ventures
                 </div>
               </div>
             </div>

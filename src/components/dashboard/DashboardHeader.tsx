@@ -13,6 +13,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LogOut, User, Menu } from "lucide-react";
 import { getInitials } from "@/lib/utils";
+import { Logo } from "@/components/ui/Logo";
 
 interface DashboardHeaderProps {
   onMenuClick: () => void;
@@ -54,16 +55,14 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
       </button>
 
       <div className="flex-1 px-4 flex justify-between items-center">
-        {/* Left side - Welcome message */}
-        <div className="flex-1 flex items-center">
-          <div className="w-full flex md:ml-0">
-            <div className="relative w-full text-gray-400 focus-within:text-gray-600">
-              <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
-                <span className="text-sm text-gray-500">
-                  Bienvenido, {session?.user?.profile?.firstName || session?.user?.email}
-                </span>
-              </div>
-            </div>
+        {/* Left side - Logo and Welcome message */}
+        <div className="flex items-center space-x-4">
+          <Logo size="md" showText={true} href="/" className="hidden sm:flex" />
+          <Logo size="sm" showText={false} href="/" className="sm:hidden" />
+          <div className="hidden md:block">
+            <span className="text-sm text-gray-500">
+              Bienvenido, {session?.user?.profile?.firstName || session?.user?.email}
+            </span>
           </div>
         </div>
 

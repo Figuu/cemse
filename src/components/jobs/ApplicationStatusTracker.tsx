@@ -42,7 +42,7 @@ export function ApplicationStatusTracker({ application, className }: Application
       case "applied":
         return {
           label: "Aplicado",
-          color: "bg-blue-100 text-blue-800",
+          color: "bg-main-blue/10 text-main-blue",
           icon: FileText,
           progress: 20,
           description: "Tu aplicación ha sido enviada y está en revisión"
@@ -50,7 +50,7 @@ export function ApplicationStatusTracker({ application, className }: Application
       case "reviewing":
         return {
           label: "En Revisión",
-          color: "bg-yellow-100 text-yellow-800",
+          color: "bg-orange-light/10 text-orange-light",
           icon: Clock,
           progress: 40,
           description: "El empleador está revisando tu aplicación"
@@ -58,7 +58,7 @@ export function ApplicationStatusTracker({ application, className }: Application
       case "shortlisted":
         return {
           label: "Preseleccionado",
-          color: "bg-purple-100 text-purple-800",
+          color: "bg-purple-gender/10 text-purple-gender",
           icon: Star,
           progress: 60,
           description: "Has sido preseleccionado para la siguiente etapa"
@@ -66,7 +66,7 @@ export function ApplicationStatusTracker({ application, className }: Application
       case "interview":
         return {
           label: "Entrevista",
-          color: "bg-orange-100 text-orange-800",
+          color: "bg-orange-economy/10 text-orange-economy",
           icon: Calendar,
           progress: 80,
           description: "Tienes una entrevista programada"
@@ -74,7 +74,7 @@ export function ApplicationStatusTracker({ application, className }: Application
       case "offered":
         return {
           label: "Oferta",
-          color: "bg-green-100 text-green-800",
+          color: "bg-green-success/10 text-green-success",
           icon: CheckCircle,
           progress: 100,
           description: "¡Felicitaciones! Has recibido una oferta"
