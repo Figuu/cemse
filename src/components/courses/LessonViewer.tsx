@@ -5,12 +5,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Play, 
-  Pause, 
-  Volume2, 
-  VolumeX, 
-  Maximize, 
+import {
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
+  Maximize,
   Minimize,
   CheckCircle,
   Clock,
@@ -20,9 +20,13 @@ import {
   ArrowRight,
   RotateCcw,
   Video,
-  Headphones
+  Headphones,
+  HelpCircle,
+  AlertCircle
 } from "lucide-react";
 import { Lesson, LessonProgress } from "@/hooks/useCourseProgress";
+import { QuizViewer } from "./QuizViewer";
+import { toast } from "sonner";
 
 interface LessonViewerProps {
   lesson: Lesson;
@@ -52,6 +56,10 @@ export function LessonViewer({
   const [videoError, setVideoError] = useState<string | null>(null);
   const [videoSrc, setVideoSrc] = useState<string | null>(null);
   const [isPlayRequestPending, setIsPlayRequestPending] = useState(false);
+  const [lessonQuiz, setLessonQuiz] = useState<any | null>(null);
+  const [isLoadingQuiz, setIsLoadingQuiz] = useState(false);
+  const [showQuiz, setShowQuiz] = useState(false);
+  const [contentWatched, setContentWatched] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -87,10 +95,70 @@ export function LessonViewer({
     };
   }, [isPlaying, isCompleted, timeSpent, onProgressUpdate]);
 
+  // Fetch quiz for this lesson
+  useEffect(() => {
+    const fetchQuiz = async () => {
+      // Safety check for lesson.course
+      if (!lesson?.course?.id || !lesson?.id) {
+        console.error("Lesson or course ID is missing", { lesson });
+        setLessonQuiz(null);
+        setIsLoadingQuiz(false);
+        return;
+      }
+
+      setIsLoadingQuiz(true);
+      try {
+        const response = await fetch(`/api/courses/${lesson.course.id}/lessons/${lesson.id}/quiz`);
+        if (response.ok) {
+          const data = await response.json();
+          console.log("Quiz data received:", data);
+          if (data.success && data.quiz) {
+            // Validate quiz structure
+            const quiz = data.quiz;
+
+            // Ensure questions is an array with valid questions
+            if (quiz.questions && Array.isArray(quiz.questions) && quiz.questions.length > 0) {
+              // Validate each question has required fields
+              const validQuestions = quiz.questions.every((q: any) =>
+                q && typeof q === 'object' && q.type && q.question
+              );
+
+              if (validQuestions) {
+                console.log("Setting quiz with", quiz.questions.length, "questions");
+                setLessonQuiz(quiz);
+              } else {
+                console.error("Quiz questions are malformed:", quiz.questions);
+                setLessonQuiz(null);
+              }
+            } else {
+              console.warn("Quiz has no questions or invalid format:", quiz);
+              setLessonQuiz(null);
+            }
+          } else {
+            console.log("No quiz found for this lesson");
+            setLessonQuiz(null);
+          }
+        } else {
+          console.error("Failed to fetch quiz, status:", response.status);
+          setLessonQuiz(null);
+        }
+      } catch (error) {
+        console.error("Error fetching quiz:", error);
+        setLessonQuiz(null);
+      } finally {
+        setIsLoadingQuiz(false);
+      }
+    };
+
+    fetchQuiz();
+    setShowQuiz(false);
+    setContentWatched(false);
+  }, [lesson?.id, lesson?.course?.id]);
+
   // Set video source when lesson changes
   useEffect(() => {
     setVideoError(null);
-    
+
     if (lesson.contentType === "VIDEO" && lesson.videoUrl) {
       setVideoSrc(lesson.videoUrl);
       console.log("Setting video source:", lesson.videoUrl);
@@ -165,14 +233,45 @@ export function LessonViewer({
   const handleComplete = async () => {
     if (isCompleted) return;
 
+    // If there's a quiz, don't mark as complete yet - show the quiz first
+    if (lessonQuiz && !showQuiz) {
+      // Validate quiz has questions before showing
+      if (lessonQuiz.questions && Array.isArray(lessonQuiz.questions) && lessonQuiz.questions.length > 0) {
+        console.log("Video ended. Quiz available with", lessonQuiz.questions.length, "questions");
+        setContentWatched(true);
+        setShowQuiz(true);
+        toast.info("Debes completar el cuestionario para terminar esta lección");
+      } else {
+        console.error("Quiz exists but has no valid questions:", lessonQuiz);
+        toast.error("Error: El cuestionario no tiene preguntas configuradas");
+        // Mark as complete anyway since the quiz is broken
+        setIsUpdating(true);
+        try {
+          const success = await onProgressUpdate(true, timeSpent);
+          if (success) {
+            setIsCompleted(true);
+            toast.success("Lección completada");
+          }
+        } catch (error) {
+          console.error("Error marking lesson complete:", error);
+          toast.error("Error al completar la lección");
+        } finally {
+          setIsUpdating(false);
+        }
+      }
+      return;
+    }
+
     setIsUpdating(true);
     try {
       const success = await onProgressUpdate(true, timeSpent);
       if (success) {
         setIsCompleted(true);
+        toast.success("Lección completada");
       }
     } catch (error) {
       console.error("Error marking lesson complete:", error);
+      toast.error("Error al completar la lección");
     } finally {
       setIsUpdating(false);
     }
@@ -253,6 +352,64 @@ export function LessonViewer({
       default:
         return contentType;
     }
+  };
+
+  const handleQuizSubmit = async (answers: Record<string, any>) => {
+    try {
+      const response = await fetch(`/api/quizzes/${lessonQuiz.id}/attempts`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ answers }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to submit quiz");
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Check if the quiz was passed
+        if (data.attempt.passed) {
+          // Mark lesson as complete
+          setIsUpdating(true);
+          try {
+            const success = await onProgressUpdate(true, timeSpent);
+            if (success) {
+              setIsCompleted(true);
+              toast.success("¡Cuestionario aprobado! Lección completada");
+            }
+          } catch (error) {
+            console.error("Error marking lesson complete:", error);
+            toast.error("Error al completar la lección");
+          } finally {
+            setIsUpdating(false);
+          }
+        } else {
+          toast.error(`No aprobaste el cuestionario. Necesitas ${lessonQuiz.passingScore}% para aprobar.`);
+        }
+
+        return {
+          attempt: data.attempt,
+          results: data.results,
+        };
+      }
+
+      return null;
+    } catch (error) {
+      console.error("Error submitting quiz:", error);
+      toast.error("Error al enviar el cuestionario");
+      return null;
+    }
+  };
+
+  const handleQuizExit = () => {
+    if (!isCompleted) {
+      toast.warning("Debes completar el cuestionario para continuar");
+    }
+    setShowQuiz(false);
   };
 
   return (
@@ -496,13 +653,81 @@ export function LessonViewer({
             <div className="flex items-center justify-between">
               <span>{isCompleted ? "Completada" : "En Progreso"}</span>
             </div>
-            <Progress 
-              value={isCompleted ? 100 : (duration > 0 ? (currentTime / duration) * 100 : 0)} 
+            <Progress
+              value={isCompleted ? 100 : (duration > 0 ? (currentTime / duration) * 100 : 0)}
               className="h-2"
             />
           </div>
         </CardContent>
       </Card>
+
+      {/* Quiz Section - Show if lesson has a quiz */}
+      {lessonQuiz && !isCompleted && (
+        <Card className="border-purple-200 bg-purple-50">
+          <CardContent className="p-6">
+            <div className="flex items-start space-x-4">
+              <div className="flex-shrink-0">
+                <HelpCircle className="h-8 w-8 text-purple-600" />
+              </div>
+              <div className="flex-1 space-y-2">
+                <h3 className="font-semibold text-purple-900">Cuestionario Requerido</h3>
+                <p className="text-sm text-purple-800">
+                  Esta lección incluye un cuestionario que debes completar para continuar.
+                  {lessonQuiz.passingScore && ` Puntuación mínima requerida: ${lessonQuiz.passingScore}%`}
+                </p>
+                {contentWatched ? (
+                  <Button
+                    onClick={() => {
+                      console.log("Opening quiz. Quiz data:", lessonQuiz);
+                      console.log("Quiz questions:", lessonQuiz?.questions);
+                      if (lessonQuiz?.questions) {
+                        console.log("First question:", lessonQuiz.questions[0]);
+                      }
+                      setShowQuiz(true);
+                    }}
+                    className="mt-2 bg-purple-600 hover:bg-purple-700"
+                  >
+                    <HelpCircle className="h-4 w-4 mr-2" />
+                    {showQuiz ? "Continuar Cuestionario" : "Comenzar Cuestionario"}
+                  </Button>
+                ) : (
+                  <p className="text-sm text-purple-700 italic">
+                    Completa el contenido de la lección para desbloquear el cuestionario
+                  </p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Quiz Viewer - Show when quiz is active */}
+      {showQuiz && lessonQuiz && lessonQuiz.questions && lessonQuiz.questions.length > 0 && (
+        <QuizViewer
+          quiz={lessonQuiz}
+          onSubmit={handleQuizSubmit}
+          onExit={handleQuizExit}
+        />
+      )}
+
+      {/* Debug: Show if quiz button was clicked but quiz is invalid */}
+      {showQuiz && (!lessonQuiz || !lessonQuiz.questions || lessonQuiz.questions.length === 0) && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="p-6">
+            <div className="text-center">
+              <AlertCircle className="h-12 w-12 text-red-600 mx-auto mb-4" />
+              <h3 className="font-semibold text-red-900 mb-2">Error al cargar el cuestionario</h3>
+              <p className="text-sm text-red-800 mb-4">
+                El cuestionario no tiene preguntas configuradas o los datos están corruptos.
+              </p>
+              <Button onClick={() => setShowQuiz(false)} variant="outline">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Volver
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Navigation */}
       <div className="flex justify-between">
@@ -517,7 +742,7 @@ export function LessonViewer({
         <Button
           variant="outline"
           onClick={onNext}
-          disabled={!onNext}
+          disabled={!onNext || (lessonQuiz && !isCompleted)}
         >
           Siguiente
           <ArrowRight className="h-4 w-4 ml-2" />

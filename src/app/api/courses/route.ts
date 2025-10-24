@@ -104,6 +104,8 @@ export async function GET(request: NextRequest) {
             select: {
               id: true,
               name: true,
+              department: true,
+              region: true,
             },
           },
           enrollments: {
@@ -182,6 +184,8 @@ export async function GET(request: NextRequest) {
         institution: course.institution ? {
           id: course.institution.id,
           name: course.institution.name,
+          department: course.institution.department,
+          region: course.institution.region,
         } : null,
         institutionName: course.institutionName,
         createdAt: course.createdAt.toISOString(),

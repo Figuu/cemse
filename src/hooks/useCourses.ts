@@ -32,6 +32,12 @@ export interface Course {
     email: string;
     avatar?: string;
   };
+  institution?: {
+    id: string;
+    name: string;
+    department?: string;
+    region?: string;
+  };
   institutionName?: string;
   createdAt: string;
   updatedAt: string;

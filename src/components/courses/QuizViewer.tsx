@@ -30,11 +30,11 @@ interface QuizViewerProps {
   className?: string;
 }
 
-export function QuizViewer({ 
-  quiz, 
-  onSubmit, 
+export function QuizViewer({
+  quiz,
+  onSubmit,
   onExit,
-  className 
+  className
 }: QuizViewerProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, any>>({});
@@ -43,9 +43,47 @@ export function QuizViewer({
   const [showResults, setShowResults] = useState(false);
   const [results, setResults] = useState<QuizResults | null>(null);
 
+  // Validate quiz has questions
+  if (!quiz.questions || !Array.isArray(quiz.questions) || quiz.questions.length === 0) {
+    return (
+      <Card className="border-red-200 bg-red-50">
+        <CardContent className="text-center py-12">
+          <AlertCircle className="h-12 w-12 text-red-600 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold mb-2">Error en el Cuestionario</h3>
+          <p className="text-muted-foreground mb-4">
+            Este cuestionario no tiene preguntas configuradas.
+          </p>
+          <Button onClick={onExit}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Volver
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const currentQuestion = quiz.questions[currentQuestionIndex];
   const totalQuestions = quiz.questions.length;
   const progress = ((currentQuestionIndex + 1) / totalQuestions) * 100;
+
+  // Additional safety check
+  if (!currentQuestion) {
+    return (
+      <Card className="border-red-200 bg-red-50">
+        <CardContent className="text-center py-12">
+          <AlertCircle className="h-12 w-12 text-red-600 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold mb-2">Error en el Cuestionario</h3>
+          <p className="text-muted-foreground mb-4">
+            No se pudo cargar la pregunta actual.
+          </p>
+          <Button onClick={onExit}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Volver
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   // Timer effect
   useEffect(() => {

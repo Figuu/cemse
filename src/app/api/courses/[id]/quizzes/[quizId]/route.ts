@@ -114,12 +114,23 @@ export async function PUT(
     if (timeLimit !== undefined) updateData.timeLimit = timeLimit;
     if (passingScore !== undefined) updateData.passingScore = passingScore;
     if (isPublished !== undefined) updateData.isActive = isPublished;
-    if (questions.length > 0) updateData.questions = questions;
+    if (questions !== undefined) updateData.questions = questions; // Update even if empty array
+
+    console.log("Quiz PUT API: Update data:", updateData);
+    console.log("Quiz PUT API: Questions to update:", questions);
 
     // Update quiz
     const quiz = await prisma.quiz.update({
       where: { id: quizId },
       data: updateData,
+    });
+
+    console.log("Quiz PUT API: Updated quiz:", {
+      id: quiz.id,
+      title: quiz.title,
+      questions: quiz.questions,
+      questionsType: typeof quiz.questions,
+      questionsIsArray: Array.isArray(quiz.questions)
     });
 
     return NextResponse.json({

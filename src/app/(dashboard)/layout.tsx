@@ -53,13 +53,7 @@ export default function DashboardLayout({
             >
               {/* Header section */}
               <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-main-light-blue/20 to-main-blue/20">
-                <div className="flex items-center space-x-3">
-                  <Logo size="md" showText={false} />
-                  <div>
-                    <h1 className="text-lg font-bold text-gray-900">Emplea y Emprende</h1>
-                    <p className="text-xs text-gray-500">Plataforma de Empleabilidad</p>
-                  </div>
-                </div>
+                <Logo size="md" showText={true} href="/dashboard" />
                 <button
                   type="button"
                   className="p-2 rounded-full hover:bg-gray-100 transition-colors duration-200"
@@ -119,7 +113,7 @@ export default function DashboardLayout({
                 <div className="flex flex-col h-full border-r border-border bg-card">
                   <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
                     <div className="flex items-center flex-shrink-0 px-4">
-                      <h1 className="text-xl font-bold text-foreground">Emplea y Emprende</h1>
+                      <Logo size="lg" showText={true} href="/dashboard" />
                     </div>
                     <div className="mt-5 flex-1 px-2">
                       <RoleBasedNavigation 

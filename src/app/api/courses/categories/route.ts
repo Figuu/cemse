@@ -62,6 +62,23 @@ export async function GET() {
 
 function getCategoryLabel(category: string): string {
   switch (category) {
+    case "SOFT_SKILLS":
+      return "Habilidades Blandas";
+    case "BASIC_COMPETENCIES":
+      return "Competencias Básicas";
+    case "JOB_PLACEMENT":
+      return "Colocación Laboral";
+    case "ENTREPRENEURSHIP":
+      return "Emprendimiento";
+    case "TECHNICAL_SKILLS":
+      return "Habilidades Técnicas";
+    case "DIGITAL_LITERACY":
+      return "Alfabetización Digital";
+    case "COMMUNICATION":
+      return "Comunicación";
+    case "LEADERSHIP":
+      return "Liderazgo";
+    // Mantener compatibilidad con categorías antiguas
     case "TECHNOLOGY":
       return "Tecnología";
     case "BUSINESS":

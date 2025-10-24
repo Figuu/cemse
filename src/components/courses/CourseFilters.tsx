@@ -25,8 +25,6 @@ interface CourseFiltersProps {
   onCategoryChange: (value: string) => void;
   selectedLevel: string;
   onLevelChange: (value: string) => void;
-  selectedMunicipality: string;
-  onMunicipalityChange: (value: string) => void;
   sortBy: string;
   onSortChange: (value: string) => void;
   sortOrder: "asc" | "desc";
@@ -35,7 +33,6 @@ interface CourseFiltersProps {
   onEnrolledChange: (value: boolean | undefined) => void;
   categories: CourseCategory[];
   levels: CourseLevel[];
-  municipalityInstitutions: Array<{ id: string; name: string }>;
   onReset: () => void;
   onApply: () => void;
   className?: string;
@@ -49,8 +46,6 @@ export function CourseFilters({
   onCategoryChange,
   selectedLevel,
   onLevelChange,
-  selectedMunicipality,
-  onMunicipalityChange,
   sortBy,
   onSortChange,
   sortOrder,
@@ -59,7 +54,6 @@ export function CourseFilters({
   onEnrolledChange,
   categories,
   levels,
-  municipalityInstitutions,
   onReset,
   onApply,
   className,
@@ -100,7 +94,6 @@ export function CourseFilters({
     searchTerm,
     selectedCategory !== "all",
     selectedLevel !== "all",
-    selectedMunicipality !== "all",
     sortBy !== "createdAt",
     sortOrder !== "desc",
     isEnrolled !== undefined,
@@ -142,24 +135,6 @@ export function CourseFilters({
                     </div>
                   </SelectItem>
                 ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Municipality Filter */}
-          <div className="space-y-2">
-            <Select value={selectedMunicipality} onValueChange={onMunicipalityChange}>
-              <SelectTrigger className="text-sm">
-                <SelectValue placeholder="Seleccionar municipio" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los municipios</SelectItem>
-                {municipalityInstitutions.map((institution) => (
-                  <SelectItem key={institution.id} value={institution.name}>
-                    {institution.name}
-                  </SelectItem>
-                ))}
-                <SelectItem value="Otro">Otro</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -346,7 +321,7 @@ export function CourseFilters({
           </div>
 
           {/* Basic Filters */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Categoría</label>
               <Select value={selectedCategory} onValueChange={onCategoryChange}>
@@ -387,24 +362,6 @@ export function CourseFilters({
                       </div>
                     </SelectItem>
                   ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Municipio</label>
-              <Select value={selectedMunicipality} onValueChange={onMunicipalityChange}>
-                <SelectTrigger className="text-sm">
-                  <SelectValue placeholder="Seleccionar municipio" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los municipios</SelectItem>
-                  {municipalityInstitutions.map((institution) => (
-                    <SelectItem key={institution.id} value={institution.name}>
-                      {institution.name}
-                    </SelectItem>
-                  ))}
-                  <SelectItem value="Otro">Otro</SelectItem>
                 </SelectContent>
               </Select>
             </div>

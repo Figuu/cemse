@@ -229,15 +229,56 @@ export async function POST(
     let correctAnswers = 0;
     const totalQuestions = questions.length;
 
+    console.log('Grading quiz. Total questions:', totalQuestions);
+    console.log('User answers:', answers);
+
     questions.forEach((question, index) => {
       const questionId = question.id || index.toString();
       const userAnswer = answers[questionId];
       const correctAnswer = question.correctAnswer;
 
-      if (userAnswer === correctAnswer) {
+      console.log(`Question ${questionId}:`, {
+        type: question.type,
+        userAnswer: userAnswer,
+        userAnswerType: typeof userAnswer,
+        correctAnswer: correctAnswer,
+        correctAnswerType: typeof correctAnswer,
+      });
+
+      // Handle different question types and type coercion
+      let isCorrect = false;
+
+      if (question.type === 'multiple_choice') {
+        // Convert both to numbers for comparison (answers come as strings from RadioGroup)
+        const userAnswerNum = typeof userAnswer === 'string' ? parseInt(userAnswer, 10) : userAnswer;
+        const correctAnswerNum = typeof correctAnswer === 'string' ? parseInt(correctAnswer, 10) : correctAnswer;
+        isCorrect = userAnswerNum === correctAnswerNum;
+      } else if (question.type === 'true_false') {
+        // Convert to boolean if needed
+        const userAnswerBool = userAnswer === true || userAnswer === 'true';
+        const correctAnswerBool = correctAnswer === true || correctAnswer === 'true';
+        isCorrect = userAnswerBool === correctAnswerBool;
+      } else if (question.type === 'fill_blank' || question.type === 'short_answer') {
+        // Case-insensitive string comparison, trim whitespace
+        const userAnswerStr = String(userAnswer || '').trim().toLowerCase();
+        const correctAnswerStr = String(correctAnswer || '').trim().toLowerCase();
+        isCorrect = userAnswerStr === correctAnswerStr;
+      } else if (question.type === 'essay') {
+        // Essays need manual grading, for now mark as correct if answered
+        isCorrect = userAnswer && String(userAnswer).trim().length > 0;
+      } else {
+        // Fallback to loose equality
+        isCorrect = userAnswer == correctAnswer;
+      }
+
+      console.log(`  -> isCorrect: ${isCorrect}`);
+
+      if (isCorrect) {
         correctAnswers++;
       }
     });
+
+    console.log('Grading complete. Correct answers:', correctAnswers);
 
     const score = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
     const passed = score >= quiz.passingScore;

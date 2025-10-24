@@ -67,6 +67,89 @@ interface QuizQuestionEditorProps {
   onClose: () => void;
 }
 
+// Helper function to convert database format to component format
+const convertFromDatabaseFormat = (dbQuestion: any): QuizQuestion => {
+  console.log('Converting from DB format:', dbQuestion);
+
+  // Convert type from underscore to hyphen format
+  let questionType: 'multiple-choice' | 'true-false' | 'text-input' | 'essay' = 'multiple-choice';
+  if (dbQuestion.type === 'multiple_choice') questionType = 'multiple-choice';
+  else if (dbQuestion.type === 'true_false') questionType = 'true-false';
+  else if (dbQuestion.type === 'fill_blank' || dbQuestion.type === 'short_answer') questionType = 'text-input';
+  else if (dbQuestion.type === 'essay') questionType = 'essay';
+
+  // Convert options from array of strings to array of objects
+  let options: QuestionOption[] | undefined;
+  if (questionType === 'multiple-choice' && Array.isArray(dbQuestion.options)) {
+    options = dbQuestion.options.map((text: string, index: number) => ({
+      id: `opt-${index}`,
+      text: text,
+      isCorrect: dbQuestion.correctAnswer === index,
+      explanation: ''
+    }));
+  } else if (questionType === 'true-false') {
+    options = [
+      { id: 'true', text: 'Verdadero', isCorrect: dbQuestion.correctAnswer === true, explanation: '' },
+      { id: 'false', text: 'Falso', isCorrect: dbQuestion.correctAnswer === false, explanation: '' },
+    ];
+  }
+
+  const converted = {
+    id: dbQuestion.id || `q-${Date.now()}`,
+    type: questionType,
+    question: dbQuestion.question || '',
+    points: dbQuestion.points || 1,
+    timeLimit: dbQuestion.timeLimit,
+    explanation: dbQuestion.explanation,
+    orderIndex: dbQuestion.orderIndex || 0,
+    options: options,
+    correctAnswer: questionType === 'text-input' ? String(dbQuestion.correctAnswer || '') : undefined,
+  };
+
+  console.log('Converted to component format:', converted);
+  return converted;
+};
+
+// Helper function to convert component format back to database format
+const convertToDatabaseFormat = (componentQuestion: QuizQuestion): any => {
+  console.log('Converting to DB format:', componentQuestion);
+
+  // Convert type from hyphen to underscore format
+  let dbType = 'multiple_choice';
+  if (componentQuestion.type === 'multiple-choice') dbType = 'multiple_choice';
+  else if (componentQuestion.type === 'true-false') dbType = 'true_false';
+  else if (componentQuestion.type === 'text-input') dbType = 'fill_blank';
+  else if (componentQuestion.type === 'essay') dbType = 'essay';
+
+  // Convert options from array of objects to array of strings and find correct answer
+  let options: string[] | undefined;
+  let correctAnswer: any;
+
+  if (componentQuestion.type === 'multiple-choice' && componentQuestion.options) {
+    options = componentQuestion.options.map(opt => opt.text);
+    correctAnswer = componentQuestion.options.findIndex(opt => opt.isCorrect);
+  } else if (componentQuestion.type === 'true-false' && componentQuestion.options) {
+    const trueOpt = componentQuestion.options.find(opt => opt.text === 'Verdadero');
+    correctAnswer = trueOpt?.isCorrect === true;
+  } else if (componentQuestion.type === 'text-input') {
+    correctAnswer = componentQuestion.correctAnswer;
+  }
+
+  const converted = {
+    id: componentQuestion.id,
+    type: dbType,
+    question: componentQuestion.question,
+    points: componentQuestion.points,
+    options: options,
+    correctAnswer: correctAnswer,
+    explanation: componentQuestion.explanation,
+    orderIndex: componentQuestion.orderIndex,
+  };
+
+  console.log('Converted to DB format:', converted);
+  return converted;
+};
+
 export function QuizQuestionEditor({
   quizId,
   questions,
@@ -78,6 +161,16 @@ export function QuizQuestionEditor({
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Convert incoming questions from database format
+  const [convertedQuestions, setConvertedQuestions] = useState<QuizQuestion[]>([]);
+
+  useEffect(() => {
+    console.log('Raw questions from parent:', questions);
+    const converted = questions.map((q: any) => convertFromDatabaseFormat(q));
+    console.log('Converted questions:', converted);
+    setConvertedQuestions(converted);
+  }, [questions]);
 
   const [questionForm, setQuestionForm] = useState<{
     type: 'multiple-choice' | 'true-false' | 'text-input' | 'essay';
@@ -186,21 +279,24 @@ export function QuizQuestionEditor({
         points: questionForm.points,
         timeLimit: questionForm.timeLimit || undefined,
         explanation: questionForm.explanation || undefined,
-        orderIndex: editingQuestion?.orderIndex || questions.length,
-        ...(questionForm.type === 'multiple-choice' || questionForm.type === 'true-false' 
+        orderIndex: editingQuestion?.orderIndex || convertedQuestions.length,
+        ...(questionForm.type === 'multiple-choice' || questionForm.type === 'true-false'
           ? { options: options.filter(opt => opt.text.trim()) }
           : { correctAnswer: correctAnswer.trim() }
         ),
       };
 
-      let updatedQuestions;
+      let updatedConvertedQuestions: QuizQuestion[];
       if (editingQuestion) {
-        updatedQuestions = questions.map(q => q.id === editingQuestion.id ? questionData : q);
+        updatedConvertedQuestions = convertedQuestions.map(q => q.id === editingQuestion.id ? questionData : q);
       } else {
-        updatedQuestions = [...questions, questionData];
+        updatedConvertedQuestions = [...convertedQuestions, questionData];
       }
 
-      onQuestionsChange(updatedQuestions);
+      // Convert back to database format before passing to parent
+      const dbFormatQuestions = updatedConvertedQuestions.map(q => convertToDatabaseFormat(q));
+      onQuestionsChange(dbFormatQuestions);
+
       setIsCreateModalOpen(false);
       resetForm();
     } catch (err) {
@@ -212,29 +308,31 @@ export function QuizQuestionEditor({
 
   const handleDeleteQuestion = (questionId: string) => {
     if (confirm('¿Estás seguro de que quieres eliminar esta pregunta?')) {
-      const updatedQuestions = questions.filter(q => q.id !== questionId);
-      onQuestionsChange(updatedQuestions);
+      const updatedConverted = convertedQuestions.filter(q => q.id !== questionId);
+      const dbFormat = updatedConverted.map(q => convertToDatabaseFormat(q));
+      onQuestionsChange(dbFormat);
     }
   };
 
   const moveQuestion = (questionId: string, direction: 'up' | 'down') => {
-    const currentIndex = questions.findIndex(q => q.id === questionId);
+    const currentIndex = convertedQuestions.findIndex(q => q.id === questionId);
     if (currentIndex === -1) return;
 
     const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
-    if (newIndex < 0 || newIndex >= questions.length) return;
+    if (newIndex < 0 || newIndex >= convertedQuestions.length) return;
 
-    const updatedQuestions = [...questions];
-    const [movedQuestion] = updatedQuestions.splice(currentIndex, 1);
-    updatedQuestions.splice(newIndex, 0, movedQuestion);
+    const updatedConverted = [...convertedQuestions];
+    const [movedQuestion] = updatedConverted.splice(currentIndex, 1);
+    updatedConverted.splice(newIndex, 0, movedQuestion);
 
     // Update order indices
-    const reorderedQuestions = updatedQuestions.map((q, index) => ({
+    const reorderedConverted = updatedConverted.map((q, index) => ({
       ...q,
       orderIndex: index,
     }));
 
-    onQuestionsChange(reorderedQuestions);
+    const dbFormat = reorderedConverted.map(q => convertToDatabaseFormat(q));
+    onQuestionsChange(dbFormat);
   };
 
   const getQuestionTypeIcon = (type: string) => {
@@ -264,7 +362,7 @@ export function QuizQuestionEditor({
         <div>
           <h3 className="text-lg font-semibold">Preguntas del Cuestionario</h3>
           <p className="text-sm text-muted-foreground">
-            {questions.length} pregunta{questions.length !== 1 ? 's' : ''} configurada{questions.length !== 1 ? 's' : ''}
+            {convertedQuestions.length} pregunta{convertedQuestions.length !== 1 ? 's' : ''} configurada{convertedQuestions.length !== 1 ? 's' : ''}
           </p>
         </div>
         <Button onClick={openCreateModal}>
@@ -281,7 +379,7 @@ export function QuizQuestionEditor({
 
       {/* Questions List */}
       <div className="space-y-3">
-        {questions.length === 0 ? (
+        {convertedQuestions.length === 0 ? (
           <Card>
             <CardContent className="text-center py-8">
               <HelpCircle className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
@@ -295,7 +393,7 @@ export function QuizQuestionEditor({
             </CardContent>
           </Card>
         ) : (
-          questions
+          convertedQuestions
             .sort((a, b) => a.orderIndex - b.orderIndex)
             .map((question, index) => (
               <Card key={question.id} className="overflow-hidden">
@@ -388,7 +486,7 @@ export function QuizQuestionEditor({
                         size="sm"
                         variant="ghost"
                         onClick={() => moveQuestion(question.id, 'down')}
-                        disabled={index === questions.length - 1}
+                        disabled={index === convertedQuestions.length - 1}
                       >
                         <ArrowDown className="h-4 w-4" />
                       </Button>

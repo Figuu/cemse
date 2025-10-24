@@ -201,10 +201,10 @@ export function LessonFileUpload({
         category = "course-thumbnail";
       }
 
-      // Use chunked upload for large files (> 10MB)
+      // Use chunked upload for videos and large files
       // IMPORTANT: Next.js App Router has a 1MB default limit for FormData
       const CHUNK_SIZE = 512 * 1024; // 512KB chunks to stay well under Next.js 1MB limit
-      const USE_CHUNKED = file.size > 10 * 1024 * 1024;
+      const USE_CHUNKED = file.type.startsWith("video/") || file.size > 10 * 1024 * 1024;
 
       if (USE_CHUNKED) {
         try {

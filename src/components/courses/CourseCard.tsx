@@ -93,6 +93,23 @@ export function CourseCard({
 
   const getCategoryColor = (category: string) => {
     switch (category) {
+      case "SOFT_SKILLS":
+        return "bg-blue-100 text-blue-800";
+      case "BASIC_COMPETENCIES":
+        return "bg-green-100 text-green-800";
+      case "JOB_PLACEMENT":
+        return "bg-purple-100 text-purple-800";
+      case "ENTREPRENEURSHIP":
+        return "bg-orange-100 text-orange-800";
+      case "TECHNICAL_SKILLS":
+        return "bg-indigo-100 text-indigo-800";
+      case "DIGITAL_LITERACY":
+        return "bg-cyan-100 text-cyan-800";
+      case "COMMUNICATION":
+        return "bg-pink-100 text-pink-800";
+      case "LEADERSHIP":
+        return "bg-yellow-100 text-yellow-800";
+      // Mantener compatibilidad con categorías antiguas
       case "TECHNOLOGY":
         return "bg-main-blue/10 text-main-blue";
       case "BUSINESS":
@@ -120,6 +137,23 @@ export function CourseCard({
 
   const getCategoryLabel = (category: string) => {
     switch (category) {
+      case "SOFT_SKILLS":
+        return "Habilidades Blandas";
+      case "BASIC_COMPETENCIES":
+        return "Competencias Básicas";
+      case "JOB_PLACEMENT":
+        return "Colocación Laboral";
+      case "ENTREPRENEURSHIP":
+        return "Emprendimiento";
+      case "TECHNICAL_SKILLS":
+        return "Habilidades Técnicas";
+      case "DIGITAL_LITERACY":
+        return "Alfabetización Digital";
+      case "COMMUNICATION":
+        return "Comunicación";
+      case "LEADERSHIP":
+        return "Liderazgo";
+      // Mantener compatibilidad con categorías antiguas
       case "TECHNOLOGY":
         return "Tecnología";
       case "BUSINESS":
@@ -268,10 +302,6 @@ export function CourseCard({
                   <div className="flex items-center">
                     <Users className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                     {course.studentsCount.toLocaleString()}
-                  </div>
-                  <div className="flex items-center">
-                    <Star className="h-3 w-3 sm:h-4 sm:w-4 mr-1 fill-yellow-400 text-yellow-400" />
-                    {course.rating.toFixed(1)}
                   </div>
                 </div>
               </div>
@@ -523,10 +553,6 @@ export function CourseCard({
             <div className="flex items-center">
               <Users className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
               {course.studentsCount.toLocaleString()}
-            </div>
-            <div className="flex items-center">
-              <Star className="h-3 w-3 sm:h-4 sm:w-4 mr-1 fill-yellow-400 text-yellow-400" />
-              {course.rating.toFixed(1)}
             </div>
           </div>
         </div>

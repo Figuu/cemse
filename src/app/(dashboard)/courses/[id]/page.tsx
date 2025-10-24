@@ -15,11 +15,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { 
-  ArrowLeft, 
-  BookOpen, 
-  Clock, 
-  Star, 
+import {
+  ArrowLeft,
+  BookOpen,
+  Clock,
   Play,
   CheckCircle,
   AlertCircle,
@@ -40,6 +39,7 @@ import {
 import { RoleGuard } from "@/components/auth/RoleGuard";
 import { useCourses } from "@/hooks/useCourses";
 import { useCourseProgress } from "@/hooks/useCourseProgress";
+import { getCategoryLabel, getLevelLabel } from "@/lib/translations";
 import { CourseCard } from "@/components/courses/CourseCard";
 import { CourseProgressTracker } from "@/components/courses/CourseProgressTracker";
 import { LessonViewer } from "@/components/courses/LessonViewer";
@@ -208,6 +208,15 @@ export default function CourseDetailPage() {
         })
         .then(data => {
           if (data.success) {
+            console.log('Fetched quizzes:', data.quizzes);
+            if (data.quizzes.length > 0) {
+              console.log('First quiz questions:', data.quizzes[0].questions);
+              console.log('First quiz questions type:', typeof data.quizzes[0].questions);
+              console.log('First quiz questions is array:', Array.isArray(data.quizzes[0].questions));
+              if (Array.isArray(data.quizzes[0].questions) && data.quizzes[0].questions.length > 0) {
+                console.log('First question details:', data.quizzes[0].questions[0]);
+              }
+            }
             setQuizzes(data.quizzes || []);
           } else {
             console.error('Error fetching quizzes:', data.error);
@@ -503,7 +512,7 @@ export default function CourseDetailPage() {
               <div>
                 <h1 className="text-lg font-bold text-foreground sm:text-xl">{course.title}</h1>
                 <p className="text-xs text-muted-foreground sm:text-sm">
-                  {course.instructor?.name} • {course.category} • {course.level}
+                  {course.instructor?.name} • {getCategoryLabel(course.category)} • {getLevelLabel(course.level)}
                 </p>
               </div>
             </div>
@@ -692,18 +701,11 @@ export default function CourseDetailPage() {
                           </div>
                           <div>
                             <p className="font-medium">Nivel</p>
-                            <p className="text-muted-foreground">{course.level}</p>
+                            <p className="text-muted-foreground">{getLevelLabel(course.level)}</p>
                           </div>
                           <div>
                             <p className="font-medium">Estudiantes</p>
                             <p className="text-muted-foreground">{course.studentsCount.toLocaleString()}</p>
-                          </div>
-                          <div>
-                            <p className="font-medium">Calificación</p>
-                            <div className="flex items-center">
-                              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400 mr-1" />
-                              <span className="text-muted-foreground">{course.rating.toFixed(1)}</span>
-                            </div>
                           </div>
                         </div>
                         {course.description && (
@@ -754,18 +756,11 @@ export default function CourseDetailPage() {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-muted-foreground">Nivel</span>
-                      <Badge variant="outline">{course.level}</Badge>
+                      <Badge variant="outline">{getLevelLabel(course.level)}</Badge>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-muted-foreground">Estudiantes</span>
                       <span className="font-medium">{course.studentsCount.toLocaleString()}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Calificación</span>
-                      <div className="flex items-center">
-                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400 mr-1" />
-                        <span className="font-medium">{course.rating.toFixed(1)}</span>
-                      </div>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-muted-foreground">Lecciones</span>
@@ -817,7 +812,7 @@ export default function CourseDetailPage() {
             <div>
               <h1 className="text-xl font-bold text-foreground sm:text-2xl">{course.title}</h1>
               <p className="text-sm text-muted-foreground sm:text-base">
-                {course.instructor?.name} • {course.category}
+                {course.instructor?.name} • {getCategoryLabel(course.category)}
               </p>
             </div>
           </div>
@@ -899,18 +894,11 @@ export default function CourseDetailPage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Nivel</span>
-                  <Badge variant="outline">{course.level}</Badge>
+                  <Badge variant="outline">{getLevelLabel(course.level)}</Badge>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Estudiantes</span>
                   <span className="font-medium">{course.studentsCount.toLocaleString()}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Calificación</span>
-                  <div className="flex items-center">
-                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400 mr-1" />
-                    <span className="font-medium">{course.rating.toFixed(1)}</span>
-                  </div>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Lecciones</span>
@@ -1009,11 +997,11 @@ export default function CourseDetailPage() {
                   </div>
                   <div>
                     <p className="text-sm font-medium">Categoría</p>
-                    <p className="text-muted-foreground">{course.category}</p>
+                    <p className="text-muted-foreground">{getCategoryLabel(course.category)}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium">Nivel</p>
-                    <p className="text-muted-foreground">{course.level}</p>
+                    <p className="text-muted-foreground">{getLevelLabel(course.level)}</p>
                   </div>
                 </CardContent>
               </Card>

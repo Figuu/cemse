@@ -40,12 +40,12 @@ import {
 interface QuizQuestion {
   id?: string;
   question: string;
-  type: "multiple_choice" | "true_false" | "short_answer";
-  options: string[];
-  correctAnswer: string | number;
-  explanation: string;
-  points: number;
-  orderIndex: number;
+  type: "multiple_choice" | "true_false" | "short_answer" | "fill_blank" | "essay";
+  options?: string[];
+  correctAnswer: string | number | boolean;
+  explanation?: string;
+  points?: number;
+  orderIndex?: number;
 }
 
 interface CourseQuiz {
@@ -188,6 +188,11 @@ export function QuizManager({ courseId, quizzes, onQuizzesChange }: QuizManagerP
   };
 
   const openEditModal = (quiz: CourseQuiz) => {
+    console.log('Opening edit modal for quiz:', quiz);
+    console.log('Quiz questions:', quiz.questions);
+    console.log('Questions type:', typeof quiz.questions);
+    console.log('Questions is array:', Array.isArray(quiz.questions));
+
     setEditingQuiz(quiz);
     setFormData({
       title: quiz.title,
@@ -196,7 +201,54 @@ export function QuizManager({ courseId, quizzes, onQuizzesChange }: QuizManagerP
       passingScore: quiz.passingScore,
       isPublished: quiz.isPublished,
     });
-    setQuestions(quiz.questions);
+
+    // Process questions - they should already have the correct structure
+    const processedQuestions = Array.isArray(quiz.questions)
+      ? quiz.questions.map((q: any, index: number) => {
+          console.log(`Processing question ${index + 1}:`, q);
+          console.log(`  - Type: ${q.type} (typeof: ${typeof q.type})`);
+          console.log(`  - Options:`, q.options);
+          console.log(`  - CorrectAnswer:`, q.correctAnswer);
+
+          // Ensure the question type is one of the allowed values
+          let questionType: "multiple_choice" | "true_false" | "short_answer" | "fill_blank" | "essay" = "multiple_choice";
+
+          if (q.type === "multiple_choice" || q.type === "true_false" ||
+              q.type === "short_answer" || q.type === "fill_blank" || q.type === "essay") {
+            questionType = q.type;
+          } else {
+            console.warn(`Unknown question type "${q.type}", defaulting to multiple_choice`);
+          }
+
+          // Process options - ensure it's an array of strings
+          let options: string[] = [];
+          if (questionType === "multiple_choice") {
+            if (Array.isArray(q.options)) {
+              options = q.options.map((opt: any) => String(opt || ''));
+            } else {
+              console.warn('Question options is not an array, using empty array');
+              options = ['', '', '', ''];
+            }
+          }
+
+          const processed = {
+            id: q.id || `temp-${index}-${Date.now()}`,
+            question: q.question || '',
+            type: questionType,
+            options: options,
+            correctAnswer: q.correctAnswer !== undefined ? q.correctAnswer : 0,
+            explanation: q.explanation || '',
+            points: q.points || 1,
+            orderIndex: q.orderIndex !== undefined ? q.orderIndex : index + 1,
+          };
+
+          console.log(`  - Processed:`, processed);
+          return processed;
+        })
+      : [];
+
+    console.log('All processed questions:', processedQuestions);
+    setQuestions(processedQuestions);
     setIsEditModalOpen(true);
   };
 
@@ -215,7 +267,25 @@ export function QuizManager({ courseId, quizzes, onQuizzesChange }: QuizManagerP
   };
 
   const editQuestion = (question: QuizQuestion) => {
-    setEditingQuestion(question);
+    console.log('Editing question:', question);
+    console.log('Question type:', question.type);
+    console.log('Question type typeof:', typeof question.type);
+
+    // Ensure the question has all required fields with proper types
+    const questionToEdit: QuizQuestion = {
+      ...question,
+      id: question.id || `temp-${Date.now()}`,
+      question: question.question || '',
+      type: (question.type as any) || 'multiple_choice',
+      options: Array.isArray(question.options) ? question.options : ['', '', '', ''],
+      correctAnswer: question.correctAnswer !== undefined ? question.correctAnswer : 0,
+      explanation: question.explanation || '',
+      points: question.points || 1,
+      orderIndex: question.orderIndex || 0,
+    };
+
+    console.log('Processed question for editing:', questionToEdit);
+    setEditingQuestion(questionToEdit);
     setIsQuestionModalOpen(true);
   };
 
@@ -246,8 +316,13 @@ export function QuizManager({ courseId, quizzes, onQuizzesChange }: QuizManagerP
         return "Verdadero/Falso";
       case "short_answer":
         return "Respuesta Corta";
+      case "fill_blank":
+        return "Llenar Espacio";
+      case "essay":
+        return "Ensayo";
       default:
-        return type;
+        console.warn('Unknown question type:', type);
+        return `Desconocido (${type})`;
     }
   };
 
@@ -260,7 +335,24 @@ export function QuizManager({ courseId, quizzes, onQuizzesChange }: QuizManagerP
             Crea cuestionarios para evaluar el progreso de los estudiantes
           </p>
         </div>
-        <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+        <div className="flex space-x-2">
+          {/* Debug button - remove in production */}
+          {process.env.NODE_ENV === 'development' && quizzes.length > 0 && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => {
+                console.log('Debug: All quizzes:', quizzes);
+                quizzes.forEach((quiz, index) => {
+                  console.log(`Debug: Quiz ${index}:`, quiz);
+                  console.log(`Debug: Quiz ${index} questions:`, quiz.questions);
+                });
+              }}
+            >
+              Debug Quizzes
+            </Button>
+          )}
+          <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
           <DialogTrigger asChild>
             <Button onClick={resetForm}>
               <Plus className="h-4 w-4 mr-2" />
@@ -417,6 +509,7 @@ export function QuizManager({ courseId, quizzes, onQuizzesChange }: QuizManagerP
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {error && (
@@ -530,10 +623,15 @@ export function QuizManager({ courseId, quizzes, onQuizzesChange }: QuizManagerP
                 <Label htmlFor="questionType">Tipo de Pregunta</Label>
                 <Select
                   value={editingQuestion?.type || "multiple_choice"}
-                  onValueChange={(value: any) => setEditingQuestion(prev => prev ? { ...prev, type: value } : null)}
+                  onValueChange={(value: any) => {
+                    console.log('Type changing to:', value);
+                    setEditingQuestion(prev => prev ? { ...prev, type: value } : null);
+                  }}
                 >
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Selecciona el tipo">
+                      {editingQuestion?.type ? getQuestionTypeLabel(editingQuestion.type) : "Selecciona el tipo"}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="multiple_choice">Opción Múltiple</SelectItem>

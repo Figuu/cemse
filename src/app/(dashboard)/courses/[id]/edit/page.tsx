@@ -78,12 +78,12 @@ interface CourseQuiz {
 interface QuizQuestion {
   id?: string;
   question: string;
-  type: "multiple_choice" | "true_false" | "short_answer";
-  options: string[];
-  correctAnswer: string | number;
-  explanation: string;
-  points: number;
-  orderIndex: number;
+  type: "multiple_choice" | "true_false" | "short_answer" | "fill_blank" | "essay";
+  options?: string[];
+  correctAnswer: string | number | boolean;
+  explanation?: string;
+  points?: number;
+  orderIndex?: number;
 }
 
 export default function CourseEditPage() {

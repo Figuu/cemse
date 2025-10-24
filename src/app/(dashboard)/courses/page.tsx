@@ -36,7 +36,6 @@ export default function CoursesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedLevel, setSelectedLevel] = useState("all");
-  const [selectedMunicipality, setSelectedMunicipality] = useState("all");
   const [sortBy, setSortBy] = useState("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [isEnrolled, setIsEnrolled] = useState<boolean | undefined>(undefined);
@@ -50,19 +49,6 @@ export default function CoursesPage() {
   const isYouth = session?.user?.role === "YOUTH";
   const isInstitution = session?.user?.role === "INSTITUTION";
   const isSuperAdmin = session?.user?.role === "SUPERADMIN";
-
-  // Fetch municipality institutions for the filter (only for authorized users)
-  const { data: municipalityInstitutions = [] } = useQuery({
-    queryKey: ['municipality-institutions-courses'],
-    queryFn: async () => {
-      const response = await fetch('/api/admin/institutions');
-      if (!response.ok) throw new Error('Failed to fetch institutions');
-      const institutions = await response.json();
-      // Filter only municipality type institutions
-      return institutions.filter((institution: any) => institution.institutionType === 'MUNICIPALITY');
-    },
-    enabled: !isYouth // Only fetch for non-youth users
-  });
 
   const {
     courses,
@@ -82,14 +68,8 @@ export default function CoursesPage() {
     isEnrolled,
   });
 
-  // Filter courses by municipality
-  const filteredCourses = courses.filter(course => {
-    if (selectedMunicipality === "all") return true;
-    return course.institutionName === selectedMunicipality;
-  });
-
-  const enrolledCourses = filteredCourses.filter(course => course.isEnrolled);
-  const availableCourses = filteredCourses.filter(course => !course.isEnrolled);
+  const enrolledCourses = courses.filter(course => course.isEnrolled);
+  const availableCourses = courses.filter(course => !course.isEnrolled);
 
   const handleEnroll = async (courseId: string) => {
     await enrollInCourse(courseId);
@@ -108,7 +88,6 @@ export default function CoursesPage() {
     setSearchTerm("");
     setSelectedCategory("all");
     setSelectedLevel("all");
-    setSelectedMunicipality("all");
     setSortBy("createdAt");
     setSortOrder("desc");
     setIsEnrolled(undefined);
@@ -239,8 +218,6 @@ export default function CoursesPage() {
           onCategoryChange={setSelectedCategory}
           selectedLevel={selectedLevel}
           onLevelChange={setSelectedLevel}
-          selectedMunicipality={selectedMunicipality}
-          onMunicipalityChange={setSelectedMunicipality}
           sortBy={sortBy}
           onSortChange={setSortBy}
           sortOrder={sortOrder}
@@ -249,7 +226,6 @@ export default function CoursesPage() {
           onEnrolledChange={setIsEnrolled}
           categories={categories}
           levels={levels}
-          municipalityInstitutions={municipalityInstitutions}
           onReset={handleResetFilters}
           onApply={handleApplyFilters}
           userRole={session?.user?.role}

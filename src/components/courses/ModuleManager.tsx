@@ -169,7 +169,7 @@ export function ModuleManager({ courseId, modules, onModulesChange }: ModuleMana
       title: module.title,
       description: module.description || "",
       estimatedDuration: module.estimatedDuration,
-      prerequisites: module.prerequisites,
+      prerequisites: Array.isArray(module.prerequisites) ? module.prerequisites : [],
     });
     setIsEditModalOpen(true);
   };
@@ -178,7 +178,7 @@ export function ModuleManager({ courseId, modules, onModulesChange }: ModuleMana
     if (newPrerequisite.trim()) {
       setFormData(prev => ({
         ...prev,
-        prerequisites: [...prev.prerequisites, newPrerequisite.trim()]
+        prerequisites: [...(Array.isArray(prev.prerequisites) ? prev.prerequisites : []), newPrerequisite.trim()]
       }));
       setNewPrerequisite("");
     }
@@ -187,7 +187,7 @@ export function ModuleManager({ courseId, modules, onModulesChange }: ModuleMana
   const removePrerequisite = (index: number) => {
     setFormData(prev => ({
       ...prev,
-      prerequisites: prev.prerequisites.filter((_, i) => i !== index)
+      prerequisites: (Array.isArray(prev.prerequisites) ? prev.prerequisites : []).filter((_, i) => i !== index)
     }));
   };
 
@@ -263,7 +263,7 @@ export function ModuleManager({ courseId, modules, onModulesChange }: ModuleMana
                   </Button>
                 </div>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {formData.prerequisites.map((prerequisite, index) => (
+                  {(Array.isArray(formData.prerequisites) ? formData.prerequisites : []).map((prerequisite, index) => (
                     <Badge key={index} variant="secondary" className="flex items-center gap-1">
                       {prerequisite}
                       <Button
@@ -421,7 +421,7 @@ export function ModuleManager({ courseId, modules, onModulesChange }: ModuleMana
                 </Button>
               </div>
               <div className="flex flex-wrap gap-2 mt-2">
-                {formData.prerequisites.map((prerequisite, index) => (
+                {(Array.isArray(formData.prerequisites) ? formData.prerequisites : []).map((prerequisite, index) => (
                   <Badge key={index} variant="secondary" className="flex items-center gap-1">
                     {prerequisite}
                     <Button

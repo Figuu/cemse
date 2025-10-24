@@ -52,6 +52,18 @@ export async function GET(
 
     console.log("Quiz API: Found quizzes:", quizzes.length);
     
+    // Log first quiz details for debugging
+    if (quizzes.length > 0) {
+      console.log("Quiz API: First quiz details:", {
+        id: quizzes[0].id,
+        title: quizzes[0].title,
+        questions: quizzes[0].questions,
+        questionsType: typeof quizzes[0].questions,
+        questionsIsArray: Array.isArray(quizzes[0].questions),
+        questionsLength: Array.isArray(quizzes[0].questions) ? quizzes[0].questions.length : 'not array'
+      });
+    }
+    
     // Safely map quizzes with error handling
     const safeQuizzes = quizzes.map(quiz => {
       try {
@@ -172,6 +184,14 @@ export async function POST(
         isActive: isPublished || false,
         questions: questions, // Store questions as JSON
       },
+    });
+
+    console.log("Quiz POST API: Created quiz:", {
+      id: quiz.id,
+      title: quiz.title,
+      questions: quiz.questions,
+      questionsType: typeof quiz.questions,
+      questionsIsArray: Array.isArray(quiz.questions)
     });
 
     return NextResponse.json({
