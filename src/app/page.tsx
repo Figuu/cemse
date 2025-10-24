@@ -50,7 +50,15 @@ const courseCategoryLabels: Record<string, string> = {
   EDUCATION: "Educación",
   PERSONAL_DEVELOPMENT: "Desarrollo Personal",
   ARTS: "Artes",
-  SCIENCE: "Ciencia"
+  SCIENCE: "Ciencia",
+  TECHNICAL_SKILLS: "Habilidades Técnicas",
+  BASIC_COMPETENCIES: "Competencias Básicas",
+  SOFT_SKILLS: "Habilidades Blandas",
+  JOB_PLACEMENT: "Colocación Laboral",
+  ENTREPRENEURSHIP: "Emprendimiento",
+  DIGITAL_LITERACY: "Alfabetización Digital",
+  COMMUNICATION: "Comunicación",
+  LEADERSHIP: "Liderazgo"
 };
 
 // Entrepreneurship Category translations
