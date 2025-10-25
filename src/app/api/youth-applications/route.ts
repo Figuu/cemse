@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { getEducationLevelLabel } from "@/lib/translations";
 
 // Custom URL validation that accepts both relative and absolute URLs
 const urlOrEmptyString = z.string().optional().refine((val) => {
@@ -150,7 +151,7 @@ export async function GET(request: NextRequest) {
             city: app.youthProfile.city,
             skills: app.youthProfile.skills || [],
             experience: app.youthProfile.workExperience || [],
-            education: app.youthProfile.educationLevel || app.youthProfile.currentInstitution,
+            education: getEducationLevelLabel(app.youthProfile.educationLevel) || app.youthProfile.currentInstitution,
             phone: app.youthProfile.phone,
           },
         },

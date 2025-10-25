@@ -106,15 +106,15 @@ function InstitutionPageContent() {
               <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                 <div className="flex items-center">
                   <MapPin className="h-4 w-4 mr-1" />
-                  {analytics?.institution?.region || "Región no especificada"}
+                  {(analytics as any)?.institution?.region || "Región no especificada"}
                 </div>
                 <div className="flex items-center">
                   <Globe className="h-4 w-4 mr-1" />
-                  {analytics?.institution?.department || "Departamento no especificado"}
+                  {(analytics as any)?.institution?.department || "Departamento no especificado"}
                 </div>
                 <div className="flex items-center">
                   <Users className="h-4 w-4 mr-1" />
-                  {analytics?.overview?.totalStudents || 0} estudiantes
+                  {(analytics as any)?.overview?.totalStudents || 0} estudiantes
                 </div>
               </div>
             </div>
@@ -132,7 +132,7 @@ function InstitutionPageContent() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Estudiantes</p>
-                <p className="text-2xl font-bold">{analytics?.overview?.totalStudents || 0}</p>
+                <p className="text-2xl font-bold">{(analytics as any)?.overview?.totalStudents || 0}</p>
               </div>
               <Users className="h-8 w-8 text-blue-600" />
             </div>
@@ -144,7 +144,7 @@ function InstitutionPageContent() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Cursos Activos</p>
-                <p className="text-2xl font-bold">{analytics?.overview?.totalCourses || 0}</p>
+                <p className="text-2xl font-bold">{(analytics as any)?.overview?.activeCourses ?? 0}</p>
               </div>
               <GraduationCap className="h-8 w-8 text-green-600" />
             </div>
@@ -156,7 +156,7 @@ function InstitutionPageContent() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Programas</p>
-                <p className="text-2xl font-bold">{analytics?.overview?.totalPrograms || 0}</p>
+                <p className="text-2xl font-bold">{(analytics as any)?.overview?.totalPrograms || 0}</p>
               </div>
               <Award className="h-8 w-8 text-purple-600" />
             </div>
@@ -168,7 +168,7 @@ function InstitutionPageContent() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Inscripciones</p>
-                <p className="text-2xl font-bold">{analytics?.overview?.totalEnrollments || 0}</p>
+                <p className="text-2xl font-bold">{(analytics as any)?.overview?.totalEnrollments || 0}</p>
               </div>
               <BookOpen className="h-8 w-8 text-orange-600" />
             </div>
@@ -220,13 +220,17 @@ function InstitutionPageContent() {
                 <div className="space-y-4">
                   {coursesLoading ? (
                     <div className="text-center py-4">Cargando cursos...</div>
-                  ) : coursesData?.courses?.slice(0, 3).map((course) => {
-                    const enrollmentProgress = Math.round((course._count?.enrollments || 0) / Math.max(course.maxStudents || 1, 1) * 100);
+                  ) : !(coursesData as any)?.courses || (coursesData as any).courses.length === 0 ? (
+                    <div className="text-center py-4 text-muted-foreground">
+                      No hay cursos disponibles
+                    </div>
+                  ) : (coursesData as any).courses.slice(0, 3).map((course) => {
+                    const enrollmentProgress = Math.round((course._count?.enrollments || 0) / Math.max(course.studentsCount || 1, 1) * 100);
                     return (
                       <div key={course.id} className="flex items-center justify-between p-3 border rounded-lg">
                         <div className="flex-1">
-                          <h4 className="font-medium">{course.name}</h4>
-                          <p className="text-sm text-muted-foreground">{course.instructor?.instructor?.firstName} {course.instructor?.instructor?.lastName}</p>
+                          <h4 className="font-medium">{course.title || course.name}</h4>
+                          <p className="text-sm text-muted-foreground">{course.instructor?.firstName} {course.instructor?.lastName}</p>
                           <div className="flex items-center space-x-2 mt-1">
                             <div className="w-full bg-gray-200 rounded-full h-2">
                               <div 
@@ -240,16 +244,16 @@ function InstitutionPageContent() {
                           </div>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Badge className={getStatusColor(course.status)}>
-                            {getStatusText(course.status)}
+                          <Badge className={getStatusColor(course.isActive ? "ACTIVE" : "INACTIVE")}>
+                            {getStatusText(course.isActive ? "ACTIVE" : "INACTIVE")}
                           </Badge>
                           <span className="text-sm text-muted-foreground">
-                            {course.currentStudents} estudiantes
+                            {course.studentsCount || 0} estudiantes
                           </span>
                         </div>
                       </div>
                     );
-                  }) || []}
+                  })}
                 </div>
               </CardContent>
             </Card>
@@ -304,34 +308,40 @@ function InstitutionPageContent() {
           <div className="space-y-4">
             {coursesLoading ? (
               <div className="text-center py-8">Cargando cursos...</div>
-            ) : coursesData?.courses?.map((course) => {
-              const enrollmentProgress = Math.round((course._count?.enrollments || 0) / Math.max(course.maxStudents || 1, 1) * 100);
+            ) : !(coursesData as any)?.courses || (coursesData as any).courses.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <GraduationCap className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>No hay cursos registrados</p>
+                <p className="text-sm">Los cursos aparecerán aquí cuando se creen</p>
+              </div>
+            ) : (coursesData as any).courses.map((course) => {
+              const enrollmentProgress = Math.round((course._count?.enrollments || 0) / Math.max(course.studentsCount || 1, 1) * 100);
               return (
                 <Card key={course.id}>
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-2">
-                          <h4 className="text-lg font-semibold">{course.name}</h4>
-                          <Badge className={getStatusColor(course.status)}>
-                            {getStatusText(course.status)}
+                          <h4 className="text-lg font-semibold">{course.title || course.name}</h4>
+                          <Badge className={getStatusColor(course.isActive ? "ACTIVE" : "INACTIVE")}>
+                            {getStatusText(course.isActive ? "ACTIVE" : "INACTIVE")}
                           </Badge>
                         </div>
                         <p className="text-muted-foreground mb-3">{course.description}</p>
                         <p className="text-sm text-muted-foreground mb-3">
-                          Instructor: {course.instructor?.instructor?.firstName} {course.instructor?.instructor?.lastName} • {course.currentStudents} estudiantes
+                          Instructor: {course.instructor?.firstName} {course.instructor?.lastName} • {course.studentsCount || 0} estudiantes
                         </p>
                         <div className="flex items-center space-x-6 text-sm text-muted-foreground mb-3">
-                          {course.startDate && (
+                          {course.publishedAt && (
                             <div className="flex items-center">
                               <Calendar className="h-4 w-4 mr-1" />
-                              Inicio: {formatDate(course.startDate)}
+                              Publicado: {formatDate(course.publishedAt)}
                             </div>
                           )}
-                          {course.endDate && (
+                          {course.createdAt && (
                             <div className="flex items-center">
                               <Calendar className="h-4 w-4 mr-1" />
-                              Fin: {formatDate(course.endDate)}
+                              Creado: {formatDate(course.createdAt)}
                             </div>
                           )}
                         </div>
@@ -364,7 +374,7 @@ function InstitutionPageContent() {
                   </CardContent>
                 </Card>
               );
-            }) || []}
+            })}
           </div>
         </div>
       )}
@@ -382,7 +392,7 @@ function InstitutionPageContent() {
           <div className="space-y-4">
             {studentsLoading ? (
               <div className="text-center py-8">Cargando estudiantes...</div>
-            ) : studentsData?.students?.map((student) => {
+            ) : (studentsData as any)?.students?.map((student) => {
               const completionProgress = Math.round((student.enrollments?.filter(e => e.status === "COMPLETED").length || 0) / Math.max(student.enrollments?.length || 1, 1) * 100);
               return (
                 <Card key={student.id}>

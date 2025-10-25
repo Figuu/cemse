@@ -22,7 +22,7 @@ export async function GET(
     const search = searchParams.get("search") || "";
     const status = searchParams.get("status") || "";
     const programId = searchParams.get("programId") || "";
-    const sortBy = searchParams.get("sortBy") || "enrollmentDate";
+    const sortBy = searchParams.get("sortBy") || "createdAt";
     const sortOrder = searchParams.get("sortOrder") || "desc";
 
     const skip = (page - 1) * limit;
@@ -34,10 +34,9 @@ export async function GET(
 
     if (search) {
       where.OR = [
-        { studentNumber: { contains: search, mode: "insensitive" } },
-        { student: { firstName: { contains: search, mode: "insensitive" } } },
-        { student: { lastName: { contains: search, mode: "insensitive" } } },
-        { student: { email: { contains: search, mode: "insensitive" } } },
+        { firstName: { contains: search, mode: "insensitive" } },
+        { lastName: { contains: search, mode: "insensitive" } },
+        { user: { email: { contains: search, mode: "insensitive" } } },
       ];
     }
 
@@ -45,21 +44,127 @@ export async function GET(
       where.status = status;
     }
 
-    if (programId) {
-      where.programId = programId;
-    }
+    // Note: programId filter is not applicable to Profile model directly
+    // if (programId) {
+    //   where.programId = programId;
+    // }
 
     const orderBy: any = {};
-    orderBy[sortBy] = sortOrder;
+    // Map sortBy fields to actual Profile fields
+    if (sortBy === "enrollmentDate") {
+      orderBy["createdAt"] = sortOrder;
+    } else {
+      orderBy[sortBy] = sortOrder;
+    }
 
-    // InstitutionStudent model doesn't exist, return empty data
-    const students: any[] = [];
-    const total = 0;
+    // Debug logging
+    console.log('Students API Debug:', {
+      institutionId,
+      where,
+      page,
+      limit,
+    });
+
+    // Get students from profiles associated with this institution
+    const [students, total] = await Promise.all([
+      prisma.profile.findMany({
+        where,
+        orderBy,
+        skip,
+        take: limit,
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              role: true,
+            },
+          },
+          institution: {
+            select: {
+              id: true,
+              name: true,
+              department: true,
+              institutionType: true,
+            },
+          },
+          _count: {
+            select: {
+              courseEnrollments: true,
+            },
+          },
+        },
+      }),
+      prisma.profile.count({ where }),
+    ]);
+
+    console.log('Students Query Result:', {
+      studentsCount: students.length,
+      total,
+    });
 
     const totalPages = Math.ceil(total / limit);
 
+    // Transform the data to match the expected interface
+    const transformedStudents = students.map(student => ({
+      id: student.id,
+      studentId: student.id,
+      institutionId: student.institutionId || institutionId,
+      studentNumber: student.id, // Using profile ID as student number
+      enrollmentDate: student.createdAt.toISOString(),
+      status: student.status || "ACTIVE",
+      programId: null, // Not implemented yet
+      graduationDate: null,
+      gpa: null,
+      notes: null,
+      createdAt: student.createdAt.toISOString(),
+      updatedAt: student.updatedAt.toISOString(),
+      student: {
+        id: student.id,
+        firstName: student.firstName,
+        lastName: student.lastName,
+        email: student.user?.email,
+        phone: student.phone,
+        avatarUrl: student.avatarUrl,
+        birthDate: student.birthDate?.toISOString(),
+        gender: student.gender,
+        address: student.address,
+        city: student.city,
+        state: student.state,
+        country: student.country,
+        educationLevel: student.educationLevel,
+        currentInstitution: student.institution?.name,
+        graduationYear: student.graduationYear,
+        skills: student.skills || [],
+        interests: student.interests || [],
+        socialLinks: student.socialLinks || {},
+        workExperience: student.workExperience || [],
+        achievements: student.achievements || [],
+        academicAchievements: student.academicAchievements || [],
+        currentDegree: student.currentDegree,
+        universityName: student.universityName,
+        universityStatus: student.universityStatus,
+        gpa: student.gpa,
+        languages: student.languages || [],
+        projects: student.projects || [],
+        skillsWithLevel: student.skillsWithLevel || [],
+        websites: student.websites || [],
+        extracurricularActivities: student.extracurricularActivities || [],
+        professionalSummary: student.professionalSummary,
+        targetPosition: student.targetPosition,
+        targetCompany: student.targetCompany,
+        relevantSkills: student.relevantSkills || [],
+      },
+      program: null, // Not implemented yet
+      institution: student.institution,
+      enrollments: [],
+      _count: {
+        enrollments: student._count.courseEnrollments,
+      },
+    }));
+
     return NextResponse.json({
-      students,
+      students: transformedStudents,
       pagination: {
         page,
         limit,

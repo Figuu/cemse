@@ -43,6 +43,9 @@ export default function NewsPage() {
 
   // Role-based permissions
   const isYouth = session?.user?.role === "YOUTH";
+  const isInstitution = session?.user?.role === "INSTITUTION";
+  const isSuperAdmin = session?.user?.role === "SUPERADMIN";
+  const isCompany = session?.user?.role === "COMPANIES";
 
   // Fetch municipality institutions for the filter (only for authorized users)
   const { data: municipalityInstitutions = [] } = useQuery({
@@ -54,11 +57,8 @@ export default function NewsPage() {
       // Filter only municipality type institutions
       return institutions.filter((institution: any) => institution.institutionType === 'MUNICIPALITY');
     },
-    enabled: !isYouth // Only fetch for non-youth users
+    enabled: isInstitution || isSuperAdmin // Only fetch for INSTITUTION and SUPERADMIN users
   });
-  const isInstitution = session?.user?.role === "INSTITUTION";
-  const isSuperAdmin = session?.user?.role === "SUPERADMIN";
-  const isCompany = session?.user?.role === "COMPANIES";
   const canManageNews = isInstitution || isSuperAdmin || isCompany;
 
   // Fetch news data

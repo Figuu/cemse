@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import { useJobs } from "@/hooks/useJobs";
+import { useCompanyId } from "@/hooks/useCompanyId";
 import { JobPosting } from "@/types/company";
 
 interface HybridFilters {
@@ -21,6 +23,9 @@ interface UseHybridJobsOptions {
 }
 
 export function useHybridJobs({ initialFilters = {}, debounceMs = 500 }: UseHybridJobsOptions = {}) {
+  const { data: session } = useSession();
+  const { companyId, isLoading: companyIdLoading } = useCompanyId();
+  
   const [filters, setFilters] = useState<HybridFilters>({
     search: "",
     employmentType: "all",
@@ -47,6 +52,7 @@ export function useHybridJobs({ initialFilters = {}, debounceMs = 500 }: UseHybr
 
   // Server-side query with debounced filters
   const serverQuery = useJobs({
+    companyId: session?.user?.role === "COMPANIES" ? companyId : undefined,
     search: debouncedFilters.search,
     employmentType: debouncedFilters.employmentType !== "all" ? debouncedFilters.employmentType : undefined,
     experienceLevel: debouncedFilters.experienceLevel !== "all" ? debouncedFilters.experienceLevel : undefined,
@@ -202,7 +208,7 @@ export function useHybridJobs({ initialFilters = {}, debounceMs = 500 }: UseHybr
   return {
     jobs: sortedJobs,
     allJobs,
-    isLoading: serverQuery.isLoading,
+    isLoading: serverQuery.isLoading || companyIdLoading,
     error: serverQuery.error,
     refetch: serverQuery.refetch,
     filters,

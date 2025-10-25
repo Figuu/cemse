@@ -215,7 +215,7 @@ export default function JobDetailPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
         {isCompanyUser ? (
           <>
             <Card>
@@ -235,18 +235,6 @@ export default function JobDetailPage() {
                   <span className="text-xs sm:text-sm font-medium">Aplicaciones</span>
                 </div>
                 <p className="text-lg sm:text-2xl font-bold">{applications.length}</p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardContent className="p-3 sm:p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Target className="h-4 w-4 text-purple-600" />
-                  <span className="text-xs sm:text-sm font-medium">Tasa de Conversión</span>
-                </div>
-                <p className="text-lg sm:text-2xl font-bold">
-                  {safePercentage(applications.length, (job as any).viewsCount)}%
-                </p>
               </CardContent>
             </Card>
             

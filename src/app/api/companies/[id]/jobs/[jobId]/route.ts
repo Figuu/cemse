@@ -7,9 +7,14 @@ import { z } from "zod";
 const updateJobSchema = z.object({
   title: z.string().min(1).optional(),
   description: z.string().min(1).optional(),
-  requirements: z.string().optional(),
-  benefits: z.string().optional(),
-  location: z.string().min(1).optional(),
+  requirements: z.array(z.string()).optional(),
+  responsibilities: z.array(z.string()).optional(),
+  benefits: z.array(z.string()).optional(),
+  location: z.object({
+    lat: z.number(),
+    lng: z.number(),
+    address: z.string().min(1),
+  }).optional(),
   municipality: z.string().optional(),
   department: z.string().optional(),
   contractType: z.enum(["FULL_TIME", "PART_TIME", "INTERNSHIP", "VOLUNTEER", "FREELANCE"]).optional(),
@@ -19,12 +24,21 @@ const updateJobSchema = z.object({
   educationRequired: z.enum(["PRIMARY", "SECONDARY", "TECHNICAL", "UNIVERSITY", "POSTGRADUATE", "OTHER"]).optional(),
   skillsRequired: z.array(z.string()).optional(),
   desiredSkills: z.array(z.string()).optional(),
+  skills: z.array(z.string()).optional(),
+  tags: z.array(z.string()).optional(),
   salaryMin: z.number().positive().optional(),
   salaryMax: z.number().positive().optional(),
   salaryCurrency: z.string().optional(),
   applicationDeadline: z.string().datetime().optional(),
+  startDate: z.string().datetime().optional(),
   isActive: z.boolean().optional(),
   featured: z.boolean().optional(),
+  isUrgent: z.boolean().optional(),
+  remoteWork: z.boolean().optional(),
+  hybridWork: z.boolean().optional(),
+  officeWork: z.boolean().optional(),
+  employmentType: z.enum(["FULL_TIME", "PART_TIME", "CONTRACT", "INTERNSHIP", "FREELANCE", "TEMPORARY"]).optional(),
+  reportingTo: z.string().optional(),
 });
 
 export async function GET(
@@ -147,9 +161,52 @@ export async function PUT(
       );
     }
 
+    // Process the data for database update
+    const updateData: any = { ...validatedData };
+    
+    // Remove frontend-only fields that don't exist in the database
+    delete updateData.remoteWork;
+    delete updateData.hybridWork;
+    delete updateData.officeWork;
+    delete updateData.employmentType; // This gets mapped to contractType
+    
+    // Handle location data
+    if (validatedData.location) {
+      updateData.latitude = validatedData.location.lat;
+      updateData.longitude = validatedData.location.lng;
+      updateData.location = validatedData.location.address;
+    }
+    
+    // Convert arrays to strings for database storage
+    if (validatedData.requirements) {
+      updateData.requirements = validatedData.requirements.join('\n');
+    }
+    if (validatedData.responsibilities) {
+      updateData.responsibilities = validatedData.responsibilities;
+    }
+    if (validatedData.benefits) {
+      updateData.benefits = validatedData.benefits.join('\n');
+    }
+    
+    // Handle work modality based on work type flags
+    if (validatedData.remoteWork !== undefined || validatedData.hybridWork !== undefined || validatedData.officeWork !== undefined) {
+      if (validatedData.remoteWork) {
+        updateData.workModality = "REMOTE";
+      } else if (validatedData.hybridWork) {
+        updateData.workModality = "HYBRID";
+      } else if (validatedData.officeWork) {
+        updateData.workModality = "ON_SITE";
+      }
+    }
+    
+    // Map employmentType to contractType
+    if (validatedData.employmentType) {
+      updateData.contractType = validatedData.employmentType;
+    }
+
     const updatedJob = await prisma.jobOffer.update({
       where: { id: jobId },
-      data: validatedData,
+      data: updateData,
       include: {
         company: {
           select: {

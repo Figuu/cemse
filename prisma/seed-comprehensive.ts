@@ -1030,6 +1030,24 @@ async function main() {
     console.log(`✅ Usuario joven creado: ${youth.email}`);
   }
 
+  // Asociar algunos estudiantes a instituciones
+  console.log('🔗 Asociando estudiantes a instituciones...');
+  for (let i = 0; i < Math.min(youthUsers.length, institutions.length * 3); i++) {
+    const youth = youthUsers[i];
+    const institution = institutions[i % institutions.length];
+    
+    if (youth.profile) {
+      await prisma.profile.update({
+        where: { id: youth.profile.id },
+        data: {
+          institutionId: institution.id,
+          currentInstitution: institution.name,
+        },
+      });
+      console.log(`✅ Estudiante ${youth.profile.firstName} ${youth.profile.lastName} asociado a ${institution.name}`);
+    }
+  }
+
   // Crear cursos
   const courses = [];
   for (let i = 0; i < coursesData.length; i++) {

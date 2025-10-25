@@ -31,14 +31,14 @@ export function Logo({
     <div className={cn("flex items-center space-x-2", className)}>
       <Image
         src="/logos/EmpleaEmprende.svg"
-        alt="Emplea y Emprende"
+        alt="Emplea Emprende"
         width={32}
         height={32}
         className={cn(sizeClasses[size])}
       />
       {showText && (
         <span className={cn("font-semibold text-gray-700", textSizeClasses[size])}>
-          Emplea y Emprende
+          Emplea Emprende
         </span>
       )}
     </div>

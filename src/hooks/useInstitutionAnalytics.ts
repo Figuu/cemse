@@ -29,6 +29,7 @@ export interface InstitutionAnalytics {
     totalStudents: number;
     totalPrograms: number;
     totalCourses: number;
+    activeCourses: number;
     totalEnrollments: number;
     totalAnnouncements: number;
     totalEvents: number;
@@ -129,11 +130,23 @@ export function useInstitutionAnalytics(institutionId: string, filters: Analytic
 
       const response = await fetch(`/api/institutions/${institutionId}/analytics?${params.toString()}`);
       if (!response.ok) {
-        throw new Error("Failed to fetch institution analytics");
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Analytics API Error:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData
+        });
+        throw new Error(`Failed to fetch institution analytics: ${response.status} ${response.statusText}`);
       }
-      return response.json();
+      const data = await response.json();
+      console.log('Analytics Response:', data);
+      return data;
     },
     enabled: !!institutionId,
+    retry: 2,
+    retryDelay: 1000,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 }
 

@@ -48,6 +48,10 @@ export async function GET(
     const skip = (page - 1) * limit;
 
     const { id: institutionId } = await params;
+    
+    // Debug institution ID
+    console.log('Institution ID from params:', institutionId);
+    
     const where: any = {
       institutionId: institutionId,
     };
@@ -75,6 +79,20 @@ export async function GET(
     const orderBy: any = {};
     orderBy[sortBy] = sortOrder;
 
+    // Debug logging
+    console.log('Courses API Debug:', {
+      institutionId,
+      where,
+      page,
+      limit,
+      search,
+      level,
+      category,
+      instructorId,
+      sortBy,
+      sortOrder,
+    });
+
     const [courses, total] = await Promise.all([
       prisma.course.findMany({
         where,
@@ -98,9 +116,21 @@ export async function GET(
       prisma.course.count({ where }),
     ]);
 
+    console.log('Courses Query Result:', {
+      coursesCount: courses.length,
+      total,
+      courses: courses.map(c => ({
+        id: c.id,
+        title: c.title,
+        institutionId: c.institutionId,
+        isActive: c.isActive,
+        studentsCount: c.studentsCount,
+      })),
+    });
+
     const totalPages = Math.ceil(total / limit);
 
-    return NextResponse.json({
+    const response = {
       courses,
       pagination: {
         page,
@@ -110,11 +140,23 @@ export async function GET(
         hasNext: page < totalPages,
         hasPrev: page > 1,
       },
+    };
+
+    console.log('Courses API Response:', {
+      coursesCount: response.courses.length,
+      pagination: response.pagination,
     });
+
+    return NextResponse.json(response);
   } catch (error) {
     console.error("Error fetching courses:", error);
+    console.error("Error details:", {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+    });
     return NextResponse.json(
-      { error: "Failed to fetch courses" },
+      { error: "Failed to fetch courses", details: error.message },
       { status: 500 }
     );
   }

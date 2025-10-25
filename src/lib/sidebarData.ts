@@ -61,7 +61,7 @@ export interface SidebarData {
 
 const commonTeams = [
   {
-    name: "Emplea y Emprende Platform",
+    name: "Emplea Emprende Platform",
     logo: Command,
     plan: "Employability & Entrepreneurship",
   },

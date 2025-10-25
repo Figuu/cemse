@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
         completionDate: enrollment.completedAt?.toISOString() || new Date().toISOString(),
         courseDuration: `${Math.floor(course.duration / 60)}h ${course.duration % 60}m`,
         courseLevel: course.level,
-        institutionName: 'Emplea y Emprende - Centro de Emprendimiento y Desarrollo Sostenible',
+        institutionName: 'Emplea Emprende - Centro de Emprendimiento y Desarrollo Sostenible',
       };
 
       // Generate course certificate

@@ -228,22 +228,13 @@ function JobsPageContent() {
         <div className="flex flex-col space-y-3 xl:flex-row xl:items-center xl:space-y-0 xl:space-x-3 xl:flex-shrink-0">
           <div className="flex items-center space-x-2">
             {isCompany && (
-              <>
-                <Link href="/company">
-                  <Button variant="outline" size="sm" className="w-full sm:w-auto">
-                    <Settings className="h-4 w-4 mr-2" />
-                    <span className="hidden sm:inline">Mi Empresa</span>
-                    <span className="sm:hidden">Empresa</span>
-                  </Button>
-                </Link>
-                <Link href="/jobs/create">
-                  <Button size="sm" className="w-full sm:w-auto">
-                    <Plus className="h-4 w-4 mr-2" />
-                    <span className="hidden sm:inline">Crear Trabajo</span>
-                    <span className="sm:hidden">Crear</span>
-                  </Button>
-                </Link>
-              </>
+              <Link href="/jobs/create">
+                <Button size="sm" className="w-full sm:w-auto">
+                  <Plus className="h-4 w-4 mr-2" />
+                  <span className="hidden sm:inline">Crear Trabajo</span>
+                  <span className="sm:hidden">Crear</span>
+                </Button>
+              </Link>
             )}
             {isYouth && (
               <Link href="/applications">
@@ -479,11 +470,6 @@ function JobsPageContent() {
                       <Link href={`/jobs/${job.id}/applications`}>
                         <Button variant="outline" size="sm" className="h-8 w-8 p-0">
                           <Users className="h-4 w-4" />
-                        </Button>
-                      </Link>
-                      <Link href={`/jobs/${job.id}/analytics`}>
-                        <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-                          <BarChart3 className="h-4 w-4" />
                         </Button>
                       </Link>
                     </div>

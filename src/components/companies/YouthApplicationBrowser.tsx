@@ -35,6 +35,7 @@ import {
 import { MessageInterface } from "@/components/messaging/MessageInterface";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
+import { getEducationLevelLabel } from "@/lib/translations";
 
 interface YouthApplication {
   id: string;
@@ -252,7 +253,7 @@ export function YouthApplicationBrowser({ companyId }: YouthApplicationBrowserPr
           )}
           {application.youth?.profile?.education && (
             <Badge variant="outline" className="text-xs w-fit">
-              {application.youth?.profile.education}
+              {getEducationLevelLabel(application.youth?.profile.education)}
             </Badge>
           )}
           <div className="flex items-center gap-1">
@@ -727,6 +728,16 @@ function YouthApplicationDetailModal({
                   </Badge>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Education */}
+          {application.youth?.profile.education && (
+            <div>
+              <h4 className="font-semibold mb-2">Nivel Educativo</h4>
+              <Badge variant="outline">
+                {getEducationLevelLabel(application.youth?.profile.education)}
+              </Badge>
             </div>
           )}
 

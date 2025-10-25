@@ -1413,7 +1413,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
-              <h3 className="text-lg font-semibold mb-4">Emplea y Emprende</h3>
+              <h3 className="text-lg font-semibold mb-4">Emplea Emprende</h3>
               <p className="text-gray-400">
                 Plataforma integral de educación, empleo y emprendimiento para jóvenes.
               </p>
@@ -1437,7 +1437,7 @@ export default function Home() {
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2025 Emplea y Emprende. Todos los derechos reservados.</p>
+            <p>&copy; 2025 Emplea Emprende. Todos los derechos reservados.</p>
             <p className="mt-2 text-sm">Desarrollado por Boring Ventures</p>
           </div>
         </div>

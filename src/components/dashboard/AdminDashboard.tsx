@@ -62,7 +62,7 @@ export function AdminDashboard({ stats = [] }: AdminDashboardProps) {
               </h1>
               <p className="mt-1 text-sm text-muted-foreground">
                 Bienvenido, {session?.user?.profile?.firstName || 'Administrador'}. 
-                Supervisa y gestiona toda la plataforma Emplea y Emprende.
+                Supervisa y gestiona toda la plataforma Emplea Emprende.
               </p>
             </div>
             <div className="flex items-center space-x-2">
@@ -157,14 +157,6 @@ export function AdminDashboard({ stats = [] }: AdminDashboardProps) {
           <CardContent className="space-y-4">
             {adminStats ? (
               <>
-                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                  <span className="font-medium">Usuarios Activos (30 días)</span>
-                  <span className="font-semibold text-green-600">{adminStats.activeUsers}</span>
-                </div>
-                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                  <span className="font-medium">Tasa de Actividad</span>
-                  <span className="font-semibold text-blue-600">{adminStats.userActivityRate}%</span>
-                </div>
                 <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                   <span className="font-medium">Ofertas de Trabajo</span>
                   <span className="font-semibold text-purple-600">{adminStats.totalJobs}</span>

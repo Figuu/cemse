@@ -9,25 +9,20 @@ import {
   Users, 
   TrendingUp, 
   CheckCircle,
-  Clock,
   Eye,
   Plus,
   Edit,
-  Filter,
   Star,
   ArrowUpRight,
   ArrowDownRight,
   Building2,
   Target,
-  Calendar,
-  MessageSquare,
-  FileText,
-  BarChart3,
-  Activity
+  MessageSquare
 } from "lucide-react";
 import Link from "next/link";
 import { useCompanyStats } from "@/hooks/useCompanyStats";
 import { useCompanyAnalytics } from "@/hooks/useCompanyAnalytics";
+import { useCompanyApplications } from "@/hooks/useCompanyApplications";
 
 interface CompanyDashboardProps {
   stats?: any[];
@@ -37,7 +32,9 @@ export function CompanyDashboard({ stats = [] }: CompanyDashboardProps) {
   const { data: session } = useSession();
   
   // Fetch company analytics and stats
-  const { stats: companyStats } = useCompanyStats();
+  const { stats: companyStats, jobPostings, isLoading, error } = useCompanyStats();
+  const { applications: recentApplications, isLoading: applicationsLoading } = useCompanyApplications(5);
+  
   // Note: useCompanyAnalytics requires companyId, but it's not available in session
   // For now, we'll skip analytics or use a placeholder
   const analytics = null; // TODO: Implement proper company ID retrieval
@@ -47,22 +44,18 @@ export function CompanyDashboard({ stats = [] }: CompanyDashboardProps) {
     { title: "Ofertas Activas", value: companyStats.activeJobs.toString(), icon: Briefcase, change: { value: 0, type: "neutral" as const } },
     { title: "Aplicaciones Recibidas", value: companyStats.totalApplications.toString(), icon: Users, change: { value: 20, type: "increase" as const } },
     { title: "Candidatos Contratados", value: companyStats.hiredCandidates.toString(), icon: CheckCircle, change: { value: 5, type: "increase" as const } },
-    { title: "Vistas de Perfil", value: companyStats.profileViews.toString(), icon: Eye, change: { value: 8, type: "increase" as const } },
   ] : [];
 
   const defaultStats = [
     { title: "Ofertas Activas", value: "0", icon: Briefcase, change: { value: 0, type: "neutral" as const } },
     { title: "Aplicaciones Recibidas", value: "0", icon: Users, change: { value: 0, type: "neutral" as const } },
     { title: "Candidatos Contratados", value: "0", icon: CheckCircle, change: { value: 0, type: "neutral" as const } },
-    { title: "Vistas de Perfil", value: "0", icon: Eye, change: { value: 0, type: "neutral" as const } },
   ];
 
   const displayStats = realStats.length > 0 ? realStats : (stats.length > 0 ? stats : defaultStats);
 
-  // TODO: Implement real data fetching for recent applications and job offers
-  // These should be fetched from the API based on the company's data
-  const recentApplications: any[] = [];
-  const activeJobOffers: any[] = [];
+  // Use real data from API
+  const activeJobOffers = jobPostings || [];
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -89,14 +82,20 @@ export function CompanyDashboard({ stats = [] }: CompanyDashboardProps) {
     switch (status) {
       case "pending":
         return "Pendiente";
+      case "reviewing":
+        return "En Revisión";
+      case "shortlisted":
+        return "Preseleccionado";
+      case "hired":
+        return "Contratado";
+      case "rejected":
+        return "Rechazado";
       case "reviewed":
         return "Revisado";
       case "interviewed":
         return "Entrevistado";
       case "accepted":
         return "Aceptado";
-      case "rejected":
-        return "Rechazado";
       case "active":
         return "Activo";
       case "draft":
@@ -132,40 +131,65 @@ export function CompanyDashboard({ stats = [] }: CompanyDashboardProps) {
       </div>
 
       {/* Company Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        {displayStats.map((stat, index) => {
-          const Icon = stat.icon;
-          return (
-            <Card key={index} className="hover:shadow-md transition-shadow">
+      {isLoading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+          {[1, 2, 3].map((i) => (
+            <Card key={i} className="hover:shadow-md transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  {stat.title}
-                </CardTitle>
-                <Icon className="h-4 w-4 text-muted-foreground" />
+                <div className="h-4 w-20 bg-gray-200 rounded animate-pulse"></div>
+                <div className="h-4 w-4 bg-gray-200 rounded animate-pulse"></div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-foreground">
-                  {companyStats ? companyStats[stat.title.toLowerCase().replace(/\s+/g, '_')] : stat.value}
-                </div>
-                <div className="flex items-center space-x-1 text-xs text-muted-foreground">
-                  {stat.change.type === 'increase' ? (
-                    <ArrowUpRight className="h-3 w-3 text-green-500" />
-                  ) : stat.change.type === 'decrease' ? (
-                    <ArrowDownRight className="h-3 w-3 text-red-500" />
-                  ) : (
-                    <TrendingUp className="h-3 w-3 text-gray-500" />
-                  )}
-                  <span className={stat.change.type === 'increase' ? 'text-green-600' : 
-                                  stat.change.type === 'decrease' ? 'text-red-600' : 'text-gray-600'}>
-                    {stat.change.value > 0 ? '+' : ''}{stat.change.value}%
-                  </span>
-                  <span>vs mes anterior</span>
-                </div>
+                <div className="h-8 w-12 bg-gray-200 rounded animate-pulse mb-2"></div>
+                <div className="h-3 w-24 bg-gray-200 rounded animate-pulse"></div>
               </CardContent>
             </Card>
-          );
-        })}
-      </div>
+          ))}
+        </div>
+      ) : error ? (
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center text-red-600">
+              <p>Error al cargar las estadísticas: {error}</p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+          {displayStats.map((stat, index) => {
+            const Icon = stat.icon;
+            return (
+              <Card key={index} className="hover:shadow-md transition-shadow">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    {stat.title}
+                  </CardTitle>
+                  <Icon className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-foreground">
+                    {stat.value}
+                  </div>
+                  <div className="flex items-center space-x-1 text-xs text-muted-foreground">
+                    {stat.change.type === 'increase' ? (
+                      <ArrowUpRight className="h-3 w-3 text-green-500" />
+                    ) : stat.change.type === 'decrease' ? (
+                      <ArrowDownRight className="h-3 w-3 text-red-500" />
+                    ) : (
+                      <TrendingUp className="h-3 w-3 text-gray-500" />
+                    )}
+                    <span className={stat.change.type === 'increase' ? 'text-green-600' : 
+                                    stat.change.type === 'decrease' ? 'text-red-600' : 'text-gray-600'}>
+                      {stat.change.value > 0 ? '+' : ''}{stat.change.value}%
+                    </span>
+                    <span>vs mes anterior</span>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Recent Applications */}
@@ -190,32 +214,51 @@ export function CompanyDashboard({ stats = [] }: CompanyDashboardProps) {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {recentApplications.length > 0 ? recentApplications.map((application) => (
+              {applicationsLoading ? (
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-10 h-10 bg-gray-200 rounded-full animate-pulse"></div>
+                        <div className="flex-1">
+                          <div className="h-4 w-32 bg-gray-200 rounded animate-pulse mb-2"></div>
+                          <div className="h-3 w-24 bg-gray-200 rounded animate-pulse"></div>
+                        </div>
+                      </div>
+                      <div className="h-8 w-20 bg-gray-200 rounded animate-pulse"></div>
+                    </div>
+                  ))}
+                </div>
+              ) : recentApplications.length > 0 ? recentApplications.map((application) => (
                 <div key={application.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                   <div className="flex items-center space-x-4">
                     <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
-                      <Users className="h-5 w-5 text-muted-foreground" />
+                      {application.applicant.avatarUrl ? (
+                        <img 
+                          src={application.applicant.avatarUrl} 
+                          alt={application.applicant.name}
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                      ) : (
+                        <Users className="h-5 w-5 text-muted-foreground" />
+                      )}
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-1">
-                        <h4 className="font-semibold">{application.name}</h4>
+                        <h4 className="font-semibold">{application.applicant.name}</h4>
                         <Badge className={getStatusColor(application.status)}>
                           {getStatusLabel(application.status)}
                         </Badge>
                       </div>
                       <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                        <span>{application.position}</span>
-                        <div className="flex items-center space-x-1">
-                          <Star className="h-3 w-3 text-yellow-500" />
-                          <span>{application.rating}</span>
-                        </div>
-                        <span>Aplicó {application.appliedAt}</span>
+                        <span>{application.jobTitle}</span>
+                        <span>Aplicó hace {application.daysSinceApplied} días</span>
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Button asChild variant="outline" size="sm">
-                      <Link href={`/talent/${application.id}`}>
+                      <Link href={`/talent/${application.applicant.id}`}>
                         <Eye className="h-4 w-4 mr-1" />
                         Ver Perfil
                       </Link>
@@ -282,7 +325,7 @@ export function CompanyDashboard({ stats = [] }: CompanyDashboardProps) {
                       </div>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span>Publicado {job.postedAt}</span>
+                      <span>Publicado {job.postedDate}</span>
                       <div className="flex space-x-1">
                         <Button asChild variant="outline" size="sm">
                           <Link href={`/jobs/${job.id}`}>
@@ -322,7 +365,7 @@ export function CompanyDashboard({ stats = [] }: CompanyDashboardProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <Button asChild variant="outline" className="h-20 flex-col space-y-2">
               <Link href="/jobs/create">
                 <Plus className="h-6 w-6" />
@@ -341,76 +384,9 @@ export function CompanyDashboard({ stats = [] }: CompanyDashboardProps) {
                 <span className="text-sm">Buscar Talento</span>
               </Link>
             </Button>
-            <Button asChild variant="outline" className="h-20 flex-col space-y-2">
-              <Link href="/company/stats">
-                <BarChart3 className="h-6 w-6" />
-                <span className="text-sm">Estadísticas</span>
-              </Link>
-            </Button>
           </div>
         </CardContent>
       </Card>
-
-      {/* Analytics Overview */}
-      <div className="grid md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <BarChart3 className="h-5 w-5 text-purple-600" />
-              <span>Métricas de Contratación</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Tasa de Conversión</span>
-                <span className="font-semibold text-green-600">
-                  {companyStats ? `${companyStats.responseRate}%` : "0%"}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Tiempo Promedio de Contratación</span>
-                <span className="font-semibold text-blue-600">
-                  {companyStats && companyStats.hiredCandidates > 0 ? "12 días" : "N/A"}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Candidatos por Oferta</span>
-                <span className="font-semibold text-purple-600">
-                  {companyStats && companyStats.activeJobs > 0 
-                    ? (companyStats.totalApplications / companyStats.activeJobs).toFixed(1)
-                    : "0"
-                  }
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Satisfacción del Proceso</span>
-                <span className="font-semibold text-orange-600">
-                  {companyStats && companyStats.hiredCandidates > 0 ? "4.3/5" : "N/A"}
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <TrendingUp className="h-5 w-5 text-orange-600" />
-              <span>Actividad Reciente</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="text-center py-8 text-muted-foreground">
-                <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No hay actividad reciente</p>
-                <p className="text-sm">La actividad de tu empresa aparecerá aquí</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 }

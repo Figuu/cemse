@@ -33,6 +33,7 @@ import { cn } from "@/lib/utils";
 import { Course } from "@/hooks/useCourses";
 import { useSession } from "next-auth/react";
 import { getImageUrl } from "@/lib/imageUtils";
+import { getTagLabel } from "@/lib/translations";
 
 interface CourseCardProps {
   course: Course;
@@ -319,7 +320,7 @@ export function CourseCard({
                   {course.tags.slice(0, 4).map((tag, index) => (
                     <Badge key={index} variant="outline" className="text-xs">
                       <Tag className="h-3 w-3 mr-1" />
-                      {tag}
+                      {getTagLabel(tag)}
                     </Badge>
                   ))}
                   {course.tags.length > 4 && (
@@ -579,7 +580,7 @@ export function CourseCard({
             {course.tags.slice(0, 3).map((tag, index) => (
               <Badge key={index} variant="outline" className="text-xs">
                 <Tag className="h-3 w-3 mr-1" />
-                {tag}
+                {getTagLabel(tag)}
               </Badge>
             ))}
             {course.tags.length > 3 && (

@@ -128,7 +128,7 @@ export function useCVData(): CVData {
       const formattedCertificates = completeProfile.certificates?.map(cert => ({
         id: cert.id,
         title: cert.course?.title || "Certificado",
-        issuer: cert.course?.instructor?.name || "Emplea y Emprende",
+        issuer: cert.course?.instructor?.name || "Emplea Emprende",
         issueDate: new Date(cert.issuedAt).toISOString().split('T')[0],
         courseName: cert.course?.title,
         fileUrl: (cert as any).fileUrl,
@@ -140,7 +140,7 @@ export function useCVData(): CVData {
         .map(course => ({
           id: course.id,
           title: course.course?.title || "Curso",
-          institution: course.course?.instructor?.name || "Emplea y Emprende",
+          institution: course.course?.instructor?.name || "Emplea Emprende",
           completedAt: new Date().toISOString().split('T')[0], // You might want to get actual completion date
           progress: course.progress || 100,
           certificateUrl: undefined, // Link to certificate if available

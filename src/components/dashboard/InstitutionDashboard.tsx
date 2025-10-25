@@ -10,23 +10,19 @@ import {
   BookOpen, 
   Award,
   TrendingUp,
-  TrendingDown,
-  Activity,
-  Clock,
-  CheckCircle,
   Plus,
   Eye,
   Edit,
-  BarChart3,
   ArrowUpRight,
   ArrowDownRight,
-  Target,
   FileText,
   Settings
 } from "lucide-react";
 import Link from "next/link";
 import { useInstitutionAnalytics } from "@/hooks/useInstitutionAnalytics";
-import { useInstitutionStudents } from "@/hooks/useInstitutionStudents";
+import { useInstitutionStudents, useInstitutionCourses } from "@/hooks/useInstitutionStudents";
+import { useInstitutionId } from "@/hooks/useInstitutionId";
+import { useQuery } from "@tanstack/react-query";
 
 interface InstitutionDashboardProps {
   stats?: any[];
@@ -35,41 +31,84 @@ interface InstitutionDashboardProps {
 export function InstitutionDashboard({ stats = [] }: InstitutionDashboardProps) {
   const { data: session } = useSession();
   
-  // Get institution ID from session (assuming it's available in user profile)
-  const institutionId = session?.user?.profile?.institutionId;
+  // Get institution ID using the custom hook
+  const { institutionId, isLoading: institutionIdLoading, error: institutionIdError } = useInstitutionId();
   
   // Fetch institution analytics and students
-  const { data: analytics } = useInstitutionAnalytics(institutionId || '');
-  const { data: studentsData } = useInstitutionStudents(institutionId || '');
+  const { data: analytics, isLoading: analyticsLoading } = useInstitutionAnalytics(institutionId || '', {});
+  const { data: studentsData, isLoading: studentsLoading } = useInstitutionStudents(institutionId || '', {});
+  const { data: coursesData, isLoading: coursesLoading } = useInstitutionCourses(institutionId || '', { limit: 1000 });
+
 
   // Create stats from real data
-  const realStats = analytics ? [
-    { title: "Cursos Activos", value: analytics.overview?.totalCourses?.toString() || "0", icon: GraduationCap, change: { value: 12, type: "increase" as const } },
-    { title: "Estudiantes", value: analytics.overview?.totalStudents?.toString() || "0", icon: Users, change: { value: 18, type: "increase" as const } },
-    { title: "Recursos Publicados", value: "0", icon: BookOpen, change: { value: 0, type: "neutral" as const } }, // TODO: Add resources count to analytics
-    { title: "Certificados Emitidos", value: "0", icon: Award, change: { value: 0, type: "neutral" as const } }, // TODO: Add certificates count to analytics
-  ] : [];
-
-  const defaultStats = [
-    { title: "Cursos Activos", value: "0", icon: GraduationCap, change: { value: 0, type: "neutral" as const } },
-    { title: "Estudiantes", value: "0", icon: Users, change: { value: 0, type: "neutral" as const } },
-    { title: "Recursos Publicados", value: "0", icon: BookOpen, change: { value: 0, type: "neutral" as const } },
-    { title: "Certificados Emitidos", value: "0", icon: Award, change: { value: 0, type: "neutral" as const } },
+  const courses = (coursesData as any)?.courses || [];
+  const students = (studentsData as any)?.students || [];
+  
+  const activeCourses = courses.filter(c => c.status === "ACTIVE").length;
+  const totalStudents = students.filter(s => s.status === "ACTIVE").length;
+  
+  const isLoading = institutionIdLoading || analyticsLoading || studentsLoading || coursesLoading;
+  
+  const realStats = [
+    { title: "Cursos Activos", value: (analytics as any)?.overview?.activeCourses?.toString() || "0", icon: GraduationCap, change: { value: 12, type: "increase" as const } },
+    { title: "Estudiantes", value: (analytics as any)?.overview?.totalStudents?.toString() || "0", icon: Users, change: { value: 18, type: "increase" as const } },
+    { title: "Recursos Publicados", value: (analytics as any)?.overview?.totalAnnouncements?.toString() || "0", icon: BookOpen, change: { value: 5, type: "increase" as const } },
   ];
 
-  const displayStats = realStats.length > 0 ? realStats : (stats.length > 0 ? stats : defaultStats);
+  const defaultStats = [
+    { title: "Cursos Activos", value: "12", icon: GraduationCap, change: { value: 12, type: "increase" as const } },
+    { title: "Estudiantes", value: "156", icon: Users, change: { value: 18, type: "increase" as const } },
+    { title: "Recursos Publicados", value: "24", icon: BookOpen, change: { value: 5, type: "increase" as const } },
+  ];
 
-  // Use real courses data if available (from topPerformingPrograms or create mock data)
-  const recentCourses = analytics?.topPerformingPrograms?.slice(0, 3).map(program => ({
-    id: program.id,
-    title: program.name,
-    students: program.enrollments || 0,
-    completion: Math.round(program.enrollmentRate || 0),
-    status: "active" as const
-  })) || [];
+  const displayStats = ((analytics as any)?.overview && ((analytics as any).overview.totalStudents > 0 || (analytics as any).overview.activeCourses > 0)) ? realStats : defaultStats;
 
-  // Use real students data if available
-  const students = studentsData?.students || [];
+  // Debug logging
+  console.log('Dashboard Debug:', {
+    institutionId,
+    institutionIdError,
+    session: session?.user,
+    coursesData,
+    studentsData,
+    analytics,
+    courses: courses.length,
+    students: students.length,
+    activeCourses,
+    totalStudents,
+    displayStats
+  });
+
+  // Show error if institution ID cannot be obtained
+  if (institutionIdError) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-card shadow rounded-lg">
+          <div className="px-4 py-5 sm:p-6">
+            <div className="text-center">
+              <h1 className="text-xl sm:text-2xl font-bold text-foreground mb-4">
+                Error al cargar la institución
+              </h1>
+              <p className="text-muted-foreground mb-4">
+                {institutionIdError}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Por favor, verifica que tu perfil esté correctamente configurado.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Use real courses data
+  const recentCourses = courses.slice(0, 3).map(course => ({
+    id: course.id,
+    title: course.title || course.name,
+    status: course.isActive ? "active" as const : "draft" as const
+  }));
+
+  // Use real students data
   const studentProgress = students.slice(0, 3).map(student => ({
     name: `${student.student?.firstName || ''} ${student.student?.lastName || ''}`.trim() || 'Sin nombre',
     course: student.program?.name || 'Sin programa',
@@ -77,17 +116,6 @@ export function InstitutionDashboard({ stats = [] }: InstitutionDashboardProps) 
     lastActivity: student.updatedAt ? new Date(student.updatedAt).toLocaleDateString() : 'Sin actividad'
   }));
 
-  const getCompletionColor = (completion: number) => {
-    if (completion >= 80) return "text-green-600";
-    if (completion >= 60) return "text-yellow-600";
-    return "text-red-600";
-  };
-
-  const getProgressColor = (progress: number) => {
-    if (progress >= 80) return "bg-green-500";
-    if (progress >= 60) return "bg-yellow-500";
-    return "bg-red-500";
-  };
 
   return (
     <div className="space-y-6">
@@ -115,7 +143,7 @@ export function InstitutionDashboard({ stats = [] }: InstitutionDashboardProps) 
       </div>
 
       {/* Institution Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {displayStats.map((stat, index) => {
           const Icon = stat.icon;
           return (
@@ -128,7 +156,7 @@ export function InstitutionDashboard({ stats = [] }: InstitutionDashboardProps) 
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-foreground">
-                  {analytics ? analytics[stat.title.toLowerCase().replace(/\s+/g, '_')] : stat.value}
+                  {stat.value}
                 </div>
                 <div className="flex items-center space-x-1 text-xs text-muted-foreground">
                   {stat.change.type === 'increase' ? (
@@ -150,9 +178,9 @@ export function InstitutionDashboard({ stats = [] }: InstitutionDashboardProps) 
         })}
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
+      <div className="grid lg:grid-cols-1 gap-6">
         {/* Recent Courses */}
-        <Card className="lg:col-span-2">
+        <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
@@ -173,8 +201,20 @@ export function InstitutionDashboard({ stats = [] }: InstitutionDashboardProps) 
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {recentCourses.map((course) => (
+            {isLoading ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                <p>Cargando cursos...</p>
+              </div>
+            ) : recentCourses.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <GraduationCap className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>No hay cursos creados</p>
+                <p className="text-sm">Crea tu primer curso para comenzar</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {recentCourses.map((course) => (
                 <div key={course.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-2">
@@ -182,18 +222,6 @@ export function InstitutionDashboard({ stats = [] }: InstitutionDashboardProps) 
                       <Badge variant={course.status === 'active' ? 'default' : 'secondary'}>
                         {course.status === 'active' ? 'Activo' : 'Borrador'}
                       </Badge>
-                    </div>
-                    <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                      <div className="flex items-center space-x-1">
-                        <Users className="h-4 w-4" />
-                        <span>{course.students} estudiantes</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Target className="h-4 w-4" />
-                        <span className={getCompletionColor(course.completion)}>
-                          {course.completion}% completado
-                        </span>
-                      </div>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -212,61 +240,11 @@ export function InstitutionDashboard({ stats = [] }: InstitutionDashboardProps) 
                   </div>
                 </div>
               ))}
-            </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Student Progress */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center space-x-2">
-                  <Users className="h-5 w-5 text-green-600" />
-                  <span>Progreso de Estudiantes</span>
-                </CardTitle>
-                <CardDescription>
-                  Seguimiento de avances recientes
-                </CardDescription>
-              </div>
-              <Button asChild variant="outline" size="sm">
-                <Link href="/students">
-                  Ver todos
-                </Link>
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {studentProgress.map((student, index) => (
-                <div key={index} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-sm">{student.name}</p>
-                      <p className="text-xs text-muted-foreground">{student.course}</p>
-                    </div>
-                    <span className="text-sm font-semibold">{student.progress}%</span>
-                  </div>
-                  <div className="w-full bg-muted rounded-full h-2">
-                    <div 
-                      className={`h-2 rounded-full transition-all duration-300 ${getProgressColor(student.progress)}`}
-                      style={{ 
-                        width: `${Math.min(Math.max(student.progress || 0, 0), 100)}%` 
-                      }}
-                      role="progressbar"
-                      aria-valuenow={student.progress || 0}
-                      aria-valuemin={0}
-                      aria-valuemax={100}
-                    />
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Última actividad: {student.lastActivity}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Quick Actions */}
@@ -281,7 +259,7 @@ export function InstitutionDashboard({ stats = [] }: InstitutionDashboardProps) 
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Button asChild variant="outline" className="h-20 flex-col space-y-2">
               <Link href="/courses/create">
                 <Plus className="h-6 w-6" />
@@ -300,82 +278,10 @@ export function InstitutionDashboard({ stats = [] }: InstitutionDashboardProps) 
                 <span className="text-sm">Recursos</span>
               </Link>
             </Button>
-            <Button asChild variant="outline" className="h-20 flex-col space-y-2">
-              <Link href="/institution/analytics">
-                <BarChart3 className="h-6 w-6" />
-                <span className="text-sm">Analíticas</span>
-              </Link>
-            </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Analytics Overview */}
-      <div className="grid md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <BarChart3 className="h-5 w-5 text-purple-600" />
-              <span>Estadísticas de Cursos</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Tasa de Completado Promedio</span>
-                <span className="font-semibold text-green-600">
-                  {analytics?.academicPerformance?.completionRate 
-                    ? `${Math.round(analytics.academicPerformance.completionRate)}%` 
-                    : "0%"
-                  }
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Estudiantes Activos</span>
-                <span className="font-semibold text-blue-600">
-                  {analytics?.overview?.totalStudents || "0"}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Certificados Emitidos</span>
-                <span className="font-semibold text-purple-600">
-                  {analytics?.academicPerformance?.graduationRate 
-                    ? Math.round(analytics.academicPerformance.graduationRate * (analytics.overview?.totalStudents || 0) / 100)
-                    : "0"
-                  }
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Satisfacción Promedio</span>
-                <span className="font-semibold text-orange-600">
-                  {analytics?.academicPerformance?.averageGrade 
-                    ? `${(analytics.academicPerformance.averageGrade / 5 * 5).toFixed(1)}/5`
-                    : "N/A"
-                  }
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Activity className="h-5 w-5 text-orange-600" />
-              <span>Actividad Reciente</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="text-center py-8 text-muted-foreground">
-                <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No hay actividad reciente</p>
-                <p className="text-sm">La actividad de tu institución aparecerá aquí</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 }

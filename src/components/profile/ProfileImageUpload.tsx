@@ -121,31 +121,33 @@ export function ProfileImageUpload({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleClick}
-              disabled={disabled || isLoading}
-              className="flex items-center space-x-2"
-            >
-              <Upload className="h-4 w-4" />
-              <span>{displayImage ? "Cambiar" : "Subir"}</span>
-            </Button>
-            
-            {displayImage && (
+          {!disabled && (
+            <div className="flex space-x-2">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleRemoveImage}
-                disabled={disabled || isLoading}
-                className="flex items-center space-x-2 text-red-600 hover:text-red-700"
+                onClick={handleClick}
+                disabled={isLoading}
+                className="flex items-center space-x-2"
               >
-                <X className="h-4 w-4" />
-                <span>Eliminar</span>
+                <Upload className="h-4 w-4" />
+                <span>{displayImage ? "Cambiar" : "Subir"}</span>
               </Button>
-            )}
-          </div>
+              
+              {displayImage && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRemoveImage}
+                  disabled={isLoading}
+                  className="flex items-center space-x-2 text-red-600 hover:text-red-700"
+                >
+                  <X className="h-4 w-4" />
+                  <span>Eliminar</span>
+                </Button>
+              )}
+            </div>
+          )}
 
           {/* Hidden File Input */}
           <input

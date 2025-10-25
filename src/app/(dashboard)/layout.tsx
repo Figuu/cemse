@@ -98,7 +98,7 @@ export default function DashboardLayout({
               {/* Footer section */}
               <div className="p-3 border-t border-gray-200 bg-gray-50">
                 <div className="text-xs text-gray-500 text-center">
-                  © 2025 Emplea y Emprende Platform
+                  © 2025 Emplea Emprende Platform
                   <br />
                   Desarrollado por Boring Ventures
                 </div>

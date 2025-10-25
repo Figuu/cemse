@@ -93,8 +93,18 @@ export async function GET(
       where.isUrgent = isUrgent === "true";
     }
 
+    // Map frontend sortBy values to database field names
+    const sortByMap: Record<string, string> = {
+      "newest": "createdAt",
+      "oldest": "createdAt", 
+      "salary-high": "salaryMin",
+      "salary-low": "salaryMin",
+      "title": "title",
+    };
+
+    const dbSortBy = sortByMap[sortBy] || "createdAt";
     const orderBy: Record<string, string> = {};
-    orderBy[sortBy] = sortOrder;
+    orderBy[dbSortBy] = sortOrder;
 
     const [jobs, total] = await Promise.all([
       prisma.jobOffer.findMany({

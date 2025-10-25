@@ -36,7 +36,7 @@ export default function InstitutionCoursesPage() {
   const courses = coursesData?.courses || [];
 
   const activeCourses = courses.filter(c => c.status === "ACTIVE").length;
-  const totalStudents = courses.reduce((sum, c) => sum + c.currentStudents, 0);
+  const totalStudents = courses.reduce((sum, c) => sum + (c.studentsCount || 0), 0);
   const totalCredits = courses.reduce((sum, c) => sum + c.credits, 0);
 
   return (

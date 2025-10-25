@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { InstitutionAnalyticsDashboard } from "@/components/institutions/InstitutionAnalyticsDashboard";
 import { ReportManagement } from "@/components/institutions/ReportManagement";
-import { useInstitutionAnalytics } from "@/hooks/useInstitutionAnalytics";
+import { useInstitutionAnalytics, InstitutionAnalytics } from "@/hooks/useInstitutionAnalytics";
 import Link from "next/link";
 
 export default function InstitutionAnalyticsPage() {
@@ -82,7 +82,7 @@ export default function InstitutionAnalyticsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Total Estudiantes</p>
-                  <p className="text-2xl font-bold">{analytics.overview.totalStudents.toLocaleString()}</p>
+                  <p className="text-2xl font-bold">{(analytics as InstitutionAnalytics).overview.totalStudents.toLocaleString()}</p>
                 </div>
                 <Users className="h-8 w-8 text-blue-600" />
               </div>
@@ -94,7 +94,7 @@ export default function InstitutionAnalyticsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Programas Activos</p>
-                  <p className="text-2xl font-bold">{analytics.overview.totalPrograms.toLocaleString()}</p>
+                  <p className="text-2xl font-bold">{(analytics as InstitutionAnalytics).overview.totalPrograms.toLocaleString()}</p>
                 </div>
                 <GraduationCap className="h-8 w-8 text-green-600" />
               </div>
@@ -106,7 +106,7 @@ export default function InstitutionAnalyticsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Cursos Activos</p>
-                  <p className="text-2xl font-bold">{analytics.overview.totalCourses.toLocaleString()}</p>
+                  <p className="text-2xl font-bold">{(analytics as InstitutionAnalytics).overview.totalCourses.toLocaleString()}</p>
                 </div>
                 <BookOpen className="h-8 w-8 text-purple-600" />
               </div>
@@ -118,7 +118,7 @@ export default function InstitutionAnalyticsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Promedio General</p>
-                  <p className="text-2xl font-bold">{analytics.academicPerformance.averageGrade.toFixed(1)}</p>
+                  <p className="text-2xl font-bold">{(analytics as InstitutionAnalytics).academicPerformance.averageGrade.toFixed(1)}</p>
                 </div>
                 <Award className="h-8 w-8 text-orange-600" />
               </div>
@@ -135,7 +135,7 @@ export default function InstitutionAnalyticsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Tasa de Finalización</p>
-                  <p className="text-2xl font-bold">{analytics.academicPerformance.completionRate.toFixed(1)}%</p>
+                  <p className="text-2xl font-bold">{(analytics as InstitutionAnalytics).academicPerformance.completionRate.toFixed(1)}%</p>
                 </div>
                 <TrendingUp className="h-8 w-8 text-green-600" />
               </div>
@@ -147,7 +147,7 @@ export default function InstitutionAnalyticsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Tasa de Retención</p>
-                  <p className="text-2xl font-bold">{analytics.academicPerformance.retentionRate.toFixed(1)}%</p>
+                  <p className="text-2xl font-bold">{(analytics as InstitutionAnalytics).academicPerformance.retentionRate.toFixed(1)}%</p>
                 </div>
                 <Users className="h-8 w-8 text-blue-600" />
               </div>
@@ -159,7 +159,7 @@ export default function InstitutionAnalyticsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Tasa de Graduación</p>
-                  <p className="text-2xl font-bold">{analytics.academicPerformance.graduationRate.toFixed(1)}%</p>
+                  <p className="text-2xl font-bold">{(analytics as InstitutionAnalytics).academicPerformance.graduationRate.toFixed(1)}%</p>
                 </div>
                 <GraduationCap className="h-8 w-8 text-purple-600" />
               </div>
@@ -171,7 +171,7 @@ export default function InstitutionAnalyticsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Total Inscripciones</p>
-                  <p className="text-2xl font-bold">{analytics.overview.totalEnrollments.toLocaleString()}</p>
+                  <p className="text-2xl font-bold">{(analytics as InstitutionAnalytics).overview.totalEnrollments.toLocaleString()}</p>
                 </div>
                 <Calendar className="h-8 w-8 text-orange-600" />
               </div>

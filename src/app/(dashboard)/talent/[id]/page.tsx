@@ -244,7 +244,7 @@ export default function TalentDetailPage() {
                           <Download className="h-4 w-4 text-blue-600" />
                         </div>
                         <div>
-                          <p className="font-medium">CV/Resume</p>
+                          <p className="font-medium">CV/Currículum</p>
                           <p className="text-sm text-muted-foreground">{application.cvFile}</p>
                         </div>
                       </div>
@@ -262,7 +262,7 @@ export default function TalentDetailPage() {
                           <ExternalLink className="h-4 w-4 text-blue-600" />
                         </div>
                         <div>
-                          <p className="font-medium">CV/Resume (URL)</p>
+                          <p className="font-medium">CV/Currículum (URL)</p>
                           <p className="text-sm text-muted-foreground truncate max-w-xs">
                             {application.cvUrl}
                           </p>

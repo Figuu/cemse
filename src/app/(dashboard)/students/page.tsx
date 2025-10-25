@@ -20,7 +20,7 @@ import {
   BookOpen
 } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useInstitutionStudents, STUDENT_STATUS_LABELS } from "@/hooks/useInstitutionStudents";
+import { useInstitutionStudents, STUDENT_STATUS_LABELS, InstitutionStudent, PaginationInfo } from "@/hooks/useInstitutionStudents";
 
 function StudentsPageContent() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -35,7 +35,7 @@ function StudentsPageContent() {
     limit: 50 
   });
 
-  const students = studentsData?.students || [];
+  const students = (studentsData as { students: InstitutionStudent[]; pagination: PaginationInfo } | undefined)?.students || [];
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -86,9 +86,9 @@ function StudentsPageContent() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{studentsData?.pagination?.totalCount || students.length}</div>
+            <div className="text-2xl font-bold">{(studentsData as { students: InstitutionStudent[]; pagination: PaginationInfo } | undefined)?.pagination?.totalCount || students.length}</div>
             <p className="text-xs text-muted-foreground">
-              {studentsData?.pagination?.totalCount ? `Total en la institución` : "Cargando..."}
+              {(studentsData as { students: InstitutionStudent[]; pagination: PaginationInfo } | undefined)?.pagination?.totalCount ? `Total en la institución` : "Cargando..."}
             </p>
           </CardContent>
         </Card>

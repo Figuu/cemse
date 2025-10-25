@@ -10,7 +10,7 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Emplea y Emprende - Plataforma Educativa y de Empleo",
+  title: "Emplea Emprende - Plataforma Educativa y de Empleo",
   description: "Plataforma completa de educación, empleo y emprendimiento para jóvenes",
 };
 

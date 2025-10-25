@@ -205,7 +205,7 @@ export function CertificateViewer({
                     <span className="font-semibold text-gray-700">Instructor</span>
                   </div>
                   <p className="text-gray-600">
-                    {certificate.course.instructor?.name || "Sistema Emplea y Emprende"}
+                    {certificate.course.instructor?.name || "Sistema Emplea Emprende"}
                   </p>
                 </div>
               </div>

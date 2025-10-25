@@ -50,9 +50,20 @@ export async function GET(request: NextRequest) {
       whereClause.isEntrepreneurshipRelated = true;
     }
 
-    // Only show published resources to non-admin users
-    if (session.user.role !== "SUPERADMIN" && session.user.role !== "INSTITUTION") {
+    // Show resources based on user role
+    if (session.user.role === "YOUTH") {
+      // Youth can see all published and public resources
       whereClause.status = "PUBLISHED";
+      whereClause.isPublic = true;
+    } else if (session.user.role === "SUPERADMIN") {
+      // SuperAdmin can see everything
+      // No additional filters
+    } else if (session.user.role === "INSTITUTION") {
+      // Institutions can only see their own resources
+      whereClause.createdByUserId = session.user.id;
+    } else if (session.user.role === "COMPANIES") {
+      // Companies can only see their own resources
+      whereClause.createdByUserId = session.user.id;
     }
 
     const resources = await prisma.resource.findMany({

@@ -66,7 +66,10 @@ export function useHybridResources(filters: HybridResourceFilters) {
 
     try {
       const params = new URLSearchParams();
-      if (filters.authorId) params.append("authorId", filters.authorId);
+      // Pass authorId if provided
+      if (filters.authorId) {
+        params.append("authorId", filters.authorId);
+      }
 
       const response = await fetch(`/api/resources?${params.toString()}`);
       if (!response.ok) {

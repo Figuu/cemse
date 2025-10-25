@@ -369,16 +369,6 @@ function AdminPageContent() {
                     <span className="text-sm text-muted-foreground">Ofertas de Trabajo</span>
                     <span className="font-semibold">{stats ? stats.totalJobs : '...'}</span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Usuarios Activos</span>
-                    <span className="font-semibold">{stats ? stats.activeUsers : '...'}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Tasa de Actividad</span>
-                    <span className="font-semibold text-green-600">
-                      {stats ? stats.userActivityRate : '...'}%
-                    </span>
-                  </div>
                 </div>
               </CardContent>
             </Card>

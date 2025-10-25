@@ -684,7 +684,7 @@ export function StudentManagementDashboard({ institutionId }: StudentManagementD
                               {course.instructor.instructor.firstName} {course.instructor.instructor.lastName}
                             </span>
                           )}
-                          <span>{course.currentStudents} estudiantes</span>
+                          <span>{course.studentsCount || 0} estudiantes</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">

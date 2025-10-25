@@ -174,7 +174,8 @@ export interface InstitutionProgram {
   startDate?: string;
   endDate?: string;
   maxStudents?: number;
-  currentStudents: number;
+  currentStudents?: number;
+  studentsCount?: number;
   institutionId: string;
   createdAt: string;
   updatedAt: string;
@@ -186,22 +187,21 @@ export interface InstitutionProgram {
 
 export interface InstitutionCourse {
   id: string;
-  name: string;
+  title: string;
+  name?: string;
   description?: string;
-  code: string;
-  credits: number;
+  slug?: string;
+  code?: string;
+  duration?: number;
+  credits?: number;
   level: CourseLevel;
-  status: CourseStatus;
+  status?: CourseStatus;
+  isActive?: boolean;
   institutionId: string;
   programId?: string;
   instructorId?: string;
-  startDate?: string;
-  endDate?: string;
-  maxStudents?: number;
-  currentStudents: number;
-  schedule?: string;
-  location?: string;
-  prerequisites: string[];
+  publishedAt?: string;
+  studentsCount?: number;
   createdAt: string;
   updatedAt: string;
   program?: {
@@ -282,6 +282,8 @@ export function useInstitutionStudents(institutionId: string, filters: StudentFi
       return response.json();
     },
     enabled: !!institutionId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
   return query;
@@ -426,6 +428,8 @@ export function useInstitutionCourses(institutionId: string, filters: CourseFilt
       return response.json();
     },
     enabled: !!institutionId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
   return query;

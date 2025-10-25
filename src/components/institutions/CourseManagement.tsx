@@ -248,10 +248,7 @@ export function CourseManagement({ institutionId }: CourseManagementProps) {
                         </div>
                         <div className="flex items-center gap-2">
                           <Users className="h-4 w-4" />
-                          <span>{course.currentStudents} estudiantes</span>
-                          {course.maxStudents && (
-                            <span>/ {course.maxStudents} máximo</span>
-                          )}
+                          <span>{course.studentsCount || 0} estudiantes</span>
                         </div>
                         {course.program && (
                           <div className="flex items-center gap-2">
@@ -270,54 +267,8 @@ export function CourseManagement({ institutionId }: CourseManagementProps) {
                             </span>
                           </div>
                         )}
-                        {course.location && (
-                          <div className="flex items-center gap-2">
-                            <MapPin className="h-4 w-4" />
-                            <span>{course.location}</span>
-                          </div>
-                        )}
-                        {course.schedule && (
-                          <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4" />
-                            <span>{course.schedule}</span>
-                          </div>
-                        )}
                       </div>
                     </div>
-
-                    {course.prerequisites && course.prerequisites.length > 0 && (
-                      <div className="mb-4">
-                        <p className="text-sm font-medium mb-1">Prerrequisitos:</p>
-                        <div className="flex flex-wrap gap-1">
-                          {course.prerequisites.map((prereq, index) => (
-                            <Badge key={index} variant="secondary" className="text-xs">
-                              {prereq}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {(course.startDate || course.endDate) && (
-                      <div className="text-xs text-muted-foreground mb-4">
-                        {course.startDate && (
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            <span>
-                              Inicio: {new Date(course.startDate).toLocaleDateString('es-ES')}
-                            </span>
-                          </div>
-                        )}
-                        {course.endDate && (
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            <span>
-                              Fin: {new Date(course.endDate).toLocaleDateString('es-ES')}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    )}
 
                     <div className="flex items-center gap-2">
                       <Button variant="outline" size="sm" className="flex-1">
@@ -385,7 +336,7 @@ export function CourseManagement({ institutionId }: CourseManagementProps) {
                 <div>
                   <p className="text-sm font-medium">Total Estudiantes</p>
                   <p className="text-2xl font-bold">
-                    {courses.reduce((sum, c) => sum + c.currentStudents, 0)}
+                    {courses.reduce((sum, c) => sum + (c.studentsCount || 0), 0)}
                   </p>
                 </div>
               </div>

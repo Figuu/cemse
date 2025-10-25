@@ -57,7 +57,7 @@ export default function DashboardLayout({
                     <span className="text-white font-bold text-sm">C</span>
                   </div>
                   <div>
-                    <h1 className="text-lg font-bold text-gray-900">Emplea y Emprende</h1>
+                    <h1 className="text-lg font-bold text-gray-900">Emplea Emprende</h1>
                     <p className="text-xs text-gray-500">Plataforma de Empleabilidad</p>
                   </div>
                 </div>
@@ -105,7 +105,7 @@ export default function DashboardLayout({
               {/* Footer section */}
               <div className="p-3 border-t border-gray-200 bg-gray-50">
                 <div className="text-xs text-gray-500 text-center">
-                  © 2025 Emplea y Emprende Platform
+                  © 2025 Emplea Emprende Platform
                   <br />
                   Desarrollado por Boring Ventures
                 </div>
@@ -120,7 +120,7 @@ export default function DashboardLayout({
                 <div className="flex flex-col h-full border-r border-border bg-card">
                   <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
                     <div className="flex items-center flex-shrink-0 px-4">
-                      <h1 className="text-xl font-bold text-foreground">Emplea y Emprende</h1>
+                      <h1 className="text-xl font-bold text-foreground">Emplea Emprende</h1>
                     </div>
                     <div className="mt-5 flex-1 px-2">
                       <RoleBasedNavigation 

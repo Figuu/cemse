@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { 
   useInstitutionAnalytics, 
+  InstitutionAnalytics,
   ANALYTICS_PERIODS, 
   formatPercentage, 
   formatNumber, 
@@ -85,7 +86,7 @@ export function InstitutionAnalyticsDashboard({ institutionId }: InstitutionAnal
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Analytics de {analytics.institution.name}</h2>
+          <h2 className="text-2xl font-bold">Analytics de {(analytics as InstitutionAnalytics).institution.name}</h2>
           <p className="text-muted-foreground flex items-center gap-1">
             <Clock className="h-4 w-4" />
             Período: {ANALYTICS_PERIODS.find(p => p.value === selectedPeriod)?.label}
@@ -129,7 +130,7 @@ export function InstitutionAnalyticsDashboard({ institutionId }: InstitutionAnal
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Estudiantes</p>
-                <p className="text-2xl font-bold">{formatNumber(analytics.overview.totalStudents)}</p>
+                <p className="text-2xl font-bold">{formatNumber((analytics as InstitutionAnalytics).overview.totalStudents)}</p>
               </div>
               <Users className="h-8 w-8 text-blue-600" />
             </div>
@@ -141,7 +142,7 @@ export function InstitutionAnalyticsDashboard({ institutionId }: InstitutionAnal
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Programas</p>
-                <p className="text-2xl font-bold">{formatNumber(analytics.overview.totalPrograms)}</p>
+                <p className="text-2xl font-bold">{formatNumber((analytics as InstitutionAnalytics).overview.totalPrograms)}</p>
               </div>
               <GraduationCap className="h-8 w-8 text-green-600" />
             </div>
@@ -153,7 +154,7 @@ export function InstitutionAnalyticsDashboard({ institutionId }: InstitutionAnal
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Cursos</p>
-                <p className="text-2xl font-bold">{formatNumber(analytics.overview.totalCourses)}</p>
+                <p className="text-2xl font-bold">{formatNumber((analytics as InstitutionAnalytics).overview.totalCourses)}</p>
               </div>
               <BookOpen className="h-8 w-8 text-purple-600" />
             </div>
@@ -165,7 +166,7 @@ export function InstitutionAnalyticsDashboard({ institutionId }: InstitutionAnal
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Inscripciones</p>
-                <p className="text-2xl font-bold">{formatNumber(analytics.overview.totalEnrollments)}</p>
+                <p className="text-2xl font-bold">{formatNumber((analytics as InstitutionAnalytics).overview.totalEnrollments)}</p>
               </div>
               <Calendar className="h-8 w-8 text-orange-600" />
             </div>
@@ -180,7 +181,7 @@ export function InstitutionAnalyticsDashboard({ institutionId }: InstitutionAnal
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Promedio General</p>
-                <p className="text-2xl font-bold">{analytics.academicPerformance.averageGrade.toFixed(1)}</p>
+                <p className="text-2xl font-bold">{(analytics as InstitutionAnalytics).academicPerformance.averageGrade.toFixed(1)}</p>
               </div>
               <Award className="h-8 w-8 text-blue-600" />
             </div>
@@ -192,7 +193,7 @@ export function InstitutionAnalyticsDashboard({ institutionId }: InstitutionAnal
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Tasa de Finalización</p>
-                <p className="text-2xl font-bold">{formatPercentage(analytics.academicPerformance.completionRate)}</p>
+                <p className="text-2xl font-bold">{formatPercentage((analytics as InstitutionAnalytics).academicPerformance.completionRate)}</p>
               </div>
               <Target className="h-8 w-8 text-green-600" />
             </div>
@@ -204,7 +205,7 @@ export function InstitutionAnalyticsDashboard({ institutionId }: InstitutionAnal
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Tasa de Retención</p>
-                <p className="text-2xl font-bold">{formatPercentage(analytics.academicPerformance.retentionRate)}</p>
+                <p className="text-2xl font-bold">{formatPercentage((analytics as InstitutionAnalytics).academicPerformance.retentionRate)}</p>
               </div>
               <TrendingUp className="h-8 w-8 text-purple-600" />
             </div>
@@ -216,7 +217,7 @@ export function InstitutionAnalyticsDashboard({ institutionId }: InstitutionAnal
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Tasa de Graduación</p>
-                <p className="text-2xl font-bold">{formatPercentage(analytics.academicPerformance.graduationRate)}</p>
+                <p className="text-2xl font-bold">{formatPercentage((analytics as InstitutionAnalytics).academicPerformance.graduationRate)}</p>
               </div>
               <GraduationCap className="h-8 w-8 text-orange-600" />
             </div>
@@ -244,9 +245,9 @@ export function InstitutionAnalyticsDashboard({ institutionId }: InstitutionAnal
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                {Object.entries(analytics.studentStatusDistribution).map(([status, count]) => (
+                {Object.entries((analytics as InstitutionAnalytics).studentStatusDistribution).map(([status, count]) => (
                   <div key={status} className="text-center p-4 bg-muted/50 rounded-lg">
-                    <div className="text-2xl font-bold mb-1">{count}</div>
+                    <div className="text-2xl font-bold mb-1">{count as number}</div>
                     <Badge variant="outline" className="text-sm">
                       {status}
                     </Badge>
@@ -266,9 +267,9 @@ export function InstitutionAnalyticsDashboard({ institutionId }: InstitutionAnal
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {Object.entries(analytics.programLevelDistribution).map(([level, count]) => (
+                {Object.entries((analytics as InstitutionAnalytics).programLevelDistribution).map(([level, count]) => (
                   <div key={level} className="text-center p-4 bg-muted/50 rounded-lg">
-                    <div className="text-2xl font-bold mb-1">{count}</div>
+                    <div className="text-2xl font-bold mb-1">{count as number}</div>
                     <div className="text-sm text-muted-foreground">{level}</div>
                   </div>
                 ))}
@@ -285,31 +286,31 @@ export function InstitutionAnalyticsDashboard({ institutionId }: InstitutionAnal
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                 <div className="text-center p-4 bg-muted/50 rounded-lg">
                   <div className="text-2xl font-bold mb-1">
-                    {analytics.engagementMetrics.averageStudentsPerProgram.toFixed(1)}
+                    {(analytics as InstitutionAnalytics).engagementMetrics.averageStudentsPerProgram.toFixed(1)}
                   </div>
                   <div className="text-sm text-muted-foreground">Estudiantes/Programa</div>
                 </div>
                 <div className="text-center p-4 bg-muted/50 rounded-lg">
                   <div className="text-2xl font-bold mb-1">
-                    {analytics.engagementMetrics.averageCoursesPerProgram.toFixed(1)}
+                    {(analytics as InstitutionAnalytics).engagementMetrics.averageCoursesPerProgram.toFixed(1)}
                   </div>
                   <div className="text-sm text-muted-foreground">Cursos/Programa</div>
                 </div>
                 <div className="text-center p-4 bg-muted/50 rounded-lg">
                   <div className="text-2xl font-bold mb-1">
-                    {analytics.engagementMetrics.averageEnrollmentsPerCourse.toFixed(1)}
+                    {(analytics as InstitutionAnalytics).engagementMetrics.averageEnrollmentsPerCourse.toFixed(1)}
                   </div>
                   <div className="text-sm text-muted-foreground">Inscripciones/Curso</div>
                 </div>
                 <div className="text-center p-4 bg-muted/50 rounded-lg">
                   <div className="text-2xl font-bold mb-1">
-                    {analytics.engagementMetrics.announcementFrequency}
+                    {(analytics as InstitutionAnalytics).engagementMetrics.announcementFrequency}
                   </div>
                   <div className="text-sm text-muted-foreground">Anuncios/Día</div>
                 </div>
                 <div className="text-center p-4 bg-muted/50 rounded-lg">
                   <div className="text-2xl font-bold mb-1">
-                    {analytics.engagementMetrics.eventFrequency}
+                    {(analytics as InstitutionAnalytics).engagementMetrics.eventFrequency}
                   </div>
                   <div className="text-sm text-muted-foreground">Eventos/Día</div>
                 </div>
@@ -326,15 +327,15 @@ export function InstitutionAnalyticsDashboard({ institutionId }: InstitutionAnal
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {Object.entries(analytics.studentStatusDistribution).map(([status, count]) => (
+                {Object.entries((analytics as InstitutionAnalytics).studentStatusDistribution).map(([status, count]) => (
                   <div key={status} className="flex items-center justify-between">
                     <span className="capitalize">{status}</span>
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold">{count}</span>
+                      <span className="font-semibold">{count as number}</span>
                       <span className="text-sm text-muted-foreground">
-                        ({formatPercentage((count / analytics.overview.totalStudents) * 100)})
+                        ({formatPercentage(((count as number) / (analytics as InstitutionAnalytics).overview.totalStudents) * 100)})
                       </span>
-                      {count < 10 && (
+                      {(count as number) < 10 && (
                         <TrendingDown className="h-3 w-3 text-red-500" />
                       )}
                     </div>
@@ -353,7 +354,7 @@ export function InstitutionAnalyticsDashboard({ institutionId }: InstitutionAnal
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {analytics.topPerformingPrograms.map((program, index) => (
+                {(analytics as InstitutionAnalytics).topPerformingPrograms.map((program, index) => (
                   <div key={program.id} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-semibold">
@@ -383,7 +384,7 @@ export function InstitutionAnalyticsDashboard({ institutionId }: InstitutionAnal
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {analytics.topPerformingCourses.map((course, index) => (
+                {(analytics as InstitutionAnalytics).topPerformingCourses.map((course, index) => (
                   <div key={course.id} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-semibold">

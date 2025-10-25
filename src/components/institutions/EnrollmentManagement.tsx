@@ -27,7 +27,11 @@ import {
   useInstitutionStudents, 
   useInstitutionPrograms,
   useInstitutionCourses,
-  ENROLLMENT_STATUS_LABELS
+  ENROLLMENT_STATUS_LABELS,
+  InstitutionStudent,
+  InstitutionProgram,
+  InstitutionCourse,
+  PaginationInfo
 } from "@/hooks/useInstitutionStudents";
 
 interface EnrollmentManagementProps {
@@ -88,9 +92,9 @@ export function EnrollmentManagement({ institutionId }: EnrollmentManagementProp
   const { data: programsData } = useInstitutionPrograms(institutionId, { limit: 1000 });
   const { data: coursesData } = useInstitutionCourses(institutionId, { limit: 1000 });
 
-  const students = studentsData?.students || [];
-  const programs = programsData?.programs || [];
-  const courses = coursesData?.courses || [];
+  const students = (studentsData as { students: InstitutionStudent[]; pagination: PaginationInfo } | undefined)?.students || [];
+  const programs = (programsData as { programs: InstitutionProgram[]; pagination: PaginationInfo } | undefined)?.programs || [];
+  const courses = (coursesData as { courses: InstitutionCourse[]; pagination: PaginationInfo } | undefined)?.courses || [];
 
   // Mock enrollments data (in real app, this would come from an API)
   const enrollments: Enrollment[] = [

@@ -260,7 +260,7 @@ export class BusinessPlanExportService {
     ${sections}
 
     <div class="footer">
-        <p>Generado el ${new Date().toLocaleDateString('es-ES')} - Plan de Negocios Emplea y Emprende</p>
+        <p>Generado el ${new Date().toLocaleDateString('es-ES')} - Plan de Negocios Emplea Emprende</p>
     </div>
 </body>
 </html>`;
@@ -390,7 +390,7 @@ ${sections}
 
 ${"=".repeat(50)}
 
-Generado el ${new Date().toLocaleDateString('es-ES')} - Plan de Negocios Emplea y Emprende
+Generado el ${new Date().toLocaleDateString('es-ES')} - Plan de Negocios Emplea Emprende
     `;
   }
 

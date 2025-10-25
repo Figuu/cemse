@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   FileText, 
@@ -17,7 +16,6 @@ import {
   Download,
   Eye,
   Calendar,
-  User,
   Tag,
   Video,
   Image,
@@ -46,8 +44,12 @@ function ResourcesPageContent() {
 
   // Role-based permissions
   const isYouth = session?.user?.role === "YOUTH";
+  const isInstitution = session?.user?.role === "INSTITUTION";
+  const isSuperAdmin = session?.user?.role === "SUPERADMIN";
+  const isCompany = session?.user?.role === "COMPANIES";
+  const canManageResources = isInstitution || isSuperAdmin || isCompany;
 
-  // Fetch municipality institutions for the filter (only for authorized users)
+  // Fetch municipality institutions for the filter
   const { data: municipalityInstitutions = [] } = useQuery({
     queryKey: ['municipality-institutions-resources'],
     queryFn: async () => {
@@ -57,15 +59,11 @@ function ResourcesPageContent() {
       // Filter only municipality type institutions
       return institutions.filter((institution: any) => institution.institutionType === 'MUNICIPALITY');
     },
-    enabled: !isYouth // Only fetch for non-youth users
+    enabled: true // Enable for all users to see municipality filter
   });
   const [editingResource, setEditingResource] = useState<any>(null);
   const [selectedResource, setSelectedResource] = useState<any>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const isInstitution = session?.user?.role === "INSTITUTION";
-  const isSuperAdmin = session?.user?.role === "SUPERADMIN";
-  const isCompany = session?.user?.role === "COMPANIES";
-  const canManageResources = isInstitution || isSuperAdmin || isCompany;
 
   // Use hybrid resources hook with debounced search
   const { 
@@ -80,7 +78,7 @@ function ResourcesPageContent() {
     type: selectedType,
     status: selectedStatus,
     municipality: selectedMunicipality,
-    authorId: isYouth ? undefined : session?.user?.id, // Youth sees all, others see their own
+    authorId: isYouth ? undefined : (session?.user?.role === "SUPERADMIN" ? session?.user?.id : undefined), // Only Youth and SuperAdmin can filter by author
   });
 
   // CRUD functions
@@ -248,12 +246,22 @@ function ResourcesPageContent() {
   const types = [
     { id: "all", name: "Todos", count: allResources.length },
     { id: "PDF", name: "PDF", count: allResources.filter(r => r.type === "PDF").length },
+    { id: "DOC", name: "Documento", count: allResources.filter(r => r.type === "DOC").length },
     { id: "Video", name: "Video", count: allResources.filter(r => r.type === "Video").length },
     { id: "Image", name: "Imagen", count: allResources.filter(r => r.type === "Image").length },
-    { id: "ZIP", name: "ZIP", count: allResources.filter(r => r.type === "ZIP").length },
-    { id: "DOC", name: "Documento", count: allResources.filter(r => r.type === "DOC").length },
-    { id: "URL", name: "Enlace", count: allResources.filter(r => r.type === "URL").length }
-  ];
+    { id: "ZIP", name: "Archivo ZIP", count: allResources.filter(r => r.type === "ZIP").length },
+    { id: "URL", name: "Enlace", count: allResources.filter(r => r.type === "URL").length },
+    { id: "GUIDE", name: "Guía", count: allResources.filter(r => r.type === "GUIDE").length },
+    { id: "TEMPLATE", name: "Plantilla", count: allResources.filter(r => r.type === "TEMPLATE").length },
+    { id: "COURSE", name: "Curso", count: allResources.filter(r => r.type === "COURSE").length },
+    { id: "ARTICLE", name: "Artículo", count: allResources.filter(r => r.type === "ARTICLE").length },
+    { id: "AUDIO", name: "Audio", count: allResources.filter(r => r.type === "AUDIO").length },
+    { id: "DOCUMENT", name: "Documento", count: allResources.filter(r => r.type === "DOCUMENT").length },
+    { id: "TOOL", name: "Herramienta", count: allResources.filter(r => r.type === "TOOL").length },
+    { id: "CHECKLIST", name: "Lista de Verificación", count: allResources.filter(r => r.type === "CHECKLIST").length },
+    { id: "WEBINAR", name: "Seminario Web", count: allResources.filter(r => r.type === "WEBINAR").length },
+    { id: "EBOOK", name: "Libro Electrónico", count: allResources.filter(r => r.type === "EBOOK").length }
+  ].filter(type => type.count > 0 || type.id === "all"); // Solo mostrar tipos que tienen recursos
 
   const statuses = [
     { id: "all", name: "Todos", count: allResources.length },
@@ -324,7 +332,7 @@ function ResourcesPageContent() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6">
             <CardTitle className="text-xs sm:text-sm font-medium">Total Recursos</CardTitle>
@@ -334,21 +342,6 @@ function ResourcesPageContent() {
             <div className="text-lg sm:text-2xl font-bold">{allResources.length}</div>
             <p className="text-xs text-muted-foreground">
               {isYouth ? "Disponibles" : "En tu biblioteca"}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6">
-            <CardTitle className="text-xs sm:text-sm font-medium">Descargas Totales</CardTitle>
-            <Download className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent className="p-3 sm:p-6 pt-0">
-            <div className="text-lg sm:text-2xl font-bold">
-              {allResources.reduce((sum, r) => sum + r.downloads, 0)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {isYouth ? "Descargas realizadas" : "De tus recursos"}
             </p>
           </CardContent>
         </Card>
@@ -405,11 +398,11 @@ function ResourcesPageContent() {
         <CardContent className="p-3 sm:p-6 pt-0">
           <div className="space-y-4">
             {/* Filter Controls */}
-            <div className="flex flex-wrap gap-3 sm:gap-4">
-              <div className="flex items-center space-x-2 min-w-0 flex-1 sm:flex-none">
-                <Label className="text-xs sm:text-sm whitespace-nowrap">Categoría:</Label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              <div className="flex flex-col space-y-2">
+                <Label className="text-xs sm:text-sm">Categoría</Label>
                 <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                  <SelectTrigger className="w-full sm:w-40 text-xs sm:text-sm">
+                  <SelectTrigger className="w-full text-xs sm:text-sm">
                     <SelectValue placeholder="Todas" />
                   </SelectTrigger>
                   <SelectContent>
@@ -422,10 +415,10 @@ function ResourcesPageContent() {
                 </Select>
               </div>
 
-              <div className="flex items-center space-x-2 min-w-0 flex-1 sm:flex-none">
-                <Label className="text-xs sm:text-sm whitespace-nowrap">Municipio:</Label>
+              <div className="flex flex-col space-y-2">
+                <Label className="text-xs sm:text-sm">Municipio</Label>
                 <Select value={selectedMunicipality} onValueChange={setSelectedMunicipality}>
-                  <SelectTrigger className="w-full sm:w-40 text-xs sm:text-sm">
+                  <SelectTrigger className="w-full text-xs sm:text-sm">
                     <SelectValue placeholder="Todos" />
                   </SelectTrigger>
                   <SelectContent>
@@ -440,10 +433,10 @@ function ResourcesPageContent() {
                 </Select>
               </div>
 
-              <div className="flex items-center space-x-2 min-w-0 flex-1 sm:flex-none">
-                <Label className="text-xs sm:text-sm whitespace-nowrap">Tipo:</Label>
+              <div className="flex flex-col space-y-2">
+                <Label className="text-xs sm:text-sm">Tipo</Label>
                 <Select value={selectedType} onValueChange={setSelectedType}>
-                  <SelectTrigger className="w-full sm:w-40 text-xs sm:text-sm">
+                  <SelectTrigger className="w-full text-xs sm:text-sm">
                     <SelectValue placeholder="Todos" />
                   </SelectTrigger>
                   <SelectContent>
@@ -457,10 +450,10 @@ function ResourcesPageContent() {
               </div>
 
               {canManageResources && (
-                <div className="flex items-center space-x-2 min-w-0 flex-1 sm:flex-none">
-                  <Label className="text-xs sm:text-sm whitespace-nowrap">Estado:</Label>
+                <div className="flex flex-col space-y-2">
+                  <Label className="text-xs sm:text-sm">Estado</Label>
                   <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                    <SelectTrigger className="w-full sm:w-40 text-xs sm:text-sm">
+                    <SelectTrigger className="w-full text-xs sm:text-sm">
                       <SelectValue placeholder="Todos" />
                     </SelectTrigger>
                     <SelectContent>
@@ -476,17 +469,7 @@ function ResourcesPageContent() {
             </div>
 
             {/* Resources Grid */}
-            <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
-              <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 h-auto">
-                {categories.slice(0, 5).map((category) => (
-                  <TabsTrigger key={category.id} value={category.id} className="text-xs sm:text-sm py-2 px-2">
-                    <span className="truncate">{category.name}</span>
-                    <span className="ml-1">({category.count})</span>
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-
-            <TabsContent value={selectedCategory} className="mt-4 sm:mt-6">
+            <div className="mt-4 sm:mt-6">
               {resources.length === 0 ? (
                 <div className="text-center py-8 sm:py-12">
                   <FileText className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-4 text-muted-foreground" />
@@ -511,7 +494,7 @@ function ResourcesPageContent() {
                   {filteredResources.map((resource) => (
                     <Card key={resource.id} className="hover:shadow-md transition-shadow">
                       <CardHeader className="pb-3 p-4 sm:p-6">
-                        <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-3">
                           <div className="flex items-center space-x-2 min-w-0 flex-1">
                             {getTypeIcon(resource.type)}
                             <div className="flex flex-wrap gap-1">
@@ -523,10 +506,6 @@ function ResourcesPageContent() {
                               )}
                             </div>
                           </div>
-                          <div className="flex items-center space-x-1 text-xs sm:text-sm text-muted-foreground flex-shrink-0">
-                            <Download className="h-3 w-3 sm:h-4 sm:w-4" />
-                            <span>{resource.downloads}</span>
-                          </div>
                         </div>
                         <CardTitle className="text-base sm:text-lg mt-3">{resource.title}</CardTitle>
                         <CardDescription className="line-clamp-2 text-xs sm:text-sm">
@@ -537,7 +516,6 @@ function ResourcesPageContent() {
                         <div className="space-y-3">
                           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs sm:text-sm text-muted-foreground">
                             <div className="flex items-center space-x-1">
-                              <User className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
                               <span className="truncate">{resource.createdBy?.firstName} {resource.createdBy?.lastName}</span>
                             </div>
                             <div className="flex items-center space-x-1">
@@ -629,8 +607,7 @@ function ResourcesPageContent() {
                   ))}
                 </div>
               )}
-            </TabsContent>
-          </Tabs>
+            </div>
           </div>
         </CardContent>
       </Card>

@@ -83,3 +83,84 @@ export function getSectorLabel(sector: string | null | undefined): string {
 
   return sectorMap[sector] || sector;
 }
+
+export function getTagLabel(tag: string | null | undefined): string {
+  if (!tag) return '';
+
+  const tagMap: Record<string, string> = {
+    'basic_competencies': 'Competencias Básicas',
+    'entrepreneurship': 'Emprendimiento',
+    'technical_skills': 'Habilidades Técnicas',
+    'soft_skills': 'Habilidades Blandas',
+    'personal_development': 'Desarrollo Personal',
+    'business': 'Negocios',
+    'technology': 'Tecnología',
+    'marketing': 'Marketing',
+    'finance': 'Finanzas',
+    'management': 'Gestión',
+    'leadership': 'Liderazgo',
+    'communication': 'Comunicación',
+    'digital_literacy': 'Alfabetización Digital',
+    'job_placement': 'Colocación Laboral',
+    'design': 'Diseño',
+    'languages': 'Idiomas',
+    'health': 'Salud',
+    'education': 'Educación',
+    'arts': 'Artes',
+    'science': 'Ciencia',
+    'engineering': 'Ingeniería',
+    'other': 'Otros',
+  };
+
+  return tagMap[tag] || tag;
+}
+
+export function getEducationLevelLabel(level: string | null | undefined): string {
+  if (!level) return '';
+
+  const educationMap: Record<string, string> = {
+    'PRIMARY': 'Primaria',
+    'SECONDARY': 'Secundaria',
+    'HIGH_SCHOOL': 'Bachillerato',
+    'TECHNICAL': 'Técnico',
+    'UNIVERSITY': 'Universitario',
+    'POSTGRADUATE': 'Postgrado',
+    'GRADUATE': 'Postgrado',
+    'OTHER': 'Otro',
+  };
+
+  return educationMap[level] || level;
+}
+
+export function getResourceTypeLabel(type: string | null | undefined): string {
+  if (!type) return '';
+
+  const resourceTypeMap: Record<string, string> = {
+    'PDF': 'PDF',
+    'DOC': 'Documento',
+    'DOCX': 'Documento',
+    'PPT': 'Presentación',
+    'PPTX': 'Presentación',
+    'XLS': 'Hoja de Cálculo',
+    'XLSX': 'Hoja de Cálculo',
+    'Video': 'Video',
+    'VIDEO': 'Video',
+    'Image': 'Imagen',
+    'IMAGE': 'Imagen',
+    'ZIP': 'Archivo ZIP',
+    'URL': 'Enlace',
+    'GUIDE': 'Guía',
+    'TEMPLATE': 'Plantilla',
+    'COURSE': 'Curso',
+    'ARTICLE': 'Artículo',
+    'AUDIO': 'Audio',
+    'DOCUMENT': 'Documento',
+    'TOOL': 'Herramienta',
+    'CHECKLIST': 'Lista de Verificación',
+    'WEBINAR': 'Seminario Web',
+    'EBOOK': 'Libro Electrónico',
+    'OTHER': 'Otro',
+  };
+
+  return resourceTypeMap[type] || type;
+}

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { X, Edit, Trash2, Eye, EyeOff, Calendar, User, Tag, ExternalLink, FileText, Video, Image, File, Globe } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { getResourceTypeLabel } from "@/lib/translations";
 
 interface ResourceDetailsModalProps {
   resource: any;
@@ -45,6 +46,12 @@ export function ResourceDetailsModal({
         return <File className="h-5 w-5 text-purple-500" />;
       case "URL":
         return <Globe className="h-5 w-5 text-orange-500" />;
+      case "GUIDE":
+        return <FileText className="h-5 w-5 text-indigo-500" />;
+      case "TEMPLATE":
+        return <FileText className="h-5 w-5 text-cyan-500" />;
+      case "COURSE":
+        return <FileText className="h-5 w-5 text-emerald-500" />;
       default:
         return <File className="h-5 w-5 text-gray-500" />;
     }
@@ -176,7 +183,7 @@ export function ResourceDetailsModal({
                   <span className="text-sm font-medium">Tipo:</span>
                   <div className="flex items-center space-x-2 mt-1">
                     {getTypeIcon(resource.type)}
-                    <span className="text-sm">{resource.type}</span>
+                    <span className="text-sm">{getResourceTypeLabel(resource.type)}</span>
                   </div>
                 </div>
                 

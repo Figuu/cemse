@@ -313,7 +313,7 @@ export async function PATCH(
               completionDate: new Date().toISOString(),
               courseDuration: `${Math.floor(course.duration / 60)}h ${course.duration % 60}m`,
               courseLevel: course.level,
-              institutionName: 'Emplea y Emprende - Centro de Emprendimiento y Desarrollo Sostenible',
+              institutionName: 'Emplea Emprende - Centro de Emprendimiento y Desarrollo Sostenible',
             };
             
             const result = await CertificateService.generateCourseCertificate(certificateData);
