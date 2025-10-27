@@ -378,7 +378,7 @@ export const otherInstitutionSidebarData: SidebarData = {
       items: [
         {
           title: "Mi Institución",
-          url: "/prifile",
+          url: "/profile",
           icon: Building2,
         },
       ],
