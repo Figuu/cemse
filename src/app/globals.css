@@ -148,16 +148,53 @@
   }
 }
 
-/* Auto-scrolling animation for logos */
+/* Auto-scrolling animation for logos - infinite seamless scroll */
+/* For 2 identical sets, move exactly 50% for perfect seamless loop */
 @keyframes scroll {
-  0% {
+  from {
     transform: translateX(0);
   }
-  100% {
+  to {
     transform: translateX(-50%);
   }
 }
 
 .animate-scroll {
   animation: scroll 12s linear infinite;
+  will-change: transform;
+}
+
+/* Auto-scrolling animation for logos - infinite seamless scroll */
+/* Technique: 8 identical sets, each set is a flex container with logos */
+/* Move exactly 12.5% (1/8) to move one complete set, creating seamless infinite loop */
+@keyframes scroll-infinite {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-12.5%);
+  }
+}
+
+.animate-scroll-infinite {
+  animation: scroll-infinite 5s linear infinite;
+  will-change: transform;
+}
+
+/* Seamless infinite carousel animation for logos */
+/* Technique: 4 identical sets, move exactly 25% (1/4) for perfect seamless loop */
+/* When animation completes one cycle, the second set is exactly in the first position */
+/* This creates a perfect infinite circular carousel without visible resets */
+@keyframes scroll-logos-seamless {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-25%);
+  }
+}
+
+.animate-scroll-logos-seamless {
+  animation: scroll-logos-seamless 25s linear infinite;
+  will-change: transform;
 }

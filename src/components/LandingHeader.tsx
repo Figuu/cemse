@@ -41,9 +41,15 @@ export function LandingHeader() {
   return (
     <header className="bg-white shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center py-6">
-          <div className="flex items-center space-x-3">
-            <Logo size="lg" showText={true} href="/" />
+        <div className="flex justify-between items-center py-4 sm:py-6 gap-2 sm:gap-4">
+          <div className="flex items-center flex-shrink-0 min-w-0 max-w-[45%] sm:max-w-none">
+            {/* Mobile: Logo más pequeño con texto, Desktop: Logo completo con texto */}
+            <div className="sm:hidden">
+              <Logo size="sm" showText={true} href="/" />
+            </div>
+            <div className="hidden sm:flex">
+              <Logo size="lg" showText={true} href="/" />
+            </div>
           </div>
           <nav className="hidden md:flex space-x-8">
             <button 
@@ -72,15 +78,15 @@ export function LandingHeader() {
             </button>
           </nav>
           
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
             {status === "loading" ? (
-              <div className="animate-pulse bg-gray-200 h-10 w-20 rounded"></div>
+              <div className="animate-pulse bg-gray-200 h-8 sm:h-10 w-16 sm:w-20 rounded"></div>
             ) : session ? (
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2 sm:space-x-4">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                      <Avatar className="h-10 w-10">
+                    <Button variant="ghost" className="relative h-8 w-8 sm:h-10 sm:w-10 rounded-full p-0">
+                      <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
                         <AvatarImage src={session.user?.profile?.avatarUrl || ""} alt={session.user?.name || ""} />
                         <AvatarFallback>
                           {session.user?.name?.charAt(0) || "U"}
@@ -122,10 +128,11 @@ export function LandingHeader() {
               </div>
             ) : (
               <>
-                <Button variant="outline" asChild>
+                {/* Mobile: Ambos botones más pequeños */}
+                <Button variant="outline" size="sm" className="px-2 py-1.5 text-[11px] sm:px-4 sm:py-2 sm:text-sm" asChild>
                   <Link href="/sign-in">Iniciar Sesión</Link>
                 </Button>
-                <Button asChild>
+                <Button size="sm" className="px-2 py-1.5 text-[11px] sm:px-4 sm:py-2 sm:text-sm" asChild>
                   <Link href="/sign-up">Registrarse</Link>
                 </Button>
               </>

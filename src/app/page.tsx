@@ -10,6 +10,113 @@ import Image from "next/image";
 import { LandingHeader } from "@/components/LandingHeader";
 import { motion, AnimatePresence, useInView } from "framer-motion";
 
+// Infinite Carousel Component for Logos
+interface InfiniteLogoCarouselProps {
+  logos: Array<{
+    src: string;
+    alt: string;
+    className?: string;
+  }>;
+  className?: string;
+}
+
+function InfiniteLogoCarousel({ logos, className = "" }: InfiniteLogoCarouselProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    const wrapper = wrapperRef.current;
+    if (!container || !wrapper) return;
+
+    let animationId: number | null = null;
+
+    // Wait for layout to calculate widths
+    const initAnimation = () => {
+      const firstSet = wrapper.children[0] as HTMLElement;
+      if (!firstSet || firstSet.offsetWidth === 0) {
+        requestAnimationFrame(initAnimation);
+        return;
+      }
+
+      const setWidth = firstSet.offsetWidth;
+      let position = 0;
+      const speed = 0.4; // pixels per frame (adjust for speed - lower = slower)
+
+      const animate = () => {
+        position -= speed;
+        
+        // When we've scrolled one complete set width, reset position to 0 seamlessly
+        // Since we have 2 identical sets, when first set is out of view,
+        // second set is in the exact same position, so reset is invisible
+        if (Math.abs(position) >= setWidth) {
+          position = 0;
+        }
+
+        wrapper.style.transform = `translateX(${position}px)`;
+        animationId = requestAnimationFrame(animate);
+      };
+
+      animationId = requestAnimationFrame(animate);
+    };
+
+    initAnimation();
+
+    return () => {
+      if (animationId !== null) {
+        cancelAnimationFrame(animationId);
+      }
+    };
+  }, [logos]);
+
+  return (
+    <div className={`overflow-hidden relative w-full ${className}`} ref={containerRef}>
+      <div className="flex items-center" ref={wrapperRef} style={{ willChange: 'transform' }}>
+        {/* Render multiple identical sets for seamless infinite loop */}
+        {/* First set */}
+        <div className="flex items-center gap-4 flex-shrink-0" key="set-1">
+          {logos.map((logo, index) => (
+            <Image
+              key={`logo-1-${index}`}
+              src={logo.src}
+              alt={logo.alt}
+              width={200}
+              height={200}
+              className={logo.className}
+            />
+          ))}
+        </div>
+        {/* Second set (duplicate for seamless loop) */}
+        <div className="flex items-center gap-4 flex-shrink-0" key="set-2">
+          {logos.map((logo, index) => (
+            <Image
+              key={`logo-2-${index}`}
+              src={logo.src}
+              alt={logo.alt}
+              width={200}
+              height={200}
+              className={logo.className}
+            />
+          ))}
+        </div>
+        {/* Third set - ensures last logo connects seamlessly with first */}
+        <div className="flex items-center gap-4 flex-shrink-0" key="set-3">
+          {logos.map((logo, index) => (
+            <Image
+              key={`logo-3-${index}`}
+              src={logo.src}
+              alt={logo.alt}
+              width={200}
+              height={200}
+              className={logo.className}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Business Stage translations
 const businessStageLabels: Record<string, string> = {
   IDEA: "Idea",
@@ -734,95 +841,16 @@ export default function Home() {
 
           {/* Mobile: Auto-scrolling carousel - Primer plano */}
           <div className="block sm:hidden">
-            <div className="overflow-hidden">
-              <div className="flex animate-scroll gap-4">
-                <Image
-                  src="/logos/cemse.png"
-                  alt="CEMSE"
-                  width={200}
-                  height={200}
-                  className="h-12 w-auto object-contain opacity-60 flex-shrink-0"
-                />
-                <Image
-                  src="/logos/kallpa.png"
-                  alt="Kallpa"
-                  width={200}
-                  height={200}
-                  className="h-12 w-auto object-contain opacity-60 flex-shrink-0"
-                />
-                <Image
-                  src="/logos/manqa.png"
-                  alt="Manqa"
-                  width={200}
-                  height={200}
-                  className="h-14 w-auto object-contain opacity-60 flex-shrink-0"
-                />
-                <Image
-                  src="/logos/childfund.png"
-                  alt="ChildFund"
-                  width={200}
-                  height={200}
-                  className="h-12 w-auto object-contain opacity-60 flex-shrink-0"
-                />
-                <Image
-                  src="/logos/stc.png"
-                  alt="STC"
-                  width={200}
-                  height={200}
-                  className="h-6 w-auto object-contain opacity-60 flex-shrink-0"
-                />
-                <Image
-                  src="/logos/40.png"
-                  alt="40"
-                  width={200}
-                  height={200}
-                  className="h-12 w-auto object-contain opacity-60 flex-shrink-0"
-                />
-                {/* Duplicate for seamless loop */}
-                <Image
-                  src="/logos/cemse.png"
-                  alt="CEMSE"
-                  width={200}
-                  height={200}
-                  className="h-12 w-auto object-contain opacity-60 flex-shrink-0"
-                />
-                <Image
-                  src="/logos/kallpa.png"
-                  alt="Kallpa"
-                  width={200}
-                  height={200}
-                  className="h-12 w-auto object-contain opacity-60 flex-shrink-0"
-                />
-                <Image
-                  src="/logos/manqa.png"
-                  alt="Manqa"
-                  width={200}
-                  height={200}
-                  className="h-14 w-auto object-contain opacity-60 flex-shrink-0"
-                />
-                <Image
-                  src="/logos/childfund.png"
-                  alt="ChildFund"
-                  width={200}
-                  height={200}
-                  className="h-12 w-auto object-contain opacity-60 flex-shrink-0"
-                />
-                <Image
-                  src="/logos/stc.png"
-                  alt="STC"
-                  width={200}
-                  height={200}
-                  className="h-6 w-auto object-contain opacity-60 flex-shrink-0"
-                />
-                <Image
-                  src="/logos/40.png"
-                  alt="40"
-                  width={200}
-                  height={200}
-                  className="h-12 w-auto object-contain opacity-60 flex-shrink-0"
-                />
-              </div>
-            </div>
+            <InfiniteLogoCarousel
+              logos={[
+                { src: "/logos/cemse.png", alt: "CEMSE", className: "h-16 w-auto object-contain opacity-60" },
+                { src: "/logos/kallpa.png", alt: "Kallpa", className: "h-20 w-auto object-contain opacity-60" },
+                { src: "/logos/manqa.png", alt: "Manqa", className: "h-16 w-auto object-contain opacity-60" },
+                { src: "/logos/childfund.png", alt: "ChildFund", className: "h-10 w-auto object-contain opacity-60" },
+                { src: "/logos/stc.png", alt: "STC", className: "h-10 w-auto object-contain opacity-60" },
+                { src: "/logos/40.png", alt: "40", className: "h-12 w-auto object-contain opacity-60" },
+              ]}
+            />
           </div>
 
           {/* Desktop: Static layout - Primer plano */}
@@ -860,14 +888,14 @@ export default function Home() {
               alt="STC"
               width={200}
               height={200}
-              className="h-12 md:h-14 lg:h-16 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
+              className="h-14 md:h-16 lg:h-18 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
             />
             <Image
               src="/logos/40.png"
               alt="40"
               width={200}
               height={200}
-              className="h-14 md:h-16 lg:h-18 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
+              className="h-16 md:h-18 lg:h-20 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
             />
           </div>
         </div>
@@ -1275,120 +1303,54 @@ export default function Home() {
 
           {/* Mobile: Auto-scrolling carousel - Socios estratégicos */}
           <div className="block sm:hidden">
-            <div className="overflow-hidden">
-              <div className="flex animate-scroll gap-3">
-                <Image 
-                  src="/logos/bvlgari.png" 
-                  alt="Bulgari" 
-                  width={200}
-                  height={200}
-                  className="h-3 w-auto object-contain opacity-40 flex-shrink-0"
-                />
-                <Image 
-                  src="/logos/stc.png" 
-                  alt="STC" 
-                  width={200}
-                  height={200}
-                  className="h-4 w-auto object-contain opacity-40 flex-shrink-0"
-                />
-                <Image 
-                  src="/logos/40.png" 
-                  alt="40" 
-                  width={200}
-                  height={200}
-                  className="h-6 w-auto object-contain opacity-40 flex-shrink-0"
-                />
-                <Image 
-                  src="/logos/maria.png" 
-                  alt="Maria" 
-                  width={200}
-                  height={200}
-                  className="h-3 w-auto object-contain opacity-40 flex-shrink-0"
-                />
-                <Image 
-                  src="/logos/childfund.png" 
-                  alt="ChildFund" 
-                  width={200}
-                  height={200}
-                  className="h-5 w-auto object-contain opacity-40 flex-shrink-0"
-                />
-                {/* Duplicate for seamless loop */}
-                <Image 
-                  src="/logos/bvlgari.png" 
-                  alt="Bulgari" 
-                  width={200}
-                  height={200}
-                  className="h-3 w-auto object-contain opacity-40 flex-shrink-0"
-                />
-                <Image 
-                  src="/logos/stc.png" 
-                  alt="STC" 
-                  width={200}
-                  height={200}
-                  className="h-4 w-auto object-contain opacity-40 flex-shrink-0"
-                />
-                <Image 
-                  src="/logos/40.png" 
-                  alt="40" 
-                  width={200}
-                  height={200}
-                  className="h-6 w-auto object-contain opacity-40 flex-shrink-0"
-                />
-                <Image 
-                  src="/logos/maria.png" 
-                  alt="Maria" 
-                  width={200}
-                  height={200}
-                  className="h-3 w-auto object-contain opacity-40 flex-shrink-0"
-                />
-                <Image 
-                  src="/logos/childfund.png" 
-                  alt="ChildFund" 
-                  width={200}
-                  height={200}
-                  className="h-5 w-auto object-contain opacity-40 flex-shrink-0"
-                />
-              </div>
-            </div>
+            <InfiniteLogoCarousel
+              logos={[
+                { src: "/logos/bvlgari.png", alt: "Bulgari", className: "h-4 w-auto object-contain opacity-40" },
+                { src: "/logos/stc.png", alt: "STC", className: "h-10 w-auto object-contain opacity-40" },
+                { src: "/logos/maria.png", alt: "Maria", className: "h-10 w-auto object-contain opacity-40" },
+                { src: "/logos/childfund.png", alt: "ChildFund", className: "h-8 w-auto object-contain opacity-40" },
+              ]}
+            />
           </div>
 
           {/* Desktop: Static layout - Socios estratégicos */}
-          <div className="hidden sm:flex justify-center items-center gap-2 md:gap-3 lg:gap-4">
-            <Image 
-              src="/logos/bvlgari.png" 
-              alt="Bulgari" 
-              width={200}
-              height={200}
-              className="h-4 md:h-5 lg:h-6 w-auto object-contain opacity-40 hover:opacity-60 transition-opacity duration-300"
-            />
-            <Image 
-              src="/logos/stc.png" 
-              alt="STC" 
-              width={200}
-              height={200}
-              className="h-10 md:h-12 lg:h-14 w-auto object-contain opacity-40 hover:opacity-60 transition-opacity duration-300"
-            />
-            <Image 
-              src="/logos/40.png" 
-              alt="40" 
-              width={200}
-              height={200}
-              className="h-10 md:h-12 lg:h-14 w-auto object-contain opacity-40 hover:opacity-60 transition-opacity duration-300"
-            />
-            <Image 
-              src="/logos/maria.png" 
-              alt="Maria" 
-              width={200}
-              height={200}
-              className="h-6 md:h-8 lg:h-10 w-auto object-contain opacity-40 hover:opacity-60 transition-opacity duration-300"
-            />
-            <Image 
-              src="/logos/childfund.png" 
-              alt="ChildFund" 
-              width={200}
-              height={200}
-              className="h-8 md:h-10 lg:h-12 w-auto object-contain opacity-40 hover:opacity-60 transition-opacity duration-300"
-            />
+          <div className="hidden sm:flex justify-center items-center gap-4 md:gap-6 lg:gap-8">
+            <div className="flex items-center justify-center h-28 md:h-32 lg:h-36">
+              <Image 
+                src="/logos/bvlgari.png" 
+                alt="Bulgari" 
+                width={200}
+                height={200}
+                className="h-8 md:h-10 lg:h-12 w-auto object-contain opacity-40 hover:opacity-60 transition-opacity duration-300"
+              />
+            </div>
+            <div className="flex items-center justify-center h-28 md:h-32 lg:h-36">
+              <Image 
+                src="/logos/stc.png" 
+                alt="STC" 
+                width={200}
+                height={200}
+                className="h-20 md:h-24 lg:h-28 w-auto object-contain opacity-40 hover:opacity-60 transition-opacity duration-300"
+              />
+            </div>
+            <div className="flex items-center justify-center h-28 md:h-32 lg:h-36">
+              <Image 
+                src="/logos/maria.png" 
+                alt="Maria" 
+                width={200}
+                height={200}
+                className="h-16 md:h-20 lg:h-24 w-auto object-contain opacity-40 hover:opacity-60 transition-opacity duration-300"
+              />
+            </div>
+            <div className="flex items-center justify-center h-28 md:h-32 lg:h-36">
+              <Image 
+                src="/logos/childfund.png" 
+                alt="ChildFund" 
+                width={200}
+                height={200}
+                className="h-12 md:h-14 lg:h-16 w-auto object-contain opacity-40 hover:opacity-60 transition-opacity duration-300"
+              />
+            </div>
           </div>
         </div>
       </section>
