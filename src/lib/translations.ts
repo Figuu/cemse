@@ -1,7 +1,30 @@
 // Translation helpers for course attributes
 
+function normalizeKey(value: string): string {
+  return value
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/[-\s]+/g, '_');
+}
+
 export function getCategoryLabel(category: string | null | undefined): string {
   if (!category) return '';
+
+  const normalized = normalizeKey(category);
+
+  const aliasMap: Record<string, string> = {
+    'softskills': 'soft_skills',
+    'soft-skill': 'soft_skills',
+    'soft_skill': 'soft_skills',
+    'basiccompetencies': 'basic_competencies',
+    'basic-competencies': 'basic_competencies',
+    'technicalskills': 'technical_skills',
+    'technical-skill': 'technical_skills',
+    'personaldevelopment': 'personal_development',
+  };
+
+  const key = aliasMap[normalized] || normalized;
 
   const categoryMap: Record<string, string> = {
     'basic_competencies': 'Competencias Básicas',
@@ -18,11 +41,22 @@ export function getCategoryLabel(category: string | null | undefined): string {
     'communication': 'Comunicación',
   };
 
-  return categoryMap[category] || category;
+  return categoryMap[key] || category;
 }
 
 export function getLevelLabel(level: string | null | undefined): string {
   if (!level) return '';
+
+  const normalized = normalizeKey(level);
+
+  const aliasMap: Record<string, string> = {
+    'begginer': 'beginner', // common misspelling
+    'all levels': 'all_levels',
+    'all-levels': 'all_levels',
+    'alllevels': 'all_levels',
+  };
+
+  const key = aliasMap[normalized] || normalized;
 
   const levelMap: Record<string, string> = {
     'beginner': 'Principiante',
@@ -32,7 +66,7 @@ export function getLevelLabel(level: string | null | undefined): string {
     'all_levels': 'Todos los niveles',
   };
 
-  return levelMap[level] || level;
+  return levelMap[key] || level;
 }
 
 export function getEmploymentTypeLabel(type: string | null | undefined): string {

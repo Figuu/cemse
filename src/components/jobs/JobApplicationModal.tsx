@@ -32,6 +32,7 @@ import { useFileUpload } from "@/hooks/useFileUpload";
 import { useSession } from "next-auth/react";
 import { useCompleteProfile } from "@/hooks/useCompleteProfile";
 import { EmploymentTypeLabels, ExperienceLevelLabels } from "@/types/company";
+import { formatLocation } from "@/lib/formatLocation";
 import { toast } from "sonner";
 
 const applicationFormSchema = z.object({
@@ -242,7 +243,7 @@ export function JobApplicationModal({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
                   <div className="flex items-center gap-2">
                     <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                    <span className="truncate">{job.location || "Ubicación no especificada"}</span>
+                    <span className="truncate">{formatLocation(job.location) || "Ubicación no especificada"}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />

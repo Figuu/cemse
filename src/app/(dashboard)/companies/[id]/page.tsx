@@ -28,6 +28,7 @@ import { CompanySizeLabels, EmploymentTypeLabels, ExperienceLevelLabels } from "
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import Link from "next/link";
+import { formatLocation } from "@/lib/formatLocation";
 
 export default function CompanyProfilePage() {
   const params = useParams();
@@ -312,7 +313,7 @@ export default function CompanyProfilePage() {
                             <div className="flex-1">
                               <h4 className="font-semibold mb-1">{job.title}</h4>
                               <p className="text-sm text-muted-foreground mb-2">
-                                {job.location} • {EmploymentTypeLabels[job.employmentType] || job.employmentType} • {ExperienceLevelLabels[job.experienceLevel] || job.experienceLevel}
+                                {formatLocation(job.location)} • {EmploymentTypeLabels[job.employmentType] || job.employmentType} • {ExperienceLevelLabels[job.experienceLevel] || job.experienceLevel}
                               </p>
                               <div className="flex items-center gap-4 text-xs text-muted-foreground">
                                 <span>{job.totalApplications} aplicaciones</span>

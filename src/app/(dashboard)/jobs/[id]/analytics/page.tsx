@@ -17,6 +17,7 @@ import {
   Target,
   Award
 } from "lucide-react";
+import { formatLocation } from "@/lib/formatLocation";
 import { useJob, useJobApplications } from "@/hooks/useJobs";
 import { useSession } from "next-auth/react";
 import { useCompanyByUser } from "@/hooks/useCompanies";
@@ -309,7 +310,7 @@ export default function JobAnalyticsPage() {
               <div className="flex items-center gap-2">
                 <MapPin className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm font-medium">Ubicación:</span>
-                <span className="text-sm text-muted-foreground">{job.location}</span>
+                <span className="text-sm text-muted-foreground">{formatLocation(job.location)}</span>
               </div>
             </div>
             

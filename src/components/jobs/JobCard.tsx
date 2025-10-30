@@ -19,6 +19,7 @@ import {
 import { JobPosting, EmploymentTypeLabels, ExperienceLevelLabels } from "@/types/company";
 import { formatTimeAgo } from "@/lib/utils";
 import Link from "next/link";
+import { formatLocation } from "@/lib/formatLocation";
 
 interface JobCardProps {
   job: JobPosting;
@@ -103,7 +104,7 @@ export function JobCard({
                 )}
               </div>
               <p className="text-sm text-muted-foreground truncate">
-                {job.company.name} • <MapPin className="inline h-3 w-3 mr-1" />{job.location}
+                {job.company.name} • <MapPin className="inline h-3 w-3 mr-1" />{formatLocation(job.location)}
               </p>
               <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
                 <span className="truncate"><Briefcase className="inline h-3 w-3 mr-1" />{EmploymentTypeLabels[job.employmentType]}</span>
@@ -149,7 +150,7 @@ export function JobCard({
                   </Badge>
                 </div>
                 <p className="text-sm text-muted-foreground truncate">
-                  {job.company.name} • <MapPin className="inline h-3 w-3 mr-1" />{job.location}
+                  {job.company.name} • <MapPin className="inline h-3 w-3 mr-1" />{formatLocation(job.location)}
                 </p>
                 <p className="text-xs text-muted-foreground truncate">
                   <Calendar className="inline h-3 w-3 mr-1" />
@@ -253,7 +254,7 @@ export function JobCard({
                 )}
               </div>
               <p className="text-xs lg:text-sm text-muted-foreground truncate">
-                {job.company.name} • <MapPin className="inline h-3 w-3 mr-1" />{job.location}
+                {job.company.name} • <MapPin className="inline h-3 w-3 mr-1" />{formatLocation(job.location)}
               </p>
             </div>
           </div>

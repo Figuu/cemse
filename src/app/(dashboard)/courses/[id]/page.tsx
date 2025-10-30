@@ -148,6 +148,72 @@ export default function CourseDetailPage() {
     return false;
   };
 
+  // Derive selected lesson and manage its detailed data BEFORE any conditional returns
+  const selectedLesson = selectedLessonId && progress 
+    ? progress.modules
+        .flatMap(m => m.lessons)
+        .find(l => l.id === selectedLessonId)
+        ? {
+            ...progress.modules
+              .flatMap(m => m.lessons)
+              .find(l => l.id === selectedLessonId)!,
+            module: {
+              id: progress.modules
+                .find(m => m.lessons.some(l => l.id === selectedLessonId))?.id || "",
+              title: progress.modules
+                .find(m => m.lessons.some(l => l.id === selectedLessonId))?.title || "",
+              courseId: courseId
+            },
+            course: {
+              id: courseId,
+              title: course?.title || "",
+              description: course?.description || null
+            }
+          } as any
+        : null
+    : null;
+
+  // Enrich selected lesson with full details (attachments, media URLs) for YOUTH view
+  const [selectedLessonDetails, setSelectedLessonDetails] = useState<any | null>(null);
+
+  useEffect(() => {
+    const fetchLessonDetails = async () => {
+      if (!selectedLesson || !selectedLessonId) {
+        setSelectedLessonDetails(null);
+        return;
+      }
+
+      try {
+        const moduleId = selectedLesson.module?.id;
+        if (!moduleId) {
+          setSelectedLessonDetails(selectedLesson);
+          return;
+        }
+        const res = await fetch(`/api/courses/${courseId}/modules/${moduleId}/lessons/${selectedLessonId}`);
+        if (!res.ok) {
+          setSelectedLessonDetails(selectedLesson);
+          return;
+        }
+        const data = await res.json();
+        if (data?.lesson) {
+          // Merge progress-selected lesson with full lesson details
+          setSelectedLessonDetails({
+            ...selectedLesson,
+            ...data.lesson,
+            module: selectedLesson.module,
+            course: selectedLesson.course,
+          });
+        } else {
+          setSelectedLessonDetails(selectedLesson);
+        }
+      } catch {
+        setSelectedLessonDetails(selectedLesson);
+      }
+    };
+
+    fetchLessonDetails();
+  }, [selectedLessonId, selectedLesson, courseId]);
+
   // Fetch modules, lessons, and quizzes for management view
   useEffect(() => {
     if ((canManageCourse || isSuperAdmin) && courseId) {
@@ -473,30 +539,6 @@ export default function CourseDetailPage() {
     );
   }
 
-  const selectedLesson = selectedLessonId && progress 
-    ? progress.modules
-        .flatMap(m => m.lessons)
-        .find(l => l.id === selectedLessonId)
-        ? {
-            ...progress.modules
-              .flatMap(m => m.lessons)
-              .find(l => l.id === selectedLessonId)!,
-            module: {
-              id: progress.modules
-                .find(m => m.lessons.some(l => l.id === selectedLessonId))?.id || "",
-              title: progress.modules
-                .find(m => m.lessons.some(l => l.id === selectedLessonId))?.title || "",
-              courseId: courseId
-            },
-            course: {
-              id: courseId,
-              title: course?.title || "",
-              description: course?.description || null
-            }
-          } as any
-        : null
-    : null;
-
   // For youth users, show a learning-focused layout
   if (session?.user?.role === "YOUTH") {
     return (
@@ -578,7 +620,7 @@ export default function CourseDetailPage() {
               <div className="sm:col-span-2 lg:col-span-3">
                 {selectedLesson ? (
                   <LessonViewer
-                    lesson={selectedLesson}
+                    lesson={selectedLessonDetails || selectedLesson}
                     progress={selectedLesson.progress}
                     onProgressUpdate={handleProgressUpdate}
                     onPrevious={handlePreviousLesson}

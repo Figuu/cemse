@@ -28,20 +28,24 @@ interface QuizViewerProps {
   onSubmit: (answers: Record<string, any>) => Promise<{ attempt: any; results: QuizResults } | null>;
   onExit: () => void;
   className?: string;
+  initialAnswers?: Record<string, any>;
+  initialResults?: QuizResults | null;
 }
 
 export function QuizViewer({
   quiz,
   onSubmit,
   onExit,
-  className
+  className,
+  initialAnswers,
+  initialResults,
 }: QuizViewerProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, any>>({});
+  const [answers, setAnswers] = useState<Record<string, any>>(initialAnswers || {});
   const [timeRemaining, setTimeRemaining] = useState(quiz.timeLimit ? quiz.timeLimit * 60 : null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showResults, setShowResults] = useState(false);
-  const [results, setResults] = useState<QuizResults | null>(null);
+  const [showResults, setShowResults] = useState(!!initialResults);
+  const [results, setResults] = useState<QuizResults | null>(initialResults || null);
 
   // Validate quiz has questions
   if (!quiz.questions || !Array.isArray(quiz.questions) || quiz.questions.length === 0) {
@@ -53,7 +57,7 @@ export function QuizViewer({
           <p className="text-muted-foreground mb-4">
             Este cuestionario no tiene preguntas configuradas.
           </p>
-          <Button onClick={onExit}>
+          <Button type="button" onClick={onExit}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Volver
           </Button>
@@ -76,7 +80,7 @@ export function QuizViewer({
           <p className="text-muted-foreground mb-4">
             No se pudo cargar la pregunta actual.
           </p>
-          <Button onClick={onExit}>
+          <Button type="button" onClick={onExit}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Volver
           </Button>
@@ -172,6 +176,29 @@ export function QuizViewer({
     }
   };
 
+  const renderAnswerValue = (question: QuizQuestion, value: any) => {
+    if (value === undefined || value === null) return "—";
+
+    if (question.type === "multiple_choice") {
+      const index = typeof value === "string" ? parseInt(value, 10) : value;
+      const option = question.options?.[index];
+      return option ?? String(value);
+    }
+
+    if (question.type === "true_false") {
+      const boolVal = value === true || value === "true";
+      return boolVal ? "Verdadero" : "Falso";
+    }
+
+    if (Array.isArray(value)) {
+      return value.join(", ");
+    }
+
+    return String(value);
+  };
+
+  const canRetake = (quiz as any).attempts?.canRetake ?? true;
+
   if (showResults && results) {
     return (
       <div className={cn("space-y-6", className)}>
@@ -212,7 +239,7 @@ export function QuizViewer({
               </div>
             </div>
 
-            <div className="space-y-2 mb-6">
+            <div className="space-y-2 mb-8">
               <div className="flex items-center justify-between text-sm">
                 <span>Puntuación Mínima Requerida</span>
                 <span className="font-medium">{quiz.passingScore}%</span>
@@ -223,13 +250,89 @@ export function QuizViewer({
               />
             </div>
 
+            {/* Detailed per-question review */}
+            <div className="text-left space-y-3 mb-8">
+              <h3 className="text-lg font-semibold">Revisión de respuestas</h3>
+              <div className="space-y-4">
+                {quiz.questions.map((question, idx) => {
+                  const qId = (question as any).id ?? idx.toString();
+                  const userAnswer = answers[qId];
+                  const correctAnswer = (question as any).correctAnswer;
+
+                  // Determine correctness, mirroring backend coercion rules
+                  let isCorrect = false;
+                  if (question.type === "multiple_choice") {
+                    const ua = typeof userAnswer === "string" ? parseInt(userAnswer, 10) : userAnswer;
+                    const ca = typeof correctAnswer === "string" ? parseInt(correctAnswer as any, 10) : correctAnswer;
+                    isCorrect = ua === ca;
+                  } else if (question.type === "true_false") {
+                    const ua = userAnswer === true || userAnswer === "true";
+                    const ca = (correctAnswer === true) || (correctAnswer === "true");
+                    isCorrect = ua === ca;
+                  } else if (question.type === "fill_blank" || (question as any).type === "short_answer") {
+                    const ua = String(userAnswer ?? '').trim().toLowerCase();
+                    const ca = String(correctAnswer ?? '').trim().toLowerCase();
+                    isCorrect = ua === ca;
+                  } else if (question.type === "essay") {
+                    isCorrect = !!(userAnswer && String(userAnswer).trim().length > 0);
+                  } else {
+                    // fallback loose equality
+                    // eslint-disable-next-line eqeqeq
+                    isCorrect = (userAnswer as any) == (correctAnswer as any);
+                  }
+
+                  return (
+                    <Card key={qId} className={cn("border", isCorrect ? "border-green-200" : "border-red-200")}> 
+                      <CardContent className="p-4 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            {getQuestionTypeIcon(question.type)}
+                            <Badge variant="outline">{getQuestionTypeLabel(question.type)}</Badge>
+                          </div>
+                          {isCorrect ? (
+                            <Badge className="bg-green-600">Correcta</Badge>
+                          ) : (
+                            <Badge className="bg-red-600">Incorrecta</Badge>
+                          )}
+                        </div>
+                        <div className="font-medium">{idx + 1}. {question.question}</div>
+                        {question.points && (
+                          <div className="text-xs text-muted-foreground">{question.points} puntos</div>
+                        )}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
+                          <div className="p-3 rounded bg-gray-50">
+                            <div className="text-xs text-muted-foreground">Tu respuesta</div>
+                            <div className="text-sm font-medium">
+                              {renderAnswerValue(question, userAnswer)}
+                            </div>
+                          </div>
+                          <div className="p-3 rounded bg-gray-50">
+                            <div className="text-xs text-muted-foreground">Respuesta correcta</div>
+                            <div className="text-sm font-medium">
+                              {renderAnswerValue(question, correctAnswer)}
+                            </div>
+                          </div>
+                        </div>
+                        {question.explanation && (
+                          <div className="bg-blue-50 rounded p-3 mt-2">
+                            <div className="text-xs font-medium text-blue-900">Explicación</div>
+                            <div className="text-sm text-blue-800">{question.explanation}</div>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+
             <div className="flex space-x-2 justify-center">
-              <Button variant="outline" onClick={onExit}>
+              <Button type="button" variant="outline" onClick={onExit}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Volver
               </Button>
-              {quiz.attempts.canRetake && (
-                <Button onClick={() => {
+              {canRetake && (
+                <Button type="button" onClick={() => {
                   setShowResults(false);
                   setResults(null);
                   setCurrentQuestionIndex(0);
@@ -268,7 +371,7 @@ export function QuizViewer({
                   </span>
                 </div>
               )}
-              <Button variant="outline" size="sm" onClick={onExit}>
+              <Button type="button" variant="outline" size="sm" onClick={onExit}>
                 Salir
               </Button>
             </div>
@@ -382,6 +485,7 @@ export function QuizViewer({
       {/* Navigation */}
       <div className="flex items-center justify-between">
         <Button
+          type="button"
           variant="outline"
           onClick={handlePrevious}
           disabled={currentQuestionIndex === 0}
@@ -398,12 +502,13 @@ export function QuizViewer({
 
         <div className="flex space-x-2">
           {currentQuestionIndex < totalQuestions - 1 ? (
-            <Button onClick={handleNext}>
+            <Button type="button" onClick={handleNext}>
               Siguiente
               <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           ) : (
             <Button
+              type="button"
               onClick={handleSubmit}
               disabled={isSubmitting}
               className="bg-green-600 hover:bg-green-700"

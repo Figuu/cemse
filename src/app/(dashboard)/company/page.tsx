@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { formatLocation } from "@/lib/formatLocation";
 
 
 function CompanyPageContent() {
@@ -449,7 +450,7 @@ function CompanyPageContent() {
                           {getStatusText(job.status)}
                         </Badge>
                       </div>
-                      <p className="text-muted-foreground mb-3">{job.department} • {job.location}</p>
+                      <p className="text-muted-foreground mb-3">{job.department} • {formatLocation(job.location)}</p>
                       {job.salary && (
                         <p className="text-sm text-muted-foreground mb-3">
                           {formatCurrency(job.salary.min, job.salary.currency)} - {formatCurrency(job.salary.max, job.salary.currency)}

@@ -22,9 +22,9 @@ import {
   Send
 } from "lucide-react";
 import Link from "next/link";
-import { useJobById, useCreateJobApplication } from "@/hooks/useJobs";
+import { useJobById } from "@/hooks/useJobs";
 import { useMessages, useSendMessage } from "@/hooks/useMessages";
-import { JobApplicationForm } from "@/components/jobs/JobApplicationForm";
+import { JobApplicationModal } from "@/components/jobs/JobApplicationModal";
 import { JobPosting } from "@/types/company";
 
 export default function JobApplicationPage() {
@@ -33,11 +33,24 @@ export default function JobApplicationPage() {
   const { data: session } = useSession();
   const jobId = params.id as string;
   
+  // Normalize location to a human-readable string
+  const formatLocation = (location: unknown): string => {
+    if (!location) return "";
+    if (typeof location === "string") return location;
+    if (typeof location === "object") {
+      const loc = location as { lat?: number; lng?: number; address?: string };
+      if (loc.address) return loc.address;
+      const lat = typeof loc.lat === "number" ? loc.lat.toFixed(4) : undefined;
+      const lng = typeof loc.lng === "number" ? loc.lng.toFixed(4) : undefined;
+      if (lat && lng) return `${lat}, ${lng}`;
+      return "";
+    }
+    return "";
+  };
+  
   const [showApplicationForm, setShowApplicationForm] = useState(false);
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
   const [messageText, setMessageText] = useState("");
-  const [applicationError, setApplicationError] = useState<string | null>(null);
-  const [applicationSuccess, setApplicationSuccess] = useState(false);
 
   // Get job details
   const { data: job, isLoading: jobLoading, error: jobError } = useJobById(jobId);
@@ -57,24 +70,18 @@ export default function JobApplicationPage() {
   console.log("Apply page - Messages error:", messagesError);
 
   const sendMessageMutation = useSendMessage();
-  
-  // Get the company ID for the application submission
-  const companyId = job?.company?.id;
-  
-  // Initialize the job application mutation
-  const createApplicationMutation = useCreateJobApplication(companyId || "", jobId);
 
   const handleSendMessage = () => {
     console.log("handleSendMessage - Called with:", { messageText, ownerId: job?.company?.ownerId, jobId });
-    
+
     if (!messageText.trim() || !job?.company?.ownerId) {
-      console.log("handleSendMessage - Validation failed:", { 
-        hasMessage: !!messageText.trim(), 
-        hasOwnerId: !!job?.company?.ownerId 
+      console.log("handleSendMessage - Validation failed:", {
+        hasMessage: !!messageText.trim(),
+        hasOwnerId: !!job?.company?.ownerId
       });
       return;
     }
-    
+
     console.log("handleSendMessage - Sending message mutation");
     sendMessageMutation.mutate({
       recipientId: job.company.ownerId,
@@ -82,40 +89,8 @@ export default function JobApplicationPage() {
       contextType: "JOB_APPLICATION",
       contextId: jobId,
     });
-    
+
     setMessageText("");
-  };
-
-  const handleApplicationSubmit = async (applicationData: Record<string, unknown>) => {
-    if (!companyId) {
-      setApplicationError("No se pudo obtener la información de la empresa");
-      return;
-    }
-
-    setApplicationError(null);
-    setApplicationSuccess(false);
-
-    try {
-      console.log("Submitting application:", applicationData);
-      
-      await createApplicationMutation.mutateAsync(applicationData);
-      
-      setApplicationSuccess(true);
-      setShowApplicationForm(false);
-      
-      // Show success message for a few seconds
-      setTimeout(() => {
-        setApplicationSuccess(false);
-      }, 5000);
-      
-    } catch (error) {
-      console.error("Error submitting application:", error);
-      setApplicationError(
-        error instanceof Error 
-          ? error.message 
-          : "Error al enviar la aplicación. Por favor, inténtalo de nuevo."
-      );
-    }
   };
 
   if (jobLoading) {
@@ -172,29 +147,6 @@ export default function JobApplicationPage() {
         </div>
       </div>
 
-      {/* Success/Error Messages */}
-      {applicationSuccess && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-3 sm:p-4">
-          <div className="flex items-center gap-2">
-            <div className="h-4 w-4 bg-green-500 rounded-full flex-shrink-0"></div>
-            <p className="text-green-800 font-medium text-sm sm:text-base">¡Aplicación enviada exitosamente!</p>
-          </div>
-          <p className="text-green-700 text-xs sm:text-sm mt-1">
-            Tu aplicación ha sido enviada a {job.company.name}. Te contactaremos pronto.
-          </p>
-        </div>
-      )}
-
-      {applicationError && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-3 sm:p-4">
-          <div className="flex items-center gap-2">
-            <div className="h-4 w-4 bg-red-500 rounded-full flex-shrink-0"></div>
-            <p className="text-red-800 font-medium text-sm sm:text-base">Error al enviar aplicación</p>
-          </div>
-          <p className="text-red-700 text-xs sm:text-sm mt-1">{applicationError}</p>
-        </div>
-      )}
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Job Details */}
         <div className="lg:col-span-2 space-y-4 sm:space-y-6">
@@ -213,7 +165,7 @@ export default function JobApplicationPage() {
                     <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <MapPin className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-                        <span className="truncate">{job.location}</span>
+                        <span className="truncate">{formatLocation(job.location)}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Calendar className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
@@ -320,18 +272,14 @@ export default function JobApplicationPage() {
       </div>
 
       {/* Application Form Modal */}
-      {showApplicationForm && (
-        <JobApplicationForm
-          job={job}
-          onClose={() => {
-            setShowApplicationForm(false);
-            setApplicationError(null);
-          }}
-          onSubmit={handleApplicationSubmit}
-          isLoading={createApplicationMutation.isPending}
-          currentUser={session?.user}
-        />
-      )}
+      <JobApplicationModal
+        isOpen={showApplicationForm}
+        onClose={() => setShowApplicationForm(false)}
+        jobId={jobId}
+        jobTitle={job.title}
+        companyName={job.company.name}
+        job={job}
+      />
 
       {/* Chat Modal */}
       <Dialog open={isChatModalOpen} onOpenChange={setIsChatModalOpen}>

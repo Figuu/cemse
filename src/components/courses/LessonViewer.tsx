@@ -22,7 +22,12 @@ import {
   Video,
   Headphones,
   HelpCircle,
-  AlertCircle
+  AlertCircle,
+  FileText,
+  File,
+  FileSpreadsheet,
+  FileImage,
+  Paperclip
 } from "lucide-react";
 import { Lesson, LessonProgress } from "@/hooks/useCourseProgress";
 import { QuizViewer } from "./QuizViewer";
@@ -59,6 +64,8 @@ export function LessonViewer({
   const [lessonQuiz, setLessonQuiz] = useState<any | null>(null);
   const [isLoadingQuiz, setIsLoadingQuiz] = useState(false);
   const [showQuiz, setShowQuiz] = useState(false);
+  const [initialQuizAnswers, setInitialQuizAnswers] = useState<Record<string, any> | undefined>(undefined);
+  const [initialQuizResults, setInitialQuizResults] = useState<any | null>(null);
   const [contentWatched, setContentWatched] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -126,6 +133,70 @@ export function LessonViewer({
               if (validQuestions) {
                 console.log("Setting quiz with", quiz.questions.length, "questions");
                 setLessonQuiz(quiz);
+
+                // If there's a latest attempt, fetch full attempt details (with answers) and show summary
+                const latest = quiz.latestAttempt;
+                if (latest) {
+                  try {
+                    const attemptsRes = await fetch(`/api/quizzes/${quiz.id}/attempts`);
+                    if (attemptsRes.ok) {
+                      const attemptsData = await attemptsRes.json();
+                      const latestAttempt = Array.isArray(attemptsData.attempts) && attemptsData.attempts.length > 0
+                        ? attemptsData.attempts[0]
+                        : null;
+
+                      if (latestAttempt && latestAttempt.answers) {
+                        const questions = quiz.questions as any[];
+                        let correct = 0;
+                        const total = questions.length;
+
+                        questions.forEach((question: any, index: number) => {
+                          const questionId = question.id || index.toString();
+                          const userAnswer = latestAttempt.answers?.[questionId];
+                          const correctAnswer = question.correctAnswer;
+
+                          let isCorrect = false;
+                          if (question.type === 'multiple_choice') {
+                            const ua = typeof userAnswer === 'string' ? parseInt(userAnswer, 10) : userAnswer;
+                            const ca = typeof correctAnswer === 'string' ? parseInt(correctAnswer, 10) : correctAnswer;
+                            isCorrect = ua === ca;
+                          } else if (question.type === 'true_false') {
+                            const ua = userAnswer === true || userAnswer === 'true';
+                            const ca = correctAnswer === true || correctAnswer === 'true';
+                            isCorrect = ua === ca;
+                          } else if (question.type === 'fill_blank' || question.type === 'short_answer') {
+                            const ua = String(userAnswer ?? '').trim().toLowerCase();
+                            const ca = String(correctAnswer ?? '').trim().toLowerCase();
+                            isCorrect = ua === ca;
+                          } else if (question.type === 'essay') {
+                            isCorrect = !!(userAnswer && String(userAnswer).trim().length > 0);
+                          } else {
+                            // eslint-disable-next-line eqeqeq
+                            isCorrect = (userAnswer as any) == (correctAnswer as any);
+                          }
+
+                          if (isCorrect) correct++;
+                        });
+
+                        const score = total > 0 ? Math.round((correct / total) * 100) : 0;
+                        setInitialQuizAnswers(latestAttempt.answers || {});
+                        setInitialQuizResults({
+                          correctAnswers: correct,
+                          totalQuestions: total,
+                          score,
+                          passed: latestAttempt.passed,
+                          passingScore: quiz.passingScore,
+                        });
+                        setShowQuiz(true);
+                      }
+                    }
+                  } catch (e) {
+                    console.error('Error loading latest attempt with answers:', e);
+                  }
+                } else {
+                  setInitialQuizAnswers(undefined);
+                  setInitialQuizResults(null);
+                }
               } else {
                 console.error("Quiz questions are malformed:", quiz.questions);
                 setLessonQuiz(null);
@@ -151,8 +222,6 @@ export function LessonViewer({
     };
 
     fetchQuiz();
-    setShowQuiz(false);
-    setContentWatched(false);
   }, [lesson?.id, lesson?.course?.id]);
 
   // Set video source when lesson changes
@@ -326,6 +395,23 @@ export function LessonViewer({
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  };
+
+  const getFileIcon = (type: string) => {
+    if (type.includes("pdf")) return <FileText className="h-5 w-5 text-red-500" />;
+    if (type.includes("word") || type.includes("document")) return <FileText className="h-5 w-5 text-blue-500" />;
+    if (type.includes("sheet") || type.includes("excel")) return <FileSpreadsheet className="h-5 w-5 text-green-500" />;
+    if (type.includes("image")) return <FileImage className="h-5 w-5 text-purple-500" />;
+    if (type.includes("zip")) return <File className="h-5 w-5 text-orange-500" />;
+    return <File className="h-5 w-5 text-gray-500" />;
   };
 
   const getContentTypeIcon = (contentType: string) => {
@@ -542,8 +628,8 @@ export function LessonViewer({
               <div className="w-full aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
                 <div className="text-center">
                   <Video className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600 font-medium">No video file available</p>
-                  <p className="text-sm text-gray-500">This lesson doesn't have a video attached</p>
+                  <p className="text-gray-600 font-medium">No hay video disponible</p>
+                  <p className="text-sm text-gray-500">Esta lección no tiene un video adjunto</p>
                 </div>
               </div>
             )}
@@ -615,8 +701,8 @@ export function LessonViewer({
               <div className="w-full aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
                 <div className="text-center">
                   <Headphones className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600 font-medium">No audio file available</p>
-                  <p className="text-sm text-gray-500">This lesson doesn't have an audio file attached</p>
+                  <p className="text-gray-600 font-medium">No hay audio disponible</p>
+                  <p className="text-sm text-gray-500">Esta lección no tiene un archivo de audio adjunto</p>
                 </div>
               </div>
             )}
@@ -627,8 +713,8 @@ export function LessonViewer({
           <CardContent className="p-8">
             <div className="text-center">
               <BookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600 font-medium">No media content</p>
-              <p className="text-sm text-gray-500">This lesson doesn't have video or audio content</p>
+              <p className="text-gray-600 font-medium">Sin contenido multimedia</p>
+              <p className="text-sm text-gray-500">Esta lección no tiene contenido de video o audio</p>
             </div>
           </CardContent>
         </Card>
@@ -661,6 +747,54 @@ export function LessonViewer({
         </CardContent>
       </Card>
 
+      {/* Attachments Section - Show lesson resources */}
+      {lesson.attachments && Object.keys(lesson.attachments).length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Paperclip className="h-5 w-5" />
+              Recursos Adjuntos
+            </CardTitle>
+            <CardDescription>
+              Descarga los recursos adicionales de esta lección
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {Object.values(lesson.attachments).map((attachment: any, index) => {
+              if (!attachment || typeof attachment !== 'object' || !attachment.url) return null;
+
+              return (
+                <div key={attachment.id || index} className="flex items-center space-x-3 p-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
+                  {getFileIcon(attachment.type || '')}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {attachment.name}
+                    </p>
+                    {attachment.size && (
+                      <p className="text-xs text-gray-500">
+                        {formatFileSize(attachment.size)}
+                      </p>
+                    )}
+                  </div>
+                  <a
+                    href={attachment.url}
+                    download
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-shrink-0"
+                  >
+                    <Button variant="outline" size="sm">
+                      <Download className="h-4 w-4 mr-2" />
+                      Descargar
+                    </Button>
+                  </a>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Quiz Section - Show if lesson has a quiz */}
       {lessonQuiz && !isCompleted && (
         <Card className="border-purple-200 bg-purple-50">
@@ -677,6 +811,7 @@ export function LessonViewer({
                 </p>
                 {contentWatched ? (
                   <Button
+                    type="button"
                     onClick={() => {
                       console.log("Opening quiz. Quiz data:", lessonQuiz);
                       console.log("Quiz questions:", lessonQuiz?.questions);
@@ -707,6 +842,8 @@ export function LessonViewer({
           quiz={lessonQuiz}
           onSubmit={handleQuizSubmit}
           onExit={handleQuizExit}
+          initialAnswers={initialQuizAnswers}
+          initialResults={initialQuizResults}
         />
       )}
 

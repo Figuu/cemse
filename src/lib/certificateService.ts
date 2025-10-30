@@ -91,8 +91,9 @@ export class CertificateService {
       this.BUCKET_NAME
     );
 
-    // Return the public URL
-    return result.url;
+    // Return proxy URL (consistent with other uploads)
+    const proxyUrl = `/api/images/proxy?bucket=${encodeURIComponent(result.bucket)}&key=${encodeURIComponent(result.key)}`;
+    return proxyUrl;
   }
 
   /**

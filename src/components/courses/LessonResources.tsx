@@ -89,7 +89,8 @@ export function LessonResources({ lessonId, resources, onResourcesChange }: Less
       for (const file of files) {
         const formData = new FormData();
         formData.append("file", file);
-        formData.append("category", "other");
+        // Usar la categoría correcta para recursos de curso (límite 20MB y tipos permitidos)
+        formData.append("category", "course-resource");
 
         const response = await fetch("/api/files/minio/upload", {
           method: "POST",
@@ -225,17 +226,24 @@ export function LessonResources({ lessonId, resources, onResourcesChange }: Less
         <div className="flex space-x-2">
           <FileUpload
             onUpload={handleFileUpload}
+            // Alinear tipos aceptados con allowedTypes de course-resource en API
             accept={{
-              "image/*": [".png", ".jpg", ".jpeg", ".gif", ".webp"],
-              "video/*": [".mp4", ".avi", ".mov", ".wmv"],
-              "audio/*": [".mp3", ".wav", ".ogg", ".m4a"],
               "application/pdf": [".pdf"],
               "application/msword": [".doc"],
               "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
-              "text/*": [".txt", ".md", ".html"],
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
+              "application/vnd.ms-excel": [".xls"],
+              "application/vnd.openxmlformats-officedocument.presentationml.presentation": [".pptx"],
+              "application/vnd.ms-powerpoint": [".ppt"],
+              "application/zip": [".zip"],
+              "application/x-zip-compressed": [".zip"],
+              "text/plain": [".txt"],
+              "image/png": [".png"],
+              "image/jpeg": [".jpg", ".jpeg"],
             }}
             maxFiles={5}
-            maxSize={100 * 1024 * 1024} // 100MB
+            // Límite coherente con API: 20MB por archivo
+            maxSize={20 * 1024 * 1024}
             className="w-auto"
           />
           <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>

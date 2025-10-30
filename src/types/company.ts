@@ -75,7 +75,7 @@ export interface JobPosting {
   requirements: string[];
   responsibilities: string[];
   benefits: string[];
-  location: string;
+  location: string | { lat?: number; lng?: number; address?: string };
   city?: string;
   state?: string;
   country?: string;

@@ -119,6 +119,7 @@ export async function POST(request: NextRequest) {
             "course-thumbnail": ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp", "image/svg+xml"],
             "course-video": ["video/mp4", "video/avi", "video/mov", "video/wmv", "video/flv", "video/webm", "video/quicktime"],
             "course-audio": ["audio/mp3", "audio/wav", "audio/ogg", "audio/m4a", "audio/aac", "audio/flac", "audio/mpeg"],
+            "course-resource": ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.presentationml.presentation", "application/vnd.ms-powerpoint", "application/zip", "application/x-zip-compressed", "text/plain", "image/png", "image/jpeg", "image/jpg"],
             "news-image": ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp", "image/svg+xml"],
             "news-video": ["video/mp4", "video/avi", "video/mov", "video/wmv", "video/flv", "video/webm", "video/quicktime"],
             "profile-picture": ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp"],
@@ -144,6 +145,18 @@ export async function POST(request: NextRequest) {
                 extensions.add("DOC");
               } else if (type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
                 extensions.add("DOCX");
+              } else if (type === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") {
+                extensions.add("XLSX");
+              } else if (type === "application/vnd.ms-excel") {
+                extensions.add("XLS");
+              } else if (type === "application/vnd.openxmlformats-officedocument.presentationml.presentation") {
+                extensions.add("PPTX");
+              } else if (type === "application/vnd.ms-powerpoint") {
+                extensions.add("PPT");
+              } else if (type === "application/zip" || type === "application/x-zip-compressed") {
+                extensions.add("ZIP");
+              } else if (type === "text/plain") {
+                extensions.add("TXT");
               }
             });
 
@@ -163,6 +176,7 @@ export async function POST(request: NextRequest) {
             "course-thumbnail": 10 * 1024 * 1024, // 10MB
             "course-video": 500 * 1024 * 1024, // 500MB
             "course-audio": 100 * 1024 * 1024, // 100MB
+            "course-resource": 200 * 1024 * 1024, // 200MB (increased from 20MB for large PDFs and documents)
             "news-image": 10 * 1024 * 1024, // 10MB
             "news-video": 500 * 1024 * 1024, // 500MB
             "other": 10 * 1024 * 1024 // 10MB
@@ -185,7 +199,7 @@ export async function POST(request: NextRequest) {
             bucket = BUCKETS.VIDEOS;
           } else if (category === "course-audio") {
             bucket = BUCKETS.AUDIO;
-          } else if (category === "cv") {
+          } else if (category === "cv" || category === "course-resource") {
             bucket = BUCKETS.DOCUMENTS;
           }
 

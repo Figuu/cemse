@@ -28,6 +28,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { LessonFileUpload } from "./LessonFileUpload";
+import { ResourceUpload } from "./ResourceUpload";
 import {
   Plus,
   Edit,
@@ -141,6 +142,7 @@ export function UnifiedCourseManager({
     duration: 0,
     isRequired: true,
     isPreview: false,
+    attachments: [] as any[],
   });
 
   // Auto-hide success messages
@@ -210,6 +212,7 @@ export function UnifiedCourseManager({
         duration: 0,
         isRequired: true,
         isPreview: false,
+        attachments: [],
       });
     } else if (type === 'quiz') {
       setQuizForm({
@@ -243,6 +246,7 @@ export function UnifiedCourseManager({
         duration: item.duration || 0,
         isRequired: item.isRequired || false,
         isPreview: item.isPreview || false,
+        attachments: item.attachments || [],
       });
     } else if (type === 'quiz') {
       setQuizForm({
@@ -264,19 +268,23 @@ export function UnifiedCourseManager({
 
     try {
       if (editingItem.type === 'module') {
-        const response = await fetch(`/api/courses/${courseId}/modules`, {
-          method: editingItem.id ? 'PUT' : 'POST',
+        const isUpdate = Boolean(editingItem.id);
+        const url = isUpdate
+          ? `/api/courses/${courseId}/modules/${editingItem.id}`
+          : `/api/courses/${courseId}/modules`;
+        const method = isUpdate ? 'PUT' : 'POST';
+        const response = await fetch(url, {
+          method,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             ...moduleForm,
-            id: editingItem.id,
           }),
         });
 
         if (!response.ok) throw new Error('Failed to save module');
         const data = await response.json();
         
-        if (editingItem.id) {
+        if (isUpdate) {
           onModulesChange(modules.map(m => m.id === editingItem.id ? data.module : m));
           setSuccess('Módulo actualizado exitosamente');
         } else {
@@ -294,12 +302,17 @@ export function UnifiedCourseManager({
           audioUrl = uploadedFileUrl || lessonForm.audioUrl || null;
         }
 
-        const response = await fetch(`/api/courses/${courseId}/modules/${editingItem.moduleId}/lessons`, {
-          method: editingItem.id ? 'PUT' : 'POST',
+        const isUpdate = Boolean(editingItem.id);
+        const url = isUpdate
+          ? `/api/courses/${courseId}/modules/${editingItem.moduleId}/lessons/${editingItem.id}`
+          : `/api/courses/${courseId}/modules/${editingItem.moduleId}/lessons`;
+        const method = isUpdate ? 'PUT' : 'POST';
+
+        const response = await fetch(url, {
+          method,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             ...lessonForm,
-            id: editingItem.id,
             videoUrl,
             audioUrl,
           }),
@@ -308,7 +321,7 @@ export function UnifiedCourseManager({
         if (!response.ok) throw new Error('Failed to save lesson');
         const data = await response.json();
         
-        if (editingItem.id) {
+        if (isUpdate) {
           onLessonsChange(lessons.map(l => l.id === editingItem.id ? data.lesson : l));
           setSuccess('Lección actualizada exitosamente');
         } else {
@@ -947,6 +960,18 @@ export function UnifiedCourseManager({
                     rows={4}
                   />
                 </div>
+
+                {/* Resource Upload Section */}
+                <div>
+                  <ResourceUpload
+                    onResourcesChange={(resources) => {
+                      setLessonForm(prev => ({ ...prev, attachments: resources }));
+                    }}
+                    initialResources={lessonForm.attachments}
+                    disabled={isLoading}
+                  />
+                </div>
+
                 <div className="flex items-center space-x-4">
                   <label className="flex items-center space-x-2">
                     <input

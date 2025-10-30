@@ -41,6 +41,16 @@ import {
 import { LessonFileUpload } from "./LessonFileUpload";
 import { LessonResources } from "./LessonResources";
 import { LessonQuizzes } from "./LessonQuizzes";
+import { ResourceUpload } from "./ResourceUpload";
+
+interface ResourceFile {
+  id: string;
+  name: string;
+  url: string;
+  size: number;
+  type: string;
+  uploadedAt: string;
+}
 
 interface CourseLesson {
   id: string;
@@ -89,6 +99,7 @@ export function LessonManager({ courseId, moduleId, lessons, onLessonsChange, se
     duration: 0,
     isRequired: true,
     isPreview: false,
+    attachments: [] as ResourceFile[],
   });
 
   const [uploadedFileUrl, setUploadedFileUrl] = useState<string | null>(null);
@@ -136,6 +147,7 @@ export function LessonManager({ courseId, moduleId, lessons, onLessonsChange, se
       duration: 0,
       isRequired: true,
       isPreview: false,
+      attachments: [],
     });
     setUploadedFileUrl(null);
   };
@@ -224,6 +236,7 @@ export function LessonManager({ courseId, moduleId, lessons, onLessonsChange, se
         ...formData,
         videoUrl,
         audioUrl,
+        attachments: formData.attachments,
       };
 
       console.log("7. 🚀 REQUEST BODY:");
@@ -295,6 +308,7 @@ export function LessonManager({ courseId, moduleId, lessons, onLessonsChange, se
           ...formData,
           videoUrl,
           audioUrl,
+          attachments: formData.attachments,
         }),
       });
 
@@ -342,6 +356,11 @@ export function LessonManager({ courseId, moduleId, lessons, onLessonsChange, se
 
   const openEditModal = (lesson: CourseLesson) => {
     setEditingLesson(lesson);
+    // Convert attachments object to array format for ResourceUpload
+    const attachmentsArray = lesson.attachments
+      ? Object.values(lesson.attachments).filter(item => item && typeof item === 'object')
+      : [];
+
     setFormData({
       title: lesson.title,
       description: lesson.description || "",
@@ -352,6 +371,7 @@ export function LessonManager({ courseId, moduleId, lessons, onLessonsChange, se
       duration: lesson.duration || 0,
       isRequired: lesson.isRequired,
       isPreview: lesson.isPreview,
+      attachments: attachmentsArray as ResourceFile[],
     });
     // Set the current file URL for display
     if (lesson.contentType === "VIDEO" && lesson.videoUrl) {
@@ -510,6 +530,17 @@ export function LessonManager({ courseId, moduleId, lessons, onLessonsChange, se
                   onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
                   placeholder="Contenido de la lección (texto, instrucciones, etc.)"
                   rows={6}
+                />
+              </div>
+
+              {/* Resource Upload Section */}
+              <div>
+                <ResourceUpload
+                  onResourcesChange={(resources) => {
+                    setFormData(prev => ({ ...prev, attachments: resources }));
+                  }}
+                  initialResources={formData.attachments}
+                  disabled={isLoading}
                 />
               </div>
 
@@ -770,6 +801,17 @@ export function LessonManager({ courseId, moduleId, lessons, onLessonsChange, se
                 onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
                 placeholder="Contenido de la lección (texto, instrucciones, etc.)"
                 rows={6}
+              />
+            </div>
+
+            {/* Resource Upload Section */}
+            <div>
+              <ResourceUpload
+                onResourcesChange={(resources) => {
+                  setFormData(prev => ({ ...prev, attachments: resources }));
+                }}
+                initialResources={formData.attachments}
+                disabled={isLoading}
               />
             </div>
 

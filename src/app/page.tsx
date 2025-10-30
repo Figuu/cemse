@@ -8,6 +8,7 @@ import { BookOpen, Briefcase, Users, Building2, GraduationCap, Lightbulb, Chevro
 import Link from "next/link";
 import Image from "next/image";
 import { LandingHeader } from "@/components/LandingHeader";
+import { formatLocation } from "@/lib/formatLocation";
 import { motion, AnimatePresence, useInView } from "framer-motion";
 
 // Infinite Carousel Component for Logos
@@ -970,7 +971,7 @@ export default function Home() {
                       </p>
                       <p className="flex items-center gap-2">
                         <Users className="w-4 h-4" />
-                        {job.location}
+                        {formatLocation(job.location)}
                       </p>
                       {job.salary && (
                         <p className="font-medium text-green-600">

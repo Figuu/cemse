@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 import { useMessages, useSendMessage } from "@/hooks/useMessages";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
+import { formatLocation } from "@/lib/formatLocation";
 
 export default function JobChatPage() {
   const { data: session } = useSession();
@@ -164,7 +165,7 @@ export default function JobChatPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                   <div className="flex items-center gap-2">
                     <MapPin className="h-4 w-4 text-muted-foreground" />
-                    <span>{job.location}</span>
+                    <span>{formatLocation(job.location)}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-muted-foreground" />
