@@ -42,6 +42,7 @@ export async function POST(request: NextRequest) {
       "course-thumbnail": ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp", "image/svg+xml"],
       "course-video": ["video/mp4", "video/avi", "video/mov", "video/wmv", "video/flv", "video/webm", "video/quicktime"],
       "course-audio": ["audio/mp3", "audio/wav", "audio/ogg", "audio/m4a", "audio/aac", "audio/flac", "audio/mpeg"],
+      "course-resource": ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.presentationml.presentation", "application/vnd.ms-powerpoint", "application/zip", "application/x-zip-compressed", "text/plain", "image/png", "image/jpeg", "image/jpg"],
       "profile-picture": ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp"],
       "cv": ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
       "certificate": ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp", "application/pdf"],
@@ -58,6 +59,7 @@ export async function POST(request: NextRequest) {
       "course-thumbnail": 10 * 1024 * 1024, // 10MB
       "course-video": 600 * 1024 * 1024, // 600MB
       "course-audio": 100 * 1024 * 1024, // 100MB
+      "course-resource": 200 * 1024 * 1024, // 200MB (same as regular upload endpoint)
       "news-image": 10 * 1024 * 1024, // 10MB
       "news-video": 600 * 1024 * 1024, // 600MB
       "other": 10 * 1024 * 1024 // 10MB
@@ -146,7 +148,7 @@ export async function POST(request: NextRequest) {
           bucket = BUCKETS.VIDEOS;
         } else if (category === "course-audio") {
           bucket = BUCKETS.AUDIO;
-        } else if (category === "cv") {
+        } else if (category === "cv" || category === "course-resource") {
           bucket = BUCKETS.DOCUMENTS;
         }
 

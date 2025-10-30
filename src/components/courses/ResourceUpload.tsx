@@ -144,71 +144,138 @@ export const ResourceUpload = ({
     try {
       console.log("Uploading file:", file.name, "Type:", file.type, "Size:", file.size);
 
-      // Use regular multipart upload for all files since nginx is configured for 1GB
-      // This is more efficient than base64 encoding
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("category", "course-resource");
+      const category = "course-resource";
 
-      // Create XMLHttpRequest for progress tracking
-      const xhr = new XMLHttpRequest();
+      // Use chunked upload for files larger than 1MB to avoid Next.js body size limits
+      // Next.js API routes have a default 1MB limit, so we use chunked upload for anything larger
+      const CHUNK_SIZE = 512 * 1024; // 512KB chunks to stay well under Next.js 1MB limit
+      const USE_CHUNKED = file.size > 1024 * 1024; // 1MB threshold
 
-      return new Promise<ResourceFile | null>((resolve, reject) => {
-        xhr.upload.addEventListener("progress", (event) => {
-          if (event.lengthComputable) {
-            const percentComplete = (event.loaded / event.total) * 100;
+      if (USE_CHUNKED) {
+        // Chunked upload for large files (same logic as LessonFileUpload for videos)
+        try {
+          const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+          const uploadId = `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+
+          console.log(`Using chunked upload: ${totalChunks} chunks of ~${Math.round(CHUNK_SIZE / 1024)}KB`);
+
+          for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+            const start = chunkIndex * CHUNK_SIZE;
+            const end = Math.min(start + CHUNK_SIZE, file.size);
+            const chunk = file.slice(start, end);
+
+            const formData = new FormData();
+            formData.append("file", chunk, file.name);
+            formData.append("category", category);
+            formData.append("uploadId", uploadId);
+            formData.append("chunkIndex", chunkIndex.toString());
+            formData.append("totalChunks", totalChunks.toString());
+            formData.append("originalName", file.name);
+            formData.append("originalSize", file.size.toString());
+
+            const response = await fetch("/api/files/chunked-upload", {
+              method: "POST",
+              body: formData,
+            });
+
+            if (!response.ok) {
+              const error = await response.json();
+              throw new Error(error.error || "Chunk upload failed");
+            }
+
+            const result = await response.json();
+
+            // Update progress
+            const percentComplete = Math.round(((chunkIndex + 1) / totalChunks) * 100);
             setProgress(prev => ({ ...prev, [file.name]: percentComplete }));
-          }
-        });
 
-        xhr.addEventListener("load", () => {
-          if (xhr.status === 200) {
-            try {
-              const result = JSON.parse(xhr.responseText);
-              if (result.success && result.file) {
-                const resourceFile: ResourceFile = {
-                  id: result.file.id,
-                  name: file.name,
-                  url: result.file.url,
-                  size: file.size,
-                  type: file.type,
-                  uploadedAt: result.file.uploadedAt
-                };
-                setProgress(prev => ({ ...prev, [file.name]: 100 }));
-                resolve(resourceFile);
-              } else {
-                reject(new Error("Upload failed"));
-              }
-            } catch (e) {
-              reject(new Error("Invalid server response"));
-            }
-          } else {
-            try {
-              const errorData = JSON.parse(xhr.responseText);
-              console.error("Upload error:", errorData);
-              reject(new Error(errorData.error || "Upload failed"));
-            } catch (e) {
-              // If response is not JSON (e.g., HTML error page)
-              console.error("Upload failed - HTML response:", xhr.responseText.substring(0, 200));
-              console.error("Status:", xhr.status);
-
-              // Provide specific error messages based on status code
-              if (xhr.status === 413) {
-                reject(new Error(`Archivo demasiado grande. El límite es 200MB. Si el problema persiste, contacta al administrador.`));
-              } else {
-                reject(new Error(`Error al subir archivo. Código: ${xhr.status}`));
-              }
+            // If this was the last chunk, return the ResourceFile
+            if (result.complete && result.url) {
+              console.log("Chunked upload complete!");
+              const resourceFile: ResourceFile = {
+                id: result.file?.id || `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+                name: file.name,
+                url: result.url,
+                size: file.size,
+                type: file.type,
+                uploadedAt: result.file?.uploadedAt || new Date().toISOString()
+              };
+              setProgress(prev => ({ ...prev, [file.name]: 100 }));
+              return resourceFile;
             }
           }
-        });
 
-        xhr.addEventListener("error", () => {
-          reject(new Error("Error de red al subir archivo"));
-        });
+          throw new Error("Chunked upload did not complete properly");
+        } catch (error) {
+          console.error("Chunked upload failed:", error);
+          throw error;
+        }
+      } else {
+        // Regular upload for small files (< 1MB)
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("category", category);
 
-        xhr.open("POST", "/api/files/minio/upload");
-        xhr.send(formData);
-      });
+        // Create XMLHttpRequest for progress tracking
+        const xhr = new XMLHttpRequest();
+
+        return new Promise<ResourceFile | null>((resolve, reject) => {
+          xhr.upload.addEventListener("progress", (event) => {
+            if (event.lengthComputable) {
+              const percentComplete = (event.loaded / event.total) * 100;
+              setProgress(prev => ({ ...prev, [file.name]: percentComplete }));
+            }
+          });
+
+          xhr.addEventListener("load", () => {
+            if (xhr.status === 200) {
+              try {
+                const result = JSON.parse(xhr.responseText);
+                if (result.success && result.file) {
+                  const resourceFile: ResourceFile = {
+                    id: result.file.id,
+                    name: file.name,
+                    url: result.file.url,
+                    size: file.size,
+                    type: file.type,
+                    uploadedAt: result.file.uploadedAt
+                  };
+                  setProgress(prev => ({ ...prev, [file.name]: 100 }));
+                  resolve(resourceFile);
+                } else {
+                  reject(new Error("Upload failed"));
+                }
+              } catch (e) {
+                reject(new Error("Invalid server response"));
+              }
+            } else {
+              try {
+                const errorData = JSON.parse(xhr.responseText);
+                console.error("Upload error:", errorData);
+                reject(new Error(errorData.error || "Upload failed"));
+              } catch (e) {
+                // If response is not JSON (e.g., HTML error page)
+                console.error("Upload failed - HTML response:", xhr.responseText.substring(0, 200));
+                console.error("Status:", xhr.status);
+
+                // Provide specific error messages based on status code
+                if (xhr.status === 413) {
+                  reject(new Error(`Archivo demasiado grande. El límite es 200MB. Si el problema persiste, contacta al administrador.`));
+                } else {
+                  reject(new Error(`Error al subir archivo. Código: ${xhr.status}`));
+                }
+              }
+            }
+          });
+
+          xhr.addEventListener("error", () => {
+            reject(new Error("Error de red al subir archivo"));
+          });
+
+          xhr.open("POST", "/api/files/minio/upload");
+          xhr.send(formData);
+        });
+      }
     } catch (error) {
       console.error("Upload failed:", error);
       return null;
