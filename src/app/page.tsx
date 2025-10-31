@@ -848,8 +848,8 @@ export default function Home() {
                 { src: "/logos/kallpa.png", alt: "Kallpa", className: "h-20 w-auto object-contain opacity-60" },
                 { src: "/logos/manqa.png", alt: "Manqa", className: "h-16 w-auto object-contain opacity-60" },
                 { src: "/logos/childfund.png", alt: "ChildFund", className: "h-10 w-auto object-contain opacity-60" },
-                { src: "/logos/stc.png", alt: "STC", className: "h-10 w-auto object-contain opacity-60" },
-                { src: "/logos/40.png", alt: "40", className: "h-12 w-auto object-contain opacity-60" },
+                { src: "/logos/stc.png", alt: "STC", className: "h-14 w-auto object-contain opacity-60" },
+                { src: "/logos/40.png", alt: "40", className: "h-16 w-auto object-contain opacity-60" },
               ]}
             />
           </div>
@@ -889,14 +889,14 @@ export default function Home() {
               alt="STC"
               width={200}
               height={200}
-              className="h-14 md:h-16 lg:h-18 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
+              className="h-18 md:h-20 lg:h-22 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
             />
             <Image
               src="/logos/40.png"
               alt="40"
               width={200}
               height={200}
-              className="h-16 md:h-18 lg:h-20 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
+              className="h-20 md:h-22 lg:h-24 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300"
             />
           </div>
         </div>
