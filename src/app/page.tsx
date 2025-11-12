@@ -745,7 +745,7 @@ export default function Home() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.8, delay: 0.5 }}
-                > Educación y Empleo</motion.span>
+                > Educación, Empleo y Emprendimiento</motion.span>
               </motion.h1>
               <motion.p
                 className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto lg:mx-0"
