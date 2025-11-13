@@ -192,11 +192,6 @@ export function CertificateCard({
             </div>
           </div>
         )}
-
-        {/* Certificate URL */}
-        <div className="text-xs text-muted-foreground break-all">
-          <span className="font-medium">URL:</span> {certificate.certificateUrl}
-        </div>
       </CardContent>
     </Card>
   );
