@@ -100,9 +100,9 @@ const nextConfig: NextConfig = {
           },
           {
             key: "Content-Security-Policy",
-            value: process.env.NODE_ENV === 'development' 
-              ? "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://* http://localhost:9000; media-src 'self' blob: https://*; connect-src 'self' https://* http://localhost:9000 ws://localhost:* wss://*; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
-              : "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://* http://localhost:9000; media-src 'self' blob: https://*; connect-src 'self' https://* http://localhost:9000 ws://localhost:* wss://*; frame-ancestors 'none'; base-uri 'self'; form-action 'self';",
+            value: process.env.NODE_ENV === 'development'
+              ? "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://* http://localhost:9000; media-src 'self' blob: https://*; connect-src 'self' https://* http://localhost:9000 ws://localhost:* wss://*; frame-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self';"
+              : "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://* http://localhost:9000; media-src 'self' blob: https://*; connect-src 'self' https://* http://localhost:9000 ws://localhost:* wss://*; frame-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self';",
           },
           {
             key: "Strict-Transport-Security",

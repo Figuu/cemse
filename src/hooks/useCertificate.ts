@@ -63,10 +63,53 @@ export function useCertificate(courseId: string) {
     generateCertificateMutation.mutate();
   };
 
-  const downloadCertificate = () => {
+  const downloadCertificate = async () => {
     const certificateUrl = certificateQuery.data?.certificateUrl;
-    if (certificateUrl) {
-      window.open(certificateUrl, "_blank");
+    if (!certificateUrl) return;
+
+    try {
+      // Check if this is a MinIO direct URL (e.g., http://localhost:9000/...)
+      // If so, we need to fetch it server-side through our proxy
+      const isMinIODirectUrl = certificateUrl.includes('localhost:9000') || certificateUrl.includes(':9000/');
+
+      let downloadUrl: string;
+
+      if (isMinIODirectUrl) {
+        // For MinIO direct URLs, we need to use the server-side download endpoint
+        // First, get the certificate ID from the API
+        const response = await fetch(`/api/courses/${courseId}/certificate`);
+        const data = await response.json();
+
+        // Check if we have a certificate record - we'll need to regenerate if the URL is bad
+        console.warn('Certificate URL is a direct MinIO URL, should use proxy URL instead');
+
+        // For now, just use the URL as-is but convert to proxy format
+        // Extract bucket and key from MinIO URL if possible
+        const urlParts = certificateUrl.match(/https?:\/\/[^\/]+\/([^\/]+)\/(.+)/);
+        if (urlParts) {
+          const bucket = urlParts[1];
+          const key = urlParts[2];
+          downloadUrl = `/api/images/proxy?bucket=${encodeURIComponent(bucket)}&key=${encodeURIComponent(key)}&download=true`;
+        } else {
+          // Fallback: try to download directly
+          downloadUrl = certificateUrl;
+        }
+      } else {
+        // For proxy URLs, just add the download parameter
+        downloadUrl = certificateUrl.includes('?')
+          ? `${certificateUrl}&download=true`
+          : `${certificateUrl}?download=true`;
+      }
+
+      // Create a temporary anchor element and trigger download
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = `certificado-${courseId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error downloading certificate:', error);
     }
   };
 

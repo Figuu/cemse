@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { CertificateService } from "@/lib/certificateService";
+import { getLevelLabel } from "@/lib/translations";
 
 export async function GET(
   request: NextRequest,
@@ -114,8 +115,8 @@ export async function POST(
         ? `${course.instructor.user.firstName} ${course.instructor.user.lastName}`
         : 'Instructor',
       completionDate: (enrollment?.completedAt || new Date()).toISOString(),
-      courseDuration: `${Math.floor(course.duration / 60)}h ${course.duration % 60}m`,
-      courseLevel: course.level,
+      courseDuration: course.duration ? `${Math.floor(course.duration / 60)}h ${course.duration % 60}min` : 'N/A',
+      courseLevel: getLevelLabel(course.level),
       institutionName: course.institutionName || 'Emplea Emprende - Centro de Emprendimiento y Desarrollo Sostenible',
     } as const;
 

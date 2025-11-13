@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { CertificateService } from "@/lib/certificateService";
+import { getLevelLabel } from "@/lib/translations";
 
 /**
  * Preview certificate template with sample data
@@ -15,8 +16,8 @@ export async function GET(request: NextRequest) {
       courseTitle: "Desarrollo de Habilidades Blandas y Liderazgo",
       instructorName: "María Rodriguez",
       completionDate: new Date().toISOString(),
-      courseDuration: "40h 30m",
-      courseLevel: "Intermedio",
+      courseDuration: "40h 30min",
+      courseLevel: getLevelLabel("INTERMEDIATE"),
       institutionName: "Emplea Emprende - Centro de Emprendimiento y Desarrollo Sostenible",
     };
 

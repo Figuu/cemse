@@ -194,9 +194,9 @@ export default function CertificatesPage() {
           <Card>
             <CardContent className="text-center py-4">
               <div className="flex items-center justify-center mb-2">
-                <Award className="h-8 w-8 text-yellow-600" />
+                <Award className="h-8 w-8 text-[#47b4d8]" />
               </div>
-              <div className="text-2xl font-bold text-yellow-600">{certificates.length}</div>
+              <div className="text-2xl font-bold text-[#47b4d8]">{certificates.length}</div>
               <div className="text-sm text-muted-foreground">Total Certificados</div>
             </CardContent>
           </Card>

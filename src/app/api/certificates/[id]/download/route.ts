@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { CertificateService } from "@/lib/certificateService";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(
@@ -42,19 +41,37 @@ export async function GET(
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
-    // Get certificate download URL
-    const downloadUrl = await CertificateService.getCertificateUrl(certificate.courseId, certificate.studentId);
-    
-    if (!downloadUrl) {
+    // Get certificate URL from database
+    const certificateUrl = certificate.fileUrl;
+
+    if (!certificateUrl) {
       return NextResponse.json({ error: "Certificate file not found" }, { status: 404 });
     }
 
-    // In a real implementation, you would:
-    // 1. Generate the actual PDF certificate
-    // 2. Return the PDF file as a response
-    // For now, we'll return a redirect to the certificate URL
-    
-    return NextResponse.redirect(downloadUrl);
+    try {
+      // Fetch the certificate file from the stored URL (which is a proxy URL)
+      const fileResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}${certificateUrl}`);
+
+      if (!fileResponse.ok) {
+        return NextResponse.json({ error: "Certificate file not found" }, { status: 404 });
+      }
+
+      // Get the PDF blob
+      const blob = await fileResponse.blob();
+      const buffer = Buffer.from(await blob.arrayBuffer());
+
+      // Return the PDF file as a download
+      return new NextResponse(buffer, {
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': `attachment; filename="certificado-${certificateId}.pdf"`,
+          'Content-Length': buffer.length.toString(),
+        },
+      });
+    } catch (error) {
+      console.error("Error fetching certificate file:", error);
+      return NextResponse.json({ error: "Failed to fetch certificate file" }, { status: 500 });
+    }
 
   } catch (error) {
     console.error("Error downloading certificate:", error);

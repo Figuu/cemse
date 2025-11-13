@@ -55,15 +55,33 @@ export async function GET(request: NextRequest) {
     } else {
       // No range request - serve entire file
       const fileBuffer = await minioService.getFile(bucket, key);
-      
+
+      // Check if this is a PDF request from a download button
+      const isPDF = fileInfo.metaData?.['content-type'] === 'application/pdf';
+      const forceDownload = searchParams.get('download') === 'true';
+
+      const headers: Record<string, string> = {
+        'Content-Type': fileInfo.metaData?.['content-type'] || 'application/octet-stream',
+        'Content-Length': fileSize.toString(),
+        'Accept-Ranges': 'bytes',
+        'Cache-Control': 'public, max-age=31536000, immutable',
+        'X-Content-Type-Options': 'nosniff',
+      };
+
+      // Add Content-Disposition header for PDFs when download is requested
+      if (isPDF) {
+        const filename = key.split('/').pop() || 'document.pdf';
+        if (forceDownload) {
+          headers['Content-Disposition'] = `attachment; filename="${filename}"`;
+        } else {
+          // For inline display (viewing in browser/iframe)
+          headers['Content-Disposition'] = `inline; filename="${filename}"`;
+        }
+      }
+
       return new NextResponse(fileBuffer as any, {
         status: 200,
-        headers: {
-          'Content-Type': fileInfo.metaData?.['content-type'] || 'application/octet-stream',
-          'Content-Length': fileSize.toString(),
-          'Accept-Ranges': 'bytes',
-          'Cache-Control': 'public, max-age=31536000, immutable',
-        },
+        headers,
       });
     }
   } catch (error) {

@@ -92,7 +92,7 @@ export function CertificateCard({
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-3">
-            <div className="p-2 bg-yellow-100 rounded-lg">
+            <div className="p-2 bg-blue-100 rounded-lg">
               {getTypeIcon(certificate.type)}
             </div>
             <div>
@@ -134,14 +134,14 @@ export function CertificateCard({
         </div>
 
         {/* Certificate Preview */}
-        <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-lg p-4 border-2 border-dashed border-yellow-200">
+        <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg p-4 border-2 border-dashed border-blue-200">
           <div className="text-center space-y-2">
-            <Award className="h-12 w-12 text-yellow-600 mx-auto" />
-            <h3 className="font-semibold text-yellow-800">Certificado de Completación</h3>
-            <p className="text-sm text-yellow-700">
+            <Award className="h-12 w-12 text-[#47b4d8] mx-auto" />
+            <h3 className="font-semibold text-blue-800">Certificado de Completación</h3>
+            <p className="text-sm text-blue-700">
               {certificate.type === "course" ? "Curso" : "Módulo"} completado exitosamente
             </p>
-            <div className="text-xs text-yellow-600">
+            <div className="text-xs text-blue-600">
               ID: {certificate.id}
             </div>
           </div>
@@ -175,7 +175,7 @@ export function CertificateCard({
                 size="sm"
                 onClick={handleDownload}
                 disabled={isDownloading}
-                className="bg-yellow-600 hover:bg-yellow-700"
+                className="bg-blue-600 hover:bg-blue-700"
               >
                 {isDownloading ? (
                   <>
