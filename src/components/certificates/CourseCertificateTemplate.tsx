@@ -13,16 +13,20 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 30,
   },
-  logo: {
-    width: 80,
-    height: 80,
+  logosContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 20,
-    alignSelf: 'center',
+    gap: 8,
+  },
+  logo: {
+    objectFit: 'contain',
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#1e40af',
+    color: '#47b4d8',
     marginBottom: 10,
     textAlign: 'center',
   },
@@ -41,7 +45,7 @@ const styles = StyleSheet.create({
   studentName: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1e40af',
+    color: '#47b4d8',
     textAlign: 'center',
     marginBottom: 20,
     textDecoration: 'underline',
@@ -94,7 +98,7 @@ const styles = StyleSheet.create({
     left: 20,
     right: 20,
     bottom: 20,
-    border: '2px solid #1e40af',
+    border: '2px solid #47b4d8',
     borderRadius: 10,
   },
   decorativeElement: {
@@ -103,7 +107,7 @@ const styles = StyleSheet.create({
     left: 50,
     right: 50,
     height: 2,
-    backgroundColor: '#1e40af',
+    backgroundColor: '#47b4d8',
     opacity: 0.3,
   },
 });
@@ -116,6 +120,14 @@ interface CourseCertificateTemplateProps {
   courseDuration: string;
   courseLevel: string;
   institutionName?: string;
+  logos?: {
+    cemse: string;
+    kallpa: string;
+    manqa: string;
+    childfund: string;
+    stc: string;
+    logo40: string;
+  };
 }
 
 export const CourseCertificateTemplate: React.FC<CourseCertificateTemplateProps> = ({
@@ -126,6 +138,7 @@ export const CourseCertificateTemplate: React.FC<CourseCertificateTemplateProps>
   courseDuration,
   courseLevel,
   institutionName = 'Emplea Emprende - Centro de Emprendimiento y Desarrollo Sostenible',
+  logos,
 }) => {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -142,9 +155,51 @@ export const CourseCertificateTemplate: React.FC<CourseCertificateTemplateProps>
         {/* Decorative border */}
         <View style={styles.border} />
         <View style={styles.decorativeElement} />
-        
+
         {/* Header */}
         <View style={styles.header}>
+          {/* Logos Row */}
+          {logos && (
+            <View style={styles.logosContainer}>
+              {logos.cemse && (
+                <Image
+                  src={logos.cemse}
+                  style={{ ...styles.logo, height: 60 }}
+                />
+              )}
+              {logos.kallpa && (
+                <Image
+                  src={logos.kallpa}
+                  style={{ ...styles.logo, height: 70 }}
+                />
+              )}
+              {logos.manqa && (
+                <Image
+                  src={logos.manqa}
+                  style={{ ...styles.logo, height: 60 }}
+                />
+              )}
+              {logos.childfund && (
+                <Image
+                  src={logos.childfund}
+                  style={{ ...styles.logo, height: 30 }}
+                />
+              )}
+              {logos.stc && (
+                <Image
+                  src={logos.stc}
+                  style={{ ...styles.logo, height: 55 }}
+                />
+              )}
+              {logos.logo40 && (
+                <Image
+                  src={logos.logo40}
+                  style={{ ...styles.logo, height: 60 }}
+                />
+              )}
+            </View>
+          )}
+
           <Text style={styles.title}>CERTIFICADO DE COMPLETACIÓN</Text>
           <Text style={styles.subtitle}>
             {institutionName}
@@ -166,7 +221,7 @@ export const CourseCertificateTemplate: React.FC<CourseCertificateTemplateProps>
           </Text>
           
           <Text style={styles.courseDetails}>
-            <Text style={{ fontWeight: 'bold', color: '#1e40af' }}>
+            <Text style={{ fontWeight: 'bold', color: '#47b4d8' }}>
               "{courseTitle}"
             </Text>
           </Text>

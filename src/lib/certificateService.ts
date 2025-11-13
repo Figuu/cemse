@@ -2,6 +2,7 @@ import { pdf } from '@react-pdf/renderer';
 import React from 'react';
 import { CourseCertificateTemplate } from '@/components/certificates/CourseCertificateTemplate';
 import { minioService } from './minioService';
+import { getCertificateLogos } from './certificateImages';
 
 export interface CertificateData {
   studentId: string;
@@ -53,6 +54,9 @@ export class CertificateService {
    * Generate PDF blob from certificate template
    */
   private static async generatePDFBlob(data: CertificateData): Promise<Blob> {
+    // Get base64 encoded logos
+    const logos = getCertificateLogos();
+
     // Create the certificate document using the template component
     const certificateDoc = CourseCertificateTemplate({
       studentName: data.studentName,
@@ -62,6 +66,7 @@ export class CertificateService {
       courseDuration: data.courseDuration,
       courseLevel: data.courseLevel,
       institutionName: data.institutionName,
+      logos,
     }) as any;
 
     const pdfBlob = await pdf(certificateDoc).toBlob();
